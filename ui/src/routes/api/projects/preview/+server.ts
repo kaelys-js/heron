@@ -7,7 +7,8 @@ import { wrap, badRequest } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
 import { matchesProject } from '$lib/server/projects';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
-import { DEFAULT_FILTER, type FilterState, type Status } from '$lib/types';
+import { DEFAULT_FILTER } from '$lib/types';
+import type { FilterState, Status } from '$lib/types';
 
 type PreviewBody = { filter?: Partial<FilterState> };
 
@@ -21,7 +22,9 @@ export const POST = wrap(
       bgRisk: { ...DEFAULT_FILTER.bgRisk, ...(body?.filter?.bgRisk ?? {}) },
       workMode: { ...DEFAULT_FILTER.workMode, ...(body?.filter?.workMode ?? {}) },
     };
-    if (!body) badRequest('expected JSON body with { filter }');
+    if (!body) {
+      badRequest('expected JSON body with { filter }');
+    }
 
     // Preview against the same profile the editor is scoped to (so the count
     // matches what `?profile=<slug>` would actually show on /pipeline).
@@ -47,15 +50,24 @@ export const POST = wrap(
     let offer = 0;
     let topScore: number | null = null;
     for (const j of jobs) {
-      if (!matchesProject(j, fakeProject)) continue;
+      if (!matchesProject(j, fakeProject)) {
+        continue;
+      }
       total++;
       const s = j.score ?? j.geminiScore ?? null;
-      if (s != null && (topScore == null || s > topScore)) topScore = s;
+      if (s != null && (topScore == null || s > topScore)) {
+        topScore = s;
+      }
       const st: Status = j.status;
-      if (st === 'Ready') ready++;
-      else if (st === 'Applied' || st === 'Screened') applied++;
-      else if (st === 'Interview') interview++;
-      else if (st === 'Offer') offer++;
+      if (st === 'Ready') {
+        ready++;
+      } else if (st === 'Applied' || st === 'Screened') {
+        applied++;
+      } else if (st === 'Interview') {
+        interview++;
+      } else if (st === 'Offer') {
+        offer++;
+      }
     }
     return { total, ready, applied, interview, offer, topScore };
   },

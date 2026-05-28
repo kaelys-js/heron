@@ -15,6 +15,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 type Reference = {
   name: string;
   relationship?: string;
@@ -49,8 +50,11 @@ function spawnRefPrep(args: {
     });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolve({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -58,15 +62,21 @@ function spawnRefPrep(args: {
 function parseRefStdout(stdout: string): { filesWritten?: number; paths?: string[] } {
   const out: { filesWritten?: number; paths?: string[] } = {};
   const fw = /REFERENCE_FILES_WRITTEN:\s*(\d+)/.exec(stdout);
-  if (fw) out.filesWritten = parseInt(fw[1], 10);
+  if (fw) {
+    out.filesWritten = parseInt(fw[1], 10);
+  }
   // REFERENCE_PATHS is followed by indented bullets.
   const ps: string[] = [];
   const re = /^\s*-\s+(\S+)$/gm;
   let m;
   while ((m = re.exec(stdout)) !== null) {
-    if (m[1].includes('interview-prep/')) ps.push(m[1]);
+    if (m[1].includes('interview-prep/')) {
+      ps.push(m[1]);
+    }
   }
-  if (ps.length) out.paths = ps;
+  if (ps.length) {
+    out.paths = ps;
+  }
   return out;
 }
 
@@ -74,7 +84,9 @@ export const POST = wrap(
   'reference-prep',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => ({}))) as { references?: Reference[] };
     if (!Array.isArray(body?.references) || body.references.length === 0) {
@@ -84,7 +96,7 @@ export const POST = wrap(
     logEvent('reference-prep', 'Generating reference briefs', {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' · ' + body.references!.length + ' references',
+      message: `${job.company || '?'} · ${body.references!.length} references`,
     });
 
     try {
@@ -98,7 +110,7 @@ export const POST = wrap(
       logEvent('reference-prep', 'Reference briefs ready', {
         level: 'success',
         category: 'application',
-        message: (meta.filesWritten ?? 0) + ' briefs written',
+        message: `${meta.filesWritten ?? 0} briefs written`,
       });
       return { ok: true, ...meta };
     } catch (err) {

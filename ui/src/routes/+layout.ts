@@ -42,10 +42,8 @@ export const trailingSlash = 'never';
 
 // Merge with parent (+layout.server.ts) data -- DON'T replace it, or downstream
 // pages lose access to activeProfile/inboxCount/queueCount/etc.
-export const load = async ({ data }) => {
-  return {
-    ...data,
-    isCapacitor: IS_CAPACITOR,
-    isBrowser: browser,
-  };
-};
+export const load = async ({ data }) => ({
+  ...data,
+  isCapacitor: IS_CAPACITOR,
+  isBrowser: browser,
+});

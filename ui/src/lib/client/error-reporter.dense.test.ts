@@ -122,7 +122,7 @@ describe('queueLocally', () => {
   it('caps queue at 50 entries (drops oldest)', () => {
     const { queueLocally, QUEUE_KEY } = reporter._testHelpers();
     for (let i = 0; i < 60; i++) {
-      queueLocally({ message: 'msg-' + i, level: 'error', capturedAt: i, attempts: 0 });
+      queueLocally({ message: `msg-${i}`, level: 'error', capturedAt: i, attempts: 0 });
     }
     const queue = JSON.parse(localStorage.getItem(QUEUE_KEY)!);
     expect(queue.length).toBe(50);

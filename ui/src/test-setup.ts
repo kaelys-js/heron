@@ -50,15 +50,21 @@ if (typeof process !== 'undefined' && process.env && !process.env.HERON_DATA_DIR
   const origMkdir = fsLib.mkdirSync;
   const origAppend = fsLib.appendFileSync;
   fsLib.writeFileSync = ((p: unknown, ...rest: unknown[]) => {
-    if (typeof p === 'string') guardWrite('writeFileSync', p);
+    if (typeof p === 'string') {
+      guardWrite('writeFileSync', p);
+    }
     return (origWrite as unknown as (...a: unknown[]) => unknown)(p, ...rest);
   }) as typeof fsLib.writeFileSync;
   fsLib.mkdirSync = ((p: unknown, ...rest: unknown[]) => {
-    if (typeof p === 'string') guardWrite('mkdirSync', p);
+    if (typeof p === 'string') {
+      guardWrite('mkdirSync', p);
+    }
     return (origMkdir as unknown as (...a: unknown[]) => unknown)(p, ...rest);
   }) as typeof fsLib.mkdirSync;
   fsLib.appendFileSync = ((p: unknown, ...rest: unknown[]) => {
-    if (typeof p === 'string') guardWrite('appendFileSync', p);
+    if (typeof p === 'string') {
+      guardWrite('appendFileSync', p);
+    }
     return (origAppend as unknown as (...a: unknown[]) => unknown)(p, ...rest);
   }) as typeof fsLib.appendFileSync;
 }
@@ -138,10 +144,14 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
         addListener: () => undefined, // legacy
         removeListener: () => undefined, // legacy
         addEventListener: (type: string, cb: EventListenerOrEventListenerObject) => {
-          if (type === 'change') listeners.add(cb as unknown as MediaListener);
+          if (type === 'change') {
+            listeners.add(cb as unknown as MediaListener);
+          }
         },
         removeEventListener: (type: string, cb: EventListenerOrEventListenerObject) => {
-          if (type === 'change') listeners.delete(cb as unknown as MediaListener);
+          if (type === 'change') {
+            listeners.delete(cb as unknown as MediaListener);
+          }
         },
         dispatchEvent: () => false,
       };
@@ -158,7 +168,9 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
 export function setMobileViewport(isMobile: boolean): void {
   __isMobile = isMobile;
   const listeners = __mqlListeners.get('(max-width: 768px)');
-  if (!listeners) return;
+  if (!listeners) {
+    return;
+  }
   const event = { matches: isMobile, media: '(max-width: 768px)' } as MediaQueryListEvent;
   listeners.forEach((cb) => cb(event));
 }
@@ -245,7 +257,9 @@ if (typeof process !== 'undefined' && typeof process.on === 'function') {
   ): boolean => {
     if (event === 'warning') {
       const w = args[0] as { name?: string } | undefined;
-      if (w?.name === 'YAMLWarning') return false; // swallow
+      if (w?.name === 'YAMLWarning') {
+        return false;
+      } // swallow
     }
     return (origEmit as unknown as (event: string, ...args: unknown[]) => boolean)(event, ...args);
   };

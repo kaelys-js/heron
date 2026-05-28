@@ -57,7 +57,9 @@ describe('mise.lock present so CI installs deterministic versions', () => {
   });
 
   it('mise.lock contains entries for every formatter', () => {
-    if (miseLock.length === 0) return;
+    if (miseLock.length === 0) {
+      return;
+    }
     for (const tool of [
       'actionlint',
       'ruff',
@@ -92,7 +94,7 @@ describe('lefthook gates — every multi-lang hook is wired', () => {
   });
 });
 
-describe('CI test.yml — format job runs every formatter through mise PATH', () => {
+describe('cI test.yml — format job runs every formatter through mise PATH', () => {
   it.each([
     ['actionlint', /actionlint\b/],
     ['ruff format', /ruff format/],

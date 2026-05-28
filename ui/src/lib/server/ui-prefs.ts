@@ -62,7 +62,9 @@ export const DEFAULT_PREFS: UiPrefs = {
 };
 
 function parseNotifications(raw: string | null | undefined): NotificationPrefs {
-  if (!raw) return DEFAULT_PREFS.notifications;
+  if (!raw) {
+    return DEFAULT_PREFS.notifications;
+  }
   try {
     const parsed = JSON.parse(raw) as Partial<NotificationPrefs>;
     return {
@@ -76,14 +78,20 @@ function parseNotifications(raw: string | null | undefined): NotificationPrefs {
 }
 
 function maybeMigrateLegacy(userId: string): void {
-  if (userId === SYSTEM_USER_ID) return;
+  if (userId === SYSTEM_USER_ID) {
+    return;
+  }
   const existing = appDb
     .select({ userId: uiPrefs.userId })
     .from(uiPrefs)
     .where(eq(uiPrefs.userId, userId))
     .get();
-  if (existing) return;
-  if (!fs.existsSync(LEGACY_PREFS_FILE)) return;
+  if (existing) {
+    return;
+  }
+  if (!fs.existsSync(LEGACY_PREFS_FILE)) {
+    return;
+  }
   try {
     const raw = fs.readFileSync(LEGACY_PREFS_FILE, 'utf8');
     const parsed = JSON.parse(raw) as Partial<UiPrefs>;
@@ -116,10 +124,14 @@ function maybeMigrateLegacy(userId: string): void {
 }
 
 function readPrefsForUser(userId: string): UiPrefs {
-  if (userId === SYSTEM_USER_ID) return { ...DEFAULT_PREFS };
+  if (userId === SYSTEM_USER_ID) {
+    return { ...DEFAULT_PREFS };
+  }
   maybeMigrateLegacy(userId);
   const row = appDb.select().from(uiPrefs).where(eq(uiPrefs.userId, userId)).get();
-  if (!row) return { ...DEFAULT_PREFS };
+  if (!row) {
+    return { ...DEFAULT_PREFS };
+  }
   return {
     displayName: row.displayName ?? undefined,
     avatarPath: row.avatarPath ?? undefined,
@@ -131,7 +143,9 @@ function readPrefsForUser(userId: string): UiPrefs {
 }
 
 function writePrefsForUser(userId: string, patch: Partial<UiPrefs>): UiPrefs {
-  if (userId === SYSTEM_USER_ID) return { ...DEFAULT_PREFS };
+  if (userId === SYSTEM_USER_ID) {
+    return { ...DEFAULT_PREFS };
+  }
   const cur = readPrefsForUser(userId);
   const merged: UiPrefs = {
     ...cur,
@@ -211,16 +225,22 @@ export function saveAvatar(
     ['image/webp', 'webp'],
   ]);
   const ext = ALLOWED.get(contentType);
-  if (!ext) return { ok: false, error: 'Unsupported content-type: ' + contentType };
-  if (buffer.length > 2 * 1024 * 1024) return { ok: false, error: 'Avatar must be ≤2MB' };
+  if (!ext) {
+    return { ok: false, error: 'Unsupported content-type: ' + contentType };
+  }
+  if (buffer.length > 2 * 1024 * 1024) {
+    return { ok: false, error: 'Avatar must be ≤2MB' };
+  }
   const dir = userAvatarDir(userId);
   fs.mkdirSync(dir, { recursive: true });
-  const filename = 'avatar.' + ext;
+  const filename = `avatar.${ext}`;
   const full = path.join(dir, filename);
   fs.writeFileSync(full, buffer);
   for (const [, otherExt] of ALLOWED) {
-    if (otherExt === ext) continue;
-    const other = path.join(dir, 'avatar.' + otherExt);
+    if (otherExt === ext) {
+      continue;
+    }
+    const other = path.join(dir, `avatar.${otherExt}`);
     if (fs.existsSync(other)) {
       try {
         fs.unlinkSync(other);
@@ -232,30 +252,38 @@ export function saveAvatar(
       }
     }
   }
-  const relPath = 'avatars/' + userId + '/' + filename;
+  const relPath = `avatars/${userId}/${filename}`;
   writePrefs({ avatarPath: relPath });
   return { ok: true, path: relPath };
 }
 
 export function readAvatar(): { buffer: Buffer; contentType: string } | null {
   const userId = currentUserIdOrDefault();
-  if (userId === SYSTEM_USER_ID) return null;
+  if (userId === SYSTEM_USER_ID) {
+    return null;
+  }
   const prefs = readPrefs();
-  if (!prefs.avatarPath) return null;
+  if (!prefs.avatarPath) {
+    return null;
+  }
   // Defence-in-depth: the stored avatarPath MUST live under this user's
   // avatar dir. Without this check, a poisoned `ui_prefs.avatar_path`
   // (e.g. crafted via a stolen session before the schema lock-down
   // landed) could read another user's avatar bytes. We enforce both:
   //   (a) the path resolves under `data/avatars/{userId}/`
   //   (b) the resolved real path doesn't escape via symlink
-  const expectedPrefix = 'avatars/' + userId + '/';
-  if (!prefs.avatarPath.startsWith(expectedPrefix)) return null;
+  const expectedPrefix = `avatars/${userId}/`;
+  if (!prefs.avatarPath.startsWith(expectedPrefix)) {
+    return null;
+  }
   const full = path.resolve(ROOT, 'data', prefs.avatarPath);
   const userDir = path.resolve(ROOT, 'data', 'avatars', userId);
   // Ensure `full` is INSIDE `userDir` after symlink resolution. We use
   // realpath only if the file exists; otherwise fall back to the prefix
   // check above (which catches the "no file but malicious path" case).
-  if (!fs.existsSync(full)) return null;
+  if (!fs.existsSync(full)) {
+    return null;
+  }
   let realFull: string;
   let realDir: string;
   try {
@@ -264,7 +292,9 @@ export function readAvatar(): { buffer: Buffer; contentType: string } | null {
   } catch {
     return null;
   }
-  if (!realFull.startsWith(realDir + path.sep) && realFull !== realDir) return null;
+  if (!realFull.startsWith(realDir + path.sep) && realFull !== realDir) {
+    return null;
+  }
   const ext = path.extname(full).slice(1).toLowerCase();
   const contentType =
     ext === 'png'

@@ -27,16 +27,15 @@ async function runCompileLatex(args?: JobArgs): Promise<JobResult> {
   if (!fs.existsSync(tex)) {
     return {
       ok: false,
-      error:
-        'No .tex source at ' +
-        tex +
-        '. Write one (templates/cv-template.tex is the reference) and re-run.',
+      error: `No .tex source at ${
+        tex
+      }. Write one (templates/cv-template.tex is the reference) and re-run.`,
     };
   }
 
   logEvent('compile-latex', 'LaTeX compile started', {
     category: 'task',
-    message: tex + ' → ' + out + ' · profile=' + profileId,
+    message: `${tex} → ${out} · profile=${profileId}`,
   });
 
   return new Promise<JobResult>((resolve) => {
@@ -65,17 +64,17 @@ async function runCompileLatex(args?: JobArgs): Promise<JobResult> {
           category: 'task',
           message: out + (bytes ? ' · ' + bytes + 'KB' : ''),
         });
-        resolve({ ok: true, message: 'Wrote ' + out });
+        resolve({ ok: true, message: `Wrote ${out}` });
       } else {
         const tail = (stderrBuf || stdoutBuf || '').slice(-400).trim();
         logEvent('compile-latex', 'LaTeX compile failed', {
           level: 'error',
           category: 'task',
-          message: 'exit ' + code + (tail ? ': ' + tail : ''),
+          message: `exit ${code}${tail ? ': ' + tail : ''}`,
         });
         resolve({
           ok: false,
-          error: 'generate-latex.mjs exited ' + code + (tail ? ': ' + tail : ''),
+          error: `generate-latex.mjs exited ${code}${tail ? ': ' + tail : ''}`,
         });
       }
     });

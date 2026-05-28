@@ -1,4 +1,5 @@
-import { type ClassValue, clsx } from 'clsx';
+import { clsx } from 'clsx';
+import type { ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 // Re-export bits-ui helpers so shadcn-svelte v1 components can import them from $lib/utils.
@@ -16,19 +17,29 @@ export function cn(...inputs: ClassValue[]) {
 export function formatRelativeTime(ts: number): string {
   const diff = Date.now() - ts;
   const sec = Math.floor(diff / 1000);
-  if (sec < 60) return 'just now';
+  if (sec < 60) {
+    return 'just now';
+  }
   const min = Math.floor(sec / 60);
-  if (min < 60) return min + 'm ago';
+  if (min < 60) {
+    return min + 'm ago';
+  }
   const hr = Math.floor(min / 60);
-  if (hr < 24) return hr + 'h ago';
+  if (hr < 24) {
+    return hr + 'h ago';
+  }
   const day = Math.floor(hr / 24);
-  if (day < 30) return day + 'd ago';
+  if (day < 30) {
+    return day + 'd ago';
+  }
   return new Date(ts).toLocaleDateString();
 }
 
 export function truncate(s: string, n = 60): string {
-  if (!s) return '';
-  return s.length > n ? s.slice(0, n - 1) + '…' : s;
+  if (!s) {
+    return '';
+  }
+  return s.length > n ? `${s.slice(0, n - 1)}…` : s;
 }
 
 /**

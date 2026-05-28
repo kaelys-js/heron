@@ -188,7 +188,7 @@ describe('runById -- perUser fan-out', () => {
     expect((perUser as { run: { mock: { calls: unknown[] } } }).run.mock.calls.length).toBe(1);
   });
 
-  it('SYSTEM_USER_ID counts as "no user" -- fan-out still happens', async () => {
+  it('sYSTEM_USER_ID counts as "no user" -- fan-out still happens', async () => {
     const { register, runById } = await import('./registry');
     const perUser = defaultJob({ id: 'sys-fan', perUser: true });
     register(perUser);
@@ -221,7 +221,9 @@ describe('runById -- perUser fan-out', () => {
       perUser: true,
       run: vi.fn(async () => {
         call++;
-        if (call === 1) throw new Error('per-user fail');
+        if (call === 1) {
+          throw new Error('per-user fail');
+        }
         return { ok: true };
       }),
     });

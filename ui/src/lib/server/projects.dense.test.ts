@@ -15,9 +15,10 @@ import {
   projectToPipelineQuery,
   parseFilterFromUrl,
   PROJECT_COLORS,
-  type Project,
 } from './projects';
-import { DEFAULT_FILTER, type Job } from '$lib/types';
+import type { Project } from './projects';
+import { DEFAULT_FILTER } from '$lib/types';
+import type { Job } from '$lib/types';
 
 function makeProject(overrides: Partial<Project> = {}): Project {
   return {
@@ -50,7 +51,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
   };
 }
 
-describe('PROJECT_COLORS', () => {
+describe('pROJECT_COLORS', () => {
   it('exports 8 distinct colors', () => {
     expect(PROJECT_COLORS).toHaveLength(8);
     expect(new Set(PROJECT_COLORS).size).toBe(8);

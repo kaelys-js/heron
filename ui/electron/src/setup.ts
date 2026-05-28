@@ -251,11 +251,11 @@ export class ElectronCapacitorApp {
     }
 
     // Security
-    this.MainWindow.webContents.setWindowOpenHandler((details) => {
-      return isInternalNavigation(details.url, this.customScheme, this.devServerUrl)
+    this.MainWindow.webContents.setWindowOpenHandler((details) =>
+      isInternalNavigation(details.url, this.customScheme, this.devServerUrl)
         ? { action: 'allow' }
-        : { action: 'deny' };
-    });
+        : { action: 'deny' },
+    );
     this.MainWindow.webContents.on('will-navigate', (event, newURL) => {
       // Allow navigation only within the app (custom scheme, or the vite dev
       // server in development). External links are blocked here and handled by
@@ -292,13 +292,19 @@ export class ElectronCapacitorApp {
       clearTimeout(this.windowRevealTimer);
       this.windowRevealTimer = null;
     }
-    if (this.mainWindowRevealed) return;
-    if (!this.MainWindow || this.MainWindow.isDestroyed()) return;
+    if (this.mainWindowRevealed) {
+      return;
+    }
+    if (!this.MainWindow || this.MainWindow.isDestroyed()) {
+      return;
+    }
     this.mainWindowRevealed = true;
 
     if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
       const splash = this.SplashScreen?.getSplashWindow();
-      if (splash && !splash.isDestroyed()) splash.hide();
+      if (splash && !splash.isDestroyed()) {
+        splash.hide();
+      }
     }
     if (!this.CapacitorFileConfig.electron?.hideMainWindowOnLaunch) {
       this.MainWindow.show();

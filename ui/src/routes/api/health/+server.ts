@@ -10,14 +10,12 @@
 
 import { wrap } from '$lib/server/api-helpers';
 
-export const GET = wrap('health', async () => {
-  return {
-    ok: true,
-    // Backend-discovery uses this endpoint as a "is this URL Heron?"
-    // probe. Returning a stable signature lets the client confirm
-    // without enumerating versions on the unauthenticated surface
-    // (returning the actual semver would let attackers fingerprint
-    // CVE-vulnerable installs).
-    service: 'heron',
-  };
-});
+export const GET = wrap('health', async () => ({
+  ok: true,
+  // Backend-discovery uses this endpoint as a "is this URL Heron?"
+  // probe. Returning a stable signature lets the client confirm
+  // without enumerating versions on the unauthenticated surface
+  // (returning the actual semver would let attackers fingerprint
+  // CVE-vulnerable installs).
+  service: 'heron',
+}));

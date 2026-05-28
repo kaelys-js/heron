@@ -93,23 +93,16 @@ async function runLinkedInAudit(): Promise<JobResult> {
     });
     const errors = findings.filter((f) => f.severity === 'error').length;
     const warns = findings.filter((f) => f.severity === 'warn').length;
-    logEvent('linkedin-audit', 'Weekly audit · grade ' + grade, {
+    logEvent('linkedin-audit', `Weekly audit · grade ${grade}`, {
       level: errors > 0 ? 'warn' : 'info',
       category: 'user',
-      message: errors + ' errors · ' + warns + ' warnings',
+      message: `${errors} errors · ${warns} warnings`,
     });
     if (errors > 0 || warns >= 3) {
       reportIssue({
         severity: errors > 0 ? 'warn' : 'info',
         source: 'linkedin-audit',
-        summary:
-          'LinkedIn audit · ' +
-          errors +
-          ' errors · ' +
-          warns +
-          ' warnings · grade ' +
-          grade +
-          '/100',
+        summary: `LinkedIn audit · ${errors} errors · ${warns} warnings · grade ${grade}/100`,
         detail: 'Open /linkedin-audit for the full report + paste-ready fixes.',
         dedupeKey: 'linkedin-audit:weekly',
         fix: { label: 'Review findings', href: '/linkedin-audit' },
@@ -117,7 +110,7 @@ async function runLinkedInAudit(): Promise<JobResult> {
     }
     return {
       ok: true,
-      message: 'grade ' + grade + ' · ' + errors + ' errors · ' + warns + ' warns',
+      message: `grade ${grade} · ${errors} errors · ${warns} warns`,
       meta: { grade, errors, warns, findings: findings.length },
     };
   } catch (err) {

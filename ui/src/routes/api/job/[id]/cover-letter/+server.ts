@@ -17,12 +17,8 @@ import { ROOT } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
-import {
-  checkCoverLetter,
-  checkAiDetect,
-  type QualityResult,
-  type AiDetectResult,
-} from '$lib/server/quality-checks';
+import { checkCoverLetter, checkAiDetect } from '$lib/server/quality-checks';
+import type { QualityResult, AiDetectResult } from '$lib/server/quality-checks';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 /** Cover letters live under {profile}/output/{stem}-cover.md so each profile
@@ -33,11 +29,13 @@ function findCachedCover(
   profileId: string,
   reportFile?: string,
 ): { path: string; body: string } | null {
-  if (!reportFile) return null;
+  if (!reportFile) {
+    return null;
+  }
   const outputDir = profilePath(profileId, 'output-dir');
   // reportFile is e.g. "047-vercel-2026-05-05.md"
   const stem = reportFile.replace(/\.md$/, '');
-  const candidate = path.join(outputDir, stem + '-cover.md');
+  const candidate = path.join(outputDir, `${stem}-cover.md`);
   try {
     if (fs.existsSync(candidate)) {
       const body = fs.readFileSync(candidate, 'utf8');
@@ -64,7 +62,7 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
     const outputDir = profilePath(profileId, 'output-dir');
 
     const { child: p } = spawnAgentWithMode('cover-letter', url, {
-      profileId: profileId,
+      profileId,
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
@@ -75,7 +73,7 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+        reject(new Error(`claude -p exited ${code}: ${stderr.slice(0, 300)}`));
         return;
       }
       // Mode prints "Wrote: <path>" -- try to capture it; otherwise fall back
@@ -94,12 +92,14 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
             .map((f) => ({ f, mtime: fs.statSync(path.join(outputDir, f)).mtimeMs }))
             .filter((x) => x.mtime >= cutoff)
             .sort((a, b) => b.mtime - a.mtime);
-          if (files[0]) coverPath = path.join(outputDir, files[0].f);
+          if (files[0]) {
+            coverPath = path.join(outputDir, files[0].f);
+          }
         } catch {}
       }
       if (!coverPath || !fs.existsSync(coverPath)) {
         reject(
-          new Error('Cover letter generation produced no file. Stdout: ' + stdout.slice(0, 500)),
+          new Error(`Cover letter generation produced no file. Stdout: ${stdout.slice(0, 500)}`),
         );
         return;
       }
@@ -117,7 +117,9 @@ export const GET = wrap(
   'cover-letter',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const cached = findCachedCover(profileId, job.reportFile);
     return { cached };
@@ -128,14 +130,18 @@ export const POST = wrap(
   'cover-letter',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
-    if (!job.url) badRequest('Job has no URL');
+    if (!job.url) {
+      badRequest('Job has no URL');
+    }
 
     logEvent('cover-letter', 'Drafting cover letter', {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' · ' + (job.role || '?'),
+      message: `${job.company || '?'} · ${job.role || '?'}`,
     });
 
     try {

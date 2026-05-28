@@ -6,13 +6,17 @@ import { pinStore } from './sidebar-pins.svelte';
 
 describe('pinStore.unpin — many ids', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     pinStore.resetAll();
   });
   afterEach(() => pinStore.resetAll());
 
   it.each([1, 5, 10, 25, 50, 100])('unpinning %i ids leaves them in the set', (n) => {
-    for (let i = 0; i < n; i++) pinStore.unpin(`id-${i}`);
+    for (let i = 0; i < n; i++) {
+      pinStore.unpin(`id-${i}`);
+    }
     expect(pinStore.excluded.size).toBe(n);
   });
 });
@@ -37,7 +41,7 @@ describe('pinStore.pin — every previously-unpinned id', () => {
     'c',
     'job-1',
     'job-2',
-    'long-id-' + 'x'.repeat(50),
+    `long-id-${'x'.repeat(50)}`,
     '🎉-emoji',
   ])('unpin then pin id %s removes it', (id) => {
     pinStore.unpin(id);
@@ -65,7 +69,9 @@ describe('pinStore.resetAll — clears regardless of count', () => {
   beforeEach(() => pinStore.resetAll());
 
   it.each([1, 10, 100])('with %i pinned, resetAll empties', (n) => {
-    for (let i = 0; i < n; i++) pinStore.unpin(`r-${i}`);
+    for (let i = 0; i < n; i++) {
+      pinStore.unpin(`r-${i}`);
+    }
     pinStore.resetAll();
     expect(pinStore.excluded.size).toBe(0);
   });
@@ -73,12 +79,16 @@ describe('pinStore.resetAll — clears regardless of count', () => {
 
 describe('pinStore — persistence across virtual re-init', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     pinStore.resetAll();
   });
 
   it.each([1, 5, 10, 25])('%i pins survive init() reload', (n) => {
-    for (let i = 0; i < n; i++) pinStore.unpin(`p-${i}`);
+    for (let i = 0; i < n; i++) {
+      pinStore.unpin(`p-${i}`);
+    }
     // Simulate fresh init (clear in-memory state, then re-read storage).
     pinStore.excluded = new Set();
     pinStore.init();
@@ -89,7 +99,9 @@ describe('pinStore — persistence across virtual re-init', () => {
 describe('pinStore — readSet defensive branches', () => {
   const KEY = 'heron:sidebar-pin-excluded';
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     pinStore.resetAll();
   });
 
@@ -119,7 +131,9 @@ describe('pinStore — readSet defensive branches', () => {
 
 describe('pinStore.pin -- noop when not excluded', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     pinStore.resetAll();
   });
 

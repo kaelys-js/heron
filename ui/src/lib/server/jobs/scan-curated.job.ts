@@ -29,7 +29,9 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
     if (typeof args?.pages === 'number' && args.pages > 0) {
       cliArgs.push('--pages', String(Math.floor(args.pages)));
     }
-    if (args?.dryRun === true) cliArgs.push('--dry-run');
+    if (args?.dryRun === true) {
+      cliArgs.push('--dry-run');
+    }
 
     let stdout = '';
     let stderr = '';
@@ -64,27 +66,27 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
         logEvent('scan-curated', 'Curated scan failed', {
           level: 'error',
           category: 'task',
-          message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 150) : ''),
+          message: `exit ${code}${stderr ? ' · ' + stderr.slice(0, 150) : ''}`,
         });
         try {
-          recordFailure('scan-curated', new Error('scan-curated.mjs exited ' + code));
+          recordFailure('scan-curated', new Error(`scan-curated.mjs exited ${code}`));
         } catch {
           // sources counter best-effort -- failure is already logged above.
         }
-        resolve({ ok: false, error: 'scan-curated.mjs exited ' + code });
+        resolve({ ok: false, error: `scan-curated.mjs exited ${code}` });
         return;
       }
       logEvent('scan-curated', 'Curated scan finished', {
         level: 'success',
         category: 'task',
-        message: found + ' new offers',
+        message: `${found} new offers`,
       });
       try {
         recordSuccess('scan-curated');
       } catch {
         // sources counter best-effort -- success is already logged above.
       }
-      resolve({ ok: true, message: found + ' new offers', meta: { found } });
+      resolve({ ok: true, message: `${found} new offers`, meta: { found } });
     });
   });
 }

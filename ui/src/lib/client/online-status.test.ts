@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 import { isOnline, OfflineError, onlineStore } from './online-status.svelte';
 
-describe('OfflineError', () => {
+describe('offlineError', () => {
   it('has name "OfflineError"', () => {
     expect(new OfflineError().name).toBe('OfflineError');
   });
@@ -23,7 +23,9 @@ describe('onlineStore — init + state', () => {
     onlineStore.destroy();
     onlineStore.online = true;
     onlineStore.reason = null;
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
   });
 
   afterEach(() => {
@@ -132,7 +134,9 @@ describe('onlineStore — update() side effects', () => {
   beforeEach(() => {
     onlineStore.destroy();
     onlineStore.online = true;
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
   });
 
   it('persists online state to localStorage', () => {

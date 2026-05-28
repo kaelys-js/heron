@@ -12,7 +12,8 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import chokidar, { type FSWatcher } from 'chokidar';
+import chokidar from 'chokidar';
+import type { FSWatcher } from 'chokidar';
 import { ROOT, DATA_ROOT } from '../files';
 import { logEvent } from '../events';
 import { reportIssue } from '../issues';
@@ -45,10 +46,14 @@ function userIdFromTsvPath(abs: string): string | null {
   const multi = rel.match(
     /^data\/users\/([^/]+)\/profiles\/[^/]+\/batch\/tracker-additions\/.+\.tsv$/,
   );
-  if (multi) return multi[1];
+  if (multi) {
+    return multi[1];
+  }
   // data/profiles/{slug}/batch/tracker-additions/*.tsv  (legacy single-user)
   const legacy = rel.match(/^data\/profiles\/[^/]+\/batch\/tracker-additions\/.+\.tsv$/);
-  if (legacy) return SYSTEM_USER_ID;
+  if (legacy) {
+    return SYSTEM_USER_ID;
+  }
   return null;
 }
 
@@ -68,10 +73,14 @@ function pendingTsvCountForUser(userId: string): number {
       userId === SYSTEM_USER_ID
         ? path.join(DATA_ROOT, 'profiles')
         : path.join(DATA_ROOT, 'users', userId, 'profiles');
-    if (!fs.existsSync(usersRoot)) return 0;
+    if (!fs.existsSync(usersRoot)) {
+      return 0;
+    }
     for (const slug of fs.readdirSync(usersRoot)) {
       const dir = path.join(usersRoot, slug, 'batch', 'tracker-additions');
-      if (!fs.existsSync(dir)) continue;
+      if (!fs.existsSync(dir)) {
+        continue;
+      }
       count += fs.readdirSync(dir).filter((n) => n.endsWith('.tsv')).length;
     }
   } catch {
@@ -89,7 +98,7 @@ function runMergeTrackerForUser(userId: string, reason: string): Promise<JobResu
   return new Promise((resolve) => {
     if (mergeInFlight.has(userId)) {
       pendingRescan.add(userId);
-      resolve({ ok: false, error: 'merge already in flight for ' + userId });
+      resolve({ ok: false, error: `merge already in flight for ${userId}` });
       return;
     }
     if (pendingTsvCountForUser(userId) === 0) {
@@ -138,20 +147,20 @@ function runMergeTrackerForUser(userId: string, reason: string): Promise<JobResu
           logEvent('batch-merge', 'merge-tracker exited non-zero', {
             level: 'warn',
             category: 'system',
-            message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 200) : ''),
+            message: `exit ${code}${stderr ? ' · ' + stderr.slice(0, 200) : ''}`,
           });
           reportIssue({
             severity: 'warn',
             source: 'auto-merge-batch',
             summary: 'merge-tracker.mjs exited non-zero',
-            detail: 'exit ' + code + '\n\n' + stderr.slice(0, 500),
+            detail: `exit ${code}\n\n${stderr.slice(0, 500)}`,
             dedupeKey: 'merge-nonzero',
           });
           if (pendingRescan.has(userId)) {
             pendingRescan.delete(userId);
             setTimeout(() => runMergeTrackerForUser(userId, 'rescan-after-failure'), 5000);
           }
-          resolve({ ok: false, error: 'merge exited ' + code });
+          resolve({ ok: false, error: `merge exited ${code}` });
           return;
         }
         const m = stdout.match(SUMMARY_RE);
@@ -160,10 +169,10 @@ function runMergeTrackerForUser(userId: string, reason: string): Promise<JobResu
         const skipped = m ? parseInt(m[3], 10) : 0;
         // Emit success event with source='batch-merge' so normalize.job +
         // dedup.job pick it up via the after-trigger listener.
-        logEvent('batch-merge', 'Merged ' + added + ' new · ' + updated + ' updated', {
+        logEvent('batch-merge', `Merged ${added} new · ${updated} updated`, {
           level: 'success',
           category: 'application',
-          message: 'reason=' + reason + ' · skipped ' + skipped,
+          message: `reason=${reason} · skipped ${skipped}`,
         });
         if (pendingRescan.has(userId) && pendingTsvCountForUser(userId) > 0) {
           pendingRescan.delete(userId);
@@ -171,7 +180,7 @@ function runMergeTrackerForUser(userId: string, reason: string): Promise<JobResu
         }
         resolve({
           ok: true,
-          message: 'Merged ' + added + ' new',
+          message: `Merged ${added} new`,
           meta: { added, updated, skipped },
         });
       });
@@ -193,7 +202,9 @@ function runMergeTracker(reason: string): Promise<JobResult> {
  *  1.5s collapse into one merge. */
 function scheduleMergeForUser(userId: string, reason: string): void {
   const existing = debounceTimers.get(userId);
-  if (existing) clearTimeout(existing);
+  if (existing) {
+    clearTimeout(existing);
+  }
   debounceTimers.set(
     userId,
     setTimeout(() => {
@@ -206,7 +217,9 @@ function scheduleMergeForUser(userId: string, reason: string): void {
 /** Start the chokidar watcher across every user × profile. Idempotent
  *  (safe to call multiple times). */
 export function startBatchWatcher(): void {
-  if (watcher) return;
+  if (watcher) {
+    return;
+  }
   // Boot-time catch-up: scan every user's tracker-additions tree for
   // TSVs that landed while the dev server was down.
   void (async () => {
@@ -252,10 +265,14 @@ export function startBatchWatcher(): void {
       },
     );
     watcher.on('add', (filepath: string) => {
-      if (!filepath.endsWith('.tsv')) return;
+      if (!filepath.endsWith('.tsv')) {
+        return;
+      }
       const userId = userIdFromTsvPath(filepath);
-      if (!userId) return; // unexpected layout -- skip
-      scheduleMergeForUser(userId, 'fs-watch · ' + path.basename(filepath));
+      if (!userId) {
+        return;
+      } // unexpected layout -- skip
+      scheduleMergeForUser(userId, `fs-watch · ${path.basename(filepath)}`);
     });
     watcher.on('error', (err: unknown) => {
       logEvent('boot', 'Batch tracker watcher emitted error', {

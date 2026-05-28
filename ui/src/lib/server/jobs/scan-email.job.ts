@@ -20,8 +20,12 @@ function runScanEmail(args?: JobArgs): Promise<JobResult> {
     if (typeof args?.profileId === 'string' && args.profileId.trim()) {
       cliArgs.push('--profile', args.profileId.trim());
     }
-    if (args?.dryRun === true) cliArgs.push('--dry-run');
-    if (args?.keep === true) cliArgs.push('--keep');
+    if (args?.dryRun === true) {
+      cliArgs.push('--dry-run');
+    }
+    if (args?.keep === true) {
+      cliArgs.push('--keep');
+    }
     if (typeof args?.file === 'string' && args.file.trim()) {
       cliArgs.push('--file', args.file.trim());
     }
@@ -54,17 +58,17 @@ function runScanEmail(args?: JobArgs): Promise<JobResult> {
         logEvent('scan-email', 'Email ingestion failed', {
           level: 'error',
           category: 'task',
-          message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 150) : ''),
+          message: `exit ${code}${stderr ? ' · ' + stderr.slice(0, 150) : ''}`,
         });
-        resolve({ ok: false, error: 'scan-email.mjs exited ' + code });
+        resolve({ ok: false, error: `scan-email.mjs exited ${code}` });
         return;
       }
       logEvent('scan-email', 'Email ingestion finished', {
         level: 'success',
         category: 'task',
-        message: found + ' new offers from email',
+        message: `${found} new offers from email`,
       });
-      resolve({ ok: true, message: found + ' new offers', meta: { found } });
+      resolve({ ok: true, message: `${found} new offers`, meta: { found } });
     });
   });
 }

@@ -10,6 +10,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 type DossierInput = {
   stage: 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
   interviewers: Array<{ name: string; role?: string; linkedinUrl?: string }>;
@@ -40,8 +41,11 @@ function spawnDossier(
     });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolve({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -58,7 +62,9 @@ function parseDossierStdout(stdout: string): {
   };
   const grabNum = (re: RegExp): number | undefined => {
     const v = grabStr(re);
-    if (!v) return undefined;
+    if (!v) {
+      return undefined;
+    }
     const n = parseInt(v, 10);
     return Number.isFinite(n) ? n : undefined;
   };
@@ -74,16 +80,20 @@ export const POST = wrap(
   'dossier',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => ({}))) as Partial<DossierInput>;
-    if (!body.stage) badRequest('stage required');
+    if (!body.stage) {
+      badRequest('stage required');
+    }
     const interviewers = Array.isArray(body.interviewers) ? body.interviewers : [];
 
-    logEvent('dossier', 'Generating pre-call dossier · ' + body.stage, {
+    logEvent('dossier', `Generating pre-call dossier · ${body.stage}`, {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' · ' + interviewers.length + ' interviewers',
+      message: `${job.company || '?'} · ${interviewers.length} interviewers`,
     });
 
     try {

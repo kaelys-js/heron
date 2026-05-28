@@ -48,8 +48,10 @@ export function isCacheable(url: string): boolean {
     /* malformed URL -- fall through to the raw string match */
   }
   const queryIdx = pathOnly.indexOf('?');
-  if (queryIdx >= 0) pathOnly = pathOnly.slice(0, queryIdx);
-  return CACHEABLE_PATTERNS.some((pat) => pathOnly === pat || pathOnly.startsWith(pat + '/'));
+  if (queryIdx >= 0) {
+    pathOnly = pathOnly.slice(0, queryIdx);
+  }
+  return CACHEABLE_PATTERNS.some((pat) => pathOnly === pat || pathOnly.startsWith(`${pat}/`));
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -58,7 +60,9 @@ function openDb(): Promise<IDBDatabase> {
   if (typeof indexedDB === 'undefined') {
     return Promise.reject(new Error('IndexedDB unavailable'));
   }
-  if (dbPromise) return dbPromise;
+  if (dbPromise) {
+    return dbPromise;
+  }
   dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
@@ -80,7 +84,9 @@ function openDb(): Promise<IDBDatabase> {
 export async function getCached<T = unknown>(
   url: string,
 ): Promise<{ data: T; cachedAt: number } | null> {
-  if (!isCacheable(url)) return null;
+  if (!isCacheable(url)) {
+    return null;
+  }
   try {
     const db = await openDb();
     return await new Promise<{ data: T; cachedAt: number } | null>((resolve) => {
@@ -114,7 +120,9 @@ export async function getCached<T = unknown>(
  *  total entry count at MAX_ENTRIES via LRU eviction. Fire-and-forget
  *  from callers -- apiCall doesn't await this. */
 export async function setCached(url: string, data: unknown): Promise<void> {
-  if (!isCacheable(url)) return;
+  if (!isCacheable(url)) {
+    return;
+  }
   try {
     const db = await openDb();
     const now = Date.now();

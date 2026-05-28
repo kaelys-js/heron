@@ -20,11 +20,11 @@
 (function () {
   'use strict';
 
-  var DASHBOARD = window.__HERON_HOST__ || 'http://localhost:5174';
-  var ENDPOINT = DASHBOARD + '/api/answer-form';
+  const DASHBOARD = window.__HERON_HOST__ || 'http://localhost:5174';
+  const ENDPOINT = DASHBOARD + '/api/answer-form';
 
   function toast(msg, kind) {
-    var el = document.createElement('div');
+    const el = document.createElement('div');
     el.textContent = msg;
     el.style.cssText = [
       'position:fixed',
@@ -35,7 +35,7 @@
       'font:13px/1.4 system-ui',
       'color:#fff',
       'z-index:2147483647',
-      'background:' + (kind === 'error' ? '#dc2626' : kind === 'warn' ? '#d97706' : '#16a34a'),
+      `background:${kind === 'error' ? '#dc2626' : kind === 'warn' ? '#d97706' : '#16a34a'}`,
       'box-shadow:0 6px 16px rgba(0,0,0,0.25)',
     ].join(';');
     document.body.appendChild(el);
@@ -49,48 +49,62 @@
   // because `attacker.greenhouse.io.evil.com` would have matched. Strip the
   // port, lowercase, then require equality or a `.<allowed>` suffix.
   function hostnameMatches(host, allowed) {
-    var h = (host || '').toLowerCase().split(':')[0];
-    for (var i = 0; i < allowed.length; i++) {
-      var d = allowed[i];
-      if (h === d || (h.length > d.length + 1 && h.slice(-d.length - 1) === '.' + d)) return true;
+    const h = (host || '').toLowerCase().split(':')[0];
+    for (let i = 0; i < allowed.length; i++) {
+      const d = allowed[i];
+      if (h === d || (h.length > d.length + 1 && h.slice(-d.length - 1) === `.${d}`)) {
+        return true;
+      }
     }
     return false;
   }
 
   function detectPortal() {
-    var h = window.location.hostname;
-    if (hostnameMatches(h, ['greenhouse.io'])) return 'greenhouse';
-    if (hostnameMatches(h, ['ashbyhq.com'])) return 'ashby';
-    if (hostnameMatches(h, ['lever.co'])) return 'lever';
+    const h = window.location.hostname;
+    if (hostnameMatches(h, ['greenhouse.io'])) {
+      return 'greenhouse';
+    }
+    if (hostnameMatches(h, ['ashbyhq.com'])) {
+      return 'ashby';
+    }
+    if (hostnameMatches(h, ['lever.co'])) {
+      return 'lever';
+    }
     return null;
   }
 
   // Walk the DOM for input/textarea/select elements that have a visible label.
   // Returns an array of { label, type, ref } where ref is the actual element.
   function scrapeQuestions() {
-    var out = [];
-    var fields = document.querySelectorAll(
+    const out = [];
+    const fields = document.querySelectorAll(
       'textarea, input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="url"], select',
     );
     fields.forEach(function (f) {
       // Skip hidden / disabled fields
-      var rect = f.getBoundingClientRect();
-      if (rect.width === 0 && rect.height === 0) return;
-      if (f.disabled || f.readOnly) return;
+      const rect = f.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) {
+        return;
+      }
+      if (f.disabled || f.readOnly) {
+        return;
+      }
 
       // Strategy 1: <label for="id"> closest match
-      var label = '';
+      let label = '';
       if (f.id) {
-        var el = document.querySelector('label[for="' + CSS.escape(f.id) + '"]');
-        if (el) label = el.textContent.trim();
+        const el = document.querySelector('label[for="' + CSS.escape(f.id) + '"]');
+        if (el) {
+          label = el.textContent.trim();
+        }
       }
       // Strategy 2: surrounding <label> ancestor
       if (!label) {
-        var parent = f.closest('label');
+        const parent = f.closest('label');
         if (parent) {
-          var clone = parent.cloneNode(true);
+          const clone = parent.cloneNode(true);
           // Strip the field itself from the clone before reading text
-          var inputs = clone.querySelectorAll('input, textarea, select');
+          const inputs = clone.querySelectorAll('input, textarea, select');
           inputs.forEach(function (i) {
             i.remove();
           });
@@ -98,15 +112,23 @@
         }
       }
       // Strategy 3: aria-label / placeholder / nearest preceding text node
-      if (!label) label = f.getAttribute('aria-label') || '';
-      if (!label) label = f.placeholder || '';
       if (!label) {
-        var prev = f.previousElementSibling;
-        if (prev) label = prev.textContent.trim();
+        label = f.getAttribute('aria-label') || '';
       }
-      if (!label) return; // skip unlabelled fields -- we can't match them
+      if (!label) {
+        label = f.placeholder || '';
+      }
+      if (!label) {
+        const prev = f.previousElementSibling;
+        if (prev) {
+          label = prev.textContent.trim();
+        }
+      }
+      if (!label) {
+        return;
+      } // skip unlabelled fields -- we can't match them
 
-      var type =
+      const type =
         f.tagName.toLowerCase() === 'textarea'
           ? 'long-text'
           : f.tagName.toLowerCase() === 'select'
@@ -118,17 +140,17 @@
                 : f.type === 'number'
                   ? 'number'
                   : 'short-text';
-      out.push({ label: label.slice(0, 200), type: type, ref: f });
+      out.push({ label: label.slice(0, 200), type, ref: f });
     });
     return out;
   }
 
   function setFieldValue(el, value) {
-    var tag = el.tagName.toLowerCase();
+    const tag = el.tagName.toLowerCase();
     if (tag === 'select') {
       // Match by value or by visible text
-      var opts = el.querySelectorAll('option');
-      for (var i = 0; i < opts.length; i++) {
+      const opts = el.querySelectorAll('option');
+      for (let i = 0; i < opts.length; i++) {
         if (opts[i].value === value || opts[i].textContent.trim() === value) {
           el.value = opts[i].value;
           el.dispatchEvent(new Event('change', { bubbles: true }));
@@ -137,7 +159,7 @@
       }
       return false;
     }
-    var setter = Object.getOwnPropertyDescriptor(
+    const setter = Object.getOwnPropertyDescriptor(
       tag === 'textarea' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype,
       'value',
     ).set;
@@ -155,23 +177,23 @@
   }
 
   async function run() {
-    var portal = detectPortal();
+    const portal = detectPortal();
     if (!portal) {
       toast('heron: not on a Greenhouse/Ashby/Lever page. Bookmarklet aborted.', 'warn');
       return;
     }
-    var questions = scrapeQuestions();
+    const questions = scrapeQuestions();
     if (questions.length === 0) {
       toast('heron: no labelled form fields found on this page.', 'warn');
       return;
     }
-    toast('heron: filling ' + questions.length + ' fields…', 'info');
+    toast(`heron: filling ${questions.length} fields…`, 'info');
 
-    var payloadQuestions = questions.map(function (q) {
+    const payloadQuestions = questions.map(function (q) {
       return { label: q.label, type: q.type };
     });
     try {
-      var res = await fetch(ENDPOINT, {
+      const res = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -181,50 +203,46 @@
         }),
       });
       if (!res.ok) {
-        var msg = 'HTTP ' + res.status;
+        let msg = 'HTTP ' + res.status;
         try {
-          var e = await res.json();
+          const e = await res.json();
           msg = (e && e.error && e.error.message) || msg;
         } catch (_) {}
-        toast('heron: ' + msg, 'error');
+        toast(`heron: ${msg}`, 'error');
         return;
       }
-      var data = await res.json();
+      const data = await res.json();
       if (!data.ok) {
-        toast('heron: ' + (data.error || 'unknown error'), 'error');
+        toast(`heron: ${data.error || 'unknown error'}`, 'error');
         return;
       }
       // Fill answers -- map by normalized label
-      var answers = data.answers || [];
-      var byLabel = {};
+      const answers = data.answers || [];
+      const byLabel = {};
       answers.forEach(function (a) {
         byLabel[normalize(a.label)] = a.value;
       });
-      var filled = 0;
+      let filled = 0;
       questions.forEach(function (q) {
-        var v = byLabel[normalize(q.label)];
+        const v = byLabel[normalize(q.label)];
         if (v != null && v !== '') {
-          if (setFieldValue(q.ref, String(v))) filled += 1;
+          if (setFieldValue(q.ref, String(v))) {
+            filled += 1;
+          }
         }
       });
-      var missed = questions.length - filled;
+      const missed = questions.length - filled;
       toast(
-        'heron: filled ' +
-          filled +
-          ' of ' +
-          questions.length +
-          ' fields' +
-          (missed ? ' · ' + missed + ' skipped' : '') +
-          '. Review and click Submit.',
+        `heron: filled ${filled} of ${questions.length} fields${
+          missed ? ' · ' + missed + ' skipped' : ''
+        }. Review and click Submit.`,
         filled > 0 ? 'info' : 'warn',
       );
     } catch (e) {
       toast(
-        'heron: ' +
-          (e && e.message ? e.message : 'request failed') +
-          '. Is the dashboard running on ' +
-          DASHBOARD +
-          '?',
+        `heron: ${e && e.message ? e.message : 'request failed'}. Is the dashboard running on ${
+          DASHBOARD
+        }?`,
         'error',
       );
     }

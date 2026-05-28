@@ -26,7 +26,9 @@ type AllRuns = Record<string, JobLastRun>;
 
 function readAll(p: string): AllRuns {
   try {
-    if (!fs.existsSync(p)) return {};
+    if (!fs.existsSync(p)) {
+      return {};
+    }
     const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? (parsed as AllRuns) : {};
@@ -37,7 +39,7 @@ function readAll(p: string): AllRuns {
 
 function writeAll(p: string, all: AllRuns): void {
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify(all, null, 2) + '\n');
+  fs.writeFileSync(p, `${JSON.stringify(all, null, 2)}\n`);
 }
 
 /** Returns null when the job has never run (or after `clearLastRun`).
@@ -84,12 +86,14 @@ export function clearAllLastRuns(): void {
 
 export function clearAllLastRunsForUser(userId: string): void {
   const p = userSharedPathForUser(userId, 'job-last-run');
-  if (!fs.existsSync(p)) return;
+  if (!fs.existsSync(p)) {
+    return;
+  }
   // Back up before wiping so reset is recoverable. Best-effort -- if the
   // .bak copy fails we still proceed with the unlink rather than block
   // the reset flow on a permissions issue.
   try {
-    fs.copyFileSync(p, p + '.bak');
+    fs.copyFileSync(p, `${p}.bak`);
   } catch {
     // .bak copy failed -- reset proceeds without recoverable backup.
   }

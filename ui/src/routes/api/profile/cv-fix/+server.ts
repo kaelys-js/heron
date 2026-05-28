@@ -11,7 +11,8 @@ import { wrap, badRequest } from '$lib/server/api-helpers';
 import { activePath } from '$lib/server/profile-paths';
 import { complete } from '$lib/server/ai';
 import { logEvent } from '$lib/server/events';
-import { checkAts, checkResumeQuality, type QualityResult } from '$lib/server/quality-checks';
+import { checkAts, checkResumeQuality } from '$lib/server/quality-checks';
+import type { QualityResult } from '$lib/server/quality-checks';
 import { generalCvStatus } from '$lib/server/cv-pdf';
 
 const FIX_PROMPT =
@@ -72,11 +73,11 @@ export const POST = wrap('cv-fix', async ({ request }: { request: Request }) => 
     .map((c) => `- ${c.name}: ${c.evidence || '(no evidence)'}`)
     .join('\n');
 
-  const userMessage = 'FAILED CHECKS:\n' + failedList + '\n\nCURRENT CV (markdown):\n\n' + before;
+  const userMessage = `FAILED CHECKS:\n${failedList}\n\nCURRENT CV (markdown):\n\n${before}`;
 
   logEvent('cv-fix', 'Rewriting CV to pass quality checks', {
     category: 'user',
-    message: quality.failCount + ' failed checks',
+    message: `${quality.failCount} failed checks`,
   });
 
   let rewritten = await complete(FIX_PROMPT, userMessage, {
@@ -120,7 +121,7 @@ export const POST = wrap('cv-fix', async ({ request }: { request: Request }) => 
   if (apply) {
     // Backup the original (mirror the writeSiblingFile convention).
     try {
-      fs.copyFileSync(cvMd, cvMd + '.bak');
+      fs.copyFileSync(cvMd, `${cvMd}.bak`);
       backedUp = true;
     } catch {
       /* non-fatal -- proceed with the write */
@@ -131,7 +132,9 @@ export const POST = wrap('cv-fix', async ({ request }: { request: Request }) => 
     // score. Don't regenerate the PDF here -- that's a separate step.
     qualityAfter = await checkResumeQuality(cvMd);
     const status = generalCvStatus();
-    if (status.exists) atsAfter = await checkAts(status.path);
+    if (status.exists) {
+      atsAfter = await checkAts(status.path);
+    }
 
     logEvent('cv-fix', `CV rewritten · quality ${qualityAfter.score.toFixed(1)}%`, {
       level:

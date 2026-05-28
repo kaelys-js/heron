@@ -8,7 +8,8 @@
  *  but the tree of WHAT to ask + WHEN is what most candidates lack and
  *  what loses the most money at signing. */
 
-import { evaluateOffer, type OfferInput, type OfferEvaluation } from './comp-math';
+import { evaluateOffer } from './comp-math';
+import type { OfferInput, OfferEvaluation } from './comp-math';
 
 // ── Decision tree (#8 if-they-say-X-you-say-Y) ─────────────────────
 
@@ -342,10 +343,15 @@ export function classifyOfferVsBand(
   bandHigh: number;
 } {
   const band = TIER_COMP_BANDS[tier];
-  if (!band) return { tier, base: offer.base, verdict: 'in-band', bandLow: 0, bandHigh: 0 };
+  if (!band) {
+    return { tier, base: offer.base, verdict: 'in-band', bandLow: 0, bandHigh: 0 };
+  }
   let verdict: 'below' | 'in-band' | 'above' = 'in-band';
-  if (offer.base < band.base[0]) verdict = 'below';
-  else if (offer.base > band.base[1]) verdict = 'above';
+  if (offer.base < band.base[0]) {
+    verdict = 'below';
+  } else if (offer.base > band.base[1]) {
+    verdict = 'above';
+  }
   return { tier, base: offer.base, verdict, bandLow: band.base[0], bandHigh: band.base[1] };
 }
 

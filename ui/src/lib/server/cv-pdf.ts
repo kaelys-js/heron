@@ -34,9 +34,13 @@ export function resolveTemplate(explicitName?: string, profileId?: string): stri
         // through profilePath() so multi-user installs read the ACTIVE
         // user's profile.yml at data/users/{uid}/profiles/{id}/profile.yml
         // rather than the legacy single-user data/profiles/{id}/profile.yml.
-        if (!profileId) return undefined;
+        if (!profileId) {
+          return undefined;
+        }
         const pPath = profilePath(profileId, 'profile-yml');
-        if (!fs.existsSync(pPath)) return undefined;
+        if (!fs.existsSync(pPath)) {
+          return undefined;
+        }
         const text = fs.readFileSync(pPath, 'utf8');
         const m = text.match(/^\s*cv_template:\s*"?([a-z0-9-]+)"?/im);
         return m ? m[1] : undefined;
@@ -52,9 +56,13 @@ export function resolveTemplate(explicitName?: string, profileId?: string): stri
         return undefined;
       }
     })();
-  if (!named || named === 'classic' || named === 'default') return CV_TEMPLATE_HTML;
-  const variant = path.join(ROOT, 'templates', 'cv-template-' + named + '.html');
-  if (fs.existsSync(variant)) return variant;
+  if (!named || named === 'classic' || named === 'default') {
+    return CV_TEMPLATE_HTML;
+  }
+  const variant = path.join(ROOT, 'templates', `cv-template-${named}.html`);
+  if (fs.existsSync(variant)) {
+    return variant;
+  }
   return CV_TEMPLATE_HTML;
 }
 
@@ -195,18 +203,19 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
     throw new Error('cv.md looks too short to be a CV (under 100 chars). Update it first.');
   }
   const template = readSafe(templatePath);
-  if (!template) throw new Error('cv-template.html is empty — re-clone the repo to restore it.');
+  if (!template) {
+    throw new Error('cv-template.html is empty — re-clone the repo to restore it.');
+  }
 
   fs.mkdirSync(outputDir, { recursive: true });
   fs.mkdirSync(tmpDir, { recursive: true });
 
   logEvent('cv-pdf', 'Generating general CV PDF', {
     category: 'user',
-    message:
-      cvText.length.toLocaleString() + ' chars in cv.md · model=claude-opus-4-7 · profile=' + id,
+    message: `${cvText.length.toLocaleString()} chars in cv.md · model=claude-opus-4-7 · profile=${id}`,
   });
 
-  const userMessage = cvText + '\n\n===HTML TEMPLATE===\n\n' + template;
+  const userMessage = `${cvText}\n\n===HTML TEMPLATE===\n\n${template}`;
   const html = await complete(SYSTEM_PROMPT, userMessage, { maxTokens: 32000, thinking: false });
 
   const cleanHtml = html
@@ -222,11 +231,9 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
   const leftover = cleanHtml.match(/\{\{[A-Z_]+\}\}/g);
   if (leftover && leftover.length > 0) {
     throw new Error(
-      'Claude left ' +
-        leftover.length +
-        ' placeholders unfilled (' +
-        leftover.slice(0, 4).join(', ') +
-        '…). Try regenerating.',
+      `Claude left ${leftover.length} placeholders unfilled (${leftover
+        .slice(0, 4)
+        .join(', ')}…). Try regenerating.`,
     );
   }
 
@@ -237,12 +244,9 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
   logEvent('cv-pdf', 'General CV PDF generated', {
     level: 'success',
     category: 'user',
-    message:
-      path.relative(ROOT, generalCvPdf) +
-      ' · ' +
-      (result.bytes / 1024).toFixed(1) +
-      ' KB' +
-      (result.pages ? ' · ' + result.pages + 'p' : ''),
+    message: `${path.relative(ROOT, generalCvPdf)} · ${(result.bytes / 1024).toFixed(1)} KB${
+      result.pages ? ' · ' + result.pages + 'p' : ''
+    }`,
   });
 
   // Run the strict ATS + resume-quality checks on the freshly-rendered
@@ -332,7 +336,7 @@ function spawnPdfRender(
       clearTimeout(timer);
       if (code !== 0) {
         const tail = (stderrBuf || stdoutBuf || '').slice(-400).trim();
-        reject(new Error('generate-pdf.mjs exited ' + code + (tail ? ': ' + tail : '')));
+        reject(new Error(`generate-pdf.mjs exited ${code}${tail ? ': ' + tail : ''}`));
         return;
       }
       try {
@@ -341,7 +345,7 @@ function spawnPdfRender(
         const pageMatch = stdoutBuf.match(/Pages:\s*(\d+)/);
         resolve({ bytes: stat.size, pages: pageMatch ? Number(pageMatch[1]) : undefined });
       } catch (e) {
-        reject(new Error('PDF render reported success but file missing at ' + pdfPath));
+        reject(new Error(`PDF render reported success but file missing at ${pdfPath}`));
       }
     });
   });
@@ -392,8 +396,9 @@ export function spawnAtsCheck(
       } catch {
         reject(
           new Error(
-            'ats-check.mjs produced non-JSON output: ' +
-              (stderrBuf.slice(-200) || stdoutBuf.slice(-200)),
+            `ats-check.mjs produced non-JSON output: ${
+              stderrBuf.slice(-200) || stdoutBuf.slice(-200)
+            }`,
           ),
         );
       }

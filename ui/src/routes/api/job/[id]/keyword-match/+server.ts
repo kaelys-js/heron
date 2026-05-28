@@ -22,7 +22,9 @@ export const GET = wrap(
   'keyword-match',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
 
     // Source of CV text: cv.md (per-profile). Falls back to empty string,
@@ -30,7 +32,9 @@ export const GET = wrap(
     let cvText = '';
     try {
       const cvPath = profilePath(profileId, 'cv-md');
-      if (fs.existsSync(cvPath)) cvText = fs.readFileSync(cvPath, 'utf8');
+      if (fs.existsSync(cvPath)) {
+        cvText = fs.readFileSync(cvPath, 'utf8');
+      }
     } catch {}
 
     // Source of JD text: the deep-eval report (evaluate mode embeds the JD).
@@ -49,7 +53,9 @@ export const GET = wrap(
     let reportText = '';
     try {
       const reportPath = path.join(ROOT, job.reportFile);
-      if (fs.existsSync(reportPath)) reportText = fs.readFileSync(reportPath, 'utf8');
+      if (fs.existsSync(reportPath)) {
+        reportText = fs.readFileSync(reportPath, 'utf8');
+      }
     } catch {}
 
     const jdText = extractJdFromReport(reportText);

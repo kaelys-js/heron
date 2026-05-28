@@ -24,7 +24,9 @@ const clientCache = new Map<string, Anthropic>();
 export function getClient(): Anthropic | null {
   const userId = currentUserIdOrDefault();
   const apiKey = getCredential(userId, 'ANTHROPIC_API_KEY');
-  if (!apiKey) return null;
+  if (!apiKey) {
+    return null;
+  }
   let c = clientCache.get(apiKey);
   if (!c) {
     c = new Anthropic({ apiKey });
@@ -47,7 +49,9 @@ export async function complete(
   opts: { model?: string; maxTokens?: number; thinking?: boolean } = {},
 ): Promise<string> {
   const c = getClient();
-  if (!c) throw new Error('ANTHROPIC_API_KEY not set; configure it in Settings');
+  if (!c) {
+    throw new Error('ANTHROPIC_API_KEY not set; configure it in Settings');
+  }
   const useThinking = opts.thinking !== false; // default on for complete()
   const params: any = {
     model: opts.model ?? DEFAULT_MODEL,
@@ -76,7 +80,9 @@ export async function chat(
   opts: { model?: string; maxTokens?: number; thinking?: boolean } = {},
 ): Promise<string> {
   const c = getClient();
-  if (!c) throw new Error('ANTHROPIC_API_KEY not set; configure it in Settings');
+  if (!c) {
+    throw new Error('ANTHROPIC_API_KEY not set; configure it in Settings');
+  }
   const params: any = {
     model: opts.model ?? DEFAULT_MODEL,
     max_tokens: opts.maxTokens ?? 16000,

@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/svelte';
 import CheckMark from './CheckMark.svelte';
 
-describe('CheckMark', () => {
+describe('checkMark', () => {
   it('renders a span element', () => {
     const { container } = render(CheckMark);
     expect(container.querySelector('span')).toBeTruthy();
@@ -51,7 +51,7 @@ describe('CheckMark', () => {
     expect(span.className).toContain('my-custom-class');
   });
 
-  it('Check icon has emerald color', () => {
+  it('check icon has emerald color', () => {
     const { container } = render(CheckMark);
     expect(container.innerHTML).toContain('text-emerald-400');
   });

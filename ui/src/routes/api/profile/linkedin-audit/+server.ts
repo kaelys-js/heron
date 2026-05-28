@@ -18,7 +18,9 @@ import { logEvent, reportServerError } from '$lib/server/events';
 
 function resolveProfileId(url: URL): string {
   const q = url.searchParams.get('profile');
-  if (q && getProfile(q)) return q;
+  if (q && getProfile(q)) {
+    return q;
+  }
   return getActiveProfileId();
 }
 
@@ -35,17 +37,19 @@ function extractLinkedInText(linkedinUrl: string): { ok: boolean; text?: string;
   );
   if (r.status !== 0) {
     const stderr = (r.stderr || '').slice(0, 300);
-    if (r.status === 3)
+    if (r.status === 3) {
       return {
         ok: false,
         error: 'LinkedIn session not connected — run linkedin-easy-apply.py --login from /sources',
       };
-    if (r.status === 4)
+    }
+    if (r.status === 4) {
       return {
         ok: false,
         error: 'Auth-wall hit — session may have expired, re-login from /sources',
       };
-    return { ok: false, error: 'extract failed (exit ' + r.status + '): ' + stderr };
+    }
+    return { ok: false, error: `extract failed (exit ${r.status}): ${stderr}` };
   }
   return { ok: true, text: r.stdout };
 }
@@ -81,8 +85,11 @@ function spawnAudit(args: {
     });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolve({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -100,7 +107,9 @@ function parseAuditStdout(stdout: string): {
   };
   const grabNum = (re: RegExp): number | undefined => {
     const v = grabStr(re);
-    if (!v) return undefined;
+    if (!v) {
+      return undefined;
+    }
     const n = parseFloat(v);
     return Number.isFinite(n) ? n : undefined;
   };
@@ -118,11 +127,15 @@ export const GET = wrap('linkedin-audit', async ({ url }: { url: URL }) => {
   // Return the most recent audit file (if any) for the dashboard to render.
   const profileId = resolveProfileId(url);
   const dir = profilePath(profileId, 'profile-dir');
-  if (!fs.existsSync(dir)) return { exists: false };
+  if (!fs.existsSync(dir)) {
+    return { exists: false };
+  }
   const entries = fs
     .readdirSync(dir)
     .filter((f) => f.startsWith('linkedin-audit-') && f.endsWith('.md'));
-  if (entries.length === 0) return { exists: false };
+  if (entries.length === 0) {
+    return { exists: false };
+  }
   entries.sort();
   const newest = entries[entries.length - 1];
   const full = path.join(dir, newest);
@@ -148,7 +161,9 @@ export const POST = wrap(
   async ({ url, request }: { url: URL; request: Request }) => {
     const profileId = resolveProfileId(url);
     const body = (await request.json().catch(() => ({}))) as { linkedinUrl?: string };
-    if (!body.linkedinUrl) badRequest('linkedinUrl required');
+    if (!body.linkedinUrl) {
+      badRequest('linkedinUrl required');
+    }
 
     logEvent('linkedin-audit', 'Starting audit', {
       level: 'info',
@@ -159,12 +174,16 @@ export const POST = wrap(
     try {
       // Step 1: extract profile text.
       const ext = extractLinkedInText(body.linkedinUrl!);
-      if (!ext.ok) return { ok: false, error: ext.error };
+      if (!ext.ok) {
+        return { ok: false, error: ext.error };
+      }
 
       // Step 2: read cv.md + targetRoles from profile.
       const cvPath = profilePath(profileId, 'cv-md');
       const cv = fs.existsSync(cvPath) ? fs.readFileSync(cvPath, 'utf8') : '';
-      if (!cv) return { ok: false, error: 'cv.md not found — onboarding not complete' };
+      if (!cv) {
+        return { ok: false, error: 'cv.md not found — onboarding not complete' };
+      }
       const profile = readProfile(profileId) as unknown as {
         target_roles?: { primary?: string[]; archetypes?: Array<{ name: string }> };
       };
@@ -185,12 +204,8 @@ export const POST = wrap(
         level: 'success',
         category: 'application',
         message:
-          'Score ' +
-          (meta.recruiterVisibilityScore ?? '?') +
-          '/10' +
-          ' · ' +
-          (meta.suggestedEdits ?? '?') +
-          ' suggested edits',
+          `Score ${meta.recruiterVisibilityScore ?? '?'}/10` +
+          ` · ${meta.suggestedEdits ?? '?'} suggested edits`,
       });
 
       return { ok: true, ...meta };

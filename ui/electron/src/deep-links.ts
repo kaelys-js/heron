@@ -41,7 +41,9 @@ export function resolveBrandedDeepLink(link: string, scheme: string): string | n
   try {
     const u = new URL(link);
     // URL parsing lowercases the scheme + appends a trailing colon.
-    if (u.protocol !== `${scheme}:`) return null;
+    if (u.protocol !== `${scheme}:`) {
+      return null;
+    }
     const host = u.hostname ? `/${u.hostname}` : '';
     const pathPart = u.pathname === '/' || u.pathname === '' ? '' : u.pathname;
     // URL guarantees `.search` and `.hash` are strings (`''` when missing).

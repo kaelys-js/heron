@@ -21,6 +21,7 @@ import { logEvent, reportServerError } from '$lib/server/events';
 import { saveAnswer } from '$lib/server/form-answers-cache';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 function slugify(s: string): string {
   return (
     s
@@ -34,7 +35,7 @@ function slugify(s: string): string {
 function persistedPath(profileId: string, jobId: string): string {
   return path.join(
     profilePath(profileId, 'interview-prep-dir'),
-    slugify(jobId) + '-form-answers.md',
+    `${slugify(jobId)}-form-answers.md`,
   );
 }
 
@@ -58,7 +59,7 @@ function spawnFormAnswers(
     let stderr = '';
 
     const { child: p } = spawnAgentWithMode('form-answers', url, {
-      profileId: profileId,
+      profileId,
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
@@ -69,7 +70,7 @@ function spawnFormAnswers(
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+        reject(new Error(`claude -p exited ${code}: ${stderr.slice(0, 300)}`));
         return;
       }
       try {
@@ -85,12 +86,14 @@ function spawnFormAnswers(
           try {
             fs.writeFileSync(fullPath, stdout, { flag: 'wx' });
           } catch (e) {
-            if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+            if ((e as NodeJS.ErrnoException).code !== 'EEXIST') {
+              throw e;
+            }
           }
         }
         if (!fs.existsSync(fullPath)) {
           reject(
-            new Error('Form-answers generation produced no file. Stdout: ' + stdout.slice(0, 500)),
+            new Error(`Form-answers generation produced no file. Stdout: ${stdout.slice(0, 500)}`),
           );
           return;
         }
@@ -107,7 +110,9 @@ export const GET = wrap(
   'form-answers',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     return { cached: readCached(profileId, job.id) };
   },
@@ -117,14 +122,18 @@ export const POST = wrap(
   'form-answers',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
-    if (!job.url) badRequest('Job has no URL');
+    if (!job.url) {
+      badRequest('Job has no URL');
+    }
 
     logEvent('form-answers', 'Generating form answers', {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' · ' + (job.role || '?'),
+      message: `${job.company || '?'} · ${job.role || '?'}`,
     });
 
     try {
@@ -159,7 +168,9 @@ export const POST = wrap(
  *  into the per-question cache. The mode writes "## {question}" headings
  *  followed by the answer text on subsequent lines until the next heading. */
 function seedCacheFromMarkdown(profileId: string, markdown: string): number {
-  if (!markdown.trim()) return 0;
+  if (!markdown.trim()) {
+    return 0;
+  }
   const blocks: { heading: string; body: string[] }[] = [];
   let current: { heading: string; body: string[] } | null = null;
   for (const line of markdown.split('\n')) {
@@ -167,20 +178,28 @@ function seedCacheFromMarkdown(profileId: string, markdown: string): number {
     // Accept "## N. Question" or "## Question"
     const m = /^##\s+(?:\d+\.\s*)?(.+)$/.exec(trimmed);
     if (m) {
-      if (current) blocks.push(current);
+      if (current) {
+        blocks.push(current);
+      }
       current = { heading: m[1].trim(), body: [] };
     } else if (current) {
       current.body.push(line);
     }
   }
-  if (current) blocks.push(current);
+  if (current) {
+    blocks.push(current);
+  }
   let count = 0;
   for (const b of blocks) {
     // Skip the document title (e.g. "Form answers · Acme · Senior Eng")
-    if (/^form answers?\b/i.test(b.heading)) continue;
+    if (/^form answers?\b/i.test(b.heading)) {
+      continue;
+    }
     const answer = b.body.join('\n').trim();
     // Skip empty blocks and obvious placeholder responses.
-    if (!answer || /^_?n\/?a_?$/i.test(answer)) continue;
+    if (!answer || /^_?n\/?a_?$/i.test(answer)) {
+      continue;
+    }
     try {
       saveAnswer(profileId, b.heading, answer);
       count++;

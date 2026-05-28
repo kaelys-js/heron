@@ -21,16 +21,9 @@ const HOURS_48 = 48 * HOUR_MS;
 function fmt(d: Date): string {
   // RFC 5545 DTSTAMP / DTSTART / DTEND -- UTC basic format YYYYMMDDTHHMMSSZ
   const pad = (n: number) => String(n).padStart(2, '0');
-  return (
-    d.getUTCFullYear() +
-    pad(d.getUTCMonth() + 1) +
-    pad(d.getUTCDate()) +
-    'T' +
-    pad(d.getUTCHours()) +
-    pad(d.getUTCMinutes()) +
-    pad(d.getUTCSeconds()) +
-    'Z'
-  );
+  return `${d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate())}T${pad(
+    d.getUTCHours(),
+  )}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
 }
 
 function escapeText(s: string): string {
@@ -60,16 +53,20 @@ function buildIcs(
   for (const ev of events) {
     lines.push('BEGIN:VEVENT');
     lines.push(`UID:${ev.uid}@${BRAND.name}`);
-    lines.push('DTSTAMP:' + now);
-    lines.push('DTSTART:' + fmt(new Date(ev.start)));
-    lines.push('DTEND:' + fmt(new Date(ev.end)));
-    lines.push('SUMMARY:' + escapeText(ev.summary));
-    if (ev.description) lines.push('DESCRIPTION:' + escapeText(ev.description));
-    if (ev.url) lines.push('URL:' + ev.url);
+    lines.push(`DTSTAMP:${now}`);
+    lines.push(`DTSTART:${fmt(new Date(ev.start))}`);
+    lines.push(`DTEND:${fmt(new Date(ev.end))}`);
+    lines.push(`SUMMARY:${escapeText(ev.summary)}`);
+    if (ev.description) {
+      lines.push('DESCRIPTION:' + escapeText(ev.description));
+    }
+    if (ev.url) {
+      lines.push('URL:' + ev.url);
+    }
     lines.push('END:VEVENT');
   }
   lines.push('END:VCALENDAR');
-  return lines.join('\r\n') + '\r\n';
+  return `${lines.join('\r\n')}\r\n`;
 }
 
 export const GET = async ({ url }: { url: URL }) => {
@@ -85,44 +82,47 @@ export const GET = async ({ url }: { url: URL }) => {
   }[] = [];
 
   for (const { jobId, interviewer } of findUpcomingInterviews(horizonDays, profileId)) {
-    if (!interviewer.scheduledAt) continue;
+    if (!interviewer.scheduledAt) {
+      continue;
+    }
     const job = resolveJobAndProfile(jobId, url)?.job;
     const company = job?.company ?? '?';
     const role = job?.role ?? '?';
     events.push({
-      uid: 'iv-' + jobId + '-' + interviewer.slug,
+      uid: `iv-${jobId}-${interviewer.slug}`,
       start: interviewer.scheduledAt,
       end: interviewer.scheduledAt + HOUR_MS,
-      summary: company + ' — ' + interviewer.stage + ' · ' + interviewer.name,
-      description:
-        role +
-        '\n' +
-        (interviewer.dossierPath ? 'Dossier ready' : 'NO dossier yet — research first.'),
-      url: url.origin + '/job/' + jobId + '#interviewer-' + interviewer.slug,
+      summary: `${company} — ${interviewer.stage} · ${interviewer.name}`,
+      description: `${role}\n${
+        interviewer.dossierPath ? 'Dossier ready' : 'NO dossier yet — research first.'
+      }`,
+      url: `${url.origin}/job/${jobId}#interviewer-${interviewer.slug}`,
     });
     const leadMs =
       interviewer.stage === 'onsite' || interviewer.stage === 'final-round' ? HOURS_48 : HOURS_24;
     events.push({
-      uid: 'prep-' + jobId + '-' + interviewer.slug,
+      uid: `prep-${jobId}-${interviewer.slug}`,
       start: interviewer.scheduledAt - leadMs,
       end: interviewer.scheduledAt - leadMs + HOUR_MS,
-      summary: '🔍 PREP · ' + company + ' / ' + interviewer.name,
-      description:
-        'Read dossier + run mock drill before ' +
-        new Date(interviewer.scheduledAt).toLocaleString(),
-      url: url.origin + '/job/' + jobId + '#interviewer-' + interviewer.slug,
+      summary: `🔍 PREP · ${company} / ${interviewer.name}`,
+      description: `Read dossier + run mock drill before ${new Date(
+        interviewer.scheduledAt,
+      ).toLocaleString()}`,
+      url: `${url.origin}/job/${jobId}#interviewer-${interviewer.slug}`,
     });
   }
   for (const offer of listActiveOffers(profileId)) {
-    if (!offer.decisionDeadline) continue;
+    if (!offer.decisionDeadline) {
+      continue;
+    }
     const job = resolveJobAndProfile(offer.jobId, url)?.job;
     events.push({
-      uid: 'decision-' + offer.jobId,
+      uid: `decision-${offer.jobId}`,
       start: offer.decisionDeadline,
       end: offer.decisionDeadline + HOUR_MS,
-      summary: '⏰ Offer decision · ' + (job?.company ?? '?'),
+      summary: `⏰ Offer decision · ${job?.company ?? '?'}`,
       description: 'Recruiter wants an answer by this time.',
-      url: url.origin + '/job/' + offer.jobId + '#offer',
+      url: `${url.origin}/job/${offer.jobId}#offer`,
     });
   }
   const ics = buildIcs(events);
@@ -137,6 +137,4 @@ export const GET = async ({ url }: { url: URL }) => {
 
 /** POST is reserved for the future "calendarUrl subscription validator". Today
  *  it just echoes ok so the mobile app can hit it to test the auth flow. */
-export const POST = wrap('calendar-sync', async () => {
-  return { ok: true };
-});
+export const POST = wrap('calendar-sync', async () => ({ ok: true }));

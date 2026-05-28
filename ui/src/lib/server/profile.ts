@@ -106,9 +106,9 @@ export type ProfileSnapshot = ProfileEdit & {
 function fileInfo(p: string) {
   try {
     const s = fs.statSync(p);
-    return { path: p.replace(ROOT + '/', ''), exists: true, size: s.size };
+    return { path: p.replace(`${ROOT}/`, ''), exists: true, size: s.size };
   } catch {
-    return { path: p.replace(ROOT + '/', ''), exists: false, size: 0 };
+    return { path: p.replace(`${ROOT}/`, ''), exists: false, size: 0 };
   }
 }
 
@@ -125,7 +125,9 @@ function readDoc(profileId?: string): Record<string, unknown> {
     if (!fs.existsSync(p)) {
       // Fall back to example so the UI has something to render on first run
       const example = readSafe(EXAMPLE_PATH);
-      if (example) return parse(example) as Record<string, unknown>;
+      if (example) {
+        return parse(example) as Record<string, unknown>;
+      }
       return {};
     }
     return (parse(readSafe(p)) as Record<string, unknown>) ?? {};
@@ -264,10 +266,14 @@ export function writeProfile(
   const doc = readDoc(id);
   // Helper: merge two plain objects shallowly
   const merge = <T extends Record<string, unknown>>(base: T, patch: Partial<T> | undefined): T => {
-    if (!patch) return base;
+    if (!patch) {
+      return base;
+    }
     const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };
     for (const [k, v] of Object.entries(patch)) {
-      if (v === undefined) continue;
+      if (v === undefined) {
+        continue;
+      }
       out[k] = v;
     }
     return out as T;
@@ -279,16 +285,26 @@ export function writeProfile(
   );
   if (edit.target_roles) {
     const tr = (doc.target_roles as Record<string, unknown>) ?? {};
-    if (edit.target_roles.primary !== undefined) tr.primary = edit.target_roles.primary;
+    if (edit.target_roles.primary !== undefined) {
+      tr.primary = edit.target_roles.primary;
+    }
     doc.target_roles = tr;
   }
   if (edit.narrative) {
     const n = (doc.narrative as Record<string, unknown>) ?? {};
     const e = edit.narrative;
-    if (e.headline !== undefined) n.headline = e.headline;
-    if (e.exit_story !== undefined) n.exit_story = e.exit_story;
-    if (e.superpowers !== undefined) n.superpowers = e.superpowers;
-    if (e.proof_points !== undefined) n.proof_points = e.proof_points;
+    if (e.headline !== undefined) {
+      n.headline = e.headline;
+    }
+    if (e.exit_story !== undefined) {
+      n.exit_story = e.exit_story;
+    }
+    if (e.superpowers !== undefined) {
+      n.superpowers = e.superpowers;
+    }
+    if (e.proof_points !== undefined) {
+      n.proof_points = e.proof_points;
+    }
     doc.narrative = n;
   }
   doc.compensation = merge(
@@ -301,28 +317,43 @@ export function writeProfile(
   );
   if (edit.preferences) {
     const p = (doc.preferences as Record<string, unknown>) ?? {};
-    if (edit.preferences.must_have !== undefined) p.must_have = edit.preferences.must_have;
-    if (edit.preferences.strong_plus !== undefined) p.strong_plus = edit.preferences.strong_plus;
-    if (edit.preferences.hard_no !== undefined) p.hard_no = edit.preferences.hard_no;
+    if (edit.preferences.must_have !== undefined) {
+      p.must_have = edit.preferences.must_have;
+    }
+    if (edit.preferences.strong_plus !== undefined) {
+      p.strong_plus = edit.preferences.strong_plus;
+    }
+    if (edit.preferences.hard_no !== undefined) {
+      p.hard_no = edit.preferences.hard_no;
+    }
     doc.preferences = p;
   }
   if (edit.language) {
     const l = (doc.language as Record<string, unknown>) ?? {};
-    if (edit.language.modes_dir !== undefined) l.modes_dir = edit.language.modes_dir;
+    if (edit.language.modes_dir !== undefined) {
+      l.modes_dir = edit.language.modes_dir;
+    }
     doc.language = l;
   }
   if (edit.automation) {
     const a = (doc.automation as Record<string, unknown>) ?? {};
     const before = a.autonomous_apply === true;
-    if (edit.automation.autonomous_apply !== undefined)
+    if (edit.automation.autonomous_apply !== undefined) {
       a.autonomous_apply = edit.automation.autonomous_apply;
-    if (edit.automation.warmup_days !== undefined) a.warmup_days = edit.automation.warmup_days;
-    if (edit.automation.min_score_to_apply !== undefined)
+    }
+    if (edit.automation.warmup_days !== undefined) {
+      a.warmup_days = edit.automation.warmup_days;
+    }
+    if (edit.automation.min_score_to_apply !== undefined) {
       a.min_score_to_apply = edit.automation.min_score_to_apply;
-    if (edit.automation.enabled_portals !== undefined)
+    }
+    if (edit.automation.enabled_portals !== undefined) {
       a.enabled_portals = edit.automation.enabled_portals;
+    }
     // Stamp enabled_at when flipping false → true so the warmup window starts ticking.
-    if (!before && edit.automation.autonomous_apply === true) a.enabled_at = Date.now();
+    if (!before && edit.automation.autonomous_apply === true) {
+      a.enabled_at = Date.now();
+    }
     doc.automation = a;
   }
 
@@ -354,7 +385,9 @@ export function readSiblingFile(
   }
   const id = resolveId(profileId);
   const p = name === 'profileMd' ? profilePath(id, 'profile-md') : profilePath(id, 'cv-md');
-  if (!fs.existsSync(p)) return null;
+  if (!fs.existsSync(p)) {
+    return null;
+  }
   return readSafe(p);
 }
 
@@ -405,10 +438,12 @@ export type ResetResult = {
 };
 
 function backupTo(p: string, backups: string[]): void {
-  if (!fs.existsSync(p)) return;
+  if (!fs.existsSync(p)) {
+    return;
+  }
   try {
-    fs.copyFileSync(p, p + '.bak');
-    backups.push(p + '.bak');
+    fs.copyFileSync(p, `${p}.bak`);
+    backups.push(`${p}.bak`);
   } catch {
     // Backup failure is non-fatal -- caller has been warned via UI confirm.
   }
@@ -421,22 +456,28 @@ function backupTo(p: string, backups: string[]): void {
  *  `exclude` is an optional set of basenames to leave untouched -- used by the 'jobs' scope to keep
  *  long-lived artifacts like interview-prep/story-bank.md while still wiping company-specific files. */
 function emptyDir(dir: string, resetFiles: string[], displayName: string, exclude?: Set<string>) {
-  if (!fs.existsSync(dir)) return;
+  if (!fs.existsSync(dir)) {
+    return;
+  }
   try {
     const entries = fs.readdirSync(dir);
     let removed = 0;
     let failed = 0;
     for (const name of entries) {
       // Skip backup files so a previous reset stays recoverable.
-      if (name.endsWith('.bak')) continue;
-      if (exclude?.has(name)) continue;
+      if (name.endsWith('.bak')) {
+        continue;
+      }
+      if (exclude?.has(name)) {
+        continue;
+      }
       const full = path.join(dir, name);
       // Per-entry backup. For plain files we copyFileSync to a .bak sibling.
       // For directories we recursively copy to <name>.bak/. Both are skipped
       // when a .bak already exists so a previous reset stays recoverable.
       try {
         const stat = fs.statSync(full);
-        const bakPath = full + '.bak';
+        const bakPath = `${full}.bak`;
         if (!fs.existsSync(bakPath)) {
           if (stat.isDirectory()) {
             fs.cpSync(full, bakPath, { recursive: true });
@@ -446,10 +487,10 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
         }
       } catch (e) {
         // Backup failure is non-fatal -- still attempt the delete.
-        logEvent('reset-profile', 'Could not back up ' + name, {
+        logEvent('reset-profile', `Could not back up ${name}`, {
           level: 'warn',
           category: 'application',
-          message: displayName + ' — ' + (e instanceof Error ? e.message : String(e)),
+          message: `${displayName} — ${e instanceof Error ? e.message : String(e)}`,
         });
       }
       try {
@@ -459,23 +500,25 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
         failed++;
         // Log per-file failure at warn -- user expects "reset" to clear and
         // a partial reset is misleading without a signal.
-        logEvent('reset-profile', 'Could not remove ' + name, {
+        logEvent('reset-profile', `Could not remove ${name}`, {
           level: 'warn',
           category: 'application',
-          message: displayName + ' — ' + (e instanceof Error ? e.message : String(e)),
+          message: `${displayName} — ${e instanceof Error ? e.message : String(e)}`,
         });
       }
     }
-    if (removed > 0) resetFiles.push(displayName + ' (' + removed + ' files)');
+    if (removed > 0) {
+      resetFiles.push(displayName + ' (' + removed + ' files)');
+    }
     if (failed > 0) {
-      logEvent('reset-profile', 'Partial reset of ' + displayName, {
+      logEvent('reset-profile', `Partial reset of ${displayName}`, {
         level: 'warn',
         category: 'application',
-        message: removed + ' removed · ' + failed + ' failed (see warnings above)',
+        message: `${removed} removed · ${failed} failed (see warnings above)`,
       });
     }
   } catch (e) {
-    logEvent('reset-profile', 'Could not enumerate ' + displayName, {
+    logEvent('reset-profile', `Could not enumerate ${displayName}`, {
       level: 'warn',
       category: 'application',
       message: e instanceof Error ? e.message : String(e),
@@ -485,13 +528,15 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
 
 /** Backup + delete a single file. No-op if the file doesn't exist. */
 function backupAndDelete(p: string, resetFiles: string[], backups: string[]): void {
-  if (!fs.existsSync(p)) return;
+  if (!fs.existsSync(p)) {
+    return;
+  }
   backupTo(p, backups);
   try {
     fs.unlinkSync(p);
     resetFiles.push(path.relative(ROOT, p));
   } catch (e) {
-    logEvent('reset-profile', 'Could not delete ' + path.basename(p), {
+    logEvent('reset-profile', `Could not delete ${path.basename(p)}`, {
       level: 'warn',
       category: 'application',
       message: e instanceof Error ? e.message : String(e),
@@ -570,15 +615,17 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
     fs.truncateSync(PIPELINE_MD, 0);
     resetFiles.push(path.relative(ROOT, PIPELINE_MD));
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw e;
+    }
   }
 
   for (const p of [SCAN_HISTORY_TSV, GEMINI_SCORES_TSV, FOLLOW_UPS_MD]) {
     backupAndDelete(p, resetFiles, backups);
   }
 
-  emptyDir(REPORTS_DIR, resetFiles, path.relative(ROOT, REPORTS_DIR) + '/');
-  emptyDir(OUTPUT_DIR, resetFiles, path.relative(ROOT, OUTPUT_DIR) + '/');
+  emptyDir(REPORTS_DIR, resetFiles, `${path.relative(ROOT, REPORTS_DIR)}/`);
+  emptyDir(OUTPUT_DIR, resetFiles, `${path.relative(ROOT, OUTPUT_DIR)}/`);
 
   // Per-profile interview-prep dir -- story-bank.md was never moved here by
   // migration (it stays at the shared top-level path), but a future per-profile
@@ -587,11 +634,11 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
     emptyDir(
       INTERVIEW_PREP_DIR,
       resetFiles,
-      path.relative(ROOT, INTERVIEW_PREP_DIR) + '/',
+      `${path.relative(ROOT, INTERVIEW_PREP_DIR)}/`,
       new Set(['story-bank.md']),
     );
   } else {
-    emptyDir(INTERVIEW_PREP_DIR, resetFiles, path.relative(ROOT, INTERVIEW_PREP_DIR) + '/');
+    emptyDir(INTERVIEW_PREP_DIR, resetFiles, `${path.relative(ROOT, INTERVIEW_PREP_DIR)}/`);
   }
 
   if (scope === 'jobs') {
@@ -709,9 +756,9 @@ export function writeSiblingFile(
   // CodeQL js/file-system-race: attempt the copy directly. ENOENT means
   // there's nothing to back up; any other error is non-fatal as before.
   try {
-    fs.copyFileSync(p, p + '.bak');
+    fs.copyFileSync(p, `${p}.bak`);
     backedUp = true;
-    backupPath = p + '.bak';
+    backupPath = `${p}.bak`;
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
       // Backup failures are non-fatal -- proceed with the write so the user

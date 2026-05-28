@@ -42,19 +42,19 @@ function runDedupTracker(): Promise<JobResult> {
     });
     p.on('close', (code: number | null) => {
       if (code !== 0) {
-        resolve({ ok: false, error: 'dedup exited with code ' + code });
+        resolve({ ok: false, error: `dedup exited with code ${code}` });
         return;
       }
       const m = stdout.match(COUNT_RE);
       const count = m ? parseInt(m[1], 10) : 0;
       if (count > 0) {
-        logEvent('dedup-tracker', 'Merged ' + count + ' duplicate' + (count === 1 ? '' : 's'), {
+        logEvent('dedup-tracker', `Merged ${count} duplicate${count === 1 ? '' : 's'}`, {
           level: 'info',
           category: 'application',
           message: 'Hygiene sweep — applications.md self-healed',
         });
       }
-      resolve({ ok: true, message: 'Removed ' + count, meta: { count } });
+      resolve({ ok: true, message: `Removed ${count}`, meta: { count } });
     });
   });
 }

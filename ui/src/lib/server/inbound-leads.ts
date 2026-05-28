@@ -76,7 +76,9 @@ function threadsPath(profileId?: string): string {
 
 function readThreadsMap(profileId?: string): Record<string, InboundThread> {
   const p = threadsPath(profileId);
-  if (!fs.existsSync(p)) return {};
+  if (!fs.existsSync(p)) {
+    return {};
+  }
   try {
     return JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, InboundThread>;
   } catch {
@@ -102,10 +104,14 @@ export function appendLead(lead: InboundLead, profileId?: string): boolean {
   try {
     text = fs.readFileSync(p, 'utf8');
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw e;
+    }
   }
-  if (text !== null && text.includes('"messageId":"' + lead.messageId + '"')) return false;
-  fs.appendFileSync(p, JSON.stringify(lead) + '\n');
+  if (text !== null && text.includes(`"messageId":"${lead.messageId}"`)) {
+    return false;
+  }
+  fs.appendFileSync(p, `${JSON.stringify(lead)}\n`);
   // Initialise thread state
   const threads = readThreadsMap(profileId);
   if (!threads[lead.id]) {
@@ -117,12 +123,16 @@ export function appendLead(lead: InboundLead, profileId?: string): boolean {
 
 export function listLeads(profileId?: string): InboundLead[] {
   const p = leadsPath(profileId);
-  if (!fs.existsSync(p)) return [];
+  if (!fs.existsSync(p)) {
+    return [];
+  }
   const out: InboundLead[] = [];
   try {
     const text = fs.readFileSync(p, 'utf8');
     for (const line of text.split('\n')) {
-      if (!line.trim()) continue;
+      if (!line.trim()) {
+        continue;
+      }
       try {
         out.push(JSON.parse(line) as InboundLead);
       } catch {
@@ -150,7 +160,9 @@ export function setThreadState(
   profileId?: string,
 ): InboundThread | undefined {
   const map = readThreadsMap(profileId);
-  if (!map[leadId]) return undefined;
+  if (!map[leadId]) {
+    return undefined;
+  }
   map[leadId].state = state;
   map[leadId].lastUserAction = Date.now();
   writeThreadsMap(map, profileId);
@@ -159,7 +171,9 @@ export function setThreadState(
 
 export function recordUserReply(leadId: string, profileId?: string): InboundThread | undefined {
   const map = readThreadsMap(profileId);
-  if (!map[leadId]) return undefined;
+  if (!map[leadId]) {
+    return undefined;
+  }
   map[leadId].userReplies = (map[leadId].userReplies ?? 0) + 1;
   map[leadId].lastUserAction = Date.now();
   map[leadId].state = 'awaiting-reply';
@@ -187,7 +201,9 @@ export function attachDraftPath(leadId: string, draftPath: string, profileId?: s
 
 export function getDraftPath(leadId: string, profileId?: string): string | undefined {
   const draftMapPath = path.join(path.dirname(threadsPath(profileId)), 'inbound-drafts.json');
-  if (!fs.existsSync(draftMapPath)) return undefined;
+  if (!fs.existsSync(draftMapPath)) {
+    return undefined;
+  }
   try {
     const map = JSON.parse(fs.readFileSync(draftMapPath, 'utf8')) as Record<string, string>;
     return map[leadId];
@@ -206,14 +222,20 @@ export function detectSilentRecruiters(profileId?: string): string[] {
   const now = Date.now();
   const flipped: string[] = [];
   for (const [leadId, thread] of Object.entries(map)) {
-    if (thread.state !== 'awaiting-reply') continue;
-    if (!thread.lastUserAction) continue;
+    if (thread.state !== 'awaiting-reply') {
+      continue;
+    }
+    if (!thread.lastUserAction) {
+      continue;
+    }
     if (now - thread.lastUserAction >= SILENT_MS) {
       thread.state = 'went-silent';
       flipped.push(leadId);
     }
   }
-  if (flipped.length > 0) writeThreadsMap(map, profileId);
+  if (flipped.length > 0) {
+    writeThreadsMap(map, profileId);
+  }
   return flipped;
 }
 
@@ -251,30 +273,54 @@ export function classifyInbound(input: { subject: string; body: string; senderDo
   kind: InboundKind;
   confidence: number;
 } {
-  const hay = (input.subject + ' ' + input.body).slice(0, 4000);
+  const hay = `${input.subject} ${input.body}`.slice(0, 4000);
 
   let scamHits = 0;
-  for (const re of SCAM_SIGNALS) if (re.test(hay)) scamHits++;
-  if (scamHits >= 1) return { kind: 'scam', confidence: scamHits >= 2 ? 0.95 : 0.7 };
+  for (const re of SCAM_SIGNALS) {
+    if (re.test(hay)) scamHits++;
+  }
+  if (scamHits >= 1) {
+    return { kind: 'scam', confidence: scamHits >= 2 ? 0.95 : 0.7 };
+  }
 
   let statusHits = 0;
-  for (const re of STATUS_UPDATE_SIGNALS) if (re.test(hay)) statusHits++;
-  if (statusHits >= 1) return { kind: 'status-update', confidence: 0.8 };
+  for (const re of STATUS_UPDATE_SIGNALS) {
+    if (re.test(hay)) statusHits++;
+  }
+  if (statusHits >= 1) {
+    return { kind: 'status-update', confidence: 0.8 };
+  }
 
   let referralHits = 0;
-  for (const re of REFERRAL_ASK_SIGNALS) if (re.test(hay)) referralHits++;
-  if (referralHits >= 1) return { kind: 'referral-ask', confidence: 0.8 };
+  for (const re of REFERRAL_ASK_SIGNALS) {
+    if (re.test(hay)) referralHits++;
+  }
+  if (referralHits >= 1) {
+    return { kind: 'referral-ask', confidence: 0.8 };
+  }
 
   let blastHits = 0;
-  for (const re of MASS_BLAST_SIGNALS) if (re.test(hay)) blastHits++;
+  for (const re of MASS_BLAST_SIGNALS) {
+    if (re.test(hay)) blastHits++;
+  }
 
   let realHits = 0;
-  for (const re of REAL_ROLE_SIGNALS) if (re.test(hay)) realHits++;
+  for (const re of REAL_ROLE_SIGNALS) {
+    if (re.test(hay)) realHits++;
+  }
 
-  if (realHits >= 2 && blastHits === 0) return { kind: 'real-role', confidence: 0.85 };
-  if (realHits >= 1 && blastHits === 0) return { kind: 'real-role', confidence: 0.6 };
-  if (blastHits >= 1 && realHits === 0) return { kind: 'mass-blast', confidence: 0.7 };
-  if (blastHits >= 1 && realHits >= 1) return { kind: 'mass-blast', confidence: 0.55 };
+  if (realHits >= 2 && blastHits === 0) {
+    return { kind: 'real-role', confidence: 0.85 };
+  }
+  if (realHits >= 1 && blastHits === 0) {
+    return { kind: 'real-role', confidence: 0.6 };
+  }
+  if (blastHits >= 1 && realHits === 0) {
+    return { kind: 'mass-blast', confidence: 0.7 };
+  }
+  if (blastHits >= 1 && realHits >= 1) {
+    return { kind: 'mass-blast', confidence: 0.55 };
+  }
   return { kind: 'unknown', confidence: 0.3 };
 }
 
@@ -306,7 +352,9 @@ export function extractJdUrl(text: string): string | undefined {
   // path prefix is the canonical pattern.
   for (const url of matches) {
     const cleaned = url.replace(/[)\].,>]+$/, '');
-    if (!isLinkedInProfileUrl(cleaned)) return cleaned;
+    if (!isLinkedInProfileUrl(cleaned)) {
+      return cleaned;
+    }
   }
   return undefined;
 }
@@ -320,7 +368,9 @@ function isLinkedInProfileUrl(url: string): boolean {
   }
   const host = parsed.hostname.toLowerCase();
   const isLinkedIn = host === 'linkedin.com' || host.endsWith('.linkedin.com');
-  if (!isLinkedIn) return false;
+  if (!isLinkedIn) {
+    return false;
+  }
   // Anchored path-prefix check: profile (/in/...) or company (/company/...).
   return /^\/(in|company)\//i.test(parsed.pathname);
 }

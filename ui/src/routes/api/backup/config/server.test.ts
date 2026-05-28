@@ -65,7 +65,7 @@ async function put(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/backup/config', () => {
+describe('gET /api/backup/config', () => {
   it('owner reads current config', async () => {
     const r = await get();
     expect(r.status).toBe(200);
@@ -79,7 +79,7 @@ describe('GET /api/backup/config', () => {
   });
 });
 
-describe('PUT /api/backup/config', () => {
+describe('pUT /api/backup/config', () => {
   it('writes a valid retentionDays', async () => {
     const r = await put({ retentionDays: 60 });
     expect(r.status).toBe(200);

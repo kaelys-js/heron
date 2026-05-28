@@ -17,12 +17,14 @@ function todayKey(): string {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
-  return yyyy + '-' + mm + '-' + dd;
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function readState(p: string): State {
   try {
-    if (!fs.existsSync(p)) return {};
+    if (!fs.existsSync(p)) {
+      return {};
+    }
     const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? (parsed as State) : {};
@@ -33,7 +35,7 @@ function readState(p: string): State {
 
 function writeState(p: string, s: State): void {
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify(s, null, 2) + '\n');
+  fs.writeFileSync(p, `${JSON.stringify(s, null, 2)}\n`);
 }
 
 /** Today's apply count for the current user (0 if no entry). */

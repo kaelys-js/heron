@@ -28,7 +28,9 @@ const DEMO_USER_FROZEN_TS = new Date('2026-05-19T00:00:00.000Z');
 
 function dataDirIsInsideTmpdir(dataDir: string): boolean {
   // Path-injection guard: bare strings like "tmp" must not pass.
-  if (!dataDir || dataDir.length < 2) return false;
+  if (!dataDir || dataDir.length < 2) {
+    return false;
+  }
   try {
     const tmpReal = realpathSync(tmpdir());
     const dataReal = realpathSync(dataDir);
@@ -43,10 +45,16 @@ function dataDirIsInsideTmpdir(dataDir: string): boolean {
  *  `null`. Callers (hooks.server.ts populateAuth) MUST treat `null` as
  *  "no bypass active" and proceed with the normal auth flow. */
 export function screenshotBypassUser(): ScreenshotDemoUser | null {
-  if (process.env.HERON_SCREENSHOT_MODE !== '1') return null;
+  if (process.env.HERON_SCREENSHOT_MODE !== '1') {
+    return null;
+  }
   const dataDir = process.env.HERON_DATA_DIR;
-  if (!dataDir) return null;
-  if (!dataDirIsInsideTmpdir(dataDir)) return null;
+  if (!dataDir) {
+    return null;
+  }
+  if (!dataDirIsInsideTmpdir(dataDir)) {
+    return null;
+  }
   return {
     id: 'demo-screenshots',
     email: 'alex@demo.example',

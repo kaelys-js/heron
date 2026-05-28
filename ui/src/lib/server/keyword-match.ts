@@ -154,7 +154,7 @@ function tokenize(text: string): string[] {
       // Keep letters, digits, and a small set of in-word chars (+/./# for c++, c#, .NET).
       .replace(/[^a-z0-9+#./\-\s]/g, ' ')
       .split(/\s+/)
-      .map((t) => t.replace(/^[\-./]+|[\-./]+$/g, ''))
+      .map((t) => t.replace(/^[-./]+|[-./]+$/g, ''))
       .filter((t) => t.length >= 2 && !STOPWORDS.has(t))
   );
 }
@@ -224,21 +224,27 @@ export function keywordMatch(jd: string, cv: string): KeywordMatchResult {
     if (matchUnigram(t)) {
       matchedWeight += w1;
       matched.push({ term: t, weight: w1 });
-    } else missing.push({ term: t, weight: w1 });
+    } else {
+      missing.push({ term: t, weight: w1 });
+    }
   }
   for (const p of bi) {
     totalWeight += w2;
     if (matchPhrase(p)) {
       matchedWeight += w2;
       matched.push({ term: p, weight: w2 });
-    } else missing.push({ term: p, weight: w2 });
+    } else {
+      missing.push({ term: p, weight: w2 });
+    }
   }
   for (const p of tri) {
     totalWeight += w3;
     if (matchPhrase(p)) {
       matchedWeight += w3;
       matched.push({ term: p, weight: w3 });
-    } else missing.push({ term: p, weight: w3 });
+    } else {
+      missing.push({ term: p, weight: w3 });
+    }
   }
 
   const score = totalWeight === 0 ? 0 : Math.round((matchedWeight / totalWeight) * 100);

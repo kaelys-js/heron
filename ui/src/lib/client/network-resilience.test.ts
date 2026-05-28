@@ -33,7 +33,7 @@ describe('network-resilience — isRetryable', () => {
     expect(isRetryable({ method: 'GET' }, false)).toBe(false);
   });
 
-  it('GET / HEAD default to retryable', () => {
+  it('gET / HEAD default to retryable', () => {
     expect(isRetryable({ method: 'GET' }, undefined)).toBe(true);
     expect(isRetryable({ method: 'HEAD' }, undefined)).toBe(true);
     expect(isRetryable({ method: 'get' }, undefined)).toBe(true); // case-insensitive

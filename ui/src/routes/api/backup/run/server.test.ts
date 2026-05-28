@@ -51,7 +51,7 @@ async function post() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/backup/run', () => {
+describe('pOST /api/backup/run', () => {
   it('owner triggers createBackup + receives the result', async () => {
     const r = await post();
     expect(r.status).toBe(200);

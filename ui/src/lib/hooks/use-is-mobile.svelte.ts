@@ -18,7 +18,9 @@ let listenerAttached = false;
 let mediaQuery: MediaQueryList | null = null;
 
 function attachListener() {
-  if (listenerAttached || typeof window === 'undefined') return;
+  if (listenerAttached || typeof window === 'undefined') {
+    return;
+  }
   listenerAttached = true;
   mediaQuery = window.matchMedia(BREAKPOINT_QUERY);
   sharedStore.value = mediaQuery.matches;

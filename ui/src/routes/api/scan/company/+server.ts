@@ -16,11 +16,13 @@ import { reportServerError } from '$lib/server/events';
 export const POST = wrap('scan-company', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => null)) as { company?: string } | null;
   const company = body?.company?.trim();
-  if (!company) badRequest('company required (non-empty string)');
+  if (!company) {
+    badRequest('company required (non-empty string)');
+  }
   // Reuse scan-portals job with the company arg -- keeps logging + after-trigger
   // chain (auto-triage fires after scan-portals success).
   runById('scan-portals', { company }).catch((err) =>
     reportServerError('scan-company', 'Per-company scan rejected', err, { category: 'task' }),
   );
-  return { ok: true, message: 'Scanning ' + company + ' — watch the activity feed.' };
+  return { ok: true, message: `Scanning ${company} — watch the activity feed.` };
 });

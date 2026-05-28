@@ -20,11 +20,13 @@ export function parseDeepLink(url: string): string | null {
     // rewrite to a parseable https form first.
     const schemePrefix = `${BRAND.urlScheme}://`;
     const normalized = url.startsWith(schemePrefix)
-      ? 'https://heron.local/' + url.slice(schemePrefix.length)
+      ? `https://heron.local/${url.slice(schemePrefix.length)}`
       : url;
     const u = new URL(normalized);
     const segments = u.pathname.split('/').filter(Boolean);
-    if (segments.length === 0) return '/';
+    if (segments.length === 0) {
+      return '/';
+    }
     const [first, ...rest] = segments;
     switch (first) {
       case 'job':

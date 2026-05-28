@@ -35,7 +35,9 @@ export function startNetPoller(opts: NetPollerOptions): () => void {
   let lastState = opts.isOnline();
   let stopped = false;
   const timer = setIntervalFn(() => {
-    if (stopped) return;
+    if (stopped) {
+      return;
+    }
     let now: boolean;
     try {
       now = opts.isOnline();
@@ -43,7 +45,9 @@ export function startNetPoller(opts: NetPollerOptions): () => void {
       // Probe threw -- skip this tick, retain prior state.
       return;
     }
-    if (now === lastState) return;
+    if (now === lastState) {
+      return;
+    }
     lastState = now;
     try {
       opts.onChange(now);
@@ -54,7 +58,9 @@ export function startNetPoller(opts: NetPollerOptions): () => void {
   }, intervalMs);
 
   return () => {
-    if (stopped) return;
+    if (stopped) {
+      return;
+    }
     stopped = true;
     clearIntervalFn(timer);
   };

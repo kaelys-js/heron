@@ -59,7 +59,7 @@ async function call(userId = 'user-1'): Promise<Response> {
   return r;
 }
 
-describe('GET /api/stream', () => {
+describe('gET /api/stream', () => {
   it('throws 401 when caller is unauthenticated', async () => {
     await expect(
       (GET as unknown as (e: unknown) => Promise<unknown>)({
@@ -76,7 +76,7 @@ describe('GET /api/stream', () => {
     expect(r.headers.get('Connection')).toBe('keep-alive');
   });
 
-  it('Response body is a ReadableStream', async () => {
+  it('response body is a ReadableStream', async () => {
     const r = await call();
     expect(r.body).toBeInstanceOf(ReadableStream);
   });
@@ -110,9 +110,13 @@ describe('GET /api/stream', () => {
     let combined = '';
     for (let i = 0; i < 4; i += 1) {
       const { value, done } = await reader.read();
-      if (done) break;
+      if (done) {
+        break;
+      }
       combined += dec.decode(value);
-      if (combined.includes('e-mine')) break;
+      if (combined.includes('e-mine')) {
+        break;
+      }
     }
     expect(combined).toContain('e-mine');
     expect(combined).not.toContain('e-other');

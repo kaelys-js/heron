@@ -7,7 +7,7 @@ import { render } from '@testing-library/svelte';
 import BackendUnreachableOverlay from './BackendUnreachableOverlay.svelte';
 import { onlineStore } from '$lib/client/online-status.svelte';
 
-describe('BackendUnreachableOverlay', () => {
+describe('backendUnreachableOverlay', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     onlineStore.online = true;

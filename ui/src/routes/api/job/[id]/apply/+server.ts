@@ -41,7 +41,9 @@ export const POST = wrap(
     }
 
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
 
     if (mode === 'linkedin') {
@@ -63,7 +65,7 @@ export const POST = wrap(
     // 'mark' and 'open-and-mark' both flip status to Applied in the job's
     // PROFILE tracker (not the currently-active one).
     markApplied(profileId, job.url, job.company, job.role);
-    logEvent('job-apply', 'Marked Applied: ' + (job.company || job.url), {
+    logEvent('job-apply', `Marked Applied: ${job.company || job.url}`, {
       level: 'success',
       category: 'application',
       message: job.role,

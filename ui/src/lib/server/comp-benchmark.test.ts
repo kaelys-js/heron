@@ -28,9 +28,15 @@ vi.mock('node:child_process', () => ({
         p.emit('error', nextOutcome.errors);
         return;
       }
-      if (nextOutcome.hangs) return;
-      if (nextOutcome.stdout) p.stdout.emit('data', Buffer.from(nextOutcome.stdout));
-      if (nextOutcome.stderr) p.stderr.emit('data', Buffer.from(nextOutcome.stderr));
+      if (nextOutcome.hangs) {
+        return;
+      }
+      if (nextOutcome.stdout) {
+        p.stdout.emit('data', Buffer.from(nextOutcome.stdout));
+      }
+      if (nextOutcome.stderr) {
+        p.stderr.emit('data', Buffer.from(nextOutcome.stderr));
+      }
       p.emit('close', 0);
     });
     return p;

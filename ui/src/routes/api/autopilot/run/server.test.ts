@@ -41,7 +41,7 @@ async function post(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/autopilot/run', () => {
+describe('pOST /api/autopilot/run', () => {
   it('400 when id is missing', async () => {
     const r = await post({});
     expect(r.status).toBe(400);

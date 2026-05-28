@@ -12,7 +12,9 @@ vi.mock('$lib/server/env', () => ({
   loadEnv: vi.fn(),
   readEnvMasked: () => envMasked,
   writeEnv: (updates: Record<string, unknown>) => {
-    if (writeShouldThrow) throw new Error('disk full');
+    if (writeShouldThrow) {
+      throw new Error('disk full');
+    }
     writeCalls.push(updates);
   },
 }));
@@ -71,7 +73,7 @@ async function post(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/settings', () => {
+describe('gET /api/settings', () => {
   it('returns masked env when caller is owner', async () => {
     const r = await get();
     expect(r.status).toBe(200);
@@ -85,7 +87,7 @@ describe('GET /api/settings', () => {
   });
 });
 
-describe('POST /api/settings', () => {
+describe('pOST /api/settings', () => {
   it('accepts a JSON body + writes via writeEnv', async () => {
     const r = await post({ ANTHROPIC_API_KEY: 'new-real-key' });
     expect(r.status).toBe(200);

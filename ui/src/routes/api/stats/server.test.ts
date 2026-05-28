@@ -48,7 +48,7 @@ async function call() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/stats — counters', () => {
+describe('gET /api/stats — counters', () => {
   it('returns ok=true + all four counters when pipeline is empty', async () => {
     const r = await call();
     expect(r.status).toBe(200);

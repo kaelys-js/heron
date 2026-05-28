@@ -5,7 +5,8 @@
  *  (per-user data only). First signup -> owner; subsequent invite-code
  *  signups -> member. Endpoints touching shared infra MUST require
  *  owner/admin; per-user endpoints need requireUserId. */
-import { error, type RequestEvent } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
+import type { RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { authDb } from './db';
 import { users as authUsers } from './db/auth-schema';
@@ -52,10 +53,13 @@ export function userRole(locals: App.Locals): UserRole {
   const user = requireUser(locals);
   // Some session payloads include role as a custom field. Check first.
   const inlineRole = (user as unknown as { role?: string }).role;
-  if (inlineRole === 'owner' || inlineRole === 'admin' || inlineRole === 'member')
+  if (inlineRole === 'owner' || inlineRole === 'admin' || inlineRole === 'member') {
     return inlineRole;
+  }
   const cached = roleCache.get(user as unknown as object);
-  if (cached) return cached;
+  if (cached) {
+    return cached;
+  }
   try {
     const row = authDb
       .select({ role: authUsers.role })
@@ -96,13 +100,17 @@ export function requireOwnerOrAdmin(locals: App.Locals): LocalsUser {
 /** Convenience: is the acting user an admin or higher? Useful for UI
  *  conditionals (show/hide a button) without throwing on false. */
 export function hasAdmin(locals: App.Locals): boolean {
-  if (!locals.user) return false;
+  if (!locals.user) {
+    return false;
+  }
   const role = userRole(locals);
   return role === 'owner' || role === 'admin';
 }
 
 /** Convenience: is the acting user the install owner? */
 export function hasOwner(locals: App.Locals): boolean {
-  if (!locals.user) return false;
+  if (!locals.user) {
+    return false;
+  }
   return userRole(locals) === 'owner';
 }

@@ -16,7 +16,9 @@ import { profilePath } from '$lib/server/profile-paths';
 const DRILL_RECENCY_DAYS = 7;
 
 function fileExists(p?: string): boolean {
-  if (!p) return false;
+  if (!p) {
+    return false;
+  }
   try {
     return fs.existsSync(path.isAbsolute(p) ? p : path.join(ROOT, p));
   } catch {
@@ -28,14 +30,22 @@ function recentDrill(profileId: string, jobId: string): boolean {
   // Drill outputs are named `{company}-{stage}-drill-{date}.md` in interview-prep/.
   // We accept ANY file containing the jobId or company-slug as a drill marker.
   const dir = profilePath(profileId, 'interview-prep-dir');
-  if (!fs.existsSync(dir)) return false;
+  if (!fs.existsSync(dir)) {
+    return false;
+  }
   const cutoff = Date.now() - DRILL_RECENCY_DAYS * 24 * 60 * 60 * 1000;
   try {
     for (const f of fs.readdirSync(dir)) {
-      if (!f.includes('drill')) continue;
-      if (!f.includes(jobId.slice(0, 8))) continue;
+      if (!f.includes('drill')) {
+        continue;
+      }
+      if (!f.includes(jobId.slice(0, 8))) {
+        continue;
+      }
       const stat = fs.statSync(path.join(dir, f));
-      if (stat.mtimeMs >= cutoff) return true;
+      if (stat.mtimeMs >= cutoff) {
+        return true;
+      }
     }
   } catch {}
   return false;
@@ -45,7 +55,9 @@ export const GET = wrap(
   'ready-gate',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const interviewers = listInterviewers(job.id, profileId);
     const upcoming = findUpcomingInterviews(14, profileId)
@@ -104,7 +116,7 @@ export const GET = wrap(
       },
       {
         key: 'drills',
-        label: 'Mock interview in last ' + DRILL_RECENCY_DAYS + 'd',
+        label: `Mock interview in last ${DRILL_RECENCY_DAYS}d`,
         ok: drillsOk,
         required: !!next,
       },

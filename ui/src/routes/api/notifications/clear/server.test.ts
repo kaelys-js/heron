@@ -29,7 +29,7 @@ async function call() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/notifications/clear', () => {
+describe('pOST /api/notifications/clear', () => {
   it('invokes bus.clear() exactly once', async () => {
     await call();
     expect(clearCalls.length).toBe(1);

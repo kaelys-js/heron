@@ -6,7 +6,7 @@ import { render } from '@testing-library/svelte';
 import ThemeToggle from './ThemeToggle.svelte';
 import { theme } from '$lib/theme.svelte';
 
-describe('ThemeToggle', () => {
+describe('themeToggle', () => {
   beforeEach(() => {
     theme.mode = 'system';
     theme.resolved = 'light';

@@ -22,11 +22,12 @@ import { notifications } from '$lib/notifications.svelte';
 const realInit = notifications.init.bind(notifications);
 const realDestroy = notifications.destroy.bind(notifications);
 
-describe('NotificationsBell', () => {
+describe('notificationsBell', () => {
   beforeAll(() => {
     notifications.init = () => {};
     notifications.destroy = () => {};
   });
+
   afterAll(() => {
     notifications.init = realInit;
     notifications.destroy = realDestroy;

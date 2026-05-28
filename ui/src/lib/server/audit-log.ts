@@ -40,7 +40,7 @@ export type AuditEntry = {
 };
 
 function newId(): string {
-  return 'a_' + crypto.randomBytes(8).toString('hex');
+  return `a_${crypto.randomBytes(8).toString('hex')}`;
 }
 
 /** Record a security event for the current user. Caller may override

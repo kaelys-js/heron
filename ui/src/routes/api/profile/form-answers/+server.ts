@@ -19,7 +19,9 @@ import { getActiveProfileId } from '$lib/server/profiles';
 
 function resolveProfileId(url: URL): string {
   const q = url.searchParams.get('profile');
-  if (q && q !== 'all') return q;
+  if (q && q !== 'all') {
+    return q;
+  }
   return getActiveProfileId();
 }
 
@@ -39,8 +41,12 @@ export const POST = wrap(
     const body = await request.json().catch(() => ({}));
     const label = typeof body?.label === 'string' ? body.label : '';
     const answer = typeof body?.answer === 'string' ? body.answer : '';
-    if (!label.trim()) badRequest('label required');
-    if (!answer.trim()) badRequest('answer required');
+    if (!label.trim()) {
+      badRequest('label required');
+    }
+    if (!answer.trim()) {
+      badRequest('answer required');
+    }
     const row = saveAnswer(profileId, label, answer);
     return { ok: true, row };
   },
@@ -52,7 +58,9 @@ export const DELETE = wrap('form-answers-cache', async ({ url }: { url: URL }) =
   // from raw fetch callers (e.g. curl).
   const profileId = resolveProfileId(url);
   const key = url.searchParams.get('key') ?? '';
-  if (!key.trim()) badRequest('key required');
+  if (!key.trim()) {
+    badRequest('key required');
+  }
   const ok = deleteAnswer(profileId, key);
   return { ok };
 });

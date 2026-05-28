@@ -12,14 +12,17 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { getSchedule, setSchedule, type ScheduleEntry } from '$lib/server/interview-schedule';
+import { getSchedule, setSchedule } from '$lib/server/interview-schedule';
+import type { ScheduleEntry } from '$lib/server/interview-schedule';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
 
 export const GET = wrap(
   'interview-schedule',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) return { ok: false, error: 'Job not found' };
+    if (!resolved) {
+      return { ok: false, error: 'Job not found' };
+    }
     const entry = getSchedule(resolved.profileId, resolved.job.id);
     return { ok: true, entry };
   },
@@ -29,9 +32,13 @@ export const POST = wrap(
   'interview-schedule',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) return { ok: false, error: 'Job not found' };
+    if (!resolved) {
+      return { ok: false, error: 'Job not found' };
+    }
     const body = (await request.json().catch(() => ({}))) as Partial<ScheduleEntry>;
-    if (typeof body.scheduledAt !== 'number') badRequest('scheduledAt (ms epoch) required');
+    if (typeof body.scheduledAt !== 'number') {
+      badRequest('scheduledAt (ms epoch) required');
+    }
     const entry = setSchedule(resolved.profileId, {
       jobId: resolved.job.id,
       scheduledAt: body.scheduledAt!,

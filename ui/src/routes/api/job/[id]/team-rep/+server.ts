@@ -15,6 +15,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const TIMEOUT_MS = 180_000;
 const CACHE_DAYS = 21;
 
@@ -39,7 +40,7 @@ export type TeamRep = {
 
 function cachePath(profileId: string, slug: string): string {
   const base = profilePath(profileId, 'profile-dir');
-  return path.join(base, 'team-rep', slug + '.json');
+  return path.join(base, 'team-rep', `${slug}.json`);
 }
 
 function companySlug(company: string): string {
@@ -70,7 +71,7 @@ function spawnTeamRep(args: {
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('team-rep timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`team-rep timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -78,8 +79,11 @@ function spawnTeamRep(args: {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolveP({ stdout });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolveP({ stdout });
+      }
     });
   });
 }
@@ -88,7 +92,9 @@ export const GET = wrap(
   'team-rep',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const force = url.searchParams.get('force') === '1';
     const slug = companySlug(job.company);
@@ -97,7 +103,9 @@ export const GET = wrap(
       try {
         const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as TeamRep;
         const ageDays = (Date.now() - parsed.refreshedAt) / (24 * 60 * 60 * 1000);
-        if (ageDays < CACHE_DAYS) return { ok: true, teamRep: parsed, cacheAgeDays: ageDays };
+        if (ageDays < CACHE_DAYS) {
+          return { ok: true, teamRep: parsed, cacheAgeDays: ageDays };
+        }
       } catch {}
     }
     try {
@@ -107,15 +115,17 @@ export const GET = wrap(
         jobId: job.id,
       });
       const m = stdout.match(/\{[\s\S]*?"sources"[\s\S]*?\}/);
-      if (!m) return { ok: false, error: 'Team-rep mode did not emit JSON' };
+      if (!m) {
+        return { ok: false, error: 'Team-rep mode did not emit JSON' };
+      }
       const parsed: TeamRep = JSON.parse(m[0]);
       parsed.refreshedAt = Date.now();
       fs.mkdirSync(path.dirname(p), { recursive: true });
       fs.writeFileSync(p, JSON.stringify(parsed, null, 2));
-      logEvent('team-rep', 'Team-rep refreshed · ' + job.company, {
+      logEvent('team-rep', `Team-rep refreshed · ${job.company}`, {
         level: 'success',
         category: 'application',
-        message: 'sources: ' + (parsed.sources || []).join(','),
+        message: `sources: ${(parsed.sources || []).join(',')}`,
       });
       return { ok: true, teamRep: parsed, cacheAgeDays: 0 };
     } catch (err) {

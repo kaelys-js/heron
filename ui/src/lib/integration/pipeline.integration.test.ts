@@ -41,9 +41,13 @@ describe('data/states.yml is the canonical states source', () => {
 
 describe('data/profiles structure', () => {
   it('every profile has applications.md (when profiles.json exists)', () => {
-    if (!exists('data/profiles.json')) return;
+    if (!exists('data/profiles.json')) {
+      return;
+    }
     const state = JSON.parse(readFile('data/profiles.json'));
-    if (!Array.isArray(state?.profiles)) return;
+    if (!Array.isArray(state?.profiles)) {
+      return;
+    }
     for (const p of state.profiles) {
       const apps = `data/profiles/${p.id}/applications.md`;
       if (exists(apps)) {
@@ -65,17 +69,23 @@ describe('per-profile batch/tracker-additions/ should be empty', () => {
     if (fs.existsSync(legacyRoot)) {
       for (const slug of fs.readdirSync(legacyRoot)) {
         const full = path.join(legacyRoot, slug);
-        if (fs.statSync(full).isDirectory()) roots.push(full);
+        if (fs.statSync(full).isDirectory()) {
+          roots.push(full);
+        }
       }
     }
     const usersRoot = path.join(REPO_ROOT, 'data/users');
     if (fs.existsSync(usersRoot)) {
       for (const uid of fs.readdirSync(usersRoot)) {
         const userProfiles = path.join(usersRoot, uid, 'profiles');
-        if (!fs.existsSync(userProfiles)) continue;
+        if (!fs.existsSync(userProfiles)) {
+          continue;
+        }
         for (const slug of fs.readdirSync(userProfiles)) {
           const full = path.join(userProfiles, slug);
-          if (fs.statSync(full).isDirectory()) roots.push(full);
+          if (fs.statSync(full).isDirectory()) {
+            roots.push(full);
+          }
         }
       }
     }
@@ -85,7 +95,9 @@ describe('per-profile batch/tracker-additions/ should be empty', () => {
   it('no .tsv pending in any profile root', () => {
     for (const root of profileRoots()) {
       const dir = path.join(root, 'batch/tracker-additions');
-      if (!fs.existsSync(dir)) continue;
+      if (!fs.existsSync(dir)) {
+        continue;
+      }
       const files = fs.readdirSync(dir).filter((f) => f.endsWith('.tsv'));
       // Empty array OR every entry already moved under merged/archived/.
       expect(files.length, `pending TSVs in ${dir}`).toBe(0);
@@ -93,10 +105,12 @@ describe('per-profile batch/tracker-additions/ should be empty', () => {
   });
 });
 
-describe('Status format hygiene', () => {
+describe('status format hygiene', () => {
   it('applications.md (if present) uses pipe-delimited table format', () => {
     const apps = path.join(REPO_ROOT, 'data/applications.md');
-    if (!fs.existsSync(apps)) return;
+    if (!fs.existsSync(apps)) {
+      return;
+    }
     const text = fs.readFileSync(apps, 'utf8');
     // Header row with pipes
     expect(text).toMatch(/\|.*\|.*\|/);

@@ -21,7 +21,7 @@ const fsMock = {
   // construction from `Date.now()` suffix to `fs.mkdtempSync`.
   // Returns a deterministic mock path so spawn-env assertions don't
   // need to know about random suffixes.
-  mkdtempSync: vi.fn((prefix: string) => prefix + 'mock-suffix'),
+  mkdtempSync: vi.fn((prefix: string) => `${prefix}mock-suffix`),
 };
 vi.mock('node:fs', () => ({ default: fsMock, ...fsMock }));
 
@@ -55,8 +55,8 @@ vi.mock('./events', () => ({
 vi.mock('./env', () => ({ loadEnv: vi.fn() }));
 
 vi.mock('./profile-paths', () => ({
-  activePath: (key: string) => '/tmp/p/' + key,
-  profilePath: (_id: string, key: string) => '/tmp/p/' + key,
+  activePath: (key: string) => `/tmp/p/${key}`,
+  profilePath: (_id: string, key: string) => `/tmp/p/${key}`,
   profilePathForUser: (uid: string, pid: string, key: string) =>
     `/tmp/users/${uid}/profiles/${pid}/${key}`,
 }));

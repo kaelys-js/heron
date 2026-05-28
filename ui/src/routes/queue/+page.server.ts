@@ -7,7 +7,8 @@
 
 import { loadAllJobs } from '$lib/server/parsers';
 import { getActiveProfileId } from '$lib/server/profiles';
-import { listInFlight, type ApplyState } from '$lib/server/apply-state';
+import { listInFlight } from '$lib/server/apply-state';
+import type { ApplyState } from '$lib/server/apply-state';
 import { todayCount } from '$lib/server/apply-counter';
 import { readConfig } from '$lib/server/autopilot';
 
@@ -32,7 +33,9 @@ export async function load({ url }: { url: URL }) {
   // can show "Step: filled_email · cv uploaded" without a per-row fetch.
   const inFlight: Record<string, ApplyState> = {};
   try {
-    for (const s of listInFlight()) inFlight[s.jobId] = s;
+    for (const s of listInFlight()) {
+      inFlight[s.jobId] = s;
+    }
   } catch {
     /* swallow -- page still renders fine without per-step detail */
   }

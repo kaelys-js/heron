@@ -35,7 +35,9 @@ function scheduleFile(profileId: string): string {
 /** Return all schedule entries for a profile, with last-write-wins on jobId. */
 export function listSchedule(profileId: string): ScheduleEntry[] {
   const p = scheduleFile(profileId);
-  if (!fs.existsSync(p)) return [];
+  if (!fs.existsSync(p)) {
+    return [];
+  }
   let txt = '';
   try {
     txt = fs.readFileSync(p, 'utf8');
@@ -44,10 +46,14 @@ export function listSchedule(profileId: string): ScheduleEntry[] {
   }
   const map = new Map<string, ScheduleEntry>();
   for (const line of txt.split('\n')) {
-    if (!line.trim()) continue;
+    if (!line.trim()) {
+      continue;
+    }
     try {
       const e = JSON.parse(line) as ScheduleEntry;
-      if (e.jobId) map.set(e.jobId, e);
+      if (e.jobId) {
+        map.set(e.jobId, e);
+      }
     } catch {
       // Corrupt line from a partial write -- skip and continue loading.
     }
@@ -72,19 +78,25 @@ export function setSchedule(
   };
   const p = scheduleFile(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.appendFileSync(p, JSON.stringify(next) + '\n');
+  fs.appendFileSync(p, `${JSON.stringify(next)}\n`);
   return next;
 }
 
 /** Mark a reminder as fired so the scheduler doesn't double-fire. */
 export function markReminderFired(profileId: string, jobId: string, which: '24h' | '30min'): void {
   const e = getSchedule(profileId, jobId);
-  if (!e) return;
+  if (!e) {
+    return;
+  }
   const reminders = { ...e.reminders };
-  if (which === '24h') reminders.fired24h = true;
-  if (which === '30min') reminders.fired30min = true;
+  if (which === '24h') {
+    reminders.fired24h = true;
+  }
+  if (which === '30min') {
+    reminders.fired30min = true;
+  }
   const p = scheduleFile(profileId);
-  fs.appendFileSync(p, JSON.stringify({ ...e, reminders }) + '\n');
+  fs.appendFileSync(p, `${JSON.stringify({ ...e, reminders })}\n`);
 }
 
 /** Identify jobs that need a reminder fired RIGHT NOW. Returns entries

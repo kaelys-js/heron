@@ -18,9 +18,8 @@ import {
   deleteProfileFor,
   slugFromName as slugFromNameDb,
   PROFILE_COLORS as PROFILE_COLORS_DB,
-  type ProfileColor as ProfileColorDb,
-  type DbProfile,
 } from './profiles-db';
+import type { ProfileColor as ProfileColorDb, DbProfile } from './profiles-db';
 
 export type ProfileColor = ProfileColorDb;
 export const PROFILE_COLORS = PROFILE_COLORS_DB;

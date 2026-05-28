@@ -12,7 +12,9 @@ export async function load({ url }: { url: URL }) {
   const projects = listProjects(profileId);
   const jobs = loadAllJobs(profileId);
   const stats: Record<string, ReturnType<typeof computeStats>> = {};
-  for (const p of projects) stats[p.id] = computeStats(p, jobs);
+  for (const p of projects) {
+    stats[p.id] = computeStats(p, jobs);
+  }
   return {
     projectId: profileId,
     profileId,

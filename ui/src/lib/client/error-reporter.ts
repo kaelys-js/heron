@@ -34,13 +34,19 @@ let backendUrl: string | null = null;
 /** Set the resolved backend URL -- called once after backend-discovery. */
 export function setReporterBackend(url: string | null): void {
   backendUrl = url;
-  if (url) void flushQueue();
+  if (url) {
+    void flushQueue();
+  }
 }
 
 /** Install global handlers -- onerror + onunhandledrejection + Electron IPC. */
 export function installErrorReporter(initialBackendUrl?: string): void {
-  if (initialBackendUrl) setReporterBackend(initialBackendUrl);
-  if (typeof window === 'undefined') return;
+  if (initialBackendUrl) {
+    setReporterBackend(initialBackendUrl);
+  }
+  if (typeof window === 'undefined') {
+    return;
+  }
   // Global JS errors
   window.addEventListener('error', (e) => {
     const err = e.error ?? new Error(e.message ?? 'Unknown error');
@@ -72,7 +78,9 @@ export function installErrorReporter(initialBackendUrl?: string): void {
         `${BRAND.name}:main-error`,
         (payload: { message: string; stack?: string; source?: string }) => {
           const err = new Error(payload.message);
-          if (payload.stack) err.stack = payload.stack;
+          if (payload.stack) {
+            err.stack = payload.stack;
+          }
           void reportError(err, { source: payload.source ?? 'electron-main' });
         },
       );
@@ -123,7 +131,9 @@ export async function reportError(
 
   // 3. Try to send to backend, else queue
   const sent = await sendToBackend(payload);
-  if (!sent) queueLocally(payload);
+  if (!sent) {
+    queueLocally(payload);
+  }
 
   // 4. OS notification (rate-limited) for visible errors
   if (level === 'error') {
@@ -165,9 +175,15 @@ function isBenignRejection(err: Error): boolean {
   // View Transitions API spec: "Aborted by new transition" / "skipped
   // because the document changed". Chromium / Safari word it slightly
   // differently so we match on the unique substrings.
-  if (/old view transition.*aborted/i.test(msg)) return true;
-  if (/view transition.*skipped/i.test(msg)) return true;
-  if (/view transition.*new view transition/i.test(msg)) return true;
+  if (/old view transition.*aborted/i.test(msg)) {
+    return true;
+  }
+  if (/view transition.*skipped/i.test(msg)) {
+    return true;
+  }
+  if (/view transition.*new view transition/i.test(msg)) {
+    return true;
+  }
   return false;
 }
 
@@ -176,9 +192,11 @@ function isBenignRejection(err: Error): boolean {
 // ───────────────────────────────────────────────────────────────────
 
 async function sendToBackend(payload: QueuedReport): Promise<boolean> {
-  if (!backendUrl) return false;
+  if (!backendUrl) {
+    return false;
+  }
   try {
-    const url = backendUrl.replace(/\/$/, '') + '/api/issues';
+    const url = `${backendUrl.replace(/\/$/, '')}/api/issues`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -206,13 +224,17 @@ async function sendToBackend(payload: QueuedReport): Promise<boolean> {
 }
 
 function queueLocally(payload: QueuedReport): void {
-  if (typeof localStorage === 'undefined') return;
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
   try {
     const raw = localStorage.getItem(QUEUE_KEY);
     const queue: QueuedReport[] = raw ? JSON.parse(raw) : [];
     queue.push(payload);
     // Cap queue at 50 entries -- drop oldest
-    if (queue.length > 50) queue.splice(0, queue.length - 50);
+    if (queue.length > 50) {
+      queue.splice(0, queue.length - 50);
+    }
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
   } catch {
     /* localStorage full / disabled */
@@ -220,7 +242,9 @@ function queueLocally(payload: QueuedReport): void {
 }
 
 async function flushQueue(): Promise<void> {
-  if (!backendUrl) return;
+  if (!backendUrl) {
+    return;
+  }
 
   // First, pull any iOS-native errors queued by ErrorReporter.swift
   // and forward them through the same /api/issues pipeline as everything
@@ -243,26 +267,39 @@ async function flushQueue(): Promise<void> {
   }
 
   // Then the localStorage retry queue
-  if (typeof localStorage === 'undefined') return;
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
   let queue: QueuedReport[] = [];
   try {
     const raw = localStorage.getItem(QUEUE_KEY);
-    if (raw) queue = JSON.parse(raw);
+    if (raw) {
+      queue = JSON.parse(raw);
+    }
   } catch {
     return;
   }
-  if (queue.length === 0) return;
+  if (queue.length === 0) {
+    return;
+  }
 
   const remaining: QueuedReport[] = [];
   for (const item of queue) {
     item.attempts++;
-    if (item.attempts > 5) continue; // give up after 5 retries
+    if (item.attempts > 5) {
+      continue;
+    } // give up after 5 retries
     const sent = await sendToBackend(item);
-    if (!sent) remaining.push(item);
+    if (!sent) {
+      remaining.push(item);
+    }
   }
   try {
-    if (remaining.length === 0) localStorage.removeItem(QUEUE_KEY);
-    else localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
+    if (remaining.length === 0) {
+      localStorage.removeItem(QUEUE_KEY);
+    } else {
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
+    }
   } catch {
     /* ignore */
   }

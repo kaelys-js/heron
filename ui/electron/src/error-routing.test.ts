@@ -7,9 +7,8 @@ import {
   buildUnhandledErrorHandler,
   buildUnhandledRejectionHandler,
   routeErrorToRenderer,
-  type BrowserWindowLike,
-  type ErrorRouterOptions,
 } from './error-routing';
+import type { BrowserWindowLike, ErrorRouterOptions } from './error-routing';
 
 function makeWindow(
   opts: { destroyed?: boolean; throwOnSend?: boolean } = {},

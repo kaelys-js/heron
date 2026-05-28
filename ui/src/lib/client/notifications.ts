@@ -38,7 +38,9 @@ let permissionGranted: boolean | null = null;
  * Electron + Web it triggers the browser's permission prompt.
  */
 export async function requestPermission(): Promise<boolean> {
-  if (permissionGranted !== null) return permissionGranted;
+  if (permissionGranted !== null) {
+    return permissionGranted;
+  }
 
   const platform = Capacitor.getPlatform(); // 'web' | 'ios' | 'electron'
 
@@ -84,12 +86,16 @@ export async function requestPermission(): Promise<boolean> {
  */
 export async function notify(opts: NotifyOptions): Promise<boolean> {
   const granted = await requestPermission();
-  if (!granted) return false;
+  if (!granted) {
+    return false;
+  }
 
   // Quiet-hours gate. Errors always go through -- a failed apply /
   // autopilot crash is exactly the kind of thing a user would want
   // to hear about even at 3am. Info/warn/success respect the window.
-  if (opts.level !== 'error' && isInQuietHoursFromStorage()) return false;
+  if (opts.level !== 'error' && isInQuietHoursFromStorage()) {
+    return false;
+  }
 
   const platform = Capacitor.getPlatform();
 
@@ -128,7 +134,9 @@ export async function notify(opts: NotifyOptions): Promise<boolean> {
       icon: `/icons/${BRAND.name}-192.png`,
       silent: false,
     });
-    if (opts.onClick) n.onclick = () => opts.onClick!();
+    if (opts.onClick) {
+      n.onclick = () => opts.onClick!();
+    }
     // Electron preload-bridge hook -- main-process Notification when the
     // WebView is hidden (better UX). Set by electron/preload.ts.
     const w = globalThis as Record<string, unknown>;
@@ -227,8 +235,12 @@ export type QuietHours = {
  * through -- a failed apply / autopilot crash shouldn't be silenced.
  */
 export function isInQuietHours(prefs: QuietHours, now: Date = new Date()): boolean {
-  if (!prefs.enabled) return false;
-  if (prefs.startHour === prefs.endHour) return false;
+  if (!prefs.enabled) {
+    return false;
+  }
+  if (prefs.startHour === prefs.endHour) {
+    return false;
+  }
   const hour = now.getHours();
   if (prefs.startHour < prefs.endHour) {
     // Same-day window -- e.g. (8, 18) means 08:00-17:59.
@@ -245,14 +257,18 @@ export function isInQuietHours(prefs: QuietHours, now: Date = new Date()): boole
  * settings page can never silently silence the user.
  */
 function isInQuietHoursFromStorage(): boolean {
-  if (typeof localStorage === 'undefined') return false;
+  if (typeof localStorage === 'undefined') {
+    return false;
+  }
   try {
     // Sourced from BRAND_STORAGE_KEYS -- matches what
     // NotificationPreferences.svelte writes. Centralising the key here
     // means a brand rename retargets read + write together; previously
     // this was a hardcoded literal that would drift on rebrand.
     const raw = localStorage.getItem(BRAND_STORAGE_KEYS.quietHours);
-    if (!raw) return false;
+    if (!raw) {
+      return false;
+    }
     const parsed = JSON.parse(raw) as QuietHours;
     return isInQuietHours(parsed);
   } catch {
@@ -266,10 +282,14 @@ function isInQuietHoursFromStorage(): boolean {
  * (in `App.svelte` or the topbar) to handle navigation on tap.
  */
 export function onNotificationTap(handler: (deepLink: string) => void): () => void {
-  if (Capacitor.getPlatform() !== 'ios') return () => {};
+  if (Capacitor.getPlatform() !== 'ios') {
+    return () => {};
+  }
   const removeP = LocalNotifications.addListener('localNotificationActionPerformed', (e) => {
     const extra = e.notification?.extra as { deepLink?: string } | undefined;
-    if (extra?.deepLink) handler(extra.deepLink);
+    if (extra?.deepLink) {
+      handler(extra.deepLink);
+    }
   });
   return () => {
     void Promise.resolve(removeP).then((sub) => sub.remove());

@@ -111,7 +111,9 @@ export async function listSchedulableUsers(): Promise<string[]> {
     const { users } = await import('./db/auth-schema');
     const { isNull } = await import('drizzle-orm');
     const rows = authDb.select({ id: users.id }).from(users).where(isNull(users.deletedAt)).all();
-    if (rows.length === 0) return [SYSTEM_USER_ID];
+    if (rows.length === 0) {
+      return [SYSTEM_USER_ID];
+    }
     return rows.map((r) => r.id);
   } catch {
     // DB not initialized yet (e.g. boot-time probe) -- fall back to system.

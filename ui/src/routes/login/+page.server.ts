@@ -22,17 +22,27 @@ import { sql } from 'drizzle-orm';
  * logged-in user off-site.
  */
 function safeRedirectTo(raw: string | null): string {
-  if (!raw) return '/';
+  if (!raw) {
+    return '/';
+  }
   // Must be a relative same-origin path. Reject:
   //   • protocol-relative (//evil.com)
   //   • absolute URLs (https://evil.com)
   //   • backslash bypass (\\evil.com -- IE/legacy)
   //   • Non-path inputs
-  if (typeof raw !== 'string') return '/';
-  if (!raw.startsWith('/')) return '/';
-  if (raw.startsWith('//') || raw.startsWith('/\\')) return '/';
+  if (typeof raw !== 'string') {
+    return '/';
+  }
+  if (!raw.startsWith('/')) {
+    return '/';
+  }
+  if (raw.startsWith('//') || raw.startsWith('/\\')) {
+    return '/';
+  }
   // Reject any control chars or schemes that pre-decoded through ?:
-  if (/[\x00-\x1f]/.test(raw)) return '/';
+  if (/[\x00-\x1f]/.test(raw)) {
+    return '/';
+  }
   return raw;
 }
 

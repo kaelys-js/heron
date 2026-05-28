@@ -28,7 +28,9 @@ function asksFile(profileId: string): string {
 
 export function listAsks(profileId: string): ReferralAsk[] {
   const p = asksFile(profileId);
-  if (!fs.existsSync(p)) return [];
+  if (!fs.existsSync(p)) {
+    return [];
+  }
   let txt = '';
   try {
     txt = fs.readFileSync(p, 'utf8');
@@ -38,10 +40,12 @@ export function listAsks(profileId: string): ReferralAsk[] {
   // Last-write-wins on (jobId, contactName) key.
   const map = new Map<string, ReferralAsk>();
   for (const line of txt.split('\n')) {
-    if (!line.trim()) continue;
+    if (!line.trim()) {
+      continue;
+    }
     try {
       const r = JSON.parse(line) as ReferralAsk;
-      const key = r.jobId + '|' + r.contactName.toLowerCase();
+      const key = `${r.jobId}|${r.contactName.toLowerCase()}`;
       map.set(key, r);
     } catch {
       // Corrupt line from a partial write -- skip and continue loading.
@@ -53,7 +57,7 @@ export function listAsks(profileId: string): ReferralAsk[] {
 export function logAsk(profileId: string, ask: ReferralAsk): void {
   const p = asksFile(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.appendFileSync(p, JSON.stringify(ask) + '\n');
+  fs.appendFileSync(p, `${JSON.stringify(ask)}\n`);
 }
 
 /** Build the LinkedIn People search URL pre-filtered to mutuals at a
@@ -68,7 +72,7 @@ export function linkedInMutualsUrl(company: string): string {
     network: 'F', // 1st-degree only
     origin: 'GLOBAL_SEARCH_HEADER',
   });
-  return 'https://www.linkedin.com/search/results/people/?' + params.toString();
+  return `https://www.linkedin.com/search/results/people/?${params.toString()}`;
 }
 
 /** Find asks that have been silent for N+ days -- candidates for a

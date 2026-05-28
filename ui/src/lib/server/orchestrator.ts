@@ -1,4 +1,5 @@
-import { spawn, type ChildProcess } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import { ROOT } from './files';
@@ -29,7 +30,9 @@ const running = new Map<TaskName, ChildProcess>();
 
 function venvPython(): string {
   const p = path.join(ROOT, '.venv', 'bin', 'python');
-  if (fs.existsSync(p)) return p;
+  if (fs.existsSync(p)) {
+    return p;
+  }
   return 'python3';
 }
 
@@ -92,7 +95,7 @@ function attachStdio(
       logEvent(taskName, 'Output rate-limited', {
         level: 'warn',
         category: 'task',
-        message: 'Dropped ' + dropped + ' lines in last second (>100/s).',
+        message: `Dropped ${dropped} lines in last second (>100/s).`,
       });
       dropped = 0;
     }
@@ -110,17 +113,16 @@ function attachStdio(
       dropped++;
       return;
     }
-    if (line.trim()) logEvent(taskName, line.trim(), { level, category: 'task' });
+    if (line.trim()) {
+      logEvent(taskName, line.trim(), { level, category: 'task' });
+    }
   };
 
   p.stdout?.on('data', (chunk: Buffer) => {
     stdoutBuf += chunk.toString();
     if (stdoutBuf.length > MAX_STDOUT_BUF) {
       onLine(
-        stdoutBuf.slice(0, 200) +
-          '… [truncated · no newline within ' +
-          MAX_STDOUT_BUF / 1024 +
-          'KB]',
+        `${stdoutBuf.slice(0, 200)}… [truncated · no newline within ${MAX_STDOUT_BUF / 1024}KB]`,
         'warn',
       );
       stdoutBuf = '';
@@ -135,10 +137,14 @@ function attachStdio(
   });
   p.stderr?.on('data', (chunk: Buffer) => {
     const lines = chunk.toString().split('\n');
-    for (const line of lines) if (line) onLine(line, stderrLevel);
+    for (const line of lines) {
+      if (line) onLine(line, stderrLevel);
+    }
   });
   p.on('close', () => {
-    if (stdoutBuf.trim()) onLine(stdoutBuf, 'info');
+    if (stdoutBuf.trim()) {
+      onLine(stdoutBuf, 'info');
+    }
     flushDropped();
   });
 }
@@ -146,11 +152,13 @@ function attachStdio(
 /** SIGTERM after `ms`; SIGKILL 5s later if the child still hasn't exited. */
 function attachTimeout(p: ChildProcess, taskName: TaskName, ms: number): void {
   const term = setTimeout(() => {
-    if (p.exitCode !== null || p.signalCode !== null) return;
+    if (p.exitCode !== null || p.signalCode !== null) {
+      return;
+    }
     logEvent(taskName, 'Task timed out', {
       level: 'error',
       category: 'task',
-      message: 'Killing after ' + Math.round(ms / 60_000) + ' min · ' + taskName,
+      message: `Killing after ${Math.round(ms / 60_000)} min · ${taskName}`,
     });
     try {
       p.kill('SIGTERM');
@@ -158,7 +166,9 @@ function attachTimeout(p: ChildProcess, taskName: TaskName, ms: number): void {
       /* process already exited -- kill races with the close event */
     }
     const hard = setTimeout(() => {
-      if (p.exitCode !== null) return;
+      if (p.exitCode !== null) {
+        return;
+      }
       try {
         p.kill('SIGKILL');
       } catch {
@@ -180,7 +190,9 @@ let cleanupInstalled = false;
  */
 // D15: kept internal -- only `bootOnce()` calls this. Removed the export.
 function installChildCleanup(): void {
-  if (cleanupInstalled) return;
+  if (cleanupInstalled) {
+    return;
+  }
   cleanupInstalled = true;
   const killAll = () => {
     for (const [, child] of running.entries()) {
@@ -219,13 +231,13 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
     logEvent(name, 'Task already running', {
       level: 'warn',
       category: 'task',
-      message: 'Wait for the running ' + name + ' to finish before starting another one.',
+      message: `Wait for the running ${name} to finish before starting another one.`,
     });
     return;
   }
   logEvent(name, 'Task started', {
     category: 'task',
-    message: cmd + ' ' + args.join(' ') + ' · cwd=' + cwd,
+    message: `${cmd} ${args.join(' ')} · cwd=${cwd}`,
   });
   let p: ChildProcess;
   // Inject the current user's id into the spawned env. Both lib_profiles.py
@@ -256,7 +268,9 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
   const resolveAs = ctxUserId ?? SYSTEM_USER_ID;
   for (const key of MIGRATABLE_KEYS) {
     const v = getCredential(resolveAs, key);
-    if (v) envWithUser[key] = v;
+    if (v) {
+      envWithUser[key] = v;
+    }
   }
   try {
     p = spawn(cmd, args, { cwd, env: envWithUser });
@@ -266,7 +280,7 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
     logEvent(name, 'Task failed to spawn', {
       level: 'error',
       category: 'task',
-      message: cmd + ': ' + (e instanceof Error ? e.message : String(e)),
+      message: `${cmd}: ${e instanceof Error ? e.message : String(e)}`,
     });
     return;
   }
@@ -282,7 +296,7 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
       level: 'error',
       category: 'task',
       message: isMissingBinary
-        ? cmd + ': command not found. Install Python (.venv) or check PATH.'
+        ? `${cmd}: command not found. Install Python (.venv) or check PATH.`
         : err.message,
     });
   });
@@ -294,8 +308,11 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
     if (name === 'scan') {
       try {
         const { recordSuccess, recordFailure } = require('./sources') as typeof import('./sources');
-        if (code === 0) recordSuccess('scan-broad');
-        else if (code !== null) recordFailure('scan-broad', new Error('exit ' + code));
+        if (code === 0) {
+          recordSuccess('scan-broad');
+        } else if (code !== null) {
+          recordFailure('scan-broad', new Error('exit ' + code));
+        }
       } catch (e) {
         // sources record best-effort -- log but don't fail the close handler.
         logEvent(name, 'Could not update sources counter for scan-broad', {
@@ -309,7 +326,7 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
       logEvent(name, 'Task finished', {
         level: 'success',
         category: 'task',
-        message: 'Exit code 0 · ' + name,
+        message: `Exit code 0 · ${name}`,
       });
     } else if (code === null) {
       // null = killed by signal (e.g. user reload during dev) -- don't surface as error
@@ -322,7 +339,7 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
       logEvent(name, 'Task failed', {
         level: 'error',
         category: 'task',
-        message: 'Exit code ' + code + ' · check logs above for the failing line',
+        message: `Exit code ${code} · check logs above for the failing line`,
       });
     }
   });
@@ -410,8 +427,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
       logEvent('apply-linkedin', 'Apply cap reached for today', {
         level: 'warn',
         category: 'task',
-        message:
-          'today=' + todayCount() + ' · cap=' + cap + '. Adjust via /autopilot → Thresholds.',
+        message: `today=${todayCount()} · cap=${cap}. Adjust via /autopilot → Thresholds.`,
       });
       return;
     }
@@ -427,11 +443,15 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
     });
   }
   const env: NodeJS.ProcessEnv = { ...process.env };
-  if (autoSubmit) env.LINKEDIN_AUTO_SUBMIT = '1';
+  if (autoSubmit) {
+    env.LINKEDIN_AUTO_SUBMIT = '1';
+  }
   // Pass the acting user id so lib_profiles.py resolves the right
   // data/users/{userId}/profiles/{slug}/ tree.
   const _uid = maybeCurrentUserId();
-  if (_uid && _uid !== SYSTEM_USER_ID) env.HERON_USER_ID = _uid;
+  if (_uid && _uid !== SYSTEM_USER_ID) {
+    env.HERON_USER_ID = _uid;
+  }
   // Surface up-front whether the general CV is missing for the targeted profile.
   let cvNote = '';
   try {
@@ -461,7 +481,9 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
       cvNote,
   });
   const args = ['scripts/apply/linkedin-easy-apply.py', ...profileFlags(profileId)];
-  if (url) args.push('--url', url);
+  if (url) {
+    args.push('--url', url);
+  }
   let p: ChildProcess;
   try {
     p = spawn(venvPython(), args, { cwd: ROOT, env });
@@ -501,10 +523,9 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
         logEvent('apply-linkedin', 'LinkedIn apply finished', {
           level: 'success',
           category: 'task',
-          message:
-            (url ? 'Applied: ' + url : 'Queue exhausted — see counts in /applied') +
-            ' · today=' +
-            n,
+          message: `${
+            url ? 'Applied: ' + url : 'Queue exhausted — see counts in /applied'
+          } · today=${n}`,
         });
       } catch (e) {
         // Counter bump failed -- apply still succeeded so we surface success,
@@ -517,7 +538,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
         logEvent('apply-linkedin', 'LinkedIn apply finished', {
           level: 'success',
           category: 'task',
-          message: url ? 'Applied: ' + url : 'Queue exhausted — see counts in /applied',
+          message: url ? `Applied: ${url}` : 'Queue exhausted — see counts in /applied',
         });
       }
     } else if (code === null) {
@@ -530,10 +551,9 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
       logEvent('apply-linkedin', 'LinkedIn apply failed', {
         level: 'error',
         category: 'task',
-        message:
-          'Exit code ' +
-          code +
-          ' — common causes: LinkedIn re-login required, rate-limit, captcha. Run "Re-login to LinkedIn" from Settings.',
+        message: `Exit code ${
+          code
+        } — common causes: LinkedIn re-login required, rate-limit, captcha. Run "Re-login to LinkedIn" from Settings.`,
       });
     }
   });
@@ -583,7 +603,7 @@ export function runEvaluate(
 
     logEvent(taskKey, 'Generate CV started', {
       category: 'task',
-      message: 'evaluate · ' + url + ' · profile=' + resolvedProfileId,
+      message: `evaluate · ${url} · profile=${resolvedProfileId}`,
       profileId: resolvedProfileId,
     });
     let p: ChildProcess;
@@ -594,7 +614,7 @@ export function runEvaluate(
         profileId: resolvedProfileId,
       }));
     } catch (e) {
-      logEvent(taskKey, 'Failed to spawn ' + AGENT_CLI + ' CLI', {
+      logEvent(taskKey, `Failed to spawn ${AGENT_CLI} CLI`, {
         level: 'error',
         category: 'task',
         message: e instanceof Error ? e.message : String(e),
@@ -608,11 +628,11 @@ export function runEvaluate(
     p.on('error', (err: Error) => {
       running.delete(taskKey);
       const isMissingBinary = (err as NodeJS.ErrnoException).code === 'ENOENT';
-      logEvent(taskKey, 'Failed to spawn ' + AGENT_CLI + ' CLI', {
+      logEvent(taskKey, `Failed to spawn ${AGENT_CLI} CLI`, {
         level: 'error',
         category: 'task',
         message: isMissingBinary
-          ? '`' + AGENT_CLI + '` not found on PATH — install it or override via AGENT_CLI env var.'
+          ? `\`${AGENT_CLI}\` not found on PATH — install it or override via AGENT_CLI env var.`
           : err.message,
       });
       resolve({ ok: false, code: null });
@@ -624,10 +644,10 @@ export function runEvaluate(
         level: ok ? 'success' : 'error',
         category: 'task',
         message: ok
-          ? 'Report + tailored CV PDF generated · ' + url
-          : 'Exit code ' +
-            code +
-            ' — review the spawned process output above. Common causes: rate limits, prompt errors, missing CV file.',
+          ? `Report + tailored CV PDF generated · ${url}`
+          : `Exit code ${
+              code
+            } — review the spawned process output above. Common causes: rate limits, prompt errors, missing CV file.`,
         profileId,
       });
       resolve({ ok, code });
@@ -660,7 +680,9 @@ export async function runBulkOfertaParallel(
     logEvent('bulk-cv', 'Bulk CV already running', { level: 'warn', category: 'task' });
     return { started: false, total: 0 };
   }
-  if (urls.length === 0) return { started: false, total: 0 };
+  if (urls.length === 0) {
+    return { started: false, total: 0 };
+  }
   // Pre-resolve the __TOKEN__ placeholders in modes/batch-prompt.md
   // against the active profile + write the realized prompt to a temp
   // file. The batch worker (batch-runner.sh) then layers its per-job
@@ -703,8 +725,8 @@ export async function runBulkOfertaParallel(
   const inputPath = path.join(batchDir, 'batch-input.tsv');
   try {
     fs.mkdirSync(batchDir, { recursive: true });
-    const rows = urls.map((u, i) => i + 1 + '\t' + u + '\t\t');
-    fs.writeFileSync(inputPath, rows.join('\n') + '\n');
+    const rows = urls.map((u, i) => `${i + 1}\t${u}\t\t`);
+    fs.writeFileSync(inputPath, `${rows.join('\n')}\n`);
   } catch (err) {
     logEvent('bulk-cv', 'Failed to write batch-input.tsv', {
       level: 'error',
@@ -718,7 +740,7 @@ export async function runBulkOfertaParallel(
   const w = Math.max(1, Math.min(8, Math.floor(workers)));
   logEvent('bulk-cv', 'Bulk CV (parallel) started', {
     category: 'task',
-    message: urls.length + ' jobs · ' + w + ' worker' + (w === 1 ? '' : 's'),
+    message: `${urls.length} jobs · ${w} worker${w === 1 ? '' : 's'}`,
   });
 
   let p: ChildProcess;
@@ -765,7 +787,7 @@ export async function runBulkOfertaParallel(
     logEvent('bulk-cv', ok ? 'Bulk CV (parallel) finished' : 'Bulk CV (parallel) failed', {
       level: ok ? 'success' : 'error',
       category: 'task',
-      message: ok ? urls.length + ' job(s) · ' + w + ' workers' : 'exit ' + code,
+      message: ok ? `${urls.length} job(s) · ${w} workers` : `exit ${code}`,
     });
   });
   return { started: true, total: urls.length };
@@ -783,19 +805,22 @@ export async function runBulkOferta(
   running.set('bulk-cv', null as any);
   logEvent('bulk-cv', 'Bulk CV started', {
     category: 'task',
-    message: urls.length + ' job(s) queued' + (profileId ? ' · profile=' + profileId : ''),
+    message: `${urls.length} job(s) queued${profileId ? ' · profile=' + profileId : ''}`,
   });
   let ok = 0;
   let failed = 0;
   try {
     for (let i = 0; i < urls.length; i++) {
-      logEvent('bulk-cv', 'Bulk CV ' + (i + 1) + '/' + urls.length, {
+      logEvent('bulk-cv', `Bulk CV ${i + 1}/${urls.length}`, {
         category: 'task',
         message: urls[i],
       });
       const r = await runEvaluate(urls[i], 'evaluate', profileId);
-      if (r.ok) ok++;
-      else failed++;
+      if (r.ok) {
+        ok++;
+      } else {
+        failed++;
+      }
     }
   } finally {
     running.delete('bulk-cv');
@@ -803,7 +828,7 @@ export async function runBulkOferta(
   logEvent('bulk-cv', 'Bulk CV finished', {
     level: failed === 0 ? 'success' : 'warn',
     category: 'task',
-    message: ok + ' generated · ' + failed + ' failed',
+    message: `${ok} generated · ${failed} failed`,
   });
   return { ok, failed, total: urls.length };
 }
@@ -868,7 +893,7 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
       logEvent('auto-eval', 'Auto-eval skipped — cooldown active', {
         level: 'warn',
         category: 'task',
-        message: 'Last run ' + minsAgo + 'm ago · 1h cooldown prevents accidental double-billing',
+        message: `Last run ${minsAgo}m ago · 1h cooldown prevents accidental double-billing`,
       });
       return { ok: false, evaluated: 0, skipped: 0, failed: 0, aborted: 'cooldown' };
     }
@@ -922,12 +947,9 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
     logEvent('auto-eval', 'Auto-eval: nothing to do', {
       level: 'info',
       category: 'task',
-      message:
-        'No Scored jobs with geminiScore ≥ ' +
-        threshold.toFixed(1) +
-        ' awaiting deep eval (across ' +
-        profilesToRun.length +
-        ' profile(s))',
+      message: `No Scored jobs with geminiScore ≥ ${threshold.toFixed(
+        1,
+      )} awaiting deep eval (across ${profilesToRun.length} profile(s))`,
     });
     return { ok: true, evaluated: 0, skipped: 0, failed: 0 };
   }
@@ -936,16 +958,9 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
   running.set('auto-eval', null as unknown as ChildProcess);
   logEvent('auto-eval', 'Task started', {
     category: 'task',
-    message:
-      'Auto-eval started: ' +
-      candidates.length +
-      ' jobs (score ≥ ' +
-      threshold.toFixed(1) +
-      ', cap ' +
-      cap +
-      ', profiles=' +
-      profilesToRun.length +
-      ')',
+    message: `Auto-eval started: ${candidates.length} jobs (score ≥ ${threshold.toFixed(1)}, cap ${
+      cap
+    }, profiles=${profilesToRun.length})`,
   });
 
   let evaluated = 0;
@@ -975,17 +990,11 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
         continue;
       }
 
-      logEvent('auto-eval', 'Auto-eval ' + (i + 1) + '/' + candidates.length, {
+      logEvent('auto-eval', `Auto-eval ${i + 1}/${candidates.length}`, {
         category: 'task',
-        message:
-          '[' +
-          job.profileId +
-          '] ' +
-          job.company +
-          ' · ' +
-          job.role +
-          ' · score ' +
-          job.geminiScore.toFixed(1),
+        message: `[${job.profileId}] ${job.company} · ${job.role} · score ${job.geminiScore.toFixed(
+          1,
+        )}`,
       });
 
       const r = await runEvaluate(job.url, 'auto-eval', job.profileId);
@@ -1000,10 +1009,9 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
           logEvent('auto-eval', 'Auto-eval aborted: 3 consecutive failures', {
             level: 'warn',
             category: 'task',
-            message:
-              'Check Claude CLI availability + ANTHROPIC_API_KEY. ' +
-              evaluated +
-              " eval'd before abort.",
+            message: `Check Claude CLI availability + ANTHROPIC_API_KEY. ${
+              evaluated
+            } eval'd before abort.`,
           });
           break;
         }
@@ -1021,16 +1029,9 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
   logEvent('auto-eval', ok ? 'Task finished' : 'Task failed', {
     level: ok ? 'success' : 'warn',
     category: 'task',
-    message:
-      'Auto-eval ' +
-      (aborted ? 'aborted (' + aborted + ')' : 'finished') +
-      ': ' +
-      evaluated +
-      " eval'd · " +
-      skipped +
-      ' skipped · ' +
-      failed +
-      ' failed',
+    message: `Auto-eval ${aborted ? 'aborted (' + aborted + ')' : 'finished'}: ${
+      evaluated
+    } eval'd · ${skipped} skipped · ${failed} failed`,
   });
 
   return { ok, evaluated, skipped, failed, aborted };
@@ -1064,7 +1065,7 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
         logEvent('apply-linkedin', 'Apply cap reached for today', {
           level: 'warn',
           category: 'task',
-          message: 'url=' + url + ' · today=' + todayCount() + ' · cap=' + cap,
+          message: `url=${url} · today=${todayCount()} · cap=${cap}`,
         });
         resolve({ ok: false, capped: true });
         return;
@@ -1083,7 +1084,9 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
     // data/users/{userId}/profiles/{slug}/ tree under multi-user.
     const env: NodeJS.ProcessEnv = { ...process.env };
     const _uid = maybeCurrentUserId();
-    if (_uid && _uid !== SYSTEM_USER_ID) env.HERON_USER_ID = _uid;
+    if (_uid && _uid !== SYSTEM_USER_ID) {
+      env.HERON_USER_ID = _uid;
+    }
 
     let p: ChildProcess;
     try {
@@ -1119,7 +1122,7 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
         logEvent('apply-linkedin', 'Per-job apply exited non-zero', {
           level: 'warn',
           category: 'task',
-          message: 'url=' + url + ' · exit=' + code,
+          message: `url=${url} · exit=${code}`,
         });
       }
       // Successful per-job apply -- bump counter so the bulk caller's
@@ -1135,7 +1138,7 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
           logEvent('apply-linkedin', 'Per-job apply counter bump failed', {
             level: 'warn',
             category: 'task',
-            message: 'url=' + url + ' · ' + (e instanceof Error ? e.message : String(e)),
+            message: `url=${url} · ${e instanceof Error ? e.message : String(e)}`,
           });
         }
       }
@@ -1154,13 +1157,13 @@ export async function runBulkApply(
   running.set('bulk-apply', null as any);
   logEvent('bulk-apply', 'Bulk apply started', {
     category: 'task',
-    message: jobs.length + ' job(s) · LinkedIn auto + Open-and-mark for others',
+    message: `${jobs.length} job(s) · LinkedIn auto + Open-and-mark for others`,
   });
   const outcomes: BulkApplyOutcome[] = [];
   try {
     for (let i = 0; i < jobs.length; i++) {
       const j = jobs[i];
-      logEvent('bulk-apply', 'Bulk apply ' + (i + 1) + '/' + jobs.length, {
+      logEvent('bulk-apply', `Bulk apply ${i + 1}/${jobs.length}`, {
         category: 'task',
         message: j.url,
       });
@@ -1178,7 +1181,9 @@ export async function runBulkApply(
         });
         // If we just hit the cap, stop iterating -- subsequent calls would
         // also be no-ops and just spam the activity feed.
-        if (r.capped) break;
+        if (r.capped) {
+          break;
+        }
       } else {
         // The status flip itself happens in the API endpoint via markApplied(url),
         // but for orchestrator-driven bulk we still log here so the activity feed
@@ -1194,14 +1199,16 @@ export async function runBulkApply(
   logEvent('bulk-apply', 'Bulk apply finished', {
     level: failed === 0 ? 'success' : 'warn',
     category: 'task',
-    message: okCount + ' applied · ' + failed + ' failed',
+    message: `${okCount} applied · ${failed} failed`,
   });
   return outcomes;
 }
 
 let bootRan = false;
 export function bootOnce() {
-  if (bootRan) return;
+  if (bootRan) {
+    return;
+  }
   bootRan = true;
   loadEnv();
   // Silently migrate install-wide credentials from .env into the OWNER's

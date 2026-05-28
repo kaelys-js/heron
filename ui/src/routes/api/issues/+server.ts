@@ -19,13 +19,17 @@ export const GET = wrap('issues', async ({ url }: { url: URL }) => {
 
 export const POST = wrap('issues', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => null)) as { id?: string } | null;
-  if (!body?.id) badRequest('id required to resolve an issue');
+  if (!body?.id) {
+    badRequest('id required to resolve an issue');
+  }
   const resolved = resolveIssue(body.id);
-  if (!resolved) badRequest('Issue not found: ' + body.id);
-  logEvent('issues', 'Issue resolved: ' + resolved!.summary, {
+  if (!resolved) {
+    badRequest('Issue not found: ' + body.id);
+  }
+  logEvent('issues', `Issue resolved: ${resolved!.summary}`, {
     level: 'info',
     category: 'system',
-    message: 'source=' + resolved!.source,
+    message: `source=${resolved!.source}`,
   });
   return { ok: true, issue: resolved };
 });

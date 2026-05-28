@@ -53,7 +53,7 @@ async function post(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/backup/restore', () => {
+describe('pOST /api/backup/restore', () => {
   it('400 when id is missing', async () => {
     const r = await post({});
     expect(r.status).toBe(400);

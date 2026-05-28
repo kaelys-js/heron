@@ -16,6 +16,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 type DrillInput = {
   mode: 'code' | 'design';
   problem: string;
@@ -48,8 +49,11 @@ function spawnDrill(
     });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolve({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -76,15 +80,22 @@ export const POST = wrap(
   'drill',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { profileId } = resolved!;
     const body = (await request.json().catch(() => ({}))) as Partial<DrillInput>;
-    if (!body.mode || (body.mode !== 'code' && body.mode !== 'design'))
+    if (!body.mode || (body.mode !== 'code' && body.mode !== 'design')) {
       badRequest('mode must be code|design');
-    if (!body.problem) badRequest('problem required');
-    if (typeof body.userInput !== 'string') badRequest('userInput required');
+    }
+    if (!body.problem) {
+      badRequest('problem required');
+    }
+    if (typeof body.userInput !== 'string') {
+      badRequest('userInput required');
+    }
 
-    logEvent('drill', 'Drill feedback request · ' + body.mode, {
+    logEvent('drill', `Drill feedback request · ${body.mode}`, {
       level: 'info',
       category: 'application',
     });

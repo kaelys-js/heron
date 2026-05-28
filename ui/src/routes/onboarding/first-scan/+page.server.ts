@@ -18,7 +18,9 @@ export async function load({ url }: { url: URL }) {
     { id: 'scan-indeed-auth', label: 'Indeed (authenticated)', source: 'indeed-auth' },
     { id: 'scan-email-imap', label: 'Gmail (job alerts)', source: 'gmail-imap' },
   ].filter((c) => {
-    if (c.alwaysOn) return true;
+    if (c.alwaysOn) {
+      return true;
+    }
     return sources.find((s) => s.id === c.source)?.state.connected ?? false;
   });
   return { children, profileId };

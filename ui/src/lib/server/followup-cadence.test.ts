@@ -25,8 +25,12 @@ vi.mock('node:child_process', () => ({
         p.emit('error', nextOutcome.errors);
         return;
       }
-      if (nextOutcome.stdout) p.stdout.emit('data', Buffer.from(nextOutcome.stdout));
-      if (nextOutcome.stderr) p.stderr.emit('data', Buffer.from(nextOutcome.stderr));
+      if (nextOutcome.stdout) {
+        p.stdout.emit('data', Buffer.from(nextOutcome.stdout));
+      }
+      if (nextOutcome.stderr) {
+        p.stderr.emit('data', Buffer.from(nextOutcome.stderr));
+      }
       p.emit('close', nextOutcome.exitCode ?? 0);
     });
     return p;

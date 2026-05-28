@@ -19,7 +19,9 @@ export const GET = wrap('stats', async () => {
   const dayStart = startOfDay.getTime();
 
   for (const job of jobs) {
-    if (job.status === 'Queued' || job.status === 'Applying') queued++;
+    if (job.status === 'Queued' || job.status === 'Applying') {
+      queued++;
+    }
     if (job.status === 'Applied' && (job as any).lastEvent && (job as any).lastEvent >= dayStart) {
       appliedToday++;
     }
@@ -31,7 +33,9 @@ export const GET = wrap('stats', async () => {
   try {
     const schedule = listSchedule(profileId);
     for (const entry of schedule) {
-      if (entry.scheduledAt >= now && entry.scheduledAt <= weekFromNow) upcomingInterviews++;
+      if (entry.scheduledAt >= now && entry.scheduledAt <= weekFromNow) {
+        upcomingInterviews++;
+      }
     }
   } catch {
     /* schedule store may be empty on fresh installs */

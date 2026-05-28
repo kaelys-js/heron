@@ -15,7 +15,9 @@ export { parseDeepLink } from './deep-links-parser';
 let installed = false;
 
 export function installDeepLinkHandler(): void {
-  if (installed) return;
+  if (installed) {
+    return;
+  }
   installed = true;
 
   App.addListener('appUrlOpen', (event) => {
@@ -31,7 +33,9 @@ export function installDeepLinkHandler(): void {
  */
 export function handleDeepLink(url: string): void {
   const target = parseDeepLink(url);
-  if (!target) return;
+  if (!target) {
+    return;
+  }
   // Some deep links want to FIRE A SIDE EFFECT in addition to (or
   // instead of) a route change -- e.g. `heron://notifications`
   // opens the in-app notifications panel via a CustomEvent. The
@@ -44,7 +48,9 @@ export function handleDeepLink(url: string): void {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent(eventName));
     }
-    if (route) void goto(route);
+    if (route) {
+      void goto(route);
+    }
     return;
   }
   void goto(target);

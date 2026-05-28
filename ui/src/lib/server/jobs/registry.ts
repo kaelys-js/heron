@@ -43,7 +43,9 @@ export function has(id: string): boolean {
 /** All jobs, sorted by category then id for stable ordering. */
 export function list(): JobDef[] {
   return [...registry.values()].sort((a, b) => {
-    if (a.category !== b.category) return a.category.localeCompare(b.category);
+    if (a.category !== b.category) {
+      return a.category.localeCompare(b.category);
+    }
     return a.id.localeCompare(b.id);
   });
 }
@@ -77,9 +79,11 @@ export function listSummaries(): JobSummary[] {
  */
 export async function runById(id: string, args?: JobArgs): Promise<JobResult> {
   const def = registry.get(id);
-  if (!def) return { ok: false, error: 'Unknown job: ' + id };
+  if (!def) {
+    return { ok: false, error: 'Unknown job: ' + id };
+  }
   if (inFlight.has(id)) {
-    return { ok: false, error: 'Job already in flight: ' + id };
+    return { ok: false, error: `Job already in flight: ${id}` };
   }
   inFlight.add(id);
   try {
@@ -105,7 +109,9 @@ export async function runById(id: string, args?: JobArgs): Promise<JobResult> {
       try {
         const result = await runAsUser(userId, () => def.run(args));
         perUserResults.push({ userId, result });
-        if (!result.ok) failed++;
+        if (!result.ok) {
+          failed++;
+        }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err);
         perUserResults.push({ userId, result: { ok: false, error: errMsg } });
@@ -114,12 +120,12 @@ export async function runById(id: string, args?: JobArgs): Promise<JobResult> {
     }
     const total = perUserResults.length;
     const ok = failed === 0;
-    const summary = `${total - failed}/${total} users ok` + (failed ? ` (${failed} failed)` : '');
+    const summary = `${total - failed}/${total} users ok${failed ? ` (${failed} failed)` : ''}`;
     return ok
       ? { ok: true, message: summary, meta: { perUser: perUserResults } }
       : { ok: false, error: summary, meta: { perUser: perUserResults } };
   } catch (err) {
-    reportServerError('jobs', 'Job ' + id + ' threw', err, { category: 'system' });
+    reportServerError('jobs', `Job ${id} threw`, err, { category: 'system' });
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   } finally {
     inFlight.delete(id);
@@ -150,22 +156,32 @@ export function installAfterListener(): void {
   // installBusListener is idempotent across HMR -- re-call replaces the
   // previous listener instead of stacking. See events.ts for rationale.
   installBusListener('jobs/registry/after', (ev: ActivityEvent) => {
-    if (ev.level !== 'success') return;
-    if (ev.title.startsWith('After-trigger from ')) return;
+    if (ev.level !== 'success') {
+      return;
+    }
+    if (ev.title.startsWith('After-trigger from ')) {
+      return;
+    }
     const finishedId = ev.source;
     // Find every registered job whose trigger.tasks list includes this id
     for (const def of registry.values()) {
-      if (def.trigger.type !== 'after') continue;
-      if (!def.trigger.tasks.includes(finishedId)) continue;
+      if (def.trigger.type !== 'after') {
+        continue;
+      }
+      if (!def.trigger.tasks.includes(finishedId)) {
+        continue;
+      }
       // Don't chain a job to its own success event
-      if (def.id === finishedId) continue;
+      if (def.id === finishedId) {
+        continue;
+      }
       // Fire and forget -- log if it errors
-      logEvent(def.id, 'After-trigger from ' + finishedId, {
+      logEvent(def.id, `After-trigger from ${finishedId}`, {
         category: 'system',
         message: def.label,
       });
       runById(def.id).catch((err) => {
-        reportServerError('jobs', 'After-trigger ' + def.id + ' failed', err, {
+        reportServerError('jobs', `After-trigger ${def.id} failed`, err, {
           category: 'system',
         });
       });

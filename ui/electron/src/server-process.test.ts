@@ -8,7 +8,8 @@
  * hooks (forker, existsImpl, portFinder, healthWaiter).
  */
 import { EventEmitter } from 'node:events';
-import { createServer, type Server } from 'node:http';
+import { createServer } from 'node:http';
+import type { Server } from 'node:http';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   findFreePort,
@@ -16,8 +17,8 @@ import {
   waitForServer,
   startEmbeddedServer,
   stopEmbeddedServer,
-  type ServerHandle,
 } from './server-process';
+import type { ServerHandle } from './server-process';
 
 // ── findFreePort ──────────────────────────────────────────────────
 describe('findFreePort', () => {

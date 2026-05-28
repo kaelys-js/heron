@@ -18,17 +18,21 @@ vi.mock('node:fs', async () => {
   const actual = await vi.importActual<typeof import('node:fs')>('node:fs');
   const existsSync = (p: string) => __files.has(p) || __dirs.has(p);
   const readFileSync = (p: string) => {
-    if (__files.has(p)) return __files.get(p)!;
-    throw new Error('ENOENT: ' + p);
+    if (__files.has(p)) {
+      return __files.get(p)!;
+    }
+    throw new Error(`ENOENT: ${p}`);
   };
   const readdirSync = (p: string) => {
-    const prefix = p.endsWith('/') ? p : p + '/';
+    const prefix = p.endsWith('/') ? p : `${p}/`;
     const out = new Set<string>();
     for (const f of __files.keys()) {
       if (f.startsWith(prefix)) {
         const rest = f.slice(prefix.length);
         const first = rest.split('/')[0];
-        if (first) out.add(first);
+        if (first) {
+          out.add(first);
+        }
       }
     }
     return Array.from(out);

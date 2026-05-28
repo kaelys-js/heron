@@ -40,7 +40,7 @@ describe('pillLabel', () => {
   });
 });
 
-describe('BackendNotFoundError', () => {
+describe('backendNotFoundError', () => {
   it('has name "BackendNotFoundError"', () => {
     expect(new BackendNotFoundError('m').name).toBe('BackendNotFoundError');
   });
@@ -132,7 +132,9 @@ describe('resolveBackend — waterfall', () => {
 
   it('picks embedded URL when it responds 200', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.includes('embedded.example')) return new Response('ok', { status: 200 });
+      if (url.includes('embedded.example')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({ embeddedUrl: 'http://embedded.example' });
@@ -142,7 +144,9 @@ describe('resolveBackend — waterfall', () => {
 
   it('falls through to localhost dev server when embedded is down', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.includes('localhost:5173')) return new Response('ok', { status: 200 });
+      if (url.includes('localhost:5173')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({ embeddedUrl: 'http://embedded.example' });
@@ -154,7 +158,7 @@ describe('resolveBackend — waterfall', () => {
     fetchSpy.mockImplementation(async (url: string) => {
       // Match on parsed hostname with an explicit boundary check:
       // allow exactly `tail.ts.net` or any subdomain like `*.tail.ts.net`.
-      const hostname = new URL(url).hostname;
+      const { hostname } = new URL(url);
       if (hostname === 'tail.ts.net' || hostname.endsWith('.tail.ts.net')) {
         return new Response('ok', { status: 200 });
       }
@@ -167,7 +171,9 @@ describe('resolveBackend — waterfall', () => {
 
   it('uses production URL last', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.includes('prod.example')) return new Response('ok', { status: 200 });
+      if (url.includes('prod.example')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({ productionUrl: 'https://prod.example' });
@@ -208,7 +214,9 @@ describe('resolveBackend — waterfall', () => {
 
   it('writes the cache after successful resolution', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.includes('localhost:5173')) return new Response('ok', { status: 200 });
+      if (url.includes('localhost:5173')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     await resolveBackend({});
@@ -219,15 +227,15 @@ describe('resolveBackend — waterfall', () => {
 
   it('respects custom probeTimeoutMs', async () => {
     let timed = false;
-    fetchSpy.mockImplementation(async (_url: string, init?: any) => {
-      // Slow response -- abort signal should fire if timeout works
-      return new Promise<Response>((_, reject) => {
-        init?.signal?.addEventListener('abort', () => {
-          timed = true;
-          reject(new Error('aborted'));
-        });
-      });
-    });
+    fetchSpy.mockImplementation(
+      async (_url: string, init?: any) =>
+        new Promise<Response>((_, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            timed = true;
+            reject(new Error('aborted'));
+          });
+        }),
+    );
     await expect(resolveBackend({ probeTimeoutMs: 50 })).rejects.toThrow(BackendNotFoundError);
     expect(timed).toBe(true);
   });
@@ -242,8 +250,12 @@ describe('resolveBackend — waterfall', () => {
       }),
     );
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.includes('gone.example')) return new Response('dead', { status: 500 });
-      if (url.includes('localhost:5173')) return new Response('ok', { status: 200 });
+      if (url.includes('gone.example')) {
+        return new Response('dead', { status: 500 });
+      }
+      if (url.includes('localhost:5173')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({});
@@ -254,7 +266,7 @@ describe('resolveBackend — waterfall', () => {
   // M7 -- stale-IP race fix. The validation timeout is now 250ms ± 50ms
   // (was a flat 500ms). A stale IP that took 400ms to respond used to
   // win the race; now it loses cleanly.
-  it('M7: cached entry that responds slowly (>300ms) loses the race + re-resolves', async () => {
+  it('m7: cached entry that responds slowly (>300ms) loses the race + re-resolves', async () => {
     prefsBacking.set(
       `${BRAND_STORAGE_PREFIX}:backend-resolved`,
       JSON.stringify({
@@ -274,7 +286,9 @@ describe('resolveBackend — waterfall', () => {
           });
         });
       }
-      if (url.includes('localhost:5173')) return new Response('ok', { status: 200 });
+      if (url.includes('localhost:5173')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({});
@@ -287,7 +301,7 @@ describe('resolveBackend — waterfall', () => {
   // than hang forever. Use a very short timeout-friendly mock and a
   // generous test budget to validate the timer-race path without
   // actually waiting 10s.
-  it('M3: throws BackendNotFoundError if every candidate hangs', async () => {
+  it('m3: throws BackendNotFoundError if every candidate hangs', async () => {
     fetchSpy.mockImplementation(
       (_url: string, init?: any) =>
         new Promise<Response>((_, reject) => {

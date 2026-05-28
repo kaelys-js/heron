@@ -121,10 +121,14 @@ export function getStarterTemplates(): Omit<Project, 'id' | 'createdAt' | 'updat
 function readRaw(profileId: string): Project[] {
   const p = projectsPath(profileId);
   try {
-    if (!fs.existsSync(p)) return [];
+    if (!fs.existsSync(p)) {
+      return [];
+    }
     const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
     return parsed.filter(
       (p): p is Project => typeof p?.id === 'string' && typeof p?.name === 'string',
     );
@@ -136,7 +140,7 @@ function readRaw(profileId: string): Project[] {
 function writeRaw(profileId: string, projects: Project[]): void {
   const p = projectsPath(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify(projects, null, 2) + '\n');
+  fs.writeFileSync(p, `${JSON.stringify(projects, null, 2)}\n`);
 }
 
 export function listProjects(profileId?: string): Project[] {
@@ -198,7 +202,9 @@ export function updateProject(
   const pid = resolveId(profileId);
   const projects = readRaw(pid);
   const idx = projects.findIndex((p) => p.id === id);
-  if (idx === -1) return null;
+  if (idx === -1) {
+    return null;
+  }
   const next: Project = {
     ...projects[idx],
     ...patch,
@@ -227,7 +233,9 @@ export function deleteProject(arg1: string | undefined, arg2?: string): boolean 
   const pid = resolveId(profileId);
   const projects = readRaw(pid);
   const next = projects.filter((p) => p.id !== id);
-  if (next.length === projects.length) return false;
+  if (next.length === projects.length) {
+    return false;
+  }
   writeRaw(pid, next);
   return true;
 }
@@ -242,7 +250,7 @@ function slugifyId(name: string, taken: Set<string>): string {
   let candidate = base;
   let i = 2;
   while (taken.has(candidate)) {
-    candidate = base + '-' + i;
+    candidate = `${base}-${i}`;
     i++;
   }
   return candidate;
@@ -254,7 +262,9 @@ function normalizeFilter(f?: Partial<FilterState>): FilterState {
     bgRisk: { ...DEFAULT_FILTER.bgRisk },
     workMode: { ...DEFAULT_FILTER.workMode },
   };
-  if (!f) return base;
+  if (!f) {
+    return base;
+  }
   return {
     minScore: typeof f.minScore === 'number' ? Math.min(5, Math.max(0, f.minScore)) : base.minScore,
     bgRisk: {
@@ -280,13 +290,23 @@ function normalizeFilter(f?: Partial<FilterState>): FilterState {
 export function matchesProject(job: Job, project: Project): boolean {
   const f = project.filter;
   const score = job.score ?? job.geminiScore ?? 0;
-  if (f.minScore > 0 && score < f.minScore) return false;
-  if (job.bgRisk && f.bgRisk[job.bgRisk] === false) return false;
-  if (f.hasPdf && !job.pdfFile) return false;
-  if (f.hasReport && !job.reportFile) return false;
+  if (f.minScore > 0 && score < f.minScore) {
+    return false;
+  }
+  if (job.bgRisk && f.bgRisk[job.bgRisk] === false) {
+    return false;
+  }
+  if (f.hasPdf && !job.pdfFile) {
+    return false;
+  }
+  if (f.hasReport && !job.reportFile) {
+    return false;
+  }
   if (f.search.trim()) {
     const q = f.search.trim().toLowerCase();
-    if (!job.company.toLowerCase().includes(q) && !job.role.toLowerCase().includes(q)) return false;
+    if (!job.company.toLowerCase().includes(q) && !job.role.toLowerCase().includes(q)) {
+      return false;
+    }
   }
   return true;
 }
@@ -303,10 +323,14 @@ export function computeStats(project: Project, jobs: Job[]): ProjectStats {
   let total = 0;
   let evaluated = 0;
   for (const job of jobs) {
-    if (!matchesProject(job, project)) continue;
+    if (!matchesProject(job, project)) {
+      continue;
+    }
     total++;
     byStatus[job.status]++;
-    if (job.reportFile) evaluated++;
+    if (job.reportFile) {
+      evaluated++;
+    }
     if (job.company) {
       companyCounts.set(job.company, (companyCounts.get(job.company) ?? 0) + 1);
     }
@@ -330,18 +354,28 @@ export function computeStats(project: Project, jobs: Job[]): ProjectStats {
  */
 export function projectToPipelineQuery(project: Project): string {
   const params = new URLSearchParams();
-  params.set('from', 'project:' + project.id);
-  if (project.filter.minScore > 0) params.set('score', String(project.filter.minScore));
+  params.set('from', `project:${project.id}`);
+  if (project.filter.minScore > 0) {
+    params.set('score', String(project.filter.minScore));
+  }
   const bg = (Object.entries(project.filter.bgRisk) as [NonNullable<BgRisk>, boolean][])
     .filter(([, on]) => on)
     .map(([k]) => k);
   // Only set bg param if it diverges from the default (LOW+MEDIUM+HIGH on, BLOCKED off)
   const isDefault =
     bg.length === 3 && bg.every((b) => b === 'LOW' || b === 'MEDIUM' || b === 'HIGH');
-  if (!isDefault) params.set('bg', bg.join(','));
-  if (project.filter.hasPdf) params.set('pdf', '1');
-  if (project.filter.hasReport) params.set('report', '1');
-  if (project.filter.search.trim()) params.set('search', project.filter.search.trim());
+  if (!isDefault) {
+    params.set('bg', bg.join(','));
+  }
+  if (project.filter.hasPdf) {
+    params.set('pdf', '1');
+  }
+  if (project.filter.hasReport) {
+    params.set('report', '1');
+  }
+  if (project.filter.search.trim()) {
+    params.set('search', project.filter.search.trim());
+  }
   return params.toString();
 }
 
@@ -353,7 +387,9 @@ export function parseFilterFromUrl(url: URL): Partial<FilterState> {
   const score = url.searchParams.get('score');
   if (score != null) {
     const n = parseFloat(score);
-    if (!isNaN(n)) out.minScore = Math.min(5, Math.max(0, n));
+    if (!isNaN(n)) {
+      out.minScore = Math.min(5, Math.max(0, n));
+    }
   }
   const bg = url.searchParams.get('bg');
   if (bg != null) {
@@ -370,13 +406,21 @@ export function parseFilterFromUrl(url: URL): Partial<FilterState> {
     }
     out.bgRisk = allowed;
   }
-  if (url.searchParams.get('pdf') === '1') out.hasPdf = true;
-  if (url.searchParams.get('report') === '1') out.hasReport = true;
+  if (url.searchParams.get('pdf') === '1') {
+    out.hasPdf = true;
+  }
+  if (url.searchParams.get('report') === '1') {
+    out.hasReport = true;
+  }
   const search = url.searchParams.get('search');
-  if (search) out.search = search;
+  if (search) {
+    out.search = search;
+  }
   // `?source=workday-api` -- single source filter, persists in URL so a
   // bookmark like /pipeline?source=linkedin-alert-email gives a focused view.
   const source = url.searchParams.get('source');
-  if (source) out.source = source;
+  if (source) {
+    out.source = source;
+  }
   return out;
 }

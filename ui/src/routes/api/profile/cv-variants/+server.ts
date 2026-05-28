@@ -15,7 +15,9 @@ import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 function resolveProfileId(url: URL): string {
   const q = url.searchParams.get('profile');
-  if (q && getProfile(q)) return q;
+  if (q && getProfile(q)) {
+    return q;
+  }
   return getActiveProfileId();
 }
 

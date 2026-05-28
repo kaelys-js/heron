@@ -48,7 +48,9 @@ function reportPath(profileId?: string): string {
 
 export function readAuditReport(profileId?: string): LinkedInAuditReport | null {
   const p = reportPath(profileId);
-  if (!fs.existsSync(p)) return null;
+  if (!fs.existsSync(p)) {
+    return null;
+  }
   try {
     return JSON.parse(fs.readFileSync(p, 'utf8')) as LinkedInAuditReport;
   } catch {
@@ -64,7 +66,9 @@ export function writeAuditReport(report: LinkedInAuditReport, profileId?: string
 
 export function markFindingResolved(kind: string, profileId?: string): LinkedInAuditReport | null {
   const report = readAuditReport(profileId);
-  if (!report) return null;
+  if (!report) {
+    return null;
+  }
   for (const f of report.findings) {
     if (f.kind === kind) {
       f.resolvedAt = Date.now();
@@ -76,7 +80,9 @@ export function markFindingResolved(kind: string, profileId?: string): LinkedInA
 }
 
 function computeGrade(findings: AuditFinding[]): number {
-  if (findings.length === 0) return 100;
+  if (findings.length === 0) {
+    return 100;
+  }
   const open = findings.filter((f) => !f.resolvedAt).length;
   return Math.round(((findings.length - open) / findings.length) * 100);
 }
@@ -161,7 +167,7 @@ export function classifySnapshot(
       kind: 'thin-headline',
       severity: 'warn',
       category: 'profile',
-      title: 'Headline is too short (' + headline.length + ' chars)',
+      title: `Headline is too short (${headline.length} chars)`,
       detail:
         'Generic short headlines lose visibility. Aim for 100-180 characters with role + 2-3 ' +
         'specific keywords + value proposition.',
@@ -197,7 +203,7 @@ export function classifySnapshot(
       kind: 'thin-about',
       severity: 'warn',
       category: 'profile',
-      title: 'About is too short (' + about.length + ' chars)',
+      title: `About is too short (${about.length} chars)`,
       detail:
         'Aim for 1000-2000 characters. Structure: opening hook (1-2 sentences) + 3-4 proof points ' +
         '(numbers, scope) + what you’re looking for next + a clear CTA (email or DM).',
@@ -212,7 +218,7 @@ export function classifySnapshot(
         kind: 'generic-about',
         severity: 'warn',
         category: 'profile',
-        title: 'About uses ' + hits + ' generic clichés',
+        title: `About uses ${hits} generic clichés`,
         detail:
           'Words like "passionate", "results-driven", "team player" make recruiters skim past. ' +
           'Replace with specific verbs + numbers.',
@@ -229,12 +235,10 @@ export function classifySnapshot(
         'Recruiters share LinkedIn URLs internally and remember "linkedin.com/in/jane-doe" ' +
         'much better than "linkedin.com/in/jane-doe-7a3f9b1".',
       settingsPath: 'LinkedIn → Profile → Edit public profile & URL → Edit URL',
-      paste:
-        '/in/' +
-        name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, ''),
+      paste: `/in/${name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')}`,
     });
   }
 
@@ -265,7 +269,7 @@ export function classifySnapshot(
       kind: 'thin-skills',
       severity: 'error',
       category: 'profile',
-      title: 'Only ' + skills.length + ' skill(s) listed',
+      title: `Only ${skills.length} skill(s) listed`,
       detail:
         'LinkedIn ranks profiles partly by skill match. Aim for 25-50 skills. Top 3 pin to your ' +
         'archetype; others fill out the long tail.',
@@ -276,7 +280,7 @@ export function classifySnapshot(
       kind: 'sparse-skills',
       severity: 'warn',
       category: 'profile',
-      title: 'Sparse skills list (' + skills.length + ')',
+      title: `Sparse skills list (${skills.length})`,
       detail: 'Add 10-15 more skills to maximise search ranking + skill-endorsement loops.',
     });
   }
@@ -297,7 +301,9 @@ export function classifySnapshot(
     const targetSignals = new Set<string>();
     for (const a of archetypes) {
       for (const key of Object.keys(archetypeSignals)) {
-        if (a.includes(key)) for (const s of archetypeSignals[key]) targetSignals.add(s);
+        if (a.includes(key)) {
+          for (const s of archetypeSignals[key]) targetSignals.add(s);
+        }
       }
     }
     const missing = [...targetSignals].filter(
@@ -308,13 +314,12 @@ export function classifySnapshot(
         kind: 'archetype-skill-gap',
         severity: 'warn',
         category: 'profile',
-        title: 'Missing ' + missing.length + ' archetype-critical skills',
-        detail:
-          'For your target archetypes (' +
-          archetypes.join(', ') +
-          '), recruiters search for these terms but they aren’t in your skills list: ' +
-          missing.slice(0, 6).join(', ') +
-          '.',
+        title: `Missing ${missing.length} archetype-critical skills`,
+        detail: `For your target archetypes (${archetypes.join(
+          ', ',
+        )}), recruiters search for these terms but they aren’t in your skills list: ${missing
+          .slice(0, 6)
+          .join(', ')}.`,
         paste: missing.slice(0, 6).join(', '),
       });
     }
@@ -356,7 +361,7 @@ export function classifySnapshot(
         kind: 'stale-activity',
         severity: 'warn',
         category: 'activity',
-        title: 'Last activity: ' + (last || 'unknown'),
+        title: `Last activity: ${last || 'unknown'}`,
         detail:
           'LinkedIn down-ranks inactive profiles in recruiter search. Aim for 1+ post/comment ' +
           'per week. Topics aligned to your archetype work best.',
@@ -401,10 +406,9 @@ export function classifySnapshot(
       severity: 'warn',
       category: 'profile',
       title: 'Headline doesn’t mention your target role',
-      detail:
-        'Recruiters search for "' +
-        targetRoleTitle +
-        '" but your headline doesn’t include that phrase. Add it so you appear in their results.',
+      detail: `Recruiters search for "${
+        targetRoleTitle
+      }" but your headline doesn’t include that phrase. Add it so you appear in their results.`,
     });
   }
 

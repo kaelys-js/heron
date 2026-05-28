@@ -30,8 +30,12 @@ export function isWindowVisible(
   displayWorkAreas: Rect[],
   minVisible = 48,
 ): boolean {
-  if (bounds.x === undefined || bounds.y === undefined) return false;
-  if (displayWorkAreas.length === 0) return false;
+  if (bounds.x === undefined || bounds.y === undefined) {
+    return false;
+  }
+  if (displayWorkAreas.length === 0) {
+    return false;
+  }
   const win: Rect = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
   return displayWorkAreas.some((area) => {
     const { w, h } = overlapArea(win, area);
@@ -43,6 +47,8 @@ export function isWindowVisible(
  *  off every display, drop x/y so the caller centers the window on the
  *  primary display instead of opening it off-screen. Size is preserved. */
 export function clampWindowBounds(bounds: SavedBounds, displayWorkAreas: Rect[]): SavedBounds {
-  if (isWindowVisible(bounds, displayWorkAreas)) return bounds;
+  if (isWindowVisible(bounds, displayWorkAreas)) {
+    return bounds;
+  }
   return { width: bounds.width, height: bounds.height };
 }

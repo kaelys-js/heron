@@ -59,7 +59,9 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
   // Backend URL changes (user clicks "force re-discovery" in /settings,
   // or visibility-change triggers resetApiBase()) -- tear down + reconnect.
   const unsubscribeBackend = onBackendStatusChange((s) => {
-    if (closed) return;
+    if (closed) {
+      return;
+    }
     // 'resolved' fires both on initial resolve AND after a reset →
     // reconnect to the new URL even if it's the same string.
     if (s.state === 'resolved' || s.state === 'idle') {
@@ -77,8 +79,10 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
   // own `online` event lands; we listen for both so the reconnect
   // happens as soon as either signal arrives.
   function handleNetStatus(e: Event): void {
-    if (closed) return;
-    const detail = (e as CustomEvent<{ online?: boolean }>).detail;
+    if (closed) {
+      return;
+    }
+    const { detail } = e as CustomEvent<{ online?: boolean }>;
     if (detail && detail.online === false) {
       // Going offline → no point thrashing reconnects. Close + wait.
       closeEventSource();
@@ -90,7 +94,9 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
     scheduleReconnect(0);
   }
   function handleBrowserOnline(): void {
-    if (closed) return;
+    if (closed) {
+      return;
+    }
     attempt = 0;
     closeEventSource();
     scheduleReconnect(0);
@@ -111,8 +117,12 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
   }
 
   function scheduleReconnect(delay: number): void {
-    if (closed) return;
-    if (reconnectTimer) clearTimeout(reconnectTimer);
+    if (closed) {
+      return;
+    }
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+    }
     reconnectTimer = setTimeout(() => {
       reconnectTimer = null;
       void connect();
@@ -120,7 +130,9 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
   }
 
   async function connect(): Promise<void> {
-    if (closed) return;
+    if (closed) {
+      return;
+    }
     closeEventSource();
 
     let base = '';
@@ -137,7 +149,9 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
       scheduleReconnect(delay);
       return;
     }
-    if (closed) return;
+    if (closed) {
+      return;
+    }
 
     const url = (base || '') + path;
     try {
@@ -178,7 +192,9 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
 
   return {
     close: () => {
-      if (closed) return;
+      if (closed) {
+        return;
+      }
       closed = true;
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
@@ -190,7 +206,9 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
       window.removeEventListener('online', handleBrowserOnline);
     },
     restart: () => {
-      if (closed) return;
+      if (closed) {
+        return;
+      }
       closeEventSource();
       attempt = 0;
       scheduleReconnect(0);

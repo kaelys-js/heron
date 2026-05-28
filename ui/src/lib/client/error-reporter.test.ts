@@ -93,20 +93,20 @@ describe('reportError — OS notifications', () => {
   });
 
   it('fires OS notification for error level', async () => {
-    await reportError(new Error('unique-1-' + Date.now()));
+    await reportError(new Error(`unique-1-${Date.now()}`));
     expect(notifyCalls.length).toBe(1);
     expect(notifyCalls[0].level).toBe('error');
   });
 
   it('does NOT fire OS notification for warn level', async () => {
     notifyCalls.length = 0;
-    await reportError(new Error('unique-warn-' + Date.now()), {}, 'warn');
+    await reportError(new Error(`unique-warn-${Date.now()}`), {}, 'warn');
     expect(notifyCalls.length).toBe(0);
   });
 
   it('rate-limits duplicate error notifications within 30s', async () => {
     notifyCalls.length = 0;
-    const msg = 'dup-' + Date.now();
+    const msg = `dup-${Date.now()}`;
     await reportError(new Error(msg));
     await reportError(new Error(msg));
     await reportError(new Error(msg));

@@ -42,7 +42,9 @@ export const GET = wrap('inbox-cards', async () => {
 
   // 1. Thank-you-owed
   for (const { jobId, interviewer } of findThankYousOwed(profileId)) {
-    if (!interviewer.scheduledAt) continue;
+    if (!interviewer.scheduledAt) {
+      continue;
+    }
     const hoursAgo = Math.floor((now - interviewer.scheduledAt) / (60 * 60 * 1000));
     cards.push({
       id: `thank-you:${jobId}:${interviewer.slug}`,
@@ -60,7 +62,9 @@ export const GET = wrap('inbox-cards', async () => {
     DAYS_PREP_REQUIRED,
     profileId,
   )) {
-    if (interviewer.dossierPath) continue;
+    if (interviewer.dossierPath) {
+      continue;
+    }
     cards.push({
       id: `prep:${jobId}:${interviewer.slug}`,
       kind: 'prep-block-recommended',
@@ -90,9 +94,13 @@ export const GET = wrap('inbox-cards', async () => {
 
   // 4. Offer-decision-due
   for (const offer of listActiveOffers(profileId)) {
-    if (!offer.decisionDeadline) continue;
+    if (!offer.decisionDeadline) {
+      continue;
+    }
     const msToDeadline = offer.decisionDeadline - now;
-    if (msToDeadline < 0 || msToDeadline > HOURS_TO_DECIDE * 60 * 60 * 1000) continue;
+    if (msToDeadline < 0 || msToDeadline > HOURS_TO_DECIDE * 60 * 60 * 1000) {
+      continue;
+    }
     cards.push({
       id: `offer-decide:${offer.jobId}`,
       kind: 'offer-decision-due',
@@ -107,7 +115,9 @@ export const GET = wrap('inbox-cards', async () => {
   // 5. Explicit nextActionDue from stage-state
   const stageState = listAllStageState(profileId);
   for (const [jobId, state] of Object.entries(stageState)) {
-    if (!state.nextActionDue) continue;
+    if (!state.nextActionDue) {
+      continue;
+    }
     cards.push({
       id: `next:${jobId}:${state.nextActionDue.kind}`,
       kind: 'next-action-due',

@@ -95,7 +95,7 @@ describe('resetProfile — wipes the per-user story-bank, not the legacy repo-ro
     runWithUser(userId, () => resetProfile('default', 'everything'));
 
     expect(fs.existsSync(aliceBank), 'alice story-bank should be wiped').toBe(false);
-    expect(fs.existsSync(aliceBank + '.bak'), '.bak preserved for recovery').toBe(true);
+    expect(fs.existsSync(`${aliceBank}.bak`), '.bak preserved for recovery').toBe(true);
   });
 
   it("does NOT touch another user's story-bank during reset", async () => {

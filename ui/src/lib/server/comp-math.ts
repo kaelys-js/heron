@@ -86,17 +86,23 @@ const DEFAULT_VESTING: VestingSchedule = {
  *  For the standard 12-month cliff / 48-month total: end of Y1 = 25%,
  *  end of Y2 = 50%, etc. */
 function vestedFraction(y: number, vesting: VestingSchedule): number {
-  if (y <= 0) return 0;
+  if (y <= 0) {
+    return 0;
+  }
   const monthsElapsed = y * 12;
-  if (monthsElapsed < vesting.cliffMonths) return 0;
+  if (monthsElapsed < vesting.cliffMonths) {
+    return 0;
+  }
   const totalMonths = vesting.totalYears * 12;
-  if (monthsElapsed >= totalMonths) return 1;
+  if (monthsElapsed >= totalMonths) {
+    return 1;
+  }
   return monthsElapsed / totalMonths;
 }
 
 /** Discounted-cash-flow factor at the END of year `y`. Default 5% / yr. */
 function dcfFactor(y: number, discountRatePct: number): number {
-  return 1 / Math.pow(1 + discountRatePct / 100, y);
+  return 1 / (1 + discountRatePct / 100) ** y;
 }
 
 /** Equity grant value at year y, with growth + risk discount applied (in
@@ -109,7 +115,7 @@ function equityNominalValue(
 ): number {
   // Compound growth: many people assume flat (growthRatePct=0). 5-15% is
   // reasonable for pre-IPO at a strong company.
-  const grown = baseGrant * Math.pow(1 + growthRatePct / 100, y);
+  const grown = baseGrant * (1 + growthRatePct / 100) ** y;
   // Risk discount applied IMMEDIATELY (treat paper as worth less than cash).
   const risked = grown * (1 - equityDiscountPct / 100);
   return Math.max(0, risked);
@@ -127,7 +133,7 @@ export function evaluateOffer(input: OfferInput): OfferEvaluation {
   const equityDiscount = Math.max(0, Math.min(100, input.equityDiscountPct ?? 0));
   const discountRate = Math.max(0, Math.min(50, input.discountRatePct ?? 5));
 
-  const equity = input.equity;
+  const { equity } = input;
   const eqType = equity?.type ?? 'none';
   const grantValue = equity?.grantValueToday ?? 0;
   const growthRate = equity?.growthRatePct ?? 0;
@@ -204,8 +210,12 @@ export function compareOffers(
   const evalA = evaluateOffer(a);
   const evalB = evaluateOffer(b);
   const pick = (e: OfferEvaluation): number => {
-    if (metric === '4yr-nominal') return e.fourYearNominal;
-    if (metric === 'year1') return e.year1Cash;
+    if (metric === '4yr-nominal') {
+      return e.fourYearNominal;
+    }
+    if (metric === 'year1') {
+      return e.year1Cash;
+    }
     return e.fourYearDiscounted;
   };
   const valA = pick(evalA);

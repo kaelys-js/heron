@@ -1,4 +1,5 @@
-import { redirect, type Cookies } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
+import type { Cookies } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { devGalleryUnlocked } from '$lib/server/dev-gate';
 import { loadAllJobs } from '$lib/server/parsers';

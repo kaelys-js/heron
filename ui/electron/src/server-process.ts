@@ -5,7 +5,8 @@
  *  The Electron main process spawns SvelteKit's adapter-node output on
  *  a random free port, advertises it via mDNS, and waits for
  *  /api/health before showing the BrowserWindow. */
-import { fork, type ChildProcess } from 'node:child_process';
+import { fork } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import { createServer } from 'node:net';
 import { request as httpRequest } from 'node:http';
 import { existsSync } from 'node:fs';
@@ -87,7 +88,9 @@ export async function waitForServer(
 ): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (await probeHealth(url, probeTimeoutMs)) return true;
+    if (await probeHealth(url, probeTimeoutMs)) {
+      return true;
+    }
     await new Promise((r) => setTimeout(r, pollIntervalMs));
   }
   return false;
@@ -119,7 +122,9 @@ export type ServerStartOptions = {
  */
 export async function startEmbeddedServer(opts: ServerStartOptions): Promise<ServerHandle | null> {
   const exists = opts.existsImpl ?? existsSync;
-  if (!exists(opts.entryPath)) return null;
+  if (!exists(opts.entryPath)) {
+    return null;
+  }
 
   const portFinder = opts.portFinder ?? findFreePort;
   const forker = opts.forker ?? fork;
@@ -151,9 +156,13 @@ export async function startEmbeddedServer(opts: ServerStartOptions): Promise<Ser
  * killGraceMs if still running.
  */
 export function stopEmbeddedServer(handle: ServerHandle, killGraceMs = 2_000): void {
-  if (handle.process.killed) return;
+  if (handle.process.killed) {
+    return;
+  }
   handle.process.kill('SIGTERM');
   setTimeout(() => {
-    if (!handle.process.killed) handle.process.kill('SIGKILL');
+    if (!handle.process.killed) {
+      handle.process.kill('SIGKILL');
+    }
   }, killGraceMs);
 }

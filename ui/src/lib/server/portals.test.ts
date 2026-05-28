@@ -16,7 +16,9 @@ const fsMock = {
     files[p] = body;
   }),
   copyFileSync: vi.fn((src: string, dest: string) => {
-    if (src in files) files[dest] = files[src];
+    if (src in files) {
+      files[dest] = files[src];
+    }
   }),
   mkdirSync: vi.fn(),
 };
@@ -49,7 +51,9 @@ beforeEach(() => {
     files[p] = body;
   });
   fsMock.copyFileSync.mockReset().mockImplementation((src: string, dest: string) => {
-    if (src in files) files[dest] = files[src];
+    if (src in files) {
+      files[dest] = files[src];
+    }
   });
   fsMock.mkdirSync.mockReset();
 });

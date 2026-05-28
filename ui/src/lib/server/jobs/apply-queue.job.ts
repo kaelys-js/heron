@@ -19,7 +19,8 @@ import { readProfile } from '../profile';
 import { profilePath } from '../profile-paths';
 import { markStatus } from '../applications';
 import { writeApplyState, appendStep, clearApplyState } from '../apply-state';
-import { detectPortal, isPortalAutomated, type SupportedPortal } from '../apply-dispatcher';
+import { detectPortal, isPortalAutomated } from '../apply-dispatcher';
+import type { SupportedPortal } from '../apply-dispatcher';
 import { reportApplyFailure } from '../apply-failures';
 import { todayCount, bumpApplyCounter } from '../apply-counter';
 import { readConfig } from '../autopilot';
@@ -44,7 +45,9 @@ function effectiveCap(profileId: string, baseCap: number): number {
       automation?: { autonomous_apply?: boolean; warmup_days?: number; enabled_at?: number };
     };
     const a = p?.automation;
-    if (!a?.autonomous_apply || !a.enabled_at || !a.warmup_days) return baseCap;
+    if (!a?.autonomous_apply || !a.enabled_at || !a.warmup_days) {
+      return baseCap;
+    }
     const ageDays = (Date.now() - a.enabled_at) / (24 * 60 * 60 * 1000);
     if (ageDays < a.warmup_days) {
       // During warmup: cap at 5/day regardless of the global setting.
@@ -59,8 +62,10 @@ function effectiveCap(profileId: string, baseCap: number): number {
 /** Confirm the job's portal is in the profile's enabled_portals list AND
  *  the score clears min_score_to_apply. Returns reason string when blocked. */
 function preflightProfile(job: Job, portal: SupportedPortal): string | null {
-  const profileId = job.profileId;
-  if (!profileId) return null; // tolerate cross-profile/active inference
+  const { profileId } = job;
+  if (!profileId) {
+    return null;
+  } // tolerate cross-profile/active inference
   try {
     const p = readProfile(profileId) as unknown as {
       automation?: {
@@ -70,13 +75,21 @@ function preflightProfile(job: Job, portal: SupportedPortal): string | null {
       };
     };
     const a = p?.automation;
-    if (!a) return null; // no opt-in block -- allow user-clicked queue-apply
-    if (a.autonomous_apply === false) return null; // user clicked Apply manually -- allowed
+    if (!a) {
+      return null;
+    } // no opt-in block -- allow user-clicked queue-apply
+    if (a.autonomous_apply === false) {
+      return null;
+    } // user clicked Apply manually -- allowed
     const minScore = typeof a.min_score_to_apply === 'number' ? a.min_score_to_apply : 4.0;
     const score = job.score ?? job.geminiScore ?? 0;
-    if (score < minScore) return 'score ' + score.toFixed(1) + ' < min ' + minScore;
+    if (score < minScore) {
+      return 'score ' + score.toFixed(1) + ' < min ' + minScore;
+    }
     const enabled = a.enabled_portals ?? ['linkedin', 'greenhouse', 'ashby'];
-    if (!enabled.includes(portal)) return 'portal ' + portal + ' not in enabled_portals';
+    if (!enabled.includes(portal)) {
+      return 'portal ' + portal + ' not in enabled_portals';
+    }
   } catch {
     /* allow */
   }
@@ -85,7 +98,9 @@ function preflightProfile(job: Job, portal: SupportedPortal): string | null {
   // user hasn't opted to relocate to. Same checks as /api/job/[id]/visa-check;
   // implemented here inline to keep the dispatcher self-contained.
   const visa = preflightVisa(job, profileId);
-  if (visa) return visa;
+  if (visa) {
+    return visa;
+  }
   return null;
 }
 
@@ -101,7 +116,9 @@ function preflightVisa(job: Job, profileId: string): string | null {
   }
   const statusMatch = profileYml.match(/^\s*status:\s*"?([a-z0-9-]+)"?/im);
   const status = statusMatch ? statusMatch[1] : 'unknown';
-  if (status === 'us-citizen' || status === 'us-permanent-resident') return null;
+  if (status === 'us-citizen' || status === 'us-permanent-resident') {
+    return null;
+  }
   const reportText = job.reportFile
     ? (() => {
         try {
@@ -114,7 +131,7 @@ function preflightVisa(job: Job, profileId: string): string | null {
         }
       })()
     : '';
-  const haystack = (job.role + ' ' + job.location + ' ' + reportText).toLowerCase();
+  const haystack = `${job.role} ${job.location} ${reportText}`.toLowerCase();
   const noSponsor =
     /no\s+sponsorship|cannot\s+sponsor|do\s+not\s+(?:offer|provide)\s+sponsorship|without\s+sponsorship|must\s+be\s+authori[sz]ed|us\s+citizen(?:ship)?\s+required/i.test(
       haystack,
@@ -134,10 +151,14 @@ function preflightVisa(job: Job, profileId: string): string | null {
 /** Pre-apply assembly: ensure tailored CV PDF + cover letter MD exist for
  *  the job. Returns true if ready (either already there or just generated). */
 async function ensureAssembly(job: Job): Promise<boolean> {
-  if (!job.profileId) return true; // can't generate without a profile; let dispatcher fail soft
-  const reportFile = job.reportFile;
-  const pdfFile = job.pdfFile;
-  if (reportFile && pdfFile) return true; // both already exist
+  if (!job.profileId) {
+    return true;
+  } // can't generate without a profile; let dispatcher fail soft
+  const { reportFile } = job;
+  const { pdfFile } = job;
+  if (reportFile && pdfFile) {
+    return true;
+  } // both already exist
 
   // Missing → spawn evaluate which produces report + tailored CV PDF + cover letter.
   // This is fire-and-forget in runEvaluate but we need to await; the result
@@ -145,7 +166,7 @@ async function ensureAssembly(job: Job): Promise<boolean> {
   // we use the awaitable form of runEvaluate.
   logEvent('apply-queue', 'Pre-apply assembly · generating CV + cover letter', {
     category: 'application',
-    message: (job.company || '?') + ' · ' + (job.role || '?'),
+    message: `${job.company || '?'} · ${job.role || '?'}`,
     profileId: job.profileId,
   });
   try {
@@ -154,7 +175,7 @@ async function ensureAssembly(job: Job): Promise<boolean> {
       logEvent('apply-queue', 'Pre-apply assembly failed', {
         level: 'error',
         category: 'application',
-        message: 'evaluate exit code ' + (r.code ?? '?'),
+        message: `evaluate exit code ${r.code ?? '?'}`,
         profileId: job.profileId,
       });
       return false;
@@ -174,8 +195,12 @@ function dispatchApply(
 ): Promise<{ status: 'applied' | 'manual-apply-needed' | 'error'; detail?: string }> {
   return new Promise((resolve) => {
     const args = [APPLY_PORTAL_SCRIPT, '--url', job.url, '--job-id', job.id];
-    if (job.profileId) args.push('--profile', job.profileId);
-    if (typeof job.score === 'number') args.push('--score', String(job.score));
+    if (job.profileId) {
+      args.push('--profile', job.profileId);
+    }
+    if (typeof job.score === 'number') {
+      args.push('--score', String(job.score));
+    }
 
     let lastResult: {
       status: 'applied' | 'manual-apply-needed' | 'error';
@@ -196,7 +221,9 @@ function dispatchApply(
       while ((nl = buf.indexOf('\n')) >= 0) {
         const line = buf.slice(0, nl).trim();
         buf = buf.slice(nl + 1);
-        if (!line) continue;
+        if (!line) {
+          continue;
+        }
         // Parse the canonical protocol.
         if (line.startsWith('APPLY_STEP:')) {
           const step = line.slice('APPLY_STEP:'.length).trim();
@@ -207,10 +234,10 @@ function dispatchApply(
             // -- swallow here so a state-file IO issue doesn't crash the
             // protocol parser.
           }
-          logEvent('apply-' + portal, 'step: ' + step, {
+          logEvent(`apply-${portal}`, `step: ${step}`, {
             level: 'info',
             category: 'application',
-            message: (job.company || '?') + ' · ' + (job.role || '?'),
+            message: `${job.company || '?'} · ${job.role || '?'}`,
             profileId: job.profileId,
           });
         } else if (line.startsWith('APPLY_RESULT:')) {
@@ -223,7 +250,7 @@ function dispatchApply(
           }
         } else {
           // Generic stdout line -- surface at info level.
-          logEvent('apply-' + portal, line.slice(0, 200), {
+          logEvent(`apply-${portal}`, line.slice(0, 200), {
             level: 'info',
             category: 'application',
             profileId: job.profileId,
@@ -234,7 +261,7 @@ function dispatchApply(
     p.stderr?.on('data', (chunk: Buffer) => {
       const text = chunk.toString().trim();
       if (text) {
-        logEvent('apply-' + portal, text.slice(0, 300), {
+        logEvent(`apply-${portal}`, text.slice(0, 300), {
           level: 'warn',
           category: 'application',
           profileId: job.profileId,
@@ -250,10 +277,13 @@ function dispatchApply(
         return;
       }
       // Fall back to exit code if the script didn't emit APPLY_RESULT.
-      if (code === 0) resolve({ status: 'applied' });
-      else if (code === 1)
+      if (code === 0) {
+        resolve({ status: 'applied' });
+      } else if (code === 1) {
         resolve({ status: 'manual-apply-needed', detail: 'unknown (no APPLY_RESULT line)' });
-      else resolve({ status: 'error', detail: 'exit ' + code });
+      } else {
+        resolve({ status: 'error', detail: 'exit ' + code });
+      }
     });
   });
 }
@@ -277,25 +307,20 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
   logEvent('apply-queue', 'Drain started', {
     level: 'info',
     category: 'application',
-    message: allJobs.length + ' queued · cap ' + baseCap,
+    message: `${allJobs.length} queued · cap ${baseCap}`,
   });
 
   for (const job of allJobs) {
-    const portal = detectPortal(job.url).portal;
+    const { portal } = detectPortal(job.url);
     // Per-profile cap (warmup-aware).
     const cap = effectiveCap(job.profileId ?? '', baseCap);
     if (todayCount() >= cap) {
       logEvent('apply-queue', 'Cap reached — stopping drain', {
         level: 'warn',
         category: 'application',
-        message:
-          'today=' +
-          todayCount() +
-          ' · cap=' +
-          cap +
-          ' (' +
-          (allJobs.length - processed) +
-          ' jobs remain queued)',
+        message: `today=${todayCount()} · cap=${cap} (${
+          allJobs.length - processed
+        } jobs remain queued)`,
       });
       break;
     }
@@ -311,7 +336,7 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
         company: job.company,
         role: job.role,
         mode: 'error',
-        detail: 'Profile preflight blocked: ' + blockReason,
+        detail: `Profile preflight blocked: ${blockReason}`,
       });
       skipped++;
       continue;
@@ -319,7 +344,7 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
 
     processed++;
     // Status → Applying.
-    markStatus(job.profileId, job.url, 'Applying', 'Drain started · portal=' + portal);
+    markStatus(job.profileId, job.url, 'Applying', `Drain started · portal=${portal}`);
     writeApplyState({
       jobId: job.id,
       url: job.url,
@@ -355,13 +380,13 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
 
     if (result.status === 'applied') {
       bumpApplyCounter();
-      markStatus(job.profileId, job.url, 'Applied', 'Auto-applied via ' + portal);
+      markStatus(job.profileId, job.url, 'Applied', `Auto-applied via ${portal}`);
       clearApplyState(job.id);
       applied++;
-      logEvent('apply-' + portal, 'Applied · ' + (job.company || '?'), {
+      logEvent(`apply-${portal}`, `Applied · ${job.company || '?'}`, {
         level: 'success',
         category: 'application',
-        message: job.role + ' · today ' + todayCount() + '/' + cap,
+        message: `${job.role} · today ${todayCount()}/${cap}`,
         profileId: job.profileId,
       });
     } else if (result.status === 'manual-apply-needed') {
@@ -411,17 +436,10 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
     }
   }
 
-  const summary =
-    'Processed ' +
-    processed +
-    ' · applied ' +
-    applied +
-    ' · manual ' +
-    manualNeeded +
-    ' · errors ' +
-    errored +
-    (skipped > 0 ? ' · skipped ' + skipped : '');
-  logEvent('apply-queue', 'Drain finished · ' + summary, {
+  const summary = `Processed ${processed} · applied ${applied} · manual ${manualNeeded} · errors ${
+    errored
+  }${skipped > 0 ? ' · skipped ' + skipped : ''}`;
+  logEvent('apply-queue', `Drain finished · ${summary}`, {
     level: errored > 0 ? 'warn' : 'success',
     category: 'application',
   });

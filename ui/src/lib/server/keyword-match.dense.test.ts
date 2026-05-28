@@ -102,11 +102,15 @@ describe('keywordMatch — matched + missing partition', () => {
     ['python rust', 'python', { matched: ['python'], missing: ['rust'] }],
     ['python rust go', 'python go', { matched: ['python', 'go'], missing: ['rust'] }],
     ['python rust go', 'python', { matchedHas: 'python', missingHas: 'rust' }],
-  ] as const)('JD "%s" CV "%s"', (jd, cv, spec) => {
+  ] as const)('jD "%s" CV "%s"', (jd, cv, spec) => {
     const r = keywordMatch(jd, cv);
     if ('matched' in spec) {
-      for (const m of spec.matched) expect(r.matched).toContain(m);
-      for (const m of spec.missing) expect(r.missing).toContain(m);
+      for (const m of spec.matched) {
+        expect(r.matched).toContain(m);
+      }
+      for (const m of spec.missing) {
+        expect(r.missing).toContain(m);
+      }
     } else {
       expect(r.matched).toContain(spec.matchedHas);
       expect(r.missing).toContain(spec.missingHas);

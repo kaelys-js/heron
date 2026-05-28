@@ -29,8 +29,12 @@ vi.mock('node:child_process', () => ({
         p.emit('error', nextRun.errors);
         return;
       }
-      if (nextRun.stdout) p.stdout.emit('data', Buffer.from(nextRun.stdout));
-      if (nextRun.stderr) p.stderr.emit('data', Buffer.from(nextRun.stderr));
+      if (nextRun.stdout) {
+        p.stdout.emit('data', Buffer.from(nextRun.stdout));
+      }
+      if (nextRun.stderr) {
+        p.stderr.emit('data', Buffer.from(nextRun.stderr));
+      }
       p.emit('close', nextRun.exitCode ?? 0);
     });
     return p;
@@ -50,7 +54,9 @@ vi.mock('$lib/server/linkedin-audit', () => ({
   classifySnapshot: (snap: Record<string, unknown>) => {
     // Stub classifier -- count of "missing" fields as warnings
     const out: { resolvedAt?: number; severity: string }[] = [];
-    if (!snap.profile) out.push({ severity: 'error' });
+    if (!snap.profile) {
+      out.push({ severity: 'error' });
+    }
     return out;
   },
 }));
@@ -92,7 +98,7 @@ async function post(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/linkedin/audit', () => {
+describe('gET /api/linkedin/audit', () => {
   it('returns null when no report has been run', async () => {
     const r = await get();
     expect(r.body.ok).toBe(true);
@@ -108,7 +114,7 @@ describe('GET /api/linkedin/audit', () => {
   });
 });
 
-describe('POST /api/linkedin/audit', () => {
+describe('pOST /api/linkedin/audit', () => {
   it('exit code 1 (session expired) returns helpful error without writing', async () => {
     nextRun = { stdout: '', exitCode: 1 };
     const r = await post({});

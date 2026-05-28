@@ -7,7 +7,8 @@ import { Tray, Menu, nativeImage, app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import { existsSync, rmSync, writeFileSync } from 'node:fs';
 import { BRAND } from './brand';
-import { fetchStats, postEmpty, type Stats } from './tray-http';
+import { fetchStats, postEmpty } from './tray-http';
+import type { Stats } from './tray-http';
 import { buildTrayMenuTemplate, computeTrayTitle, computeDockBadge } from './tray-menu-builder';
 
 export type TrayHandlers = {
@@ -54,7 +55,9 @@ export class DesktopTray {
     // 22px is the macOS menu-bar standard. Windows tray icons render at
     // 16px but accept anything; the OS scales.
     const resized = img.resize({ width: 22, height: 22 });
-    if (process.platform === 'darwin') resized.setTemplateImage(true);
+    if (process.platform === 'darwin') {
+      resized.setTemplateImage(true);
+    }
     this.tray = new Tray(resized);
     this.tray.setToolTip(BRAND.displayName);
     // Single-click on the tray icon brings the window forward on
@@ -67,14 +70,18 @@ export class DesktopTray {
     this.tray.on('right-click', () => this.tray?.popUpContextMenu());
 
     // Apply persisted menu-bar-only state.
-    if (this.menuBarOnly) this.setMenuBarOnly(true);
+    if (this.menuBarOnly) {
+      this.setMenuBarOnly(true);
+    }
 
     this.refresh();
     this.timer = setInterval(() => void this.refresh(), POLL_INTERVAL_MS);
   }
 
   stop(): void {
-    if (this.timer) clearInterval(this.timer);
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
     this.tray?.destroy();
     this.tray = undefined;
   }
@@ -104,7 +111,9 @@ export class DesktopTray {
   }
 
   private rebuildMenu(): void {
-    if (!this.tray) return;
+    if (!this.tray) {
+      return;
+    }
     const items = buildTrayMenuTemplate(
       {
         stats: this.stats,
@@ -138,8 +147,12 @@ export class DesktopTray {
   /** macOS / Linux Dock badge -- set to the upcoming-interviews count so
    *  glancing at the Dock shows "you have N interviews coming up". */
   private updateDockBadge(): void {
-    if (process.platform !== 'darwin') return;
-    if (!app.dock) return;
+    if (process.platform !== 'darwin') {
+      return;
+    }
+    if (!app.dock) {
+      return;
+    }
     app.dock.setBadge(computeDockBadge(this.stats, process.platform));
   }
 
@@ -156,7 +169,9 @@ export class DesktopTray {
    *  appears in the Dock, and Cmd+Tab skips it. Re-show by re-toggling
    *  from the tray menu. */
   private setMenuBarOnly(enable: boolean): void {
-    if (process.platform !== 'darwin' || !app.dock) return;
+    if (process.platform !== 'darwin' || !app.dock) {
+      return;
+    }
     this.menuBarOnly = enable;
     try {
       if (enable) {
@@ -167,8 +182,11 @@ export class DesktopTray {
       this.handlers.onSetDockVisible?.(!enable);
       // Persist the preference.
       const pref = path.join(app.getPath('userData'), 'menubar-only.pref');
-      if (enable) writeFileSync(pref, '1');
-      else rmSync(pref, { force: true });
+      if (enable) {
+        writeFileSync(pref, '1');
+      } else {
+        rmSync(pref, { force: true });
+      }
     } catch {
       /* non-fatal */
     }
@@ -176,7 +194,7 @@ export class DesktopTray {
   }
 
   private runTask(taskId: string): Promise<void> {
-    return postEmpty(this.handlers.getBackendUrl(), '/api/jobs/' + taskId + '/run');
+    return postEmpty(this.handlers.getBackendUrl(), `/api/jobs/${taskId}/run`);
   }
 
   private toggleAutopilot(): Promise<void> {

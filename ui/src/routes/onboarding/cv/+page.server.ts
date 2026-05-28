@@ -15,7 +15,7 @@ export async function load({ url }: { url: URL }) {
   const linkedinUrl = profile.candidate?.linkedin
     ? profile.candidate.linkedin.startsWith('http')
       ? profile.candidate.linkedin
-      : 'https://www.' + profile.candidate.linkedin.replace(/^www\./, '')
+      : `https://www.${profile.candidate.linkedin.replace(/^www\./, '')}`
     : '';
   return { profileId, existing, linkedinConnected, linkedinUrl };
 }

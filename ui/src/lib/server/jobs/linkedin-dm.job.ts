@@ -18,8 +18,8 @@ import {
   classifyInbound,
   extractJdUrl,
   detectSilentRecruiters,
-  type InboundLead,
 } from '../inbound-leads';
+import type { InboundLead } from '../inbound-leads';
 import { reportIssue } from '../issues';
 import { logEvent } from '../events';
 import { userContextEnv } from '../user-context';
@@ -87,7 +87,9 @@ async function runLinkedInDmIngest(): Promise<JobResult> {
     });
     return { ok: false, error: 'session-expired' };
   }
-  if (code === 124) return { ok: false, error: 'timeout' };
+  if (code === 124) {
+    return { ok: false, error: 'timeout' };
+  }
   let messages: ScrapedDM[] = [];
   try {
     messages = JSON.parse(stdout) as ScrapedDM[];
@@ -98,9 +100,9 @@ async function runLinkedInDmIngest(): Promise<JobResult> {
   let realCount = 0;
   for (const m of messages) {
     const { kind, confidence } = classifyInbound({ subject: m.subject, body: m.body });
-    const jdUrl = extractJdUrl(m.subject + ' ' + m.body);
+    const jdUrl = extractJdUrl(`${m.subject} ${m.body}`);
     const lead: InboundLead = {
-      id: 'li-' + m.messageId,
+      id: `li-${m.messageId}`,
       channel: 'linkedin-dm',
       messageId: m.messageId,
       arrivedAt: m.ts,
@@ -114,21 +116,23 @@ async function runLinkedInDmIngest(): Promise<JobResult> {
     const added = appendLead(lead);
     if (added) {
       newCount++;
-      if (kind === 'real-role') realCount++;
+      if (kind === 'real-role') {
+        realCount++;
+      }
     }
     void jdUrl; // auto-enrich is handled by a separate job (see below)
   }
   const silentlyFlipped = detectSilentRecruiters();
-  logEvent('linkedin-dm', newCount + ' new DM(s) · ' + realCount + ' look real', {
+  logEvent('linkedin-dm', `${newCount} new DM(s) · ${realCount} look real`, {
     level: newCount === 0 ? 'info' : realCount > 0 ? 'success' : 'info',
     category: 'application',
-    message: 'silent flips: ' + silentlyFlipped.length,
+    message: `silent flips: ${silentlyFlipped.length}`,
   });
   if (realCount > 0) {
     reportIssue({
       severity: 'info',
       source: 'linkedin-dm',
-      summary: realCount + ' new recruiter DM(s) · review + reply',
+      summary: `${realCount} new recruiter DM(s) · review + reply`,
       detail: 'Open /inbox or /linkedin-dm to triage.',
       dedupeKey: 'linkedin-dm:new-leads',
       fix: { label: 'Open Inbox', href: '/inbox' },
@@ -136,8 +140,7 @@ async function runLinkedInDmIngest(): Promise<JobResult> {
   }
   return {
     ok: true,
-    message:
-      newCount + ' new · ' + realCount + ' real-role · ' + silentlyFlipped.length + ' silent',
+    message: `${newCount} new · ${realCount} real-role · ${silentlyFlipped.length} silent`,
     meta: { newCount, realCount, silentlyFlipped: silentlyFlipped.length },
   };
 }

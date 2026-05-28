@@ -7,12 +7,8 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import {
-  listInterviewers,
-  upsertInterviewer,
-  type Interviewer,
-  type InterviewerStage,
-} from '$lib/server/interviewers';
+import { listInterviewers, upsertInterviewer } from '$lib/server/interviewers';
+import type { Interviewer, InterviewerStage } from '$lib/server/interviewers';
 import { touchJob } from '$lib/server/stage-state';
 import { logEvent } from '$lib/server/events';
 
@@ -31,7 +27,9 @@ export const GET = wrap(
   'interviewers',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     return { ok: true, interviewers: listInterviewers(job.id, profileId) };
   },
@@ -41,10 +39,14 @@ export const POST = wrap(
   'interviewers',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => null)) as Partial<Interviewer> | null;
-    if (!body || !body.name) badRequest('name is required');
+    if (!body || !body.name) {
+      badRequest('name is required');
+    }
     const stage: InterviewerStage = VALID_STAGES.includes(body.stage as InterviewerStage)
       ? (body.stage as InterviewerStage)
       : 'unknown';
@@ -70,10 +72,10 @@ export const POST = wrap(
     // Adding/updating an interviewer counts as a "touch" -- keeps the
     // auto-ghost detector from flagging the job as silent.
     touchJob(job.id, profileId);
-    logEvent('interviewers', 'Interviewer upserted: ' + interviewer.name, {
+    logEvent('interviewers', `Interviewer upserted: ${interviewer.name}`, {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' / ' + interviewer.stage,
+      message: `${job.company || '?'} / ${interviewer.stage}`,
     });
     return { ok: true, interviewer };
   },

@@ -42,7 +42,7 @@ describe('detectPortal — Greenhouse', () => {
     expect(r.meta?.jobId).toBe('4321');
   });
 
-  it('EU regional shard job-boards.eu.greenhouse.io', () => {
+  it('eU regional shard job-boards.eu.greenhouse.io', () => {
     const r = detectPortal('https://job-boards.eu.greenhouse.io/acme/jobs/4321');
     expect(r.portal).toBe('greenhouse');
     expect(r.meta?.company).toBe('acme');
@@ -168,7 +168,7 @@ describe('isPortalAutomated', () => {
     expect(isPortalAutomated('unknown')).toBe(false);
   });
 
-  it('PRODUCTION_PORTALS includes the big 5 + the second-round graduates', () => {
+  it('pRODUCTION_PORTALS includes the big 5 + the second-round graduates', () => {
     for (const p of ['linkedin', 'greenhouse', 'ashby', 'lever', 'workday']) {
       expect(PRODUCTION_PORTALS.has(p as 'linkedin')).toBe(true);
     }

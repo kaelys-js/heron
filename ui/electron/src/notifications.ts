@@ -31,7 +31,9 @@ function resolveIcon(): Electron.NativeImage | undefined {
     }
     iconPath = '';
   }
-  if (!iconPath) return undefined;
+  if (!iconPath) {
+    return undefined;
+  }
   return nativeImage.createFromPath(iconPath);
 }
 
@@ -51,7 +53,9 @@ export type OsNotificationOptions = {
 /** Show a native OS notification. No-op if Notification.isSupported()
  *  returns false (very old OS / sandboxed). */
 export function showOsNotification(opts: OsNotificationOptions): Notification | null {
-  if (!Notification.isSupported()) return null;
+  if (!Notification.isSupported()) {
+    return null;
+  }
   const icon = resolveIcon();
   const n = new Notification({
     title: opts.title,
@@ -61,7 +65,9 @@ export function showOsNotification(opts: OsNotificationOptions): Notification | 
     urgency: opts.urgency,
     icon,
   });
-  if (opts.onClick) n.on('click', opts.onClick);
+  if (opts.onClick) {
+    n.on('click', opts.onClick);
+  }
   n.show();
   return n;
 }

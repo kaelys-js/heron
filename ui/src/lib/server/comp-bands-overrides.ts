@@ -7,11 +7,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { profilePath } from './profile-paths';
-import {
-  DEFAULT_TIER_COMP_BANDS,
-  TIER_COMP_BANDS_LAST_UPDATED_MS,
-  type CompBand,
-} from './negotiation-playbook';
+import { DEFAULT_TIER_COMP_BANDS, TIER_COMP_BANDS_LAST_UPDATED_MS } from './negotiation-playbook';
+import type { CompBand } from './negotiation-playbook';
 
 const OVERRIDE_FILE = 'comp-bands.jsonl';
 
@@ -31,7 +28,9 @@ function overrideFilePath(profileId: string): string {
 export function readOverrides(profileId: string): Map<string, BandOverride> {
   const p = overrideFilePath(profileId);
   const out = new Map<string, BandOverride>();
-  if (!fs.existsSync(p)) return out;
+  if (!fs.existsSync(p)) {
+    return out;
+  }
   let txt = '';
   try {
     txt = fs.readFileSync(p, 'utf8');
@@ -39,10 +38,14 @@ export function readOverrides(profileId: string): Map<string, BandOverride> {
     return out;
   }
   for (const line of txt.split('\n')) {
-    if (!line.trim()) continue;
+    if (!line.trim()) {
+      continue;
+    }
     try {
       const row = JSON.parse(line) as BandOverride;
-      if (row.key) out.set(row.key, row);
+      if (row.key) {
+        out.set(row.key, row);
+      }
     } catch {
       // Corrupt line from a partial write -- skip and continue loading
       // the rest of the override map. The full row will be rewritten
@@ -59,13 +62,15 @@ export function writeOverride(
   const row: BandOverride = { ...override, updatedAt: Date.now() };
   const p = overrideFilePath(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.appendFileSync(p, JSON.stringify(row) + '\n');
+  fs.appendFileSync(p, `${JSON.stringify(row)}\n`);
   return row;
 }
 
 export function deleteOverride(profileId: string, key: string): boolean {
   const overrides = readOverrides(profileId);
-  if (!overrides.has(key)) return false;
+  if (!overrides.has(key)) {
+    return false;
+  }
   // Rewrite the file without the deleted key.
   const remaining = [...overrides.values()].filter((o) => o.key !== key);
   const p = overrideFilePath(profileId);
@@ -96,8 +101,12 @@ export function mergedBands(profileId: string): Record<string, CompBand> {
   }
   // Allow overrides to ADD new tiers the defaults don't cover.
   for (const [k, override] of overrides.entries()) {
-    if (out[k]) continue;
-    if (!override.band.band || !override.band.base || !override.band.total) continue;
+    if (out[k]) {
+      continue;
+    }
+    if (!override.band.band || !override.band.base || !override.band.total) {
+      continue;
+    }
     out[k] = {
       band: override.band.band,
       base: override.band.base,

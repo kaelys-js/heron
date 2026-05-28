@@ -34,16 +34,32 @@ function clamp(n: number, lo: number, hi: number): number {
 }
 
 function normalisedTc(tc: number, median?: number): number {
-  if (!median || median <= 0) return 50;
+  if (!median || median <= 0) {
+    return 50;
+  }
   const ratio = tc / median;
   // 70% of median → 0; matches median → 50; 130%+ → 100.
-  if (ratio >= 1.3) return 100;
-  if (ratio >= 1.2) return 85;
-  if (ratio >= 1.1) return 70;
-  if (ratio >= 1.0) return 60;
-  if (ratio >= 0.9) return 45;
-  if (ratio >= 0.8) return 30;
-  if (ratio >= 0.7) return 15;
+  if (ratio >= 1.3) {
+    return 100;
+  }
+  if (ratio >= 1.2) {
+    return 85;
+  }
+  if (ratio >= 1.1) {
+    return 70;
+  }
+  if (ratio >= 1.0) {
+    return 60;
+  }
+  if (ratio >= 0.9) {
+    return 45;
+  }
+  if (ratio >= 0.8) {
+    return 30;
+  }
+  if (ratio >= 0.7) {
+    return 15;
+  }
   return 0;
 }
 
@@ -51,12 +67,18 @@ export const POST = wrap(
   'offer-ev',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const offer = getOffer(job.id, profileId);
-    if (!offer) badRequest('No offer to evaluate — POST /api/job/[id]/offer first');
+    if (!offer) {
+      badRequest('No offer to evaluate — POST /api/job/[id]/offer first');
+    }
     const cur = currentRound(offer!);
-    if (!cur) badRequest('Offer has no rounds');
+    if (!cur) {
+      badRequest('Offer has no rounds');
+    }
     const body = (await request.json().catch(() => ({}))) as Subjective & WaitInputs;
     const subjective: Required<Subjective> = {
       growthFit: clamp(body.growthFit ?? 3, 1, 5),
@@ -151,11 +173,9 @@ export const POST = wrap(
       verdict,
       breakdown: {
         tcScore,
-        tcEvidence:
-          tc +
-          ' ' +
-          offer!.currency +
-          (offer!.benchmark?.medianTc ? ' vs band ' + offer!.benchmark.medianTc : ' (no band)'),
+        tcEvidence: `${tc} ${
+          offer!.currency
+        }${offer!.benchmark?.medianTc ? ' vs band ' + offer!.benchmark.medianTc : ' (no band)'}`,
         batna,
         batnaEvidence: batna === 0 ? 'no alternative offers logged' : 'best alt vs current ratio',
         subjective,

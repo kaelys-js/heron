@@ -77,12 +77,14 @@ export function listSuggestions(profileId?: string): {
   suggestions: StructuredSuggestion[];
 } {
   const analysis = spawnAnalyzer();
-  if (!analysis || analysis.error) return { analysis, suggestions: [] };
+  if (!analysis || analysis.error) {
+    return { analysis, suggestions: [] };
+  }
   const recs = analysis.recommendations ?? [];
   const suggestions: StructuredSuggestion[] = [];
 
   recs.forEach((rec, idx) => {
-    const id = 'sug-' + idx + '-' + Date.now();
+    const id = `sug-${idx}-${Date.now()}`;
     // Geo-restriction → add US-only / region-restricted keywords to portals.yml.negative
     if (/geo-?restriction|tighten location/i.test(rec.action)) {
       suggestions.push({
@@ -188,7 +190,9 @@ export function applySuggestion(
     switch (s.op) {
       case 'portals-add-negative-keyword': {
         const keywords = s.payload?.keywords ?? [];
-        if (keywords.length === 0) return { ok: false, error: 'No keywords in payload' };
+        if (keywords.length === 0) {
+          return { ok: false, error: 'No keywords in payload' };
+        }
         const portalsPath = profileFilePath(profileId, 'portals');
         // CodeQL js/file-system-race: read directly and treat ENOENT as
         // empty rather than racing existsSync against the read.
@@ -196,9 +200,13 @@ export function applySuggestion(
         try {
           before = fs.readFileSync(portalsPath, 'utf8');
         } catch (e) {
-          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+            throw e;
+          }
         }
-        if (!before) return { ok: false, error: 'portals.yml not found at ' + portalsPath };
+        if (!before) {
+          return { ok: false, error: 'portals.yml not found at ' + portalsPath };
+        }
         const parsed = (yamlParse(before) as Record<string, unknown>) ?? {};
         const tf = (parsed.title_filter as Record<string, unknown>) ?? {};
         const negative = Array.isArray(tf.negative) ? (tf.negative as string[]) : [];
@@ -212,18 +220,20 @@ export function applySuggestion(
         tf.negative = negative;
         parsed.title_filter = tf;
         // Backup + write
-        fs.writeFileSync(portalsPath + '.bak', before);
+        fs.writeFileSync(`${portalsPath}.bak`, before);
         fs.writeFileSync(portalsPath, yamlStringify(parsed));
         return {
           ok: true,
-          summary: 'Added ' + added.length + ' negative keyword(s): ' + added.join(', '),
+          summary: `Added ${added.length} negative keyword(s): ${added.join(', ')}`,
           changedFiles: [path.relative(ROOT, portalsPath)],
         };
       }
 
       case 'profile-set-min-score': {
         const minScore = s.payload?.minScore;
-        if (typeof minScore !== 'number') return { ok: false, error: 'No minScore in payload' };
+        if (typeof minScore !== 'number') {
+          return { ok: false, error: 'No minScore in payload' };
+        }
         const profilePath_ = profileFilePath(profileId, 'profile-yml');
         // CodeQL js/file-system-race: read directly and treat ENOENT as
         // empty rather than racing existsSync against the read.
@@ -231,19 +241,23 @@ export function applySuggestion(
         try {
           before = fs.readFileSync(profilePath_, 'utf8');
         } catch (e) {
-          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+            throw e;
+          }
         }
-        if (!before) return { ok: false, error: 'profile.yml not found' };
+        if (!before) {
+          return { ok: false, error: 'profile.yml not found' };
+        }
         const parsed = (yamlParse(before) as Record<string, unknown>) ?? {};
         const automation = (parsed.automation as Record<string, unknown>) ?? {};
         const previousMin = automation.min_score_to_apply;
         automation.min_score_to_apply = minScore;
         parsed.automation = automation;
-        fs.writeFileSync(profilePath_ + '.bak', before);
+        fs.writeFileSync(`${profilePath_}.bak`, before);
         fs.writeFileSync(profilePath_, yamlStringify(parsed));
         return {
           ok: true,
-          summary: 'min_score_to_apply: ' + (previousMin ?? '(unset)') + ' → ' + minScore,
+          summary: `min_score_to_apply: ${previousMin ?? '(unset)'} → ${minScore}`,
           changedFiles: [path.relative(ROOT, profilePath_)],
         };
       }
@@ -251,7 +265,9 @@ export function applySuggestion(
       case 'profile-flag-archetype-strong':
       case 'profile-flag-archetype-weak': {
         const archetype = s.payload?.archetype;
-        if (!archetype) return { ok: false, error: 'No archetype in payload' };
+        if (!archetype) {
+          return { ok: false, error: 'No archetype in payload' };
+        }
         const target = profileFilePath(profileId, 'profile-md');
         // CodeQL js/file-system-race: read directly and treat ENOENT as
         // empty rather than racing existsSync against the read.
@@ -259,30 +275,23 @@ export function applySuggestion(
         try {
           before = fs.readFileSync(target, 'utf8');
         } catch (e) {
-          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+            throw e;
+          }
         }
         const isStrong = s.op === 'profile-flag-archetype-strong';
         const tag = isStrong ? 'STRONG-FIT' : 'AVOID';
-        const note =
-          '<!-- Pattern-analyzer ' +
-          new Date().toISOString().slice(0, 10) +
-          ': [' +
-          tag +
-          '] "' +
-          archetype +
-          '"' +
-          (s.payload?.conversionRate != null
-            ? ' (' + s.payload.conversionRate + '% conversion)'
-            : '') +
-          ' — ' +
-          s.reasoning +
-          ' -->';
-        const after = before + (before.endsWith('\n') ? '' : '\n') + '\n' + note + '\n';
-        fs.writeFileSync(target + '.bak', before);
+        const note = `<!-- Pattern-analyzer ${new Date().toISOString().slice(0, 10)}: [${tag}] "${
+          archetype
+        }"${
+          s.payload?.conversionRate != null ? ' (' + s.payload.conversionRate + '% conversion)' : ''
+        } — ${s.reasoning} -->`;
+        const after = `${before + (before.endsWith('\n') ? '' : '\n')}\n${note}\n`;
+        fs.writeFileSync(`${target}.bak`, before);
         fs.writeFileSync(target, after);
         return {
           ok: true,
-          summary: 'Annotated _profile.md with [' + tag + '] for "' + archetype + '"',
+          summary: `Annotated _profile.md with [${tag}] for "${archetype}"`,
           changedFiles: [path.relative(ROOT, target)],
         };
       }
@@ -291,7 +300,7 @@ export function applySuggestion(
         return { ok: false, error: 'Manual suggestion — apply by hand' };
 
       default:
-        return { ok: false, error: 'Unknown op: ' + (s as { op: string }).op };
+        return { ok: false, error: `Unknown op: ${(s as { op: string }).op}` };
     }
   } catch (err) {
     reportServerError('pattern-suggestions', 'applySuggestion failed', err, { category: 'system' });
@@ -306,20 +315,32 @@ function profileFilePath(
   kind: 'portals' | 'profile-yml' | 'profile-md',
 ): string {
   if (profileId) {
-    if (kind === 'portals') return profilePath(profileId, 'portals-yml');
-    if (kind === 'profile-yml') return profilePath(profileId, 'profile-yml');
-    if (kind === 'profile-md') return profilePath(profileId, 'profile-md');
+    if (kind === 'portals') {
+      return profilePath(profileId, 'portals-yml');
+    }
+    if (kind === 'profile-yml') {
+      return profilePath(profileId, 'profile-yml');
+    }
+    if (kind === 'profile-md') {
+      return profilePath(profileId, 'profile-md');
+    }
   }
   // Legacy fallbacks at repo root.
-  if (kind === 'portals') return path.join(ROOT, 'portals.yml');
-  if (kind === 'profile-yml') return path.join(ROOT, 'config', 'profile.yml');
-  if (kind === 'profile-md') return path.join(ROOT, 'modes', '_profile.md');
+  if (kind === 'portals') {
+    return path.join(ROOT, 'portals.yml');
+  }
+  if (kind === 'profile-yml') {
+    return path.join(ROOT, 'config', 'profile.yml');
+  }
+  if (kind === 'profile-md') {
+    return path.join(ROOT, 'modes', '_profile.md');
+  }
   return '';
 }
 
 // Used in logging when an apply succeeds.
 export function logSuggestionApplied(s: StructuredSuggestion, summary: string): void {
-  logEvent('pattern-suggestions', 'Applied · ' + s.op, {
+  logEvent('pattern-suggestions', `Applied · ${s.op}`, {
     level: 'success',
     category: 'system',
     message: summary,

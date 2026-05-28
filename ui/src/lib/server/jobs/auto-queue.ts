@@ -18,13 +18,21 @@ import type { ActivityEvent } from '$lib/types';
 function installAutoQueue(): void {
   // installBusListener is idempotent across HMR -- see events.ts.
   installBusListener('auto-queue', (ev: ActivityEvent) => {
-    if (ev.level !== 'success') return;
-    if (ev.source !== 'evaluate') return;
-    if (!/Generate CV finished/i.test(ev.title)) return;
+    if (ev.level !== 'success') {
+      return;
+    }
+    if (ev.source !== 'evaluate') {
+      return;
+    }
+    if (!/Generate CV finished/i.test(ev.title)) {
+      return;
+    }
 
     // Message format set by runEvaluate: 'Report + tailored CV PDF generated · <url>'
     const m = (ev.message ?? '').match(/\bhttps?:\/\/\S+/);
-    if (!m) return;
+    if (!m) {
+      return;
+    }
     const url = m[0].replace(/[)\].,>]+$/, '');
 
     // F11 -- anchor to ev.userId. Without it we'd potentially flip the
@@ -36,7 +44,7 @@ function installAutoQueue(): void {
       logEvent('auto-queue', 'Skipping untagged evaluate event', {
         level: 'warn',
         category: 'application',
-        message: 'event has no userId — cannot scope to a profile · url=' + url,
+        message: `event has no userId — cannot scope to a profile · url=${url}`,
       });
       return;
     }
@@ -46,15 +54,19 @@ function installAutoQueue(): void {
     // every await boundary downstream.
     void runAsUser(ownerUserId, async () => {
       const job = loadAllJobs().find((j) => j.url === url);
-      if (!job) return;
-      if (job.status !== 'Ready' && job.status !== 'Scored' && job.status !== 'New') return;
+      if (!job) {
+        return;
+      }
+      if (job.status !== 'Ready' && job.status !== 'Scored' && job.status !== 'New') {
+        return;
+      }
 
       try {
         markStatus(url, 'Queued', 'auto-queued: CV ready for batch send');
         logEvent('auto-queue', 'Job queued for batch send', {
           level: 'info',
           category: 'application',
-          message: (job.company || '?') + ' · ' + (job.role || '?') + ' — review on /queue',
+          message: `${job.company || '?'} · ${job.role || '?'} — review on /queue`,
         });
       } catch (err) {
         reportServerError('auto-queue', 'Status flip failed', err, { category: 'application' });

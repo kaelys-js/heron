@@ -16,7 +16,9 @@ function shouldWrite(userId: string | undefined | null): userId is string {
 
 /** Mirror an activity event into app.db.activity_events. */
 export function dbWriteActivity(ev: ActivityEvent): void {
-  if (!shouldWrite(ev.userId)) return;
+  if (!shouldWrite(ev.userId)) {
+    return;
+  }
   try {
     appDb
       .insert(activityEvents)
@@ -42,7 +44,9 @@ export function dbWriteActivity(ev: ActivityEvent): void {
 /** Mirror an issue into app.db.issues. Upsert on (user_id, dedupe_key)
  *  matches the JSONL dedup semantics. */
 export function dbWriteIssue(issue: Issue): void {
-  if (!shouldWrite(issue.userId)) return;
+  if (!shouldWrite(issue.userId)) {
+    return;
+  }
   try {
     const row = {
       id: issue.id,
@@ -88,7 +92,9 @@ export function dbWriteIssue(issue: Issue): void {
  *  via visibleToUser(); this defense-in-depth fix prevents user A
  *  resolving user B's issue if the ids ever collide. */
 export function dbResolveIssue(userId: string, id: string, resolvedAt: number): void {
-  if (!shouldWrite(userId)) return;
+  if (!shouldWrite(userId)) {
+    return;
+  }
   try {
     appDb
       .update(issuesTable)

@@ -21,7 +21,9 @@ export const POST = wrap(
     requireOwner(locals);
     const body = await request.json().catch(() => ({}));
     const id = typeof body?.id === 'string' ? body.id : '';
-    if (!id) badRequest('id required');
+    if (!id) {
+      badRequest('id required');
+    }
     return await restoreBackup(id);
   },
 );

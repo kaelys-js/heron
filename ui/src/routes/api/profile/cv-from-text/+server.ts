@@ -44,13 +44,19 @@ export const POST = wrap('cv-from-text', async ({ request }: { request: Request 
     badRequest('expected JSON body with { text: string }');
   }
   const text = body.text.trim();
-  if (!text) badRequest('text is empty');
-  if (text.length < 50) badRequest('text too short to be a CV (need at least 50 characters)');
-  if (text.length > 200_000) badRequest('text too long (>200k chars) — trim it before submitting');
+  if (!text) {
+    badRequest('text is empty');
+  }
+  if (text.length < 50) {
+    badRequest('text too short to be a CV (need at least 50 characters)');
+  }
+  if (text.length > 200_000) {
+    badRequest('text too long (>200k chars) — trim it before submitting');
+  }
 
   logEvent('cv-from-text', 'Converting plain-text CV to markdown', {
     category: 'user',
-    message: text.length.toLocaleString() + ' chars · model=claude-opus-4-7',
+    message: `${text.length.toLocaleString()} chars · model=claude-opus-4-7`,
   });
 
   const out = await complete(SYSTEM_PROMPT, text, { maxTokens: 8000, thinking: false });
@@ -61,17 +67,14 @@ export const POST = wrap('cv-from-text', async ({ request }: { request: Request 
     .replace(/^```(?:markdown|md)?\s*/i, '')
     .replace(/\s*```$/, '')
     .trim();
-  if (!markdown)
+  if (!markdown) {
     badRequest('Claude returned an empty response — try again or paste markdown directly');
+  }
 
   logEvent('cv-from-text', 'Plain-text CV converted', {
     level: 'success',
     category: 'user',
-    message:
-      text.length.toLocaleString() +
-      ' chars in → ' +
-      markdown.length.toLocaleString() +
-      ' chars out',
+    message: `${text.length.toLocaleString()} chars in → ${markdown.length.toLocaleString()} chars out`,
   });
 
   return { markdown };

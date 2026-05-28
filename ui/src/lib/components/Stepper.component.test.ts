@@ -9,7 +9,7 @@ import { render } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import Stepper from './Stepper.svelte';
 
-describe('Stepper — render', () => {
+describe('stepper — render', () => {
   it('renders 3 buttons + 1 input (minus, input, plus)', () => {
     const { container } = render(Stepper, { props: { value: 5 } });
     const buttons = container.querySelectorAll('button');
@@ -48,7 +48,7 @@ describe('Stepper — render', () => {
   });
 });
 
-describe('Stepper — interactions', () => {
+describe('stepper — interactions', () => {
   it('clicking + button increments by step', async () => {
     const onchange = vi.fn();
     const { container } = render(Stepper, { props: { value: 5, step: 1, onchange } });

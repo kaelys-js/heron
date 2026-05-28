@@ -57,7 +57,9 @@ vi.mock('./profiles-db', () => ({
     dbCalls.push({ fn: 'rename', args: [uid, slug, name] });
     const list = profilesByUser[uid] ?? [];
     const p = list.find((x) => x.slug === slug);
-    if (!p) throw new Error('not found');
+    if (!p) {
+      throw new Error('not found');
+    }
     p.name = name;
     p.updatedAt = Date.now();
     return p;
@@ -66,7 +68,9 @@ vi.mock('./profiles-db', () => ({
     dbCalls.push({ fn: 'recolor', args: [uid, slug, color] });
     const list = profilesByUser[uid] ?? [];
     const p = list.find((x) => x.slug === slug);
-    if (!p) throw new Error('not found');
+    if (!p) {
+      throw new Error('not found');
+    }
     p.color = color;
     p.updatedAt = Date.now();
     return p;

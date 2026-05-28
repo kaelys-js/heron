@@ -11,7 +11,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { error } from '@sveltejs/kit';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { resetProfile, type ResetScope } from '$lib/server/profile';
+import { resetProfile } from '$lib/server/profile';
+import type { ResetScope } from '$lib/server/profile';
 import { getActiveProfile, getProfileBySlug } from '$lib/server/profiles-db';
 import { requireUserId, requireOwner } from '$lib/server/auth-helpers';
 import { DATA_ROOT, ROOT } from '$lib/server/files';
@@ -69,8 +70,8 @@ export const POST = wrap(
       // Onboarding reset is shared-state -- owner-only.
       requireOwner(locals);
       try {
-        fs.copyFileSync(ONBOARDING_STATE, ONBOARDING_STATE + '.bak');
-        result.backups.push(ONBOARDING_STATE + '.bak');
+        fs.copyFileSync(ONBOARDING_STATE, `${ONBOARDING_STATE}.bak`);
+        result.backups.push(`${ONBOARDING_STATE}.bak`);
       } catch {
         /* non-fatal */
       }
@@ -98,18 +99,12 @@ export const POST = wrap(
         'Pipeline, applications, reports, projects, autopilot, activity feed, and story bank all wiped (with .bak siblings).',
     };
 
-    logEvent('profile-reset', titles[scope] + ' · ' + profileSlug, {
+    logEvent('profile-reset', `${titles[scope]} · ${profileSlug}`, {
       level: 'warn',
       category: 'user',
-      message:
-        'profile=' +
-        profileSlug +
-        ' · ' +
-        result.resetFiles.length +
-        ' file(s) reset · ' +
-        result.backups.length +
-        ' backup(s) at .bak. ' +
-        summaries[scope],
+      message: `profile=${profileSlug} · ${result.resetFiles.length} file(s) reset · ${
+        result.backups.length
+      } backup(s) at .bak. ${summaries[scope]}`,
     });
     return result;
   },

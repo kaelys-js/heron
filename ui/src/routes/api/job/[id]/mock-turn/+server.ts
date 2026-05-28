@@ -14,6 +14,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 type Turn = { question: string; answer: string; score?: number | null };
 type Stage = 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
 
@@ -68,8 +69,11 @@ function spawnMockTurn(args: {
     });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolve({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -89,7 +93,9 @@ function parseTurnOutput(stdout: string): {
   let score: number | null = null;
   if (scoreRaw && scoreRaw !== 'NULL' && scoreRaw !== 'null') {
     const n = parseInt(scoreRaw, 10);
-    if (Number.isFinite(n) && n >= 1 && n <= 5) score = n;
+    if (Number.isFinite(n) && n >= 1 && n <= 5) {
+      score = n;
+    }
   }
   // Session-summary is multi-line; capture everything after the marker.
   const sessionMatch = /SESSION_SUMMARY:([\s\S]+)$/i.exec(stdout);
@@ -117,27 +123,23 @@ function saveTranscript(
     .toISOString()
     .replace(/[:.]/g, '-')
     .replace(/-\d{3}Z$/, 'Z');
-  const filename =
-    slugify(company) +
-    '-' +
-    slugify(role) +
-    '-mock-' +
-    payload.stage.toLowerCase() +
-    '-' +
-    ts +
-    '.md';
+  const filename = `${slugify(company)}-${slugify(role)}-mock-${payload.stage.toLowerCase()}-${
+    ts
+  }.md`;
   const dest = path.join(profilePath(profileId, 'interview-prep-dir'), filename);
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  let md = '# Mock Interview · ' + company + ' · ' + role + ' · ' + payload.stage + '\n\n';
-  md += '_Recorded ' + new Date(payload.startedAt).toISOString() + '_\n\n';
+  let md = `# Mock Interview · ${company} · ${role} · ${payload.stage}\n\n`;
+  md += `_Recorded ${new Date(payload.startedAt).toISOString()}_\n\n`;
   for (let i = 0; i < payload.history.length; i++) {
     const t = payload.history[i];
-    md += '## Q' + (i + 1) + ': ' + t.question + '\n\n';
-    md += '**Your answer:** ' + (t.answer || '(skipped)') + '\n\n';
-    if (t.score != null) md += '**Score:** ' + t.score + '/5\n\n';
+    md += `## Q${i + 1}: ${t.question}\n\n`;
+    md += `**Your answer:** ${t.answer || '(skipped)'}\n\n`;
+    if (t.score != null) {
+      md += '**Score:** ' + t.score + '/5\n\n';
+    }
   }
   if (payload.summary) {
-    md += '\n## Session summary\n\n' + payload.summary + '\n';
+    md += `\n## Session summary\n\n${payload.summary}\n`;
   }
   fs.writeFileSync(dest, md);
   return path.relative(ROOT, dest);
@@ -147,7 +149,9 @@ export const POST = wrap(
   'mock-turn',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
 
     const body = await request.json().catch(() => ({}));

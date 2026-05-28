@@ -23,7 +23,7 @@ export type BenchmarkQuery = {
 /** Spawn the AGENT CLI with the benchmark deep-research prompt. The CLI
  *  is responsible for hitting public pages (or using its own browsing
  *  tools) and returning a JSON band the spec below. */
-const BENCHMARK_PROMPT_PREFIX = '/' + CLI_NAMESPACE + ' deep --benchmark-comp ';
+const BENCHMARK_PROMPT_PREFIX = `/${CLI_NAMESPACE} deep --benchmark-comp `;
 
 const BENCHMARK_TIMEOUT_MS = 90_000;
 
@@ -68,7 +68,9 @@ export async function fetchBenchmark(q: BenchmarkQuery): Promise<OfferBenchmark 
       clearTimeout(timer);
       const m = stdout.match(/\{[\s\S]*?"medianTc"[\s\S]*?\}/);
       if (!m) {
-        if (stderr) reportServerError('comp-benchmark', 'no JSON in output', stderr.slice(0, 400));
+        if (stderr) {
+          reportServerError('comp-benchmark', 'no JSON in output', stderr.slice(0, 400));
+        }
         resolveP(null);
         return;
       }

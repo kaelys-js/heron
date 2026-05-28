@@ -20,9 +20,13 @@ export const POST = wrap(
   'queue-apply',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
-    if (!job.url) badRequest('Job has no URL — cannot queue apply');
+    if (!job.url) {
+      badRequest('Job has no URL — cannot queue apply');
+    }
 
     // Idempotency: don't queue twice.
     const blocking = new Set(['Queued', 'Applying', 'Applied', 'Screened', 'Interview', 'Offer']);
@@ -30,7 +34,7 @@ export const POST = wrap(
       return {
         ok: false,
         already: job.status,
-        message: 'Job already at status ' + job.status + ' — not re-queuing.',
+        message: `Job already at status ${job.status} — not re-queuing.`,
       };
     }
 
@@ -41,17 +45,16 @@ export const POST = wrap(
       return {
         ok: false,
         capped: true,
-        message:
-          'Daily apply cap (' +
-          cap +
-          ') reached. Try again tomorrow or raise the cap on /autopilot.',
+        message: `Daily apply cap (${
+          cap
+        }) reached. Try again tomorrow or raise the cap on /autopilot.`,
       };
     }
 
     // Flip status to Queued + seed apply-state.
     markStatus(profileId, job.url, 'Queued', 'Queued for autonomous apply');
 
-    const portal = detectPortal(job.url).portal;
+    const { portal } = detectPortal(job.url);
     writeApplyState({
       jobId: job.id,
       url: job.url,
@@ -62,10 +65,10 @@ export const POST = wrap(
       stepHistory: ['queued'],
     });
 
-    logEvent('queue-apply', 'Queued for apply · ' + (job.company || '?'), {
+    logEvent('queue-apply', `Queued for apply · ${job.company || '?'}`, {
       level: 'info',
       category: 'application',
-      message: portal + ' · ' + job.url,
+      message: `${portal} · ${job.url}`,
       profileId,
     });
 

@@ -57,7 +57,7 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
           const w = BrowserWindow.getFocusedWindow();
           if (w) {
             const url = w.webContents.getURL();
-            const target = url.replace(/\/[^/]*$/, '') + '/pipeline';
+            const target = `${url.replace(/\/[^/]*$/, '')}/pipeline`;
             w.webContents.loadURL(target).catch(() => {});
           }
         },
@@ -69,7 +69,7 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
           const w = BrowserWindow.getFocusedWindow();
           if (w) {
             const url = w.webContents.getURL();
-            const target = new URL(url).origin + '/pipeline';
+            const target = `${new URL(url).origin}/pipeline`;
             w.webContents.loadURL(target).catch(() => {});
           }
         },

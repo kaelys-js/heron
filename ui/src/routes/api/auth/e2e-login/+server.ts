@@ -18,7 +18,9 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24; // 24h -- ample for any single CI ru
 export const POST = async ({ request }: { request: Request }) => {
   // Guard 1: env-gated. Without HERON_E2E_DATA_DIR the endpoint is
   // indistinguishable from a missing route.
-  if (!process.env.HERON_E2E_DATA_DIR) throw error(404, 'Not Found');
+  if (!process.env.HERON_E2E_DATA_DIR) {
+    throw error(404, 'Not Found');
+  }
 
   // Guard 2: hardcoded principal. Reject any attempt to mint a session
   // for any other userId.
@@ -28,7 +30,9 @@ export const POST = async ({ request }: { request: Request }) => {
   } catch {
     throw error(404, 'Not Found');
   }
-  if (body?.userId !== E2E_USER_ID) throw error(404, 'Not Found');
+  if (body?.userId !== E2E_USER_ID) {
+    throw error(404, 'Not Found');
+  }
 
   // Confirm the seeded user actually exists. global-setup.ts inserts
   // it; if it's missing, the test-infra wiring is broken and we want

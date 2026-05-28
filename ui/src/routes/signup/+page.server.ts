@@ -23,7 +23,9 @@ import { sql } from 'drizzle-orm';
  * (`pnpm reset-data` nukes auth.db + app.db together).
  */
 export async function load({ locals, url }: { locals: App.Locals; url: URL }) {
-  if (locals.user) throw redirect(302, '/');
+  if (locals.user) {
+    throw redirect(302, '/');
+  }
   // Intentionally ignore `url.searchParams.get('first')` -- see comment
   // above. Source of truth: DB count.
   void url;

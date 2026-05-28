@@ -4,7 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfirmGate } from './confirm.svelte';
 
-describe('ConfirmGate — every common key shape', () => {
+describe('confirmGate — every common key shape', () => {
   let gate: ConfirmGate;
   beforeEach(() => {
     vi.useFakeTimers();
@@ -22,7 +22,7 @@ describe('ConfirmGate — every common key shape', () => {
     'reset',
     'job:abc123',
     'profile:default',
-    'extremely-long-key-' + 'x'.repeat(100),
+    `extremely-long-key-${'x'.repeat(100)}`,
     'unicode-🎉-key',
     'with spaces and dashes',
     'a',
@@ -35,7 +35,7 @@ describe('ConfirmGate — every common key shape', () => {
   });
 });
 
-describe('ConfirmGate — custom timeout values', () => {
+describe('confirmGate — custom timeout values', () => {
   it.each([100, 250, 500, 1000, 2000, 5000])('timeoutMs=%i', (ms) => {
     vi.useFakeTimers();
     const g = new ConfirmGate(ms);
@@ -49,25 +49,31 @@ describe('ConfirmGate — custom timeout values', () => {
   });
 });
 
-describe('ConfirmGate — multi-gate isolation', () => {
+describe('confirmGate — multi-gate isolation', () => {
   it.each([1, 2, 3, 5, 10])('%i independent gates', (n) => {
     vi.useFakeTimers();
     const gates = Array.from({ length: n }, () => new ConfirmGate());
     // Arm each with the same key
-    for (const g of gates) g.trigger('shared-key');
-    for (const g of gates) expect(g.isArmed('shared-key')).toBe(true);
+    for (const g of gates) {
+      g.trigger('shared-key');
+    }
+    for (const g of gates) {
+      expect(g.isArmed('shared-key')).toBe(true);
+    }
     // Disarm only the first one
     gates[0].disarm();
     expect(gates[0].isArmed('shared-key')).toBe(false);
     for (let i = 1; i < n; i++) {
       expect(gates[i].isArmed('shared-key')).toBe(true);
     }
-    for (const g of gates) g.destroy();
+    for (const g of gates) {
+      g.destroy();
+    }
     vi.useRealTimers();
   });
 });
 
-describe('ConfirmGate — switching keys disarms previous', () => {
+describe('confirmGate — switching keys disarms previous', () => {
   it.each([
     ['a', 'b'],
     ['delete', 'clear'],

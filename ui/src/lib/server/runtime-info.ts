@@ -150,9 +150,13 @@ function detectPython(): {
 }
 
 function maskKey(v: string | undefined): string | undefined {
-  if (!v) return undefined;
-  if (v.length < 8) return '****';
-  return '****' + v.slice(-4);
+  if (!v) {
+    return undefined;
+  }
+  if (v.length < 8) {
+    return '****';
+  }
+  return `****${v.slice(-4)}`;
 }
 
 function eventsInWindow(predicate: (ev: ActivityEvent) => boolean): {
@@ -169,11 +173,19 @@ function eventsInWindow(predicate: (ev: ActivityEvent) => boolean): {
   // correctly. `bus.recent()` (unscoped) would count user A's anthropic
   // API errors against user B's "last 24h" stats.
   for (const ev of bus.recentForUser(currentUserIdOrDefault())) {
-    if (!predicate(ev)) continue;
-    if (ev.ts < cutoff) continue;
+    if (!predicate(ev)) {
+      continue;
+    }
+    if (ev.ts < cutoff) {
+      continue;
+    }
     count++;
-    if (lastUsed == null || ev.ts > lastUsed) lastUsed = ev.ts;
-    if (ev.level === 'error' && (!lastError || ev.ts > lastError.ts)) lastError = ev;
+    if (lastUsed == null || ev.ts > lastUsed) {
+      lastUsed = ev.ts;
+    }
+    if (ev.level === 'error' && (!lastError || ev.ts > lastError.ts)) {
+      lastError = ev;
+    }
   }
   return { last24h: count, lastUsedAt: lastUsed, lastError };
 }
@@ -196,16 +208,10 @@ export function buildRuntimeReport(): RuntimeReport {
     status: 'healthy',
     badge: process.version,
     details: [
-      'SvelteKit ' + sk + ' · Svelte ' + svelte + ' · Vite ' + vite,
-      'PID ' +
-        process.pid +
-        ' · ' +
-        process.platform +
-        '/' +
-        process.arch +
-        ' · uptime ' +
-        Math.round(process.uptime()) +
-        's',
+      `SvelteKit ${sk} · Svelte ${svelte} · Vite ${vite}`,
+      `PID ${process.pid} · ${process.platform}/${process.arch} · uptime ${Math.round(
+        process.uptime(),
+      )}s`,
     ],
     powers: [
       'Dashboard server (this UI)',
@@ -234,14 +240,11 @@ export function buildRuntimeReport(): RuntimeReport {
     badge: py.exists ? (py.version ?? 'detected') : 'missing',
     details: py.exists
       ? ([
-          (py.packagesCount ?? 0) + ' packages installed',
-          'jobspy ' +
-            (py.hasJobspy ? '✓' : '✗') +
-            ' · playwright ' +
-            (py.hasPlaywright ? '✓' : '✗') +
-            ' · google-genai ' +
-            (py.hasGoogleGenAI ? '✓' : '✗'),
-          py.sitePackagesPath ? py.sitePackagesPath.replace(ROOT + '/', '') : '',
+          `${py.packagesCount ?? 0} packages installed`,
+          `jobspy ${py.hasJobspy ? '✓' : '✗'} · playwright ${
+            py.hasPlaywright ? '✓' : '✗'
+          } · google-genai ${py.hasGoogleGenAI ? '✓' : '✗'}`,
+          py.sitePackagesPath ? py.sitePackagesPath.replace(`${ROOT}/`, '') : '',
         ].filter(Boolean) as string[])
       : [
           'Run: python3 -m venv .venv && .venv/bin/pip install python-jobspy playwright google-generativeai',

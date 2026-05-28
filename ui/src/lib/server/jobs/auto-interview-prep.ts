@@ -25,15 +25,23 @@ function installAutoInterviewPrep(): void {
   // installBusListener is idempotent across HMR -- see events.ts.
   installBusListener('auto-interview-prep', (ev: ActivityEvent) => {
     // We only care about "Status changed to Interview" success events
-    if (ev.level !== 'success') return;
-    if (ev.source !== 'status') return;
-    if (!/Status changed to Interview\b/i.test(ev.title)) return;
+    if (ev.level !== 'success') {
+      return;
+    }
+    if (ev.source !== 'status') {
+      return;
+    }
+    if (!/Status changed to Interview\b/i.test(ev.title)) {
+      return;
+    }
 
     // The status endpoint puts "<company> · <role>" in the message field.
     // Match the row in applications.md by company+role to find the jobId.
     const message = ev.message ?? '';
     const [companyRaw, roleRaw] = message.split('·').map((s) => s.trim());
-    if (!companyRaw) return;
+    if (!companyRaw) {
+      return;
+    }
 
     // F11 -- anchor to ev.userId. Status events ARE always tagged (the
     // /api/status endpoint runs inside requireUserId), but defensively
@@ -55,13 +63,17 @@ function installAutoInterviewPrep(): void {
           j.company.trim().toLowerCase() === companyRaw.toLowerCase() &&
           (!roleRaw || j.role.trim().toLowerCase() === roleRaw.toLowerCase()),
       );
-      if (!match) return;
+      if (!match) {
+        return;
+      }
       if (!match.reportFile) {
         // No deep eval yet -- the prep would be empty; skip.
         return;
       }
-      const flightKey = ownerUserId + ':' + match.id;
-      if (inFlight.has(flightKey)) return;
+      const flightKey = `${ownerUserId}:${match.id}`;
+      if (inFlight.has(flightKey)) {
+        return;
+      }
       if (readPersistedInterviewPrep(match.id)) {
         // Already have a prep on disk -- don't burn tokens regenerating.
         return;
@@ -71,14 +83,14 @@ function installAutoInterviewPrep(): void {
       logEvent('auto-interview-prep', 'Pre-generating interview brief', {
         level: 'info',
         category: 'task',
-        message: match.company + ' · ' + match.role,
+        message: `${match.company} · ${match.role}`,
       });
       try {
         await generateInterviewPrep(match.reportFile, undefined, match.id);
         logEvent('auto-interview-prep', 'Interview brief ready', {
           level: 'success',
           category: 'task',
-          message: match.company + ' · ' + match.role + ' — open the Interview Prep tab',
+          message: `${match.company} · ${match.role} — open the Interview Prep tab`,
         });
       } catch (err) {
         reportServerError('auto-interview-prep', 'Brief generation failed', err, {

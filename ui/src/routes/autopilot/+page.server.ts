@@ -1,4 +1,5 @@
-import { readConfig, nextRunAt, type Schedule } from '$lib/server/autopilot';
+import { readConfig, nextRunAt } from '$lib/server/autopilot';
+import type { Schedule } from '$lib/server/autopilot';
 import { bus } from '$lib/server/events';
 import { listSummaries } from '$lib/server/jobs';
 import { readLastRun } from '$lib/server/job-last-run';
@@ -16,16 +17,20 @@ function virtualSchedules(): Schedule[] {
   const summaries = listSummaries();
   const out: Schedule[] = [];
   for (const s of summaries) {
-    if (!s.allowManual) continue;
+    if (!s.allowManual) {
+      continue;
+    }
     const t = s.trigger;
-    if (t.type !== 'daily' && t.type !== 'weekly') continue;
+    if (t.type !== 'daily' && t.type !== 'weekly') {
+      continue;
+    }
     const last = readLastRun(s.id);
     const triggerForSchedule =
       t.type === 'daily'
         ? { type: 'daily' as const, hour: t.hour, minute: t.minute, weekdays: t.weekdays ?? [] }
         : { type: 'weekly' as const, dayOfWeek: t.dayOfWeek, hour: t.hour, minute: t.minute };
     out.push({
-      id: 'auto:' + s.id,
+      id: `auto:${s.id}`,
       name: s.label,
       description: s.description,
       details: [s.description],

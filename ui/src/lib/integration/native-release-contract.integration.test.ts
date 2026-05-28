@@ -56,7 +56,7 @@ describe('native-release contract — store version derives from package.json', 
       /package\.json/,
     );
   });
-  it('Android versionName derives from package.json $.version', () => {
+  it('android versionName derives from package.json $.version', () => {
     expect(buildGradle, 'versionName must read package.json, not a literal').toMatch(
       /package\.json/,
     );
@@ -68,16 +68,16 @@ describe('native-release contract — App Store submission lane (#4E)', () => {
     expect(iosFastfile).toContain('lane :app_store');
     expect(iosFastfile).toContain('upload_to_app_store');
   });
-  it('NEVER auto-submits — submit_for_review is false (Cole does the real submit)', () => {
+  it('nEVER auto-submits — submit_for_review is false (Cole does the real submit)', () => {
     // The lane preps everything but stops before the irreversible Submit.
     expect(iosFastfile).toMatch(/submit_for_review:\s*false/);
     expect(iosFastfile).not.toMatch(/submit_for_review:\s*true/);
   });
-  it('What’s New derives from CHANGELOG.md (Release Please source)', () => {
+  it('what’s New derives from CHANGELOG.md (Release Please source)', () => {
     expect(iosFastfile).toContain('release_notes_for_version');
     expect(iosFastfile, 'reads the CHANGELOG').toContain('CHANGELOG.md');
   });
-  it('Android production lane promotes internal -> production', () => {
+  it('android production lane promotes internal -> production', () => {
     const androidFastfile = read('ui/android/fastlane/Fastfile');
     expect(androidFastfile).toContain('lane :production');
     expect(androidFastfile).toMatch(/track_promote_to:\s*["']production["']/);
@@ -139,7 +139,7 @@ describe('native-release contract — iOS signing via match', () => {
       /\bmatch\(/,
     );
   });
-  it('ASC API key decoded from base64 (is_key_content_base64)', () => {
+  it('aSC API key decoded from base64 (is_key_content_base64)', () => {
     expect(iosFastfile).toContain('is_key_content_base64');
   });
   it('bootstrap auto-registers missing App IDs + App Groups (match never creates them)', () => {
@@ -153,7 +153,7 @@ describe('native-release contract — iOS signing via match', () => {
 });
 
 describe('native-release contract — App Store privacy label + age rating (#4D)', () => {
-  it('ITSAppUsesNonExemptEncryption derives from brand export-compliance', () => {
+  it('iTSAppUsesNonExemptEncryption derives from brand export-compliance', () => {
     expect(applyBrand, 'apply-brand must derive the encryption flag').toContain(
       'ITSAppUsesNonExemptEncryption',
     );
@@ -202,7 +202,7 @@ describe('native-release contract — App Store privacy label + age rating (#4D)
 });
 
 describe('native-release contract — TestFlight internal delivery invites the maintainer', () => {
-  it('APPLE_ID flows setup -> workflow so the lane has someone to invite', () => {
+  it('aPPLE_ID flows setup -> workflow so the lane has someone to invite', () => {
     expect(setup, 'APPLE_ID not produced by setup.mjs').toContain('APPLE_ID');
     // Without this the build-ios lane sees ENV["APPLE_ID"] empty and logs
     // "already covers " (empty) -- the maintainer is never added to the group.
@@ -261,7 +261,7 @@ describe('native-release contract — macOS notarize key is a path, not base64',
 });
 
 describe('native-release contract — no dead pushed secret', () => {
-  it('PLAY_STORE_PACKAGE_NAME is dropped (Fastfile uses the constant)', () => {
+  it('pLAY_STORE_PACKAGE_NAME is dropped (Fastfile uses the constant)', () => {
     expect(setup, 'PLAY_STORE_PACKAGE_NAME is dead -- drop it').not.toContain(
       'PLAY_STORE_PACKAGE_NAME',
     );

@@ -23,7 +23,9 @@ type ProbeResult = {
 
 async function probeAnthropic(): Promise<ProbeResult> {
   const key = getCredential(currentUserIdOrDefault(), 'ANTHROPIC_API_KEY');
-  if (!key) return { provider: 'anthropic', ok: false, message: 'No key configured' };
+  if (!key) {
+    return { provider: 'anthropic', ok: false, message: 'No key configured' };
+  }
   if (!key.startsWith('sk-ant-')) {
     return {
       provider: 'anthropic',
@@ -56,20 +58,21 @@ async function probeAnthropic(): Promise<ProbeResult> {
 
 async function probeGemini(): Promise<ProbeResult> {
   const key = getCredential(currentUserIdOrDefault(), 'GEMINI_API_KEY');
-  if (!key) return { provider: 'gemini', ok: false, message: 'No key configured' };
+  if (!key) {
+    return { provider: 'gemini', ok: false, message: 'No key configured' };
+  }
   if (!key.startsWith('AIza')) {
     return { provider: 'gemini', ok: false, message: 'Key format looks wrong (expected AIza…)' };
   }
   try {
-    const url =
-      'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`;
     const r = await fetch(url, { method: 'GET' });
     if (!r.ok) {
       const body = await r.text().catch(() => '');
       return {
         provider: 'gemini',
         ok: false,
-        message: 'Gemini API rejected the key (' + r.status + ')',
+        message: `Gemini API rejected the key (${r.status})`,
         info: { status: r.status, body: body.slice(0, 200) },
       };
     }
@@ -78,7 +81,7 @@ async function probeGemini(): Promise<ProbeResult> {
     return {
       provider: 'gemini',
       ok: true,
-      message: 'Connected · ' + count + ' models available',
+      message: `Connected · ${count} models available`,
       info: { models: count },
     };
   } catch (e: any) {
@@ -94,19 +97,16 @@ async function probeAdzuna(): Promise<ProbeResult> {
     return { provider: 'adzuna', ok: false, message: 'Both APP_ID and APP_KEY are required' };
   }
   try {
-    const url =
-      'https://api.adzuna.com/v1/api/jobs/ca/search/1?app_id=' +
-      encodeURIComponent(id) +
-      '&app_key=' +
-      encodeURIComponent(key) +
-      '&results_per_page=1&content-type=application/json';
+    const url = `https://api.adzuna.com/v1/api/jobs/ca/search/1?app_id=${encodeURIComponent(
+      id,
+    )}&app_key=${encodeURIComponent(key)}&results_per_page=1&content-type=application/json`;
     const r = await fetch(url);
     if (!r.ok) {
       const body = await r.text().catch(() => '');
       return {
         provider: 'adzuna',
         ok: false,
-        message: 'Adzuna API rejected the credentials (' + r.status + ')',
+        message: `Adzuna API rejected the credentials (${r.status})`,
         info: { status: r.status, body: body.slice(0, 200) },
       };
     }
@@ -114,7 +114,7 @@ async function probeAdzuna(): Promise<ProbeResult> {
     return {
       provider: 'adzuna',
       ok: true,
-      message: 'Connected · ' + (j?.count ?? 0).toLocaleString() + ' jobs in CA index',
+      message: `Connected · ${(j?.count ?? 0).toLocaleString()} jobs in CA index`,
       info: { count: j?.count ?? 0 },
     };
   } catch (e: any) {
@@ -138,7 +138,7 @@ export const POST = wrap(
       badRequest('expected { provider } to be one of: anthropic, gemini, adzuna');
     }
     const result = await PROBES[provider]();
-    logEvent('settings', 'Tested ' + provider, {
+    logEvent('settings', `Tested ${provider}`, {
       level: result.ok ? 'success' : 'warn',
       category: 'user',
       message: result.message,

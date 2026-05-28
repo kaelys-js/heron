@@ -110,11 +110,15 @@ const INTERVIEW_SCHEDULING_PATTERNS = [
 // Returns the matched literal "calendly.com" snippet when present, else undefined.
 function findCalendlyEvidence(text: string): string | undefined {
   const idx = text.toLowerCase().indexOf('calendly.com');
-  if (idx < 0) return undefined;
+  if (idx < 0) {
+    return undefined;
+  }
   // Preserve original \bcalendly\.com\b semantics: require the trailing char
   // (if any) to NOT be a word character (a-z, 0-9, underscore).
   const tail = text.toLowerCase().charCodeAt(idx + 'calendly.com'.length);
-  if (Number.isNaN(tail)) return 'calendly.com'; // end of string
+  if (Number.isNaN(tail)) {
+    return 'calendly.com';
+  } // end of string
   const isWord = (tail >= 97 && tail <= 122) || (tail >= 48 && tail <= 57) || tail === 95; // a-z, 0-9, _
   return isWord ? undefined : 'calendly.com';
 }
@@ -155,7 +159,9 @@ const STAGE_PATTERNS: Array<[RegExp, InterviewStage]> = [
 function extractEvidence(text: string, patterns: RegExp[]): string | undefined {
   for (const p of patterns) {
     const m = p.exec(text);
-    if (m) return m[0].slice(0, 120);
+    if (m) {
+      return m[0].slice(0, 120);
+    }
   }
   return undefined;
 }
@@ -164,7 +170,9 @@ function extractSenderDomain(from: string): string {
   const m = /<([^>]+)>/.exec(from);
   const addr = m ? m[1] : from;
   const at = addr.lastIndexOf('@');
-  if (at < 0) return '';
+  if (at < 0) {
+    return '';
+  }
   return addr
     .slice(at + 1)
     .toLowerCase()
@@ -181,7 +189,7 @@ function extractSenderDomain(from: string): string {
 export function classifyEmail(email: EmailInput): Classification {
   const subj = email.subject || '';
   const body = email.body || '';
-  const combined = subj + '\n' + body;
+  const combined = `${subj}\n${body}`;
   const senderDomain = extractSenderDomain(email.from);
 
   // Offer FIRST -- offer + take-home patterns can both appear in long emails
@@ -262,9 +270,11 @@ export function matchEmailToJob(
   cls: Classification,
 ): { jobId: string; profileId?: string; url: string; company: string; status: string } | null {
   const allJobs = loadAllJobs('all');
-  if (allJobs.length === 0) return null;
+  if (allJobs.length === 0) {
+    return null;
+  }
 
-  const senderDomain = cls.senderDomain;
+  const { senderDomain } = cls;
   // Strip common ATS-relay prefixes (greenhouse-mail.io, hiring.team, etc.)
   const senderHost = senderDomain.replace(
     /^(mail\.|notifications?\.|recruiting\.|talent\.|hello@|jobs?@)/,
@@ -282,18 +292,27 @@ export function matchEmailToJob(
   }> = [];
   const subj = (email.subject || '').toLowerCase();
   const body = (email.body || '').toLowerCase().slice(0, 4000);
-  const combined = subj + ' ' + body;
+  const combined = `${subj} ${body}`;
 
   for (const j of allJobs) {
-    if (!j.company || !j.url) continue;
+    if (!j.company || !j.url) {
+      continue;
+    }
     let score = 0;
     const companyLower = j.company.toLowerCase();
     // Direct mention in subject is the strongest signal.
-    if (subj.includes(companyLower)) score += 5;
-    else if (combined.includes(companyLower)) score += 2;
+    if (subj.includes(companyLower)) {
+      score += 5;
+    } else if (combined.includes(companyLower)) {
+      score += 2;
+    }
     // Sender domain contains the company name (e.g. recruiter@stripe.com)
-    if (senderHost.includes(companyLower.replace(/\s+/g, ''))) score += 4;
-    if (companyLower.replace(/\s+/g, '').includes(senderHost.split('.')[0])) score += 2;
+    if (senderHost.includes(companyLower.replace(/\s+/g, ''))) {
+      score += 4;
+    }
+    if (companyLower.replace(/\s+/g, '').includes(senderHost.split('.')[0])) {
+      score += 2;
+    }
     // Prefer jobs we've already applied to over not-yet-applied
     if (
       j.status === 'Applied' ||
@@ -320,10 +339,14 @@ export function matchEmailToJob(
     }
   }
 
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) {
+    return null;
+  }
   candidates.sort((a, b) => b.score - a.score);
   // Require a minimum score to avoid bad matches.
-  if (candidates[0].score < 3) return null;
+  if (candidates[0].score < 3) {
+    return null;
+  }
   return candidates[0];
 }
 
@@ -368,7 +391,7 @@ export function planActions(
     return actions;
   }
 
-  const note = `Email-reactor: ${cls.kind}${cls.evidence ? ' — "' + cls.evidence.slice(0, 60) + '"' : ''}`;
+  const note = `Email-reactor: ${cls.kind}${cls.evidence ? ` — "${cls.evidence.slice(0, 60)}"` : ''}`;
 
   if (cls.kind === 'rejection') {
     actions.push({
@@ -448,7 +471,7 @@ export function executeActions(actions: EmailAction[]): ExecutionResult {
       switch (a.type) {
         case 'mark-status':
           markStatus(a.profileId, a.url, a.status as never, a.note);
-          logEvent('email-reactor', 'Status auto-update · ' + a.status, {
+          logEvent('email-reactor', `Status auto-update · ${a.status}`, {
             level: 'success',
             category: 'application',
             message: a.note,
@@ -461,7 +484,7 @@ export function executeActions(actions: EmailAction[]): ExecutionResult {
           logEvent('email-reactor', 'Recruiter lead logged', {
             level: 'info',
             category: 'application',
-            message: a.sender + ' · ' + a.subject.slice(0, 80),
+            message: `${a.sender} · ${a.subject.slice(0, 80)}`,
           });
           result.executed++;
           break;
@@ -534,16 +557,20 @@ export function executeActions(actions: EmailAction[]): ExecutionResult {
 function appendLead(lead: { sender: string; subject: string; ts: number }): void {
   const f = leadsFile();
   fs.mkdirSync(path.dirname(f), { recursive: true });
-  fs.appendFileSync(f, JSON.stringify(lead) + '\n');
+  fs.appendFileSync(f, `${JSON.stringify(lead)}\n`);
 }
 
 export function listLeads(): Array<{ sender: string; subject: string; ts: number }> {
   const f = leadsFile();
-  if (!fs.existsSync(f)) return [];
+  if (!fs.existsSync(f)) {
+    return [];
+  }
   const txt = fs.readFileSync(f, 'utf8');
   const out: Array<{ sender: string; subject: string; ts: number }> = [];
   for (const line of txt.split('\n')) {
-    if (!line.trim()) continue;
+    if (!line.trim()) {
+      continue;
+    }
     try {
       // Filter to the simple {sender, subject, ts} shape this module
       // writes. inbound-leads.ts may also write structured Lead objects
@@ -569,16 +596,14 @@ function fireBackgroundTechPrep(jobId: string, profileId?: string): void {
   // We hit our own endpoint via fetch() so we go through the standard
   // tech-prep generation path. The localhost URL is hard-coded; in
   // production this should be configurable.
-  const url =
-    '/api/job/' +
-    encodeURIComponent(jobId) +
-    '/tech-prep' +
-    (profileId ? '?profile=' + encodeURIComponent(profileId) : '');
+  const url = `/api/job/${encodeURIComponent(jobId)}/tech-prep${
+    profileId ? '?profile=' + encodeURIComponent(profileId) : ''
+  }`;
   // SvelteKit endpoints accept relative paths only from within the
   // server context -- we use globalThis.fetch which routes through the
   // server runtime. Errors are surfaced via the activity feed inside
   // the tech-prep endpoint itself.
-  void fetch('http://127.0.0.1:5174' + url, {
+  void fetch(`http://127.0.0.1:5174${url}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: '{}',
@@ -592,12 +617,10 @@ function fireBackgroundTechPrep(jobId: string, profileId?: string): void {
 }
 
 function fireBackgroundPostRejection(jobId: string, profileId?: string): void {
-  const url =
-    '/api/job/' +
-    encodeURIComponent(jobId) +
-    '/post-rejection' +
-    (profileId ? '?profile=' + encodeURIComponent(profileId) : '');
-  void fetch('http://127.0.0.1:5174' + url, {
+  const url = `/api/job/${encodeURIComponent(jobId)}/post-rejection${
+    profileId ? '?profile=' + encodeURIComponent(profileId) : ''
+  }`;
+  void fetch(`http://127.0.0.1:5174${url}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: '{}',
@@ -614,12 +637,10 @@ function fireBackgroundTakehomeScaffold(jobId: string, profileId?: string): void
   // Fire-and-forget POST to the takehome endpoint, which scaffolds the
   // working dir + README + CHECKLIST + state.json with a default 4h
   // budget. The user can adjust budget via PATCH from the UI.
-  const url =
-    '/api/job/' +
-    encodeURIComponent(jobId) +
-    '/takehome' +
-    (profileId ? '?profile=' + encodeURIComponent(profileId) : '');
-  void fetch('http://127.0.0.1:5174' + url, {
+  const url = `/api/job/${encodeURIComponent(jobId)}/takehome${
+    profileId ? '?profile=' + encodeURIComponent(profileId) : ''
+  }`;
+  void fetch(`http://127.0.0.1:5174${url}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({}),

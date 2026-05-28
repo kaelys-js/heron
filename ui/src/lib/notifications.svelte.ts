@@ -48,12 +48,14 @@ export function reportClientError(
 
   // Always log to console first, even if toast/notifications throw downstream.
   // eslint-disable-next-line no-console
-  console.error('[' + source + ']', title, '—', errMsg);
+  console.error(`[${source}]`, title, '—', errMsg);
   // eslint-disable-next-line no-console
-  if (stack) console.error(stack);
+  if (stack) {
+    console.error(stack);
+  }
 
   const ev: ActivityEvent = {
-    id: 'client-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    id: `client-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     ts: Date.now(),
     level: 'error',
     category: 'system',
@@ -94,14 +96,18 @@ class NotificationStore {
   private runningInterval: ReturnType<typeof setInterval> | null = null;
 
   init() {
-    if (!browser || this.sseClient) return;
+    if (!browser || this.sseClient) {
+      return;
+    }
     void this.connect();
     this.refreshRunning();
     this.runningInterval = setInterval(() => this.refreshRunning(), 3000);
   }
 
   private async connect(): Promise<void> {
-    if (!browser) return;
+    if (!browser) {
+      return;
+    }
     const { createSseClient } = await import('./client/sse-client');
     // Idempotent -- earlier client (if any) is closed by sse-client's
     // internal teardown. Guard against double-init by clearing first.
@@ -120,17 +126,23 @@ class NotificationStore {
           const ev: ActivityEvent = JSON.parse(e.data);
           this.add(ev, { autoToast: true });
           // Refresh running tasks when a task event comes in
-          if (ev.category === 'task') this.refreshRunning();
+          if (ev.category === 'task') {
+            this.refreshRunning();
+          }
         } catch {}
       },
     });
   }
 
   async refreshRunning() {
-    if (!browser) return;
+    if (!browser) {
+      return;
+    }
     try {
       const r = await fetch('/api/run');
-      if (!r.ok) return;
+      if (!r.ok) {
+        return;
+      }
       const data = await r.json();
       const list = Array.isArray(data?.running)
         ? data.running
@@ -144,12 +156,16 @@ class NotificationStore {
   destroy() {
     this.sseClient?.close();
     this.sseClient = null;
-    if (this.runningInterval) clearInterval(this.runningInterval);
+    if (this.runningInterval) {
+      clearInterval(this.runningInterval);
+    }
     this.runningInterval = null;
   }
 
   add(ev: ActivityEvent, opts: { autoToast?: boolean } = {}) {
-    if (this.events.some((x) => x.id === ev.id)) return;
+    if (this.events.some((x) => x.id === ev.id)) {
+      return;
+    }
     this.events = [ev, ...this.events].slice(0, 200);
     this.unreadIds = new Set([...this.unreadIds, ev.id]);
     if (opts.autoToast && !this.autoToastSet.has(ev.id)) {
@@ -188,12 +204,17 @@ class NotificationStore {
           onClick: () => dispatchOpenNotifications(),
         },
       });
-    } else if (ev.level === 'warn') toast.warning(ev.title, { description: desc });
-    else if (ev.level === 'success') toast.success(ev.title, { description: desc });
+    } else if (ev.level === 'warn') {
+      toast.warning(ev.title, { description: desc });
+    } else if (ev.level === 'success') {
+      toast.success(ev.title, { description: desc });
+    }
   }
 
   markRead(id: string) {
-    if (!this.unreadIds.has(id)) return;
+    if (!this.unreadIds.has(id)) {
+      return;
+    }
     const next = new Set(this.unreadIds);
     next.delete(id);
     this.unreadIds = next;

@@ -88,7 +88,7 @@ describe('packageManager field matches mise pnpm', () => {
   });
 });
 
-describe('CI workflow does NOT pin a Node version directly', () => {
+describe('cI workflow does NOT pin a Node version directly', () => {
   // mise-action reads .mise.toml -- any hardcoded `node-version` input
   // is drift waiting to happen.
   it('test.yml uses jdx/mise-action, not actions/setup-node', () => {

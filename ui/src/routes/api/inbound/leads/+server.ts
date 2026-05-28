@@ -8,13 +8,8 @@
  */
 
 import { wrap } from '$lib/server/api-helpers';
-import {
-  listLeads,
-  getThread,
-  getDraftPath,
-  type InboundLead,
-  type InboundThread,
-} from '$lib/server/inbound-leads';
+import { listLeads, getThread, getDraftPath } from '$lib/server/inbound-leads';
+import type { InboundLead, InboundThread } from '$lib/server/inbound-leads';
 
 type LeadWithThread = InboundLead & {
   thread: InboundThread | null;
@@ -28,12 +23,18 @@ export const GET = wrap('inbound-leads', async ({ url }: { url: URL }) => {
   const leads = listLeads();
   const out: LeadWithThread[] = [];
   for (const l of leads) {
-    if (kindFilter && l.kind !== kindFilter) continue;
+    if (kindFilter && l.kind !== kindFilter) {
+      continue;
+    }
     const thread = getThread(l.id) ?? null;
-    if (stateFilter && thread?.state !== stateFilter) continue;
+    if (stateFilter && thread?.state !== stateFilter) {
+      continue;
+    }
     const draft = getDraftPath(l.id);
     const entry: LeadWithThread = { ...l, thread };
-    if (draft) entry.draftFile = draft;
+    if (draft) {
+      entry.draftFile = draft;
+    }
     out.push(entry);
   }
   return { ok: true, leads: out };

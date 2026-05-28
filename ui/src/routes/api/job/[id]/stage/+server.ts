@@ -7,18 +7,16 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import {
-  recordTransition,
-  setNextAction,
-  getStageState,
-  type NextActionKind,
-} from '$lib/server/stage-state';
+import { recordTransition, setNextAction, getStageState } from '$lib/server/stage-state';
+import type { NextActionKind } from '$lib/server/stage-state';
 import { logEvent } from '$lib/server/events';
 import type { Status } from '$lib/types';
 
 export const GET = wrap('stage', async ({ params, url }: { params: { id: string }; url: URL }) => {
   const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
+  if (!resolved) {
+    badRequest('Job not found: ' + params.id);
+  }
   const { job, profileId } = resolved!;
   const state = getStageState(job.id, profileId);
   return { ok: true, state: state ?? null };
@@ -28,7 +26,9 @@ export const POST = wrap(
   'stage',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => null)) as {
       status?: Status;
@@ -38,7 +38,9 @@ export const POST = wrap(
       dueNote?: string;
       interviewerName?: string;
     } | null;
-    if (!body || !body.status) badRequest('status is required');
+    if (!body || !body.status) {
+      badRequest('status is required');
+    }
 
     const state = recordTransition(job.id, body.status!, {
       profileId,

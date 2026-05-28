@@ -127,7 +127,7 @@ export function draftAvailabilityReply(input: {
     '',
     `Thanks for reaching out — I'd love to chat about ${ctxPhrase}.`,
     '',
-    'A few times that work on my side (all ' + (tz ? tz : 'local time') + '):',
+    `A few times that work on my side (all ${tz ? tz : 'local time'}):`,
     ...slots.map((s) => `- ${s.label}`),
     '',
     'Happy to suggest more if none of these are good for you. Looking forward to it.',

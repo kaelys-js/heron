@@ -13,9 +13,8 @@ import {
   TAB_PRESETS,
   tabLabel,
   tabStatuses,
-  type Status,
-  type BgRisk,
 } from './types';
+import type { Status, BgRisk } from './types';
 
 const ALL_STATUSES: Status[] = [
   'New',
@@ -42,25 +41,25 @@ const ALL_STATUSES: Status[] = [
   'ManualApplyNeeded',
 ];
 
-describe('Status surface — completeness per status', () => {
-  it.each(ALL_STATUSES)('STATUS_ORDER includes %s', (s) => {
+describe('status surface — completeness per status', () => {
+  it.each(ALL_STATUSES)('sTATUS_ORDER includes %s', (s) => {
     expect(STATUS_ORDER).toContain(s);
   });
 
-  it.each(ALL_STATUSES)('STATUS_TINTS has tint class for %s', (s) => {
+  it.each(ALL_STATUSES)('sTATUS_TINTS has tint class for %s', (s) => {
     expect(STATUS_TINTS[s]).toBeTruthy();
   });
 
-  it.each(ALL_STATUSES)('STATUS_TINTS[%s] is a tailwind utility chain', (s) => {
+  it.each(ALL_STATUSES)('sTATUS_TINTS[%s] is a tailwind utility chain', (s) => {
     expect(STATUS_TINTS[s]).toMatch(/text-|bg-|border-|ring-/);
   });
 
-  it.each(ALL_STATUSES)('STATUS_EMPTY_COPY[%s] is non-empty', (s) => {
+  it.each(ALL_STATUSES)('sTATUS_EMPTY_COPY[%s] is non-empty', (s) => {
     expect(STATUS_EMPTY_COPY[s]).toBeTruthy();
     expect(STATUS_EMPTY_COPY[s].length).toBeGreaterThan(5);
   });
 
-  it.each(ALL_STATUSES)('STATUS_EMPTY_COPY[%s] is a plain string', (s) => {
+  it.each(ALL_STATUSES)('sTATUS_EMPTY_COPY[%s] is a plain string', (s) => {
     expect(typeof STATUS_EMPTY_COPY[s]).toBe('string');
   });
 
@@ -74,31 +73,31 @@ describe('Status surface — completeness per status', () => {
   });
 });
 
-describe('BgRisk — completeness', () => {
+describe('bgRisk — completeness', () => {
   const BG_KEYS: NonNullable<BgRisk>[] = ['LOW', 'MEDIUM', 'HIGH', 'BLOCKED'];
 
-  it.each(BG_KEYS)('BG_TINTS[%s] exists', (k) => {
+  it.each(BG_KEYS)('bG_TINTS[%s] exists', (k) => {
     expect(BG_TINTS[k]).toBeTruthy();
   });
 
-  it.each(BG_KEYS)('BG_TINTS[%s] is a tailwind utility chain', (k) => {
+  it.each(BG_KEYS)('bG_TINTS[%s] is a tailwind utility chain', (k) => {
     expect(BG_TINTS[k]).toMatch(/text-|bg-|border-/);
   });
 });
 
-describe('Source labels — completeness', () => {
+describe('source labels — completeness', () => {
   const SOURCE_KEYS = Object.keys(SOURCE_LABELS);
 
-  it.each(SOURCE_KEYS)('SOURCE_LABELS[%s].label is non-empty', (k) => {
+  it.each(SOURCE_KEYS)('sOURCE_LABELS[%s].label is non-empty', (k) => {
     expect(SOURCE_LABELS[k].label.length).toBeGreaterThan(0);
   });
 
-  it.each(SOURCE_KEYS)('SOURCE_LABELS[%s].tint is a tailwind class chain', (k) => {
+  it.each(SOURCE_KEYS)('sOURCE_LABELS[%s].tint is a tailwind class chain', (k) => {
     expect(SOURCE_LABELS[k].tint).toMatch(/text-|bg-|border-|ring-/);
   });
 });
 
-describe('Tab presets — properties', () => {
+describe('tab presets — properties', () => {
   it.each(['all', 'ready', 'applied'])('preset value %s is in TAB_PRESETS', (v) => {
     expect(TAB_PRESETS.map((p) => p.value)).toContain(v);
   });
@@ -114,16 +113,16 @@ describe('Tab presets — properties', () => {
   });
 });
 
-describe('Application status tints — completeness', () => {
+describe('application status tints — completeness', () => {
   const APP_STATUS_KEYS = Object.keys(APPLICATION_STATUS_TINTS);
 
-  it.each(APP_STATUS_KEYS)('APPLICATION_STATUS_TINTS[%s] is non-empty', (k) => {
+  it.each(APP_STATUS_KEYS)('aPPLICATION_STATUS_TINTS[%s] is non-empty', (k) => {
     const tints = APPLICATION_STATUS_TINTS as Record<string, string>;
     expect(tints[k]).toBeTruthy();
   });
 });
 
-describe('DEFAULT_FILTER — shape', () => {
+describe('dEFAULT_FILTER — shape', () => {
   it('every BgRisk key present in bgRisk', () => {
     expect(DEFAULT_FILTER.bgRisk).toHaveProperty('LOW');
     expect(DEFAULT_FILTER.bgRisk).toHaveProperty('MEDIUM');

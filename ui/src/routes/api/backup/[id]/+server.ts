@@ -22,7 +22,9 @@ export const GET = wrap(
   async ({ params, locals }: { params: { id: string }; locals: App.Locals }) => {
     requireOwner(locals);
     const info = getBackup(params.id);
-    if (!info) error(404, 'Backup not found: ' + params.id);
+    if (!info) {
+      error(404, 'Backup not found: ' + params.id);
+    }
     // Stream the tar.gz directly. wrap() expects a JSON-serializable return,
     // so we throw a Response to short-circuit its serializer. wrap()'s catch
     // path re-throws Responses unchanged.

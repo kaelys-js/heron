@@ -13,6 +13,7 @@ import { getActiveProfileId } from '$lib/server/profiles';
 import { readAuditReport } from '$lib/server/linkedin-audit';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const TIMEOUT_MS = 240_000;
 
 function spawnRewrite(args: {
@@ -55,7 +56,7 @@ function spawnRewrite(args: {
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('linkedin-rewrite timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`linkedin-rewrite timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -63,8 +64,11 @@ function spawnRewrite(args: {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolveP({ stdout });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolveP({ stdout });
+      }
     });
   });
 }
@@ -78,7 +82,9 @@ export const POST = wrap('linkedin-rewrite', async ({ request }: { request: Requ
   const body = (await request.json().catch(() => ({}))) as { findings?: string[] };
   const profileId = getActiveProfileId();
   const report = readAuditReport(profileId);
-  if (!report) return { ok: false, error: 'Run /api/linkedin/audit first to produce a report' };
+  if (!report) {
+    return { ok: false, error: 'Run /api/linkedin/audit first to produce a report' };
+  }
   // Default: all unresolved findings that aren't pure settings-flip items
   const defaultKinds = report.findings
     .filter((f) => !f.resolvedAt && !f.settingsPath)

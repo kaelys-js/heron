@@ -17,7 +17,9 @@ export function resolveDevServerUrl(
   isDev: boolean,
   env: NodeJS.ProcessEnv = process.env,
 ): string | null {
-  if (!isDev) return null;
+  if (!isDev) {
+    return null;
+  }
   const override = (env.ELECTRON_DEV_SERVER_URL || env.CAPACITOR_SERVER_URL || '').trim();
   return override || 'http://localhost:5173';
 }
@@ -32,7 +34,9 @@ export function buildCsp(
   isDev: boolean,
   devServerUrl?: string | null,
 ): string {
-  if (!isDev) return `default-src ${customScheme}://* 'unsafe-inline' data:`;
+  if (!isDev) {
+    return `default-src ${customScheme}://* 'unsafe-inline' data:`;
+  }
   // Allow the ACTUAL dev-server origin (http + ws), not just localhost, so a
   // non-localhost ELECTRON_DEV_SERVER_URL / CAPACITOR_SERVER_URL override (e.g.
   // a LAN IP) isn't CSP-blocked into a blank window.
@@ -58,8 +62,12 @@ export function isInternalNavigation(
   customScheme: string,
   devServerUrl: string | null,
 ): boolean {
-  if (!url) return false;
-  if (url.startsWith(`${customScheme}://`)) return true;
+  if (!url) {
+    return false;
+  }
+  if (url.startsWith(`${customScheme}://`)) {
+    return true;
+  }
   // Compare parsed ORIGINS, not raw prefixes -- `startsWith(devServerUrl)` would
   // wrongly allow `http://localhost:5173.attacker.tld/...`.
   if (devServerUrl) {

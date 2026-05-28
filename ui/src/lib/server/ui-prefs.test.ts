@@ -103,7 +103,7 @@ describe('ui-prefs — constants', () => {
     expect(THEME_OPTIONS).toContain('fuchsia');
   });
 
-  it('DEFAULT_PREFS is system / default / info-toast-on', () => {
+  it('dEFAULT_PREFS is system / default / info-toast-on', () => {
     expect(DEFAULT_PREFS.appearance).toBe('system');
     expect(DEFAULT_PREFS.theme).toBe('default');
     expect(DEFAULT_PREFS.notifications.toast.info).toBe(true);
@@ -158,14 +158,14 @@ describe('ui-prefs — readPrefs', () => {
 });
 
 describe('ui-prefs — writePrefs', () => {
-  it('INSERTs when no row exists; the row reflects the patched fields', () => {
+  it('iNSERTs when no row exists; the row reflects the patched fields', () => {
     writePrefs({ appearance: 'dark', theme: 'rose' });
     expect(inserts.length).toBe(1);
     expect(inserts[0].appearance).toBe('dark');
     expect(inserts[0].theme).toBe('rose');
   });
 
-  it('UPDATEs when a row already exists', () => {
+  it('uPDATEs when a row already exists', () => {
     dbRows['user-A'] = {
       userId: 'user-A',
       appearance: 'light',

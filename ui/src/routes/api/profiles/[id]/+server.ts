@@ -19,9 +19,9 @@ import {
   getProfileBySlug,
   getActiveProfile,
   listProfilesForUser,
-  type ProfileColor,
   PROFILE_COLORS,
 } from '$lib/server/profiles-db';
+import type { ProfileColor } from '$lib/server/profiles-db';
 import { requireUserId } from '$lib/server/auth-helpers';
 import { profilePath } from '$lib/server/profile-paths';
 import { logEvent } from '$lib/server/events';
@@ -38,13 +38,17 @@ export const PATCH = wrap(
     locals: App.Locals;
   }) => {
     const userId = requireUserId(locals);
-    const id = params.id;
-    if (!getProfileBySlug(userId, id)) badRequest('Unknown profile: ' + id);
+    const { id } = params;
+    if (!getProfileBySlug(userId, id)) {
+      badRequest('Unknown profile: ' + id);
+    }
     const body = (await request.json().catch(() => null)) as {
       name?: string;
       color?: string;
     } | null;
-    if (!body) badRequest('expected JSON body with name? and/or color?');
+    if (!body) {
+      badRequest('expected JSON body with name? and/or color?');
+    }
     let updated = getProfileBySlug(userId, id)!;
     if (typeof body.name === 'string' && body.name.trim()) {
       updated = renameProfileFor(userId, id, body.name);
@@ -55,7 +59,7 @@ export const PATCH = wrap(
     logEvent('profiles', 'Profile updated', {
       level: 'info',
       category: 'user',
-      message: updated.name + ' (' + updated.slug + ')',
+      message: `${updated.name} (${updated.slug})`,
     });
     return {
       profile: {
@@ -81,8 +85,10 @@ export const DELETE = wrap(
     locals: App.Locals;
   }) => {
     const userId = requireUserId(locals);
-    const id = params.id;
-    if (!getProfileBySlug(userId, id)) badRequest('Unknown profile: ' + id);
+    const { id } = params;
+    if (!getProfileBySlug(userId, id)) {
+      badRequest('Unknown profile: ' + id);
+    }
     const body = (await request.json().catch(() => null)) as { confirm?: string } | null;
     if (!body || body.confirm !== 'DELETE') {
       badRequest('Profile deletion requires { confirm: "DELETE" } in the body.');
@@ -103,7 +109,7 @@ export const DELETE = wrap(
       logEvent('profiles-delete', 'Profile rm failed (state already updated)', {
         level: 'warn',
         category: 'user',
-        message: dir + ' — ' + (e instanceof Error ? e.message : String(e)),
+        message: `${dir} — ${e instanceof Error ? e.message : String(e)}`,
       });
     }
 
@@ -123,7 +129,7 @@ export const DELETE = wrap(
     logEvent('profiles-delete', 'Profile deleted', {
       level: 'warn',
       category: 'user',
-      message: 'Removed ' + id + ' · active now ' + state.activeId,
+      message: `Removed ${id} · active now ${state.activeId}`,
     });
     return { state };
   },

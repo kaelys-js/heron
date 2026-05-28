@@ -72,25 +72,35 @@ const EMPTY: ReportSummary = {
 function takeFirst(text: string, ...patterns: RegExp[]): string {
   for (const r of patterns) {
     const m = text.match(r);
-    if (m && m[1]) return m[1].trim();
+    if (m && m[1]) {
+      return m[1].trim();
+    }
   }
   return '';
 }
 
 function parseScore(text: string): number | null {
   const m = text.match(/\*\*Score:\*\*\s*([\d.]+)/i);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
   const n = parseFloat(m[1]);
   return isNaN(n) ? null : n;
 }
 
 function parseBg(text: string): { risk: BgRisk; note: string } {
   const m = text.match(/\*\*Background Check Risk:\*\*\s*([A-Z][A-Z ]+?)(?:\s*[—\-–]\s*(.+))?$/im);
-  if (!m) return { risk: undefined, note: '' };
+  if (!m) {
+    return { risk: undefined, note: '' };
+  }
   const raw = m[1].trim().toUpperCase();
   const note = (m[2] ?? '').trim();
-  if (raw === 'HARD STOP') return { risk: 'BLOCKED', note };
-  if (['LOW', 'MEDIUM', 'HIGH', 'BLOCKED'].includes(raw)) return { risk: raw as BgRisk, note };
+  if (raw === 'HARD STOP') {
+    return { risk: 'BLOCKED', note };
+  }
+  if (['LOW', 'MEDIUM', 'HIGH', 'BLOCKED'].includes(raw)) {
+    return { risk: raw as BgRisk, note };
+  }
   return { risk: undefined, note };
 }
 
@@ -102,43 +112,68 @@ function parseKeyValueTable(text: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const raw of text.split('\n')) {
     const line = raw.trim();
-    if (!line.startsWith('|')) continue;
+    if (!line.startsWith('|')) {
+      continue;
+    }
     // skip separator lines and headers
-    if (/^\|\s*-+\s*\|/.test(line) || /[✅❌]/.test(line)) continue;
+    if (/^\|\s*-+\s*\|/.test(line) || /[✅❌]/.test(line)) {
+      continue;
+    }
     const cells = line.split('|').map((c) => c.trim());
     // Need at least: empty, key, value, empty (= 4 cells from split with leading/trailing |)
-    if (cells.length < 4) continue;
+    if (cells.length < 4) {
+      continue;
+    }
     const keyRaw = cells[1];
     const valueRaw = cells[2];
-    if (!keyRaw || !valueRaw) continue;
+    if (!keyRaw || !valueRaw) {
+      continue;
+    }
     const key = keyRaw
       .replace(/\*\*/g, '')
       .replace(/`([^`]+)`/g, '$1')
       .toLowerCase()
       .trim();
-    if (!key || key.length > 40) continue;
-    if (out[key]) continue; // first occurrence wins
+    if (!key || key.length > 40) {
+      continue;
+    }
+    if (out[key]) {
+      continue;
+    } // first occurrence wins
     out[key] = valueRaw.replace(/`([^`]+)`/g, '$1').trim();
   }
   return out;
 }
 
 function classifyWorkMode(raw: string): WorkMode {
-  if (!raw) return 'unknown';
+  if (!raw) {
+    return 'unknown';
+  }
   const s = raw.toLowerCase();
   // Negative signals first
-  if (/\bon[\s-]?site\b|\bin[\s-]?office\b/.test(s)) return 'onsite';
-  if (/\bhybrid\b|\d+\s*day(?:s)?\s*\/?\s*(?:per\s+)?week|\bhq\s*\d/.test(s)) return 'hybrid';
+  if (/\bon[\s-]?site\b|\bin[\s-]?office\b/.test(s)) {
+    return 'onsite';
+  }
+  if (/\bhybrid\b|\d+\s*day(?:s)?\s*\/?\s*(?:per\s+)?week|\bhq\s*\d/.test(s)) {
+    return 'hybrid';
+  }
   if (
     /\bfully\s*remote\b|\bremote[\s-]?(first|friendly|ok)\b|\bremote\b\s*[-—:].*\b(yes|available|ok|friendly)\b/.test(
       s,
     )
-  )
+  ) {
     return 'remote';
-  if (/^yes\b|^remote\b|\bdistributed\b|\banywhere\b/.test(s)) return 'remote';
-  if (/\bno\b|\bmust be (in|located|based) (in)?\s/.test(s)) return 'onsite';
+  }
+  if (/^yes\b|^remote\b|\bdistributed\b|\banywhere\b/.test(s)) {
+    return 'remote';
+  }
+  if (/\bno\b|\bmust be (in|located|based) (in)?\s/.test(s)) {
+    return 'onsite';
+  }
   // If it just mentions a city, lean on-site/hybrid -- pessimistic
-  if (/\b(based in|located in)\s+[A-Z]/.test(raw)) return 'hybrid';
+  if (/\b(based in|located in)\s+[A-Z]/.test(raw)) {
+    return 'hybrid';
+  }
   return 'unknown';
 }
 
@@ -159,13 +194,19 @@ function parseMatchTable(text: string): { strong: StrongMatch[]; gaps: Gap[]; st
   const lines = text.split('\n');
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line.startsWith('|')) continue;
-    if (!/[✅❌]/.test(line)) continue;
+    if (!line.startsWith('|')) {
+      continue;
+    }
+    if (!/[✅❌]/.test(line)) {
+      continue;
+    }
     const cells = line
       .split('|')
       .map((c) => c.trim())
       .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
-    if (cells.length < 2) continue;
+    if (cells.length < 2) {
+      continue;
+    }
 
     const requirement = cells[0]
       .replace(/\*\*/g, '')
@@ -179,7 +220,9 @@ function parseMatchTable(text: string): { strong: StrongMatch[]; gaps: Gap[]; st
       const tokens = requirement.match(
         /\b(TypeScript|JavaScript|React|Node\.?js|Vue|Svelte|Python|Go(?:lang)?|Rust|Java|Kotlin|Ruby|PHP|C\+\+|C#|GraphQL|REST|gRPC|AWS|GCP|Azure|Cloudflare|Workers|Kubernetes|K8s|Docker|Terraform|Postgres|PostgreSQL|MySQL|MongoDB|Redis|Kafka|GraphQL|Next\.js|Nuxt|Astro|Vite|Webpack|Tailwind)\b/gi,
       );
-      if (tokens) for (const t of tokens) stack.add(t);
+      if (tokens) {
+        for (const t of tokens) stack.add(t);
+      }
     } else if (level.includes('❌')) {
       gaps.push({ requirement, level: level.replace(/[❌\s]+/, '').trim() || 'Gap', notes });
     }
@@ -199,35 +242,51 @@ function parseVisa(text: string, table: Record<string, string>): string {
     table['work auth'] ??
     table['visa status'] ??
     '';
-  if (fromTable) return fromTable;
+  if (fromTable) {
+    return fromTable;
+  }
 
   // Heuristic: search lines mentioning visa/sponsorship
   const lines = text.split('\n');
   for (const raw of lines) {
     const line = raw.trim();
-    if (!/visa|sponsorship|work auth/i.test(line)) continue;
-    if (!line.startsWith('|') && !line.startsWith('-')) continue;
-    const m = line.match(/visa[^|]*?[\.|]/i);
-    if (m) return m[0].replace(/[|\.]+$/, '').trim();
+    if (!/visa|sponsorship|work auth/i.test(line)) {
+      continue;
+    }
+    if (!line.startsWith('|') && !line.startsWith('-')) {
+      continue;
+    }
+    const m = line.match(/visa[^|]*?[.|]/i);
+    if (m) {
+      return m[0].replace(/[|\.]+$/, '').trim();
+    }
     // Take the line up to ~120 chars
     const cleaned = line.replace(/^\|\s*|\|\s*$|^-\s+/, '').trim();
-    if (cleaned && cleaned.length < 200) return cleaned;
+    if (cleaned && cleaned.length < 200) {
+      return cleaned;
+    }
   }
   return '';
 }
 
 function parseCompanyStage(text: string, table: Record<string, string>): string {
   const fromTable = table['stage'] ?? table['etapa'] ?? table['funding'] ?? '';
-  if (fromTable) return fromTable;
+  if (fromTable) {
+    return fromTable;
+  }
   const m = text.match(
     /Series\s+([A-K])(?!\w)|\b(public|publicly traded|seed|pre-seed|bootstrapped)\b/i,
   );
-  if (m) return m[0];
+  if (m) {
+    return m[0];
+  }
   return '';
 }
 
 export function parseReportSummary(markdown: string): ReportSummary {
-  if (!markdown || markdown.trim().length === 0) return { ...EMPTY };
+  if (!markdown || markdown.trim().length === 0) {
+    return { ...EMPTY };
+  }
 
   const score = parseScore(markdown);
   const archetype = takeFirst(markdown, /\*\*Arch?(?:etype|quetipo):\*\*\s*(.+)/i);

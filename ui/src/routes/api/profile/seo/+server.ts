@@ -29,8 +29,12 @@ export const POST = wrap('profile-seo', async ({ request }: { request: Request }
   const body = (await request.json().catch(() => ({}))) as Body;
   return new Promise<{ ok: boolean; seo?: SeoResult; error?: string }>((resolveP) => {
     const args = [path.join(ROOT, 'scripts/quality/profile-seo.mjs'), '--json'];
-    if (body.headline) args.push('--headline', body.headline);
-    if (body.about) args.push('--about', body.about);
+    if (body.headline) {
+      args.push('--headline', body.headline);
+    }
+    if (body.about) {
+      args.push('--about', body.about);
+    }
     const p = spawn('node', args, { cwd: ROOT, env: userContextEnv() });
     let stdoutBuf = '';
     let stderrBuf = '';
@@ -55,10 +59,10 @@ export const POST = wrap('profile-seo', async ({ request }: { request: Request }
       clearTimeout(timer);
       try {
         const parsed = JSON.parse(stdoutBuf) as SeoResult;
-        logEvent('profile-seo', 'SEO score ' + parsed.composite + '/100', {
+        logEvent('profile-seo', `SEO score ${parsed.composite}/100`, {
           level: parsed.composite >= 70 ? 'success' : parsed.composite >= 50 ? 'info' : 'warn',
           category: 'user',
-          message: parsed.matchedInHeadline.length + ' keyword hits in headline',
+          message: `${parsed.matchedInHeadline.length} keyword hits in headline`,
         });
         resolveP({ ok: true, seo: parsed });
       } catch {

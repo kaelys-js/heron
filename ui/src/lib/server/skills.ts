@@ -142,9 +142,11 @@ function parseHeader(text: string): { title: string; subtitle: string } {
   const cleaned = firstHeading.replace(/^# /, '').trim();
   // Match "Modo: X -- Y" or "Mode: X -- Y" or "Mode: X -- Y"
   const m =
-    cleaned.match(/^(?:Modo|Mode):\s*([^—–\-]+?)\s*[—–\-]{1,2}\s*(.+)$/i) ??
-    cleaned.match(/^([a-z\-]+)\s*[—–\-]{1,2}\s*(.+)$/i);
-  if (m) return { title: m[1].trim(), subtitle: m[2].trim() };
+    cleaned.match(/^(?:Modo|Mode):\s*([^—–-]+?)\s*[—–-]{1,2}\s*(.+)$/i) ??
+    cleaned.match(/^([a-z-]+)\s*[—–-]{1,2}\s*(.+)$/i);
+  if (m) {
+    return { title: m[1].trim(), subtitle: m[2].trim() };
+  }
   return { title: cleaned, subtitle: '' };
 }
 
@@ -152,7 +154,7 @@ function parseDescription(text: string): string {
   // First non-empty paragraph that isn't a heading or list/blockquote
   const lines = text.split('\n');
   let started = false;
-  let buf: string[] = [];
+  const buf: string[] = [];
   for (const raw of lines) {
     const line = raw.trim();
     if (!started) {
@@ -162,28 +164,36 @@ function parseDescription(text: string): string {
       continue;
     }
     if (line === '') {
-      if (buf.length > 0) break;
+      if (buf.length > 0) {
+        break;
+      }
       continue;
     }
     if (/^[#>\-*|]/.test(line) || line.startsWith('```')) {
-      if (buf.length > 0) break;
+      if (buf.length > 0) {
+        break;
+      }
       continue;
     }
     buf.push(line);
   }
   const para = buf.join(' ').trim();
-  return para.length > 220 ? para.slice(0, 217) + '…' : para;
+  return para.length > 220 ? `${para.slice(0, 217)}…` : para;
 }
 
 function parseInputs(text: string): string[] {
   // Look for '## Inputs' or '## Inputs needed' sections, take following bulleted lines
   const lines = text.split('\n');
   const idx = lines.findIndex((l) => /^##\s*(Inputs|Inputs needed)/i.test(l));
-  if (idx === -1) return [];
+  if (idx === -1) {
+    return [];
+  }
   const out: string[] = [];
   for (let i = idx + 1; i < lines.length && out.length < 6; i++) {
     const line = lines[i].trim();
-    if (line.startsWith('##')) break;
+    if (line.startsWith('##')) {
+      break;
+    }
     const m =
       line.match(/^[\d]+\.\s+\*\*(.+?)\*\*/) ??
       line.match(/^[\d]+\.\s+(.+?)$/) ??
@@ -192,7 +202,9 @@ function parseInputs(text: string): string[] {
     if (m) {
       const v = m[1].replace(/`([^`]+)`/g, '$1').trim();
       // Skip excessively long inputs (full sentences)
-      if (v.length > 0 && v.length < 80) out.push(v);
+      if (v.length > 0 && v.length < 80) {
+        out.push(v);
+      }
     }
   }
   return out;
@@ -228,7 +240,9 @@ export function listSkills(includeSystem = false): Skill[] {
     // up `angebot` in CATEGORY.
     const lookupId = id.includes(':') ? id.split(':', 2)[1] : id;
     const category = inferCategory(lookupId);
-    if (!includeSystem && category === 'system') return;
+    if (!includeSystem && category === 'system') {
+      return;
+    }
     const filePath = path.join(dirAbs, f);
     let stat;
     try {
@@ -242,7 +256,7 @@ export function listSkills(includeSystem = false): Skill[] {
     const inputs = parseInputs(text);
     skills.push({
       id,
-      name: subtitle ? title + ' — ' + subtitle : title,
+      name: subtitle ? `${title} — ${subtitle}` : title,
       title: title || lookupId,
       subtitle,
       description,
@@ -250,7 +264,7 @@ export function listSkills(includeSystem = false): Skill[] {
       emoji: EMOJI[lookupId] ?? '🛠',
       language: detectLanguage(text),
       lang,
-      invocation: '/' + CLI_NAMESPACE + ' ' + lookupId,
+      invocation: `/${CLI_NAMESPACE} ${lookupId}`,
       inputs: inputs.length > 0 ? inputs : undefined,
       filePath,
       bytes: stat.size,
@@ -273,8 +287,10 @@ export function listSkills(includeSystem = false): Skill[] {
         // One-level recursion into modes/<lang>/.
         try {
           for (const lf of fs.readdirSync(full).sort()) {
-            if (!lf.endsWith('.md')) continue;
-            consumeFile(lf, full, f as Skill['lang'], f + ':');
+            if (!lf.endsWith('.md')) {
+              continue;
+            }
+            consumeFile(lf, full, f as Skill['lang'], `${f}:`);
           }
         } catch {
           /* unreadable lang dir -- skip */
@@ -295,13 +311,19 @@ export function readSkillBody(id: string): string | null {
   if (colon >= 0) {
     lang = id.slice(0, colon);
     bareId = id.slice(colon + 1);
-    if (!LANG_SUBDIRS.has(lang)) return null;
+    if (!LANG_SUBDIRS.has(lang)) {
+      return null;
+    }
   }
   // Sanitize. Reject path-traversal and stray punctuation.
   const safe = bareId.replace(/[^a-zA-Z0-9_\-.]/g, '');
-  if (safe !== bareId) return null;
+  if (safe !== bareId) {
+    return null;
+  }
   const dir = lang ? path.join(MODES_DIR, lang) : MODES_DIR;
-  const filePath = path.join(dir, bareId + '.md');
-  if (!fs.existsSync(filePath)) return null;
+  const filePath = path.join(dir, `${bareId}.md`);
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
   return readSafe(filePath);
 }

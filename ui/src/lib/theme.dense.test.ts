@@ -12,7 +12,9 @@ const MODES = ['light', 'dark', 'system'] as const;
 
 describe('theme.set — every mode persists', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     theme.destroy();
     theme.mode = 'system';
   });
@@ -27,7 +29,9 @@ describe('theme.set — every mode persists', () => {
 
 describe('theme.set — mode round-trip after destroy', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     theme.destroy();
     theme.mode = 'system';
   });
@@ -59,7 +63,9 @@ describe('theme.toggle — every starting state', () => {
 
 describe('theme.init — corrupt localStorage values', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     theme.destroy();
     theme.mode = 'system';
   });
@@ -82,7 +88,9 @@ describe('theme.init — corrupt localStorage values', () => {
 
 describe('theme.init — valid stored values', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     theme.destroy();
     theme.mode = 'system';
   });

@@ -13,6 +13,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 type RetroInput = {
   stage: 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
   notes: string;
@@ -45,8 +46,11 @@ function spawnRetro(
     });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolve({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -58,11 +62,17 @@ function parseStdout(stdout: string): {
 } {
   const out: { retroPath?: string; storiesAdded?: number; weakAreasLogged?: number } = {};
   const pm = /RETRO_PATH:\s*(\S+)/.exec(stdout);
-  if (pm) out.retroPath = pm[1];
+  if (pm) {
+    out.retroPath = pm[1];
+  }
   const sm = /STORIES_ADDED:\s*(\d+)/.exec(stdout);
-  if (sm) out.storiesAdded = parseInt(sm[1], 10);
+  if (sm) {
+    out.storiesAdded = parseInt(sm[1], 10);
+  }
   const wm = /WEAK_AREAS_LOGGED:\s*(\d+)/.exec(stdout);
-  if (wm) out.weakAreasLogged = parseInt(wm[1], 10);
+  if (wm) {
+    out.weakAreasLogged = parseInt(wm[1], 10);
+  }
   return out;
 }
 
@@ -70,18 +80,25 @@ export const POST = wrap(
   'interview-retro',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => ({}))) as Partial<RetroInput>;
-    if (!body.stage) badRequest('stage required');
-    if (!body.notes || typeof body.notes !== 'string' || !body.notes.trim())
+    if (!body.stage) {
+      badRequest('stage required');
+    }
+    if (!body.notes || typeof body.notes !== 'string' || !body.notes.trim()) {
       badRequest('notes required');
-    if (!body.outcome) badRequest('outcome required');
+    }
+    if (!body.outcome) {
+      badRequest('outcome required');
+    }
 
-    logEvent('interview-retro', 'Generating retro · ' + body.stage, {
+    logEvent('interview-retro', `Generating retro · ${body.stage}`, {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' · ' + (job.role || '?'),
+      message: `${job.company || '?'} · ${job.role || '?'}`,
     });
 
     try {

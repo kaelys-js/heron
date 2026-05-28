@@ -9,7 +9,7 @@ import { render } from '@testing-library/svelte';
 import TaskIndicator from './TaskIndicator.svelte';
 import { notifications } from '$lib/notifications.svelte';
 
-describe('TaskIndicator', () => {
+describe('taskIndicator', () => {
   beforeEach(() => {
     notifications.runningTasks = [];
   });

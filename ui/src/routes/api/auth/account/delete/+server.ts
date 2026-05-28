@@ -36,7 +36,7 @@ export const POST = wrap(
     logEvent('account-delete', 'Account scheduled for deletion', {
       level: 'warn',
       category: 'user',
-      message: 'grace ends ' + new Date(scheduledFor).toISOString(),
+      message: `grace ends ${new Date(scheduledFor).toISOString()}`,
     });
     return { ok: true, scheduledFor };
   },

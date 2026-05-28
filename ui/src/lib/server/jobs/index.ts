@@ -60,7 +60,9 @@ import './lifecycle-reap.job';
 let installed = false;
 
 export function installAllJobs(): void {
-  if (installed) return;
+  if (installed) {
+    return;
+  }
   installed = true;
 
   // FIRST: migrate legacy single-profile layout into data/profiles/default/.
@@ -118,7 +120,7 @@ export function installAllJobs(): void {
     run: (args) => {
       const top = typeof args?.top === 'number' ? args.top : 30;
       runGemini(top);
-      return { ok: true, message: 'Gemini scoring started · top=' + top };
+      return { ok: true, message: `Gemini scoring started · top=${top}` };
     },
   });
 

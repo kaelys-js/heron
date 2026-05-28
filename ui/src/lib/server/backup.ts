@@ -113,7 +113,9 @@ function configPath(): string {
 /** Read the backup config. Falls back to defaults when missing/corrupt. */
 export function readBackupConfig(): BackupConfig {
   try {
-    if (!fs.existsSync(configPath())) return { retentionDays: DEFAULT_RETENTION_DAYS };
+    if (!fs.existsSync(configPath())) {
+      return { retentionDays: DEFAULT_RETENTION_DAYS };
+    }
     const raw = fs.readFileSync(configPath(), 'utf8');
     const parsed = JSON.parse(raw) as Partial<BackupConfig>;
     const days =
@@ -137,7 +139,7 @@ export function writeBackupConfig(next: BackupConfig): BackupConfig {
   const clean: BackupConfig = {
     retentionDays: Math.max(1, Math.min(365, Math.round(next.retentionDays))),
   };
-  fs.writeFileSync(configPath(), JSON.stringify(clean, null, 2) + '\n');
+  fs.writeFileSync(configPath(), `${JSON.stringify(clean, null, 2)}\n`);
   return clean;
 }
 
@@ -162,8 +164,12 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
   try {
     if (fs.existsSync(usersRoot)) {
       for (const entry of fs.readdirSync(usersRoot, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue;
-        if (entry.name.startsWith('.')) continue;
+        if (!entry.isDirectory()) {
+          continue;
+        }
+        if (entry.name.startsWith('.')) {
+          continue;
+        }
         users.push(entry.name);
       }
     }
@@ -179,7 +185,9 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
   try {
     if (fs.existsSync(legacyRoot)) {
       for (const entry of fs.readdirSync(legacyRoot, { withFileTypes: true })) {
-        if (entry.isDirectory()) legacyProfiles.push(entry.name);
+        if (entry.isDirectory()) {
+          legacyProfiles.push(entry.name);
+        }
       }
     }
   } catch (e) {
@@ -210,18 +218,22 @@ function countIncludedFiles(): number {
       // Skip excluded dirs.
       const relParts = rel.split('/');
       for (const pat of EXCLUDE_PATTERNS) {
-        if (relParts.some((p) => p === pat) || rel === pat) return;
+        if (relParts.some((p) => p === pat) || rel === pat) {
+          return;
+        }
       }
       try {
         for (const entry of fs.readdirSync(abs)) {
-          visit(rel + '/' + entry);
+          visit(`${rel}/${entry}`);
         }
       } catch {
         /* permission etc */
       }
     }
   };
-  for (const p of INCLUDE_PATHS) visit(p);
+  for (const p of INCLUDE_PATHS) {
+    visit(p);
+  }
   return count;
 }
 
@@ -240,7 +252,7 @@ function writeSidecar(
     app?: string;
   },
 ): void {
-  fs.writeFileSync(metaPath, JSON.stringify(payload, null, 2) + '\n');
+  fs.writeFileSync(metaPath, `${JSON.stringify(payload, null, 2)}\n`);
 }
 
 function readVersion(): string | undefined {
@@ -270,7 +282,9 @@ function readSchemaVersions(): { auth?: number; app?: number } {
         const row = handle.prepare("SELECT value FROM schema_meta WHERE key = 'version'").get() as
           | { value?: string }
           | undefined;
-        if (row?.value) out[key] = parseInt(row.value, 10);
+        if (row?.value) {
+          out[key] = parseInt(row.value, 10);
+        }
       } catch {
         /* tables may not exist yet on a fresh install -- non-fatal */
       }
@@ -287,8 +301,8 @@ function readSchemaVersions(): { auth?: number; app?: number } {
 export async function createBackup(): Promise<CreateBackupResult> {
   fs.mkdirSync(backupsDir(), { recursive: true });
   const id = timestampId();
-  const tarPath = path.join(backupsDir(), id + '.tar.gz');
-  const metaPath = path.join(backupsDir(), id + '.meta.json');
+  const tarPath = path.join(backupsDir(), `${id}.tar.gz`);
+  const metaPath = path.join(backupsDir(), `${id}.meta.json`);
 
   // Gather what we're including. Skip anything that's not on disk yet --
   // a fresh install may not have data/issues.jsonl yet.
@@ -298,7 +312,9 @@ export async function createBackup(): Promise<CreateBackupResult> {
   }
 
   const args: string[] = ['-czf', tarPath];
-  for (const pat of EXCLUDE_PATTERNS) args.push('--exclude=' + pat);
+  for (const pat of EXCLUDE_PATTERNS) {
+    args.push('--exclude=' + pat);
+  }
   args.push('-C', ROOT, ...presentTargets);
 
   const inventory = listBackupInventory();
@@ -327,13 +343,12 @@ export async function createBackup(): Promise<CreateBackupResult> {
           logEvent('backup', 'Could not clean up half-written tarball', {
             level: 'warn',
             category: 'system',
-            message:
-              tarPath +
-              ': ' +
-              (cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)),
+            message: `${tarPath}: ${
+              cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)
+            }`,
           });
         }
-        const msg = stderr.split('\n').slice(0, 3).join(' | ') || 'tar exit ' + code;
+        const msg = stderr.split('\n').slice(0, 3).join(' | ') || `tar exit ${code}`;
         logEvent('backup', 'Backup failed', {
           level: 'error',
           category: 'system',
@@ -344,14 +359,14 @@ export async function createBackup(): Promise<CreateBackupResult> {
       }
       let size = 0;
       try {
-        size = fs.statSync(tarPath).size;
+        ({ size } = fs.statSync(tarPath));
       } catch (e) {
         // We just produced this file; stat failing here means something
         // racy happened (another process unlinked it?). Surface it.
         logEvent('backup', 'Tarball stat failed after successful tar exit', {
           level: 'warn',
           category: 'system',
-          message: tarPath + ': ' + (e instanceof Error ? e.message : String(e)),
+          message: `${tarPath}: ${e instanceof Error ? e.message : String(e)}`,
         });
       }
       writeSidecar(metaPath, {
@@ -366,12 +381,12 @@ export async function createBackup(): Promise<CreateBackupResult> {
       const pruned = pruneOldBackups();
 
       const durationS = ((Date.now() - startedAt) / 1000).toFixed(1);
-      logEvent('backup', 'Backup created · ' + id, {
+      logEvent('backup', `Backup created · ${id}`, {
         level: 'success',
         category: 'system',
-        message:
-          `${fileCount} files · ${(size / 1024 / 1024).toFixed(1)} MB · ${durationS}s` +
-          (pruned > 0 ? ` · pruned ${pruned}` : ''),
+        message: `${fileCount} files · ${(size / 1024 / 1024).toFixed(1)} MB · ${durationS}s${
+          pruned > 0 ? ` · pruned ${pruned}` : ''
+        }`,
       });
       resolve({ ok: true, id, path: tarPath, size, fileCount, profiles, pruned });
     });
@@ -382,7 +397,9 @@ export async function createBackup(): Promise<CreateBackupResult> {
  *  + fs.stat + sidecar (when present). */
 export function listBackups(): BackupInfo[] {
   try {
-    if (!fs.existsSync(backupsDir())) return [];
+    if (!fs.existsSync(backupsDir())) {
+      return [];
+    }
   } catch {
     return [];
   }
@@ -394,15 +411,17 @@ export function listBackups(): BackupInfo[] {
     return [];
   }
   for (const name of entries) {
-    if (!name.endsWith('.tar.gz')) continue;
+    if (!name.endsWith('.tar.gz')) {
+      continue;
+    }
     const id = name.slice(0, -'.tar.gz'.length);
     const tarPath = path.join(backupsDir(), name);
-    const metaPath = path.join(backupsDir(), id + '.meta.json');
+    const metaPath = path.join(backupsDir(), `${id}.meta.json`);
     let size = 0;
     let createdAt = Date.now();
     try {
       const st = fs.statSync(tarPath);
-      size = st.size;
+      ({ size } = st);
       createdAt = st.mtimeMs;
     } catch {
       continue;
@@ -423,7 +442,7 @@ export function listBackups(): BackupInfo[] {
       // Sidecar corrupt -- we still surface the tarball so the user can
       // restore from it (tarball integrity is checked at restore time),
       // but flag the broken sidecar so they know the metadata is stale.
-      logEvent('backup', 'Backup sidecar unreadable · ' + id, {
+      logEvent('backup', `Backup sidecar unreadable · ${id}`, {
         level: 'warn',
         category: 'system',
         message: e instanceof Error ? e.message : String(e),
@@ -438,33 +457,39 @@ export function listBackups(): BackupInfo[] {
 /** Find a specific backup by id (the filename stem). */
 export function getBackup(id: string): BackupInfo | null {
   // Defense in depth: refuse path-traversal candidates.
-  if (!/^[\w.\-:T]+Z?$/.test(id)) return null;
+  if (!/^[\w.\-:T]+Z?$/.test(id)) {
+    return null;
+  }
   return listBackups().find((b) => b.id === id) ?? null;
 }
 
 /** Delete a single backup + its sidecar. Returns true on success. */
 export function deleteBackup(id: string): boolean {
   const info = getBackup(id);
-  if (!info) return false;
-  try {
-    fs.unlinkSync(info.path);
-  } catch (e) {
-    reportServerError('backup', 'Backup delete failed · ' + id, e, { category: 'system' });
+  if (!info) {
     return false;
   }
   try {
-    if (fs.existsSync(info.metaPath)) fs.unlinkSync(info.metaPath);
+    fs.unlinkSync(info.path);
+  } catch (e) {
+    reportServerError('backup', `Backup delete failed · ${id}`, e, { category: 'system' });
+    return false;
+  }
+  try {
+    if (fs.existsSync(info.metaPath)) {
+      fs.unlinkSync(info.metaPath);
+    }
   } catch (e) {
     // Orphan sidecar -- the tarball is gone but we couldn't drop the
     // metadata. listBackups() will skip it (no .tar.gz to pair with) but
     // the user will see leftover .meta.json files in the dir.
-    logEvent('backup', 'Backup sidecar unlink failed · ' + id, {
+    logEvent('backup', `Backup sidecar unlink failed · ${id}`, {
       level: 'warn',
       category: 'system',
       message: e instanceof Error ? e.message : String(e),
     });
   }
-  logEvent('backup', 'Backup deleted · ' + id, { level: 'info', category: 'system' });
+  logEvent('backup', `Backup deleted · ${id}`, { level: 'info', category: 'system' });
   return true;
 }
 
@@ -476,13 +501,17 @@ export function pruneOldBackups(): number {
   const { retentionDays } = readBackupConfig();
   const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
   const all = listBackups(); // newest first
-  if (all.length <= 1) return 0;
+  if (all.length <= 1) {
+    return 0;
+  }
   let pruned = 0;
   // Skip index 0 (newest) so we always keep ≥1 backup.
   for (let i = 1; i < all.length; i++) {
     const b = all[i];
     if (b.createdAt < cutoff) {
-      if (deleteBackup(b.id)) pruned++;
+      if (deleteBackup(b.id)) {
+        pruned++;
+      }
     }
   }
   return pruned;
@@ -496,7 +525,9 @@ export function verifyBackupIntegrity(id: string): {
   error?: string;
 } {
   const info = getBackup(id);
-  if (!info) return { ok: false, error: 'not-found' };
+  if (!info) {
+    return { ok: false, error: 'not-found' };
+  }
   const r = spawnSync('tar', ['-tzf', info.path], { encoding: 'utf8' });
   if (r.status !== 0) {
     return { ok: false, error: (r.stderr || '').slice(0, 200) };
@@ -521,28 +552,29 @@ export function verifyBackupIntegrity(id: string): {
  *  retention window. */
 export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   const info = getBackup(id);
-  if (!info) return { ok: false, error: 'Backup not found: ' + id };
+  if (!info) {
+    return { ok: false, error: 'Backup not found: ' + id };
+  }
 
   // Safety gate: refuse if any task is running.
   const running = listRunning();
   if (running.length > 0) {
     return {
       ok: false,
-      error:
-        'Cannot restore while tasks are running: ' +
-        running.join(', ') +
-        '. Wait for them to finish, then retry.',
+      error: `Cannot restore while tasks are running: ${running.join(
+        ', ',
+      )}. Wait for them to finish, then retry.`,
     };
   }
 
   // Integrity check before destroying anything.
   const integrity = verifyBackupIntegrity(id);
   if (!integrity.ok) {
-    return { ok: false, error: 'Backup integrity check failed: ' + (integrity.error || 'unknown') };
+    return { ok: false, error: `Backup integrity check failed: ${integrity.error || 'unknown'}` };
   }
 
-  const stage = path.join(backupsDir(), '.restore-' + id);
-  const audit = path.join(backupsDir(), '.pre-restore-' + id);
+  const stage = path.join(backupsDir(), `.restore-${id}`);
+  const audit = path.join(backupsDir(), `.pre-restore-${id}`);
 
   // Clean any stale staging dir from a previous failed attempt. force:true
   // already swallows ENOENT, so this catch only fires on real EACCES/EIO --
@@ -553,7 +585,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
     logEvent('backup', 'Could not clean stale staging dir', {
       level: 'warn',
       category: 'system',
-      message: stage + ': ' + (e instanceof Error ? e.message : String(e)),
+      message: `${stage}: ${e instanceof Error ? e.message : String(e)}`,
     });
   }
   try {
@@ -562,7 +594,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
     logEvent('backup', 'Could not clean stale audit dir', {
       level: 'warn',
       category: 'system',
-      message: audit + ': ' + (e instanceof Error ? e.message : String(e)),
+      message: `${audit}: ${e instanceof Error ? e.message : String(e)}`,
     });
   }
   fs.mkdirSync(stage, { recursive: true });
@@ -576,11 +608,11 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
       logEvent('backup', 'Could not clean staging dir after extract failure', {
         level: 'warn',
         category: 'system',
-        message: stage + ': ' + (e instanceof Error ? e.message : String(e)),
+        message: `${stage}: ${e instanceof Error ? e.message : String(e)}`,
       });
     }
-    const tarErr = 'tar -xzf failed: ' + (extract.stderr || '').slice(0, 200);
-    logEvent('backup', 'Restore extract failed · ' + id, {
+    const tarErr = `tar -xzf failed: ${(extract.stderr || '').slice(0, 200)}`;
+    logEvent('backup', `Restore extract failed · ${id}`, {
       level: 'error',
       category: 'system',
       message: tarErr,
@@ -594,14 +626,16 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   fs.mkdirSync(audit, { recursive: true });
   for (const rel of INCLUDE_PATHS) {
     const src = path.join(ROOT, rel);
-    if (!fs.existsSync(src)) continue;
+    if (!fs.existsSync(src)) {
+      continue;
+    }
     const dst = path.join(audit, rel);
     try {
       fs.mkdirSync(path.dirname(dst), { recursive: true });
       fs.cpSync(src, dst, { recursive: true });
     } catch (e) {
       // Audit copy failed -- bail BEFORE touching live data.
-      reportServerError('backup', 'Audit snapshot failed during restore · ' + id, e, {
+      reportServerError('backup', `Audit snapshot failed during restore · ${id}`, e, {
         category: 'system',
       });
       try {
@@ -610,8 +644,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
         logEvent('backup', 'Could not clean staging dir after audit failure', {
           level: 'warn',
           category: 'system',
-          message:
-            stage + ': ' + (cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)),
+          message: `${stage}: ${cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)}`,
         });
       }
       try {
@@ -620,13 +653,12 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
         logEvent('backup', 'Could not clean audit dir after audit failure', {
           level: 'warn',
           category: 'system',
-          message:
-            audit + ': ' + (cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)),
+          message: `${audit}: ${cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)}`,
         });
       }
       return {
         ok: false,
-        error: 'Audit snapshot failed: ' + (e instanceof Error ? e.message : String(e)),
+        error: `Audit snapshot failed: ${e instanceof Error ? e.message : String(e)}`,
       };
     }
   }
@@ -637,7 +669,9 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   for (const rel of INCLUDE_PATHS) {
     const stagedSrc = path.join(stage, rel);
     const liveDst = path.join(ROOT, rel);
-    if (!fs.existsSync(stagedSrc)) continue;
+    if (!fs.existsSync(stagedSrc)) {
+      continue;
+    }
     try {
       // Remove current.
       if (fs.existsSync(liveDst)) {
@@ -666,7 +700,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
         // know to inspect data/backups/.pre-restore-{id}/ manually.
         reportServerError(
           'backup',
-          'Rollback from audit failed at ' + rel + ' · MANUAL RECOVERY NEEDED',
+          `Rollback from audit failed at ${rel} · MANUAL RECOVERY NEEDED`,
           rollbackErr,
           { category: 'system' },
         );
@@ -677,13 +711,12 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
         logEvent('backup', 'Could not clean staging dir after rollback', {
           level: 'warn',
           category: 'system',
-          message:
-            stage + ': ' + (cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)),
+          message: `${stage}: ${cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)}`,
         });
       }
       return {
         ok: false,
-        error: 'Restore failed at ' + rel + ': ' + (e instanceof Error ? e.message : String(e)),
+        error: `Restore failed at ${rel}: ${e instanceof Error ? e.message : String(e)}`,
       };
     }
   }
@@ -697,11 +730,11 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
     logEvent('backup', 'Could not clean staging dir after successful restore', {
       level: 'warn',
       category: 'system',
-      message: stage + ': ' + (e instanceof Error ? e.message : String(e)),
+      message: `${stage}: ${e instanceof Error ? e.message : String(e)}`,
     });
   }
 
-  logEvent('backup', 'Restored from ' + id, {
+  logEvent('backup', `Restored from ${id}`, {
     level: 'success',
     category: 'system',
     message: `${restoredFiles} files · audit at .pre-restore-${id}/`,
@@ -717,10 +750,14 @@ function countFilesAt(p: string): number {
   } catch {
     return 0;
   }
-  if (stat.isFile()) return 1;
+  if (stat.isFile()) {
+    return 1;
+  }
   if (stat.isDirectory()) {
     try {
-      for (const entry of fs.readdirSync(p)) n += countFilesAt(path.join(p, entry));
+      for (const entry of fs.readdirSync(p)) {
+        n += countFilesAt(path.join(p, entry));
+      }
     } catch {
       // readdir failure on a stat-confirmed dir is EACCES/EIO -- we just
       // skip the subtree so file count is slightly under-reported.

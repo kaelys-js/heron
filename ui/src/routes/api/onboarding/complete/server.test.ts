@@ -71,7 +71,7 @@ async function post(body: unknown) {
   return { status: res.status, body: await res.json() };
 }
 
-describe('POST /api/onboarding/complete', () => {
+describe('pOST /api/onboarding/complete', () => {
   it('calls markComplete and returns 200', async () => {
     const r = await post({});
     expect(r.status).toBe(200);
@@ -97,12 +97,12 @@ describe('POST /api/onboarding/complete', () => {
     expect(spawnAgentCalls[0].opts.profileId).toBe('default');
   });
 
-  it('SKIP path does NOT fire the seed spawn', async () => {
+  it('sKIP path does NOT fire the seed spawn', async () => {
     await post({ skip: true });
     expect(spawnAgentCalls.length).toBe(0);
   });
 
-  it('SKIP path still marks onboarding complete', async () => {
+  it('sKIP path still marks onboarding complete', async () => {
     await post({ skip: true });
     expect(markCompleteCalls.length).toBe(1);
   });

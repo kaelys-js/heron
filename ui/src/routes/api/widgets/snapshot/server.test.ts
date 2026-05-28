@@ -65,7 +65,7 @@ async function get() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/widgets/snapshot — fresh install', () => {
+describe('gET /api/widgets/snapshot — fresh install', () => {
   it('returns ok + authenticated true + zeros across the board', async () => {
     const r = await get();
     expect(r.status).toBe(200);
@@ -78,7 +78,7 @@ describe('GET /api/widgets/snapshot — fresh install', () => {
   });
 });
 
-describe('GET /api/widgets/snapshot — stats aggregates', () => {
+describe('gET /api/widgets/snapshot — stats aggregates', () => {
   it('counts Queued + Applying as queued', async () => {
     jobs = [
       { id: 'a', status: 'Queued' },
@@ -113,7 +113,7 @@ describe('GET /api/widgets/snapshot — stats aggregates', () => {
   });
 });
 
-describe('GET /api/widgets/snapshot — nextInterview', () => {
+describe('gET /api/widgets/snapshot — nextInterview', () => {
   it('returns null when no scheduled interviews', async () => {
     expect((await get()).body.nextInterview).toBeNull();
   });
@@ -163,7 +163,7 @@ describe('GET /api/widgets/snapshot — nextInterview', () => {
   });
 });
 
-describe('GET /api/widgets/snapshot — topApply', () => {
+describe('gET /api/widgets/snapshot — topApply', () => {
   it('returns null when no Queued/Scored jobs', async () => {
     jobs = [{ id: 'a', status: 'Applied' }];
     expect((await get()).body.topApply).toBeNull();
@@ -184,14 +184,14 @@ describe('GET /api/widgets/snapshot — topApply', () => {
   });
 });
 
-describe('GET /api/widgets/snapshot — openIssues', () => {
+describe('gET /api/widgets/snapshot — openIssues', () => {
   it('returns up to 8 open issues with the compact shape', async () => {
     for (let i = 0; i < 10; i += 1) {
       issues.push({
-        id: 'i' + i,
+        id: `i${i}`,
         severity: 'warn',
         source: 'liveness',
-        summary: 'broken ' + i,
+        summary: `broken ${i}`,
         ts: i,
       });
     }

@@ -28,9 +28,13 @@ const KNOWN_KEYS = [
 ] as const;
 
 function mask(value: string | null): string {
-  if (!value) return '';
-  if (value.length < 8) return '****';
-  return '****' + value.slice(-4);
+  if (!value) {
+    return '';
+  }
+  if (value.length < 8) {
+    return '****';
+  }
+  return `****${value.slice(-4)}`;
 }
 
 export async function load({ locals }: { locals: App.Locals }) {

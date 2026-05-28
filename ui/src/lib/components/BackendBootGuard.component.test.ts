@@ -37,7 +37,7 @@ async function openManualAndType(container: HTMLElement, user: ReturnType<typeof
   await tick();
 }
 
-describe('BackendBootGuard — per-action loading state', () => {
+describe('backendBootGuard — per-action loading state', () => {
   it('renders the error card with a Try again button in preview mode', () => {
     const { container } = render(BackendBootGuard, { props: { preview: true } });
     expect(byTestId(container, 'boot-retry')).toBeTruthy();
@@ -78,7 +78,7 @@ describe('BackendBootGuard — per-action loading state', () => {
   });
 });
 
-describe('BackendBootGuard — URL validation', () => {
+describe('backendBootGuard — URL validation', () => {
   async function openManual(
     container: HTMLElement,
     user: ReturnType<typeof userEvent.setup>,

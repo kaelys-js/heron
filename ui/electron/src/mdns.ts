@@ -31,7 +31,9 @@ export async function startMdnsAdvertise(opts: AdvertiseOptions): Promise<void> 
     // CJS dynamic import can land on either `mod.Bonjour` (vitest mock
     // factory shape) or `mod.default.Bonjour` (Node's CJS interop).
     const Bonjour = mod.Bonjour ?? mod.default?.Bonjour;
-    if (!Bonjour) throw new Error('Bonjour constructor missing from bonjour-service');
+    if (!Bonjour) {
+      throw new Error('Bonjour constructor missing from bonjour-service');
+    }
     const instance = new Bonjour();
     advertiser = instance.publish({
       name: opts.name,

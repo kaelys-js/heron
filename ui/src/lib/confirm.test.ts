@@ -12,7 +12,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfirmGate } from './confirm.svelte';
 
-describe('ConfirmGate', () => {
+describe('confirmGate', () => {
   let gate: ConfirmGate;
 
   beforeEach(() => {

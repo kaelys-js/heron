@@ -9,7 +9,8 @@
  *  lucide-svelte. */
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig } from 'vite';
+import type { Plugin } from 'vite';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -49,8 +50,12 @@ function brandWatcherPlugin(): Plugin {
         server.watcher.add(f);
       }
       const onChange = (file: string) => {
-        if (!WATCH_FILES.includes(file)) return;
-        if (debounceTimer) clearTimeout(debounceTimer);
+        if (!WATCH_FILES.includes(file)) {
+          return;
+        }
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
         debounceTimer = setTimeout(() => runApply(`change: ${file}`), 250);
       };
       server.watcher.on('change', onChange);
@@ -114,13 +119,17 @@ export default defineConfig({
         // dependency at module-init time. The warning is correct that no
         // code-splitting happens, but the lazy evaluation still solves the
         // cycle. Silencing here keeps the build output clean.
-        if (log.code === 'INEFFECTIVE_DYNAMIC_IMPORT') return;
+        if (log.code === 'INEFFECTIVE_DYNAMIC_IMPORT') {
+          return;
+        }
         // INVALID_ANNOTATION -- third-party libs (notably @noble/ciphers,
         // a transitive dep of better-auth) ship `@__NO_SIDE_EFFECTS__`
         // JSDoc annotations in positions Rolldown can't preserve through
         // tree-shaking. Not our code to fix; the comment gets stripped
         // and the build still works.
-        if (log.code === 'INVALID_ANNOTATION') return;
+        if (log.code === 'INVALID_ANNOTATION') {
+          return;
+        }
         defaultHandler(level, log);
       },
     },

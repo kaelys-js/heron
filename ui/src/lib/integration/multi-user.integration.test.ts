@@ -39,7 +39,7 @@ function readFile(rel: string): string {
   return fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 }
 
-describe('Multi-user — code surface', () => {
+describe('multi-user — code surface', () => {
   it('user-context.ts exists', () => {
     expect(exists('ui/src/lib/server/user-context.ts')).toBe(true);
   });
@@ -61,7 +61,7 @@ describe('Multi-user — code surface', () => {
   });
 });
 
-describe('Multi-user — schema files', () => {
+describe('multi-user — schema files', () => {
   it('auth-schema.ts exists', () => {
     expect(exists('ui/src/lib/server/db/auth-schema.ts')).toBe(true);
   });
@@ -73,14 +73,14 @@ describe('Multi-user — schema files', () => {
   });
 });
 
-describe('Multi-user — endpoint guards', () => {
+describe('multi-user — endpoint guards', () => {
   it('hooks.server.ts wires populateAuth', () => {
     const ts = readFile('ui/src/hooks.server.ts');
     expect(ts).toMatch(/populateAuth|locals\.user|getSession/);
   });
 });
 
-describe('Multi-user — extended structural checks (replaces verify-multi-user.mjs server-spawn parity)', () => {
+describe('multi-user — extended structural checks (replaces verify-multi-user.mjs server-spawn parity)', () => {
   // The legacy verifier spawned a preview server and hit ~40 endpoints
   // to assert per-user isolation. Below: assertions on the code surface
   // that prove the user-context plumbing is wired everywhere -- without
@@ -114,7 +114,9 @@ describe('Multi-user — extended structural checks (replaces verify-multi-user.
       'ui/src/routes/api/profiles/[id]/activate/+server.ts',
     ];
     for (const r of required) {
-      if (exists(r)) expect(true).toBe(true); // present
+      if (exists(r)) {
+        expect(true).toBe(true);
+      } // present
     }
   });
 });
@@ -131,7 +133,7 @@ describe('Multi-user — extended structural checks (replaces verify-multi-user.
  * components that pull in $app/navigation etc., which we can't easily
  * load from a node-environment vitest project.
  */
-describe('Multi-user — sign-out scrubs local state (F2 regression guard)', () => {
+describe('multi-user — sign-out scrubs local state (F2 regression guard)', () => {
   const SIGNOUT_CALL_SITES = [
     'ui/src/lib/components/AppSidebar.svelte',
     'ui/src/routes/settings/users/+page.svelte',

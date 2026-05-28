@@ -124,8 +124,9 @@ function runScript(scriptName: string, args: string[], timeoutMs = 30_000): Prom
       } catch (e) {
         rejectP(
           new Error(
-            `${scriptName} produced non-JSON output: ` +
-              (stderrBuf.slice(-200) || stdoutBuf.slice(-200)),
+            `${scriptName} produced non-JSON output: ${
+              stderrBuf.slice(-200) || stdoutBuf.slice(-200)
+            }`,
           ),
         );
       }
@@ -136,7 +137,9 @@ function runScript(scriptName: string, args: string[], timeoutMs = 30_000): Prom
 /** Run ats-check.mjs on a PDF. Returns score 0-100 + the failed-check list. */
 export function checkAts(pdfPath: string, opts?: { lenient?: boolean }): Promise<QualityResult> {
   const args = [pdfPath];
-  if (opts?.lenient) args.push('--lenient');
+  if (opts?.lenient) {
+    args.push('--lenient');
+  }
   return runScript('scripts/cv/ats-check.mjs', args).catch((err) => {
     reportServerError('quality-checks', 'ats-check failed', err);
     return emptyResult('ats-check threw — see activity log');
@@ -149,7 +152,9 @@ export function checkResumeQuality(
   opts?: { lenient?: boolean },
 ): Promise<QualityResult> {
   const args = [mdPath];
-  if (opts?.lenient) args.push('--lenient');
+  if (opts?.lenient) {
+    args.push('--lenient');
+  }
   return runScript('scripts/quality/resume-quality.mjs', args).catch((err) => {
     reportServerError('quality-checks', 'resume-quality failed', err);
     return emptyResult('resume-quality threw — see activity log');
@@ -162,9 +167,15 @@ export function checkCoverLetter(
   opts?: { company?: string; role?: string; lenient?: boolean },
 ): Promise<QualityResult> {
   const args = [mdPath];
-  if (opts?.company) args.push(`--company=${opts.company}`);
-  if (opts?.role) args.push(`--role=${opts.role}`);
-  if (opts?.lenient) args.push('--lenient');
+  if (opts?.company) {
+    args.push(`--company=${opts.company}`);
+  }
+  if (opts?.role) {
+    args.push(`--role=${opts.role}`);
+  }
+  if (opts?.lenient) {
+    args.push('--lenient');
+  }
   return runScript('scripts/quality/cover-letter-check.mjs', args).catch((err) => {
     reportServerError('quality-checks', 'cover-letter-check failed', err);
     return emptyResult('cover-letter-check threw — see activity log');
@@ -415,7 +426,9 @@ export async function checkAll(opts: {
   let cover: QualityResult | undefined;
   let aiDetectResume: AiDetectResult | undefined;
   let aiDetectCover: AiDetectResult | undefined;
-  if (opts.pdfPath) tasks.push(checkAts(opts.pdfPath).then((r) => (ats = r)));
+  if (opts.pdfPath) {
+    tasks.push(checkAts(opts.pdfPath).then((r) => (ats = r)));
+  }
   if (opts.cvMdPath) {
     tasks.push(checkResumeQuality(opts.cvMdPath).then((r) => (resume = r)));
     tasks.push(checkAiDetect(opts.cvMdPath).then((r) => (aiDetectResume = r)));

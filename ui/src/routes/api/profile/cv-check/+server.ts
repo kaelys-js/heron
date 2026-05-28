@@ -15,10 +15,8 @@ import {
   checkResumeQuality,
   checkAiDetect,
   checkNarrativeArc,
-  type QualityResult,
-  type AiDetectResult,
-  type NarrativeResult,
 } from '$lib/server/quality-checks';
+import type { QualityResult, AiDetectResult, NarrativeResult } from '$lib/server/quality-checks';
 import { logEvent } from '$lib/server/events';
 import { generalCvStatus } from '$lib/server/cv-pdf';
 

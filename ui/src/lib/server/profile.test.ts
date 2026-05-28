@@ -34,9 +34,15 @@ vi.mock('./files', async () => {
     ...actual,
     ROOT: '/test-root',
     readSafe: (p: string) => {
-      if (p.includes('profile.example.yml')) return __exampleYaml;
-      if (p.includes('_profile.template.md')) return '# template';
-      if (__yamlContent !== null) return __yamlContent;
+      if (p.includes('profile.example.yml')) {
+        return __exampleYaml;
+      }
+      if (p.includes('_profile.template.md')) {
+        return '# template';
+      }
+      if (__yamlContent !== null) {
+        return __yamlContent;
+      }
       return '';
     },
   };

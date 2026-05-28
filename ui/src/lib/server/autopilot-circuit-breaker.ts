@@ -34,7 +34,9 @@ async function activeProfileFor(userId: string): Promise<string | null> {
   try {
     const { listProfilesForUser } = await import('./profiles-db');
     const profiles = listProfilesForUser(userId);
-    if (profiles.length === 0) return null;
+    if (profiles.length === 0) {
+      return null;
+    }
     const active = profiles.find((p) => p.isActive) ?? profiles[0];
     return active.slug;
   } catch {
@@ -57,12 +59,12 @@ function trip(
   reportIssue({
     severity: 'error',
     source: 'autopilot',
-    summary: 'Autopilot paused: ' + reason,
+    summary: `Autopilot paused: ${reason}`,
     detail,
     fix: fix ?? { label: 'Open Autopilot', href: '/autopilot' },
     // Per-user dedupe key so user A and user B can each have their own
     // open circuit-breaker issue without colliding.
-    dedupeKey: DEDUPE_KEY + ':' + userId,
+    dedupeKey: `${DEDUPE_KEY}:${userId}`,
     userId: userId === SYSTEM_USER_ID ? undefined : userId,
   });
   logEvent('autopilot', 'Circuit breaker tripped', {
@@ -77,27 +79,40 @@ function trip(
 }
 
 function isLinkedInFailure(ev: ActivityEvent): boolean {
-  if (ev.level !== 'error') return false;
-  if (ev.source !== 'apply-linkedin') return false;
+  if (ev.level !== 'error') {
+    return false;
+  }
+  if (ev.source !== 'apply-linkedin') {
+    return false;
+  }
   // logEvent for failed tasks uses titles like "Task failed" or "Apply finished failed".
   // We're conservative and accept any error from this source.
   return true;
 }
 
 function isLinkedInSuccess(ev: ActivityEvent): boolean {
-  if (ev.level !== 'success') return false;
-  if (ev.source !== 'apply-linkedin') return false;
+  if (ev.level !== 'success') {
+    return false;
+  }
+  if (ev.source !== 'apply-linkedin') {
+    return false;
+  }
   return /finished|complete/i.test(ev.title);
 }
 
 function isProfileYamlError(ev: ActivityEvent): boolean {
-  if (ev.level !== 'error') return false;
+  if (ev.level !== 'error') {
+    return false;
+  }
   // Heuristic: profile-loader-style sources, or message mentions profile.yml
   // and YAML/parse keywords.
-  if (ev.source === 'profile' || ev.source === 'profile-yml') return true;
-  const text = (ev.title + ' ' + (ev.message ?? '')).toLowerCase();
-  if (text.includes('profile.yml') && (text.includes('yaml') || text.includes('parse')))
+  if (ev.source === 'profile' || ev.source === 'profile-yml') {
     return true;
+  }
+  const text = `${ev.title} ${ev.message ?? ''}`.toLowerCase();
+  if (text.includes('profile.yml') && (text.includes('yaml') || text.includes('parse'))) {
+    return true;
+  }
   return false;
 }
 
@@ -112,10 +127,14 @@ async function checkPreflight(): Promise<void> {
   try {
     const userIds = await listSchedulableUsers();
     for (const userId of userIds) {
-      if (userId === SYSTEM_USER_ID) continue; // skip the legacy sentinel
+      if (userId === SYSTEM_USER_ID) {
+        continue;
+      } // skip the legacy sentinel
       await runAsUser(userId, async () => {
         const activeSlug = await activeProfileFor(userId);
-        if (!activeSlug) return; // pre-onboarding, nothing to check
+        if (!activeSlug) {
+          return;
+        } // pre-onboarding, nothing to check
         const cvPath = profilePathForUser(userId, activeSlug, 'cv-md');
         const profileYml = profilePathForUser(userId, activeSlug, 'profile-yml');
         if (!fs.existsSync(cvPath)) {
@@ -214,12 +233,14 @@ function onEvent(ev: ActivityEvent): void {
 export function resumeAutopilot(): { ok: boolean; resolved: boolean } {
   const userId = currentUserIdOrDefault();
   const cfg = readConfigForUser(userId);
-  if (!cfg.globalEnabled) writeConfigForUser(userId, { ...cfg, globalEnabled: true });
+  if (!cfg.globalEnabled) {
+    writeConfigForUser(userId, { ...cfg, globalEnabled: true });
+  }
   consecutiveLinkedInFailures.set(userId, 0);
   // Mark the open circuit-breaker issue resolved so the inbox banner clears.
   // Match by per-user dedupeKey (F12) so user A's resume doesn't
   // accidentally clear user B's open issue.
-  const open = listOpenIssues().find((i) => i.dedupeKey === DEDUPE_KEY + ':' + userId);
+  const open = listOpenIssues().find((i) => i.dedupeKey === `${DEDUPE_KEY}:${userId}`);
   let resolved = false;
   if (open) {
     resolveIssue(open.id);

@@ -5,7 +5,8 @@
  * vesting, discounting, signing-bonus year-1 timing, and the comparator.
  */
 import { describe, expect, it } from 'vitest';
-import { compareOffers, evaluateOffer, type OfferInput } from './comp-math';
+import { compareOffers, evaluateOffer } from './comp-math';
+import type { OfferInput } from './comp-math';
 
 function offer(over: Partial<OfferInput> = {}): OfferInput {
   return {
@@ -100,7 +101,7 @@ describe('evaluateOffer — equity', () => {
     expect(r.equityNpv).toBe(0);
   });
 
-  it('RSU-public grants vest over 4 years', () => {
+  it('rSU-public grants vest over 4 years', () => {
     const r = evaluateOffer(
       offer({
         equity: { type: 'rsu-public', grantValueToday: 400_000, growthRatePct: 0 },

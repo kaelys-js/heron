@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 
-const TMP = path.join(tmpdir(), 'heron-secrets-api-' + Date.now() + '-' + process.pid);
+const TMP = path.join(tmpdir(), `heron-secrets-api-${Date.now()}-${process.pid}`);
 
 vi.mock('$lib/server/files', () => ({
   ROOT: TMP,
@@ -59,7 +59,9 @@ beforeEach(() => {
   process.env.BETTER_AUTH_SECRET = 'a'.repeat(64);
   activeUserId = USER_A;
   loggedEvents.length = 0;
-  if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+  if (fs.existsSync(TMP)) {
+    fs.rmSync(TMP, { recursive: true, force: true });
+  }
 });
 
 afterEach(() => {
@@ -90,12 +92,12 @@ async function post(body: unknown) {
 async function del(key: string) {
   const r = (await (DELETE as unknown as (e: unknown) => Promise<Response>)({
     locals: { user: { role: 'member' } },
-    url: new URL('http://localhost/api/settings/secrets?key=' + key),
+    url: new URL(`http://localhost/api/settings/secrets?key=${key}`),
   } as unknown)) as Response;
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/settings/secrets', () => {
+describe('gET /api/settings/secrets', () => {
   it('returns empty masks for a new user', async () => {
     const r = await get();
     expect(r.status).toBe(200);
@@ -123,7 +125,7 @@ describe('GET /api/settings/secrets', () => {
   });
 });
 
-describe('POST /api/settings/secrets', () => {
+describe('pOST /api/settings/secrets', () => {
   it('upserts a single key', async () => {
     const r = await post({ ANTHROPIC_API_KEY: 'sk-ant-FRESH-WRITE-LONG-VALUE' });
     expect(r.status).toBe(200);
@@ -182,7 +184,7 @@ describe('POST /api/settings/secrets', () => {
   });
 });
 
-describe('DELETE /api/settings/secrets', () => {
+describe('dELETE /api/settings/secrets', () => {
   it('removes the specified key', async () => {
     setSecret(USER_A, 'ANTHROPIC_API_KEY', 'gone-soon-LONG-VAL');
     const r = await del('ANTHROPIC_API_KEY');

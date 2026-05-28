@@ -19,21 +19,21 @@ import {
 } from './branding';
 
 describe('re-exports', () => {
-  it('APP_NAME is a non-empty string', () => {
+  it('aPP_NAME is a non-empty string', () => {
     expect(typeof APP_NAME).toBe('string');
     expect(APP_NAME.length).toBeGreaterThan(0);
   });
-  it('APP_TAGLINE is a non-empty string', () => {
+  it('aPP_TAGLINE is a non-empty string', () => {
     expect(typeof APP_TAGLINE).toBe('string');
     expect(APP_TAGLINE.length).toBeGreaterThan(0);
   });
-  it('APP_DESCRIPTION equals APP_TAGLINE (legacy alias)', () => {
+  it('aPP_DESCRIPTION equals APP_TAGLINE (legacy alias)', () => {
     expect(APP_DESCRIPTION).toBe(APP_TAGLINE);
   });
-  it('CLI_NAMESPACE is "heron"', () => {
+  it('cLI_NAMESPACE is "heron"', () => {
     expect(CLI_NAMESPACE).toBe('heron');
   });
-  it('REPO_URL is an https URL', () => {
+  it('rEPO_URL is an https URL', () => {
     expect(REPO_URL).toMatch(/^https?:\/\//);
   });
 });
@@ -57,15 +57,15 @@ describe('docTitle()', () => {
     expect(docTitle(['Inbox']).endsWith(APP_NAME)).toBe(true);
   });
   it('joins parts with em-dash separator', () => {
-    expect(docTitle(['Inbox'])).toBe('Inbox — ' + APP_NAME);
+    expect(docTitle(['Inbox'])).toBe(`Inbox — ${APP_NAME}`);
   });
   it('skips empty/null/undefined parts', () => {
-    expect(docTitle([null, 'Inbox', undefined, ''])).toBe('Inbox — ' + APP_NAME);
+    expect(docTitle([null, 'Inbox', undefined, ''])).toBe(`Inbox — ${APP_NAME}`);
   });
   it('handles all-empty array → just APP_NAME', () => {
     expect(docTitle([null, undefined, ''])).toBe(APP_NAME);
   });
   it('handles multiple parts', () => {
-    expect(docTitle(['Inbox', 'Pipeline'])).toBe('Inbox — Pipeline — ' + APP_NAME);
+    expect(docTitle(['Inbox', 'Pipeline'])).toBe(`Inbox — Pipeline — ${APP_NAME}`);
   });
 });

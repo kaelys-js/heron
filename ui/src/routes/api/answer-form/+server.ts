@@ -14,6 +14,7 @@ import { loadAllJobs } from '$lib/server/parsers';
 import { getActiveProfileId } from '$lib/server/profiles';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 type Question = { label: string; type?: string };
 type Answer = { label: string; value: string };
 
@@ -51,13 +52,17 @@ const ATS_ORIGIN_PATTERNS: RegExp[] = [
 ];
 
 function allowedOrigin(origin: string | null): string | null {
-  if (!origin) return null;
+  if (!origin) {
+    return null;
+  }
   return ATS_ORIGIN_PATTERNS.some((re) => re.test(origin)) ? origin : null;
 }
 
 function corsHeaders(origin: string | null): Record<string, string> {
   const allowed = allowedOrigin(origin);
-  if (!allowed) return {};
+  if (!allowed) {
+    return {};
+  }
   return {
     'Access-Control-Allow-Origin': allowed,
     Vary: 'Origin',
@@ -92,7 +97,7 @@ function spawnAnswers(
 
     const { child: p } = spawnAgentWithMode(
       'form-answers',
-      url + ' --bookmarklet --json-output (questions piped via stdin as JSON)',
+      `${url} --bookmarklet --json-output (questions piped via stdin as JSON)`,
       { profileId },
     );
     p.stdout?.on('data', (c: Buffer) => {
@@ -106,7 +111,7 @@ function spawnAnswers(
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+        reject(new Error(`claude -p exited ${code}: ${stderr.slice(0, 300)}`));
         return;
       }
       // The mode emits a JSON block. Try to extract the largest JSON object/
@@ -161,7 +166,9 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
   }
 
   const body = await request.json().catch(() => null);
-  if (!body || typeof body !== 'object') badRequest('expected JSON body');
+  if (!body || typeof body !== 'object') {
+    badRequest('expected JSON body');
+  }
 
   const url = typeof body.url === 'string' ? body.url : '';
   const portal = typeof body.portal === 'string' ? body.portal : 'unknown';
@@ -169,12 +176,18 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
     ? body.questions.filter((q: unknown) => q && typeof (q as Question).label === 'string')
     : [];
 
-  if (!url) badRequest('missing url');
-  if (questions.length === 0) badRequest('missing questions');
+  if (!url) {
+    badRequest('missing url');
+  }
+  if (questions.length === 0) {
+    badRequest('missing questions');
+  }
 
   // Defence-in-depth: cap questions per request so a hostile bookmarklet
   // can't spawn a runaway CLI invocation with 10k bogus questions.
-  if (questions.length > 100) badRequest('too many questions (max 100)');
+  if (questions.length > 100) {
+    badRequest('too many questions (max 100)');
+  }
 
   // Validate URL is to an actual ATS -- prevents using this endpoint as
   // a generic Anthropic CLI proxy.
@@ -196,14 +209,14 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
     logEvent('answer-form', 'URL not in pipeline', {
       level: 'warn',
       category: 'application',
-      message: url + ' — answers will lack full context. Add the URL to your pipeline first.',
+      message: `${url} — answers will lack full context. Add the URL to your pipeline first.`,
     });
   }
 
   logEvent('answer-form', 'Bookmarklet form-fill', {
     level: 'info',
     category: 'application',
-    message: portal + ' · ' + questions.length + ' fields · ' + (job?.company ?? '?'),
+    message: `${portal} · ${questions.length} fields · ${job?.company ?? '?'}`,
   });
 
   try {
@@ -211,7 +224,7 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
     logEvent('answer-form', 'Answers produced', {
       level: 'success',
       category: 'application',
-      message: answers.length + ' / ' + questions.length + ' fields',
+      message: `${answers.length} / ${questions.length} fields`,
     });
     return withCors(json({ ok: true, answers, jobId: job?.id ?? null }), origin);
   } catch (err) {

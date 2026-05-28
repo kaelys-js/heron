@@ -19,7 +19,9 @@ const LEGACY_PROFILES_TREE = path.join(DATA_ROOT, 'profiles');
 const PER_USER_ROOT = path.join(DATA_ROOT, 'users');
 
 function copyDirSync(src: string, dst: string): void {
-  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(src)) {
+    return;
+  }
   fs.mkdirSync(dst, { recursive: true });
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     const s = path.join(src, entry.name);
@@ -57,11 +59,17 @@ function copyDirSync(src: string, dst: string): void {
  *  the first time this user references that slug. Idempotent -- skips if
  *  the destination tree already exists. */
 function maybeCopyProfileTree(userId: string, slug: string): void {
-  if (userId === SYSTEM_USER_ID) return;
+  if (userId === SYSTEM_USER_ID) {
+    return;
+  }
   const src = path.join(LEGACY_PROFILES_TREE, slug);
   const dst = path.join(PER_USER_ROOT, userId, 'profiles', slug);
-  if (fs.existsSync(dst)) return;
-  if (!fs.existsSync(src)) return;
+  if (fs.existsSync(dst)) {
+    return;
+  }
+  if (!fs.existsSync(src)) {
+    return;
+  }
   copyDirSync(src, dst);
 }
 
@@ -115,14 +123,18 @@ export function slugFromName(name: string): string {
 function uniqueSlug(userId: string, base: string): string {
   const owned = listProfilesForUser(userId);
   const taken = new Set(owned.map((p) => p.slug));
-  if (!taken.has(base)) return base;
+  if (!taken.has(base)) {
+    return base;
+  }
   let i = 2;
-  while (taken.has(base + '-' + i)) i++;
-  return base + '-' + i;
+  while (taken.has(`${base}-${i}`)) {
+    i++;
+  }
+  return `${base}-${i}`;
 }
 
 function newId(): string {
-  return 'p_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  return `p_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }
 
 function mapRow(row: typeof profiles.$inferSelect): DbProfile {
@@ -153,7 +165,9 @@ function claimLegacyForUser(userId: string): boolean {
       fs.writeFileSync(LEGACY_CLAIM_FILE, userId, { flag: 'wx' });
       return true;
     } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') {
+        throw e;
+      }
     }
     const claimedBy = fs.readFileSync(LEGACY_CLAIM_FILE, 'utf8').trim();
     return claimedBy === userId;
@@ -170,14 +184,18 @@ function maybeMigrateLegacy(userId: string): void {
   // Never seed for the system sentinel -- those are anonymous reads we
   // don't want producing phantom rows. The endpoint guard already 401s
   // unauthenticated traffic before it reaches the per-user surface.
-  if (userId === SYSTEM_USER_ID) return;
+  if (userId === SYSTEM_USER_ID) {
+    return;
+  }
 
   const existing = appDb
     .select({ id: profiles.id })
     .from(profiles)
     .where(eq(profiles.userId, userId))
     .all();
-  if (existing.length > 0) return;
+  if (existing.length > 0) {
+    return;
+  }
 
   const inheritsLegacy = claimLegacyForUser(userId);
   if (!inheritsLegacy) {
@@ -252,7 +270,9 @@ function maybeMigrateLegacy(userId: string): void {
     const activeSlug = parsed.activeId ?? list[0]?.id ?? 'default';
     const now = nowMs();
     for (const p of list) {
-      if (!p?.id || !p?.name) continue;
+      if (!p?.id || !p?.name) {
+        continue;
+      }
       appDb
         .insert(profiles)
         .values({
@@ -318,7 +338,9 @@ export function getProfileBySlug(userId: string, slug: string): DbProfile | unde
 
 export function setActiveProfile(userId: string, slug: string): DbProfile {
   const target = getProfileBySlug(userId, slug);
-  if (!target) throw new Error('Unknown profile: ' + slug);
+  if (!target) {
+    throw new Error('Unknown profile: ' + slug);
+  }
   const now = nowMs();
   // Clear all isActive flags for this user, then set the target.
   appDb
@@ -340,8 +362,12 @@ export function createProfileFor(
   color: ProfileColor = 'blue',
 ): DbProfile {
   const trimmed = name.trim();
-  if (!trimmed) throw new Error('Profile name is required');
-  if (trimmed.length > 60) throw new Error('Profile name is too long (max 60 chars)');
+  if (!trimmed) {
+    throw new Error('Profile name is required');
+  }
+  if (trimmed.length > 60) {
+    throw new Error('Profile name is too long (max 60 chars)');
+  }
   maybeMigrateLegacy(userId);
   const base = slugFromName(trimmed);
   const now = nowMs();
@@ -392,25 +418,32 @@ export function createProfileFor(
       const msg = e instanceof Error ? e.message : String(e);
       // Only retry on UNIQUE conflict -- anything else (FK / disk full /
       // permission) should surface to the caller.
-      if (!/UNIQUE/i.test(msg) && !/constraint/i.test(msg)) throw e;
+      if (!/UNIQUE/i.test(msg) && !/constraint/i.test(msg)) {
+        throw e;
+      }
       // Loop: uniqueSlug() will read the now-newer state and append
       // -2/-3/... until it finds a free slot.
     }
   }
   throw new Error(
-    'Could not allocate a unique profile slug after ' +
-      MAX_ATTEMPTS +
-      ' attempts. Last error: ' +
-      (lastErr instanceof Error ? lastErr.message : String(lastErr)),
+    `Could not allocate a unique profile slug after ${MAX_ATTEMPTS} attempts. Last error: ${
+      lastErr instanceof Error ? lastErr.message : String(lastErr)
+    }`,
   );
 }
 
 export function renameProfileFor(userId: string, slug: string, name: string): DbProfile {
   const trimmed = name.trim();
-  if (!trimmed) throw new Error('Profile name is required');
-  if (trimmed.length > 60) throw new Error('Profile name is too long (max 60 chars)');
+  if (!trimmed) {
+    throw new Error('Profile name is required');
+  }
+  if (trimmed.length > 60) {
+    throw new Error('Profile name is too long (max 60 chars)');
+  }
   const target = getProfileBySlug(userId, slug);
-  if (!target) throw new Error('Unknown profile: ' + slug);
+  if (!target) {
+    throw new Error('Unknown profile: ' + slug);
+  }
   const now = nowMs();
   appDb
     .update(profiles)
@@ -422,7 +455,9 @@ export function renameProfileFor(userId: string, slug: string, name: string): Db
 
 export function recolorProfileFor(userId: string, slug: string, color: ProfileColor): DbProfile {
   const target = getProfileBySlug(userId, slug);
-  if (!target) throw new Error('Unknown profile: ' + slug);
+  if (!target) {
+    throw new Error('Unknown profile: ' + slug);
+  }
   const now = nowMs();
   appDb
     .update(profiles)
@@ -438,7 +473,7 @@ export function deleteProfileFor(userId: string, slug: string): DbProfile[] {
     throw new Error('Cannot delete the last profile — at least one must exist.');
   }
   if (!list.some((p) => p.slug === slug)) {
-    throw new Error('Unknown profile: ' + slug);
+    throw new Error(`Unknown profile: ${slug}`);
   }
   const wasActive = list.find((p) => p.slug === slug)?.isActive ?? false;
   appDb
@@ -448,7 +483,9 @@ export function deleteProfileFor(userId: string, slug: string): DbProfile[] {
   if (wasActive) {
     // Promote the oldest remaining profile to active.
     const remaining = listProfilesForUser(userId).sort((a, b) => a.createdAt - b.createdAt);
-    if (remaining[0]) setActiveProfile(userId, remaining[0].slug);
+    if (remaining[0]) {
+      setActiveProfile(userId, remaining[0].slug);
+    }
   }
   return listProfilesForUser(userId);
 }

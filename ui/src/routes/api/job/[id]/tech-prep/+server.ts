@@ -16,6 +16,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 function slugify(s: string): string {
   return (
     (s || '')
@@ -29,7 +30,7 @@ function slugify(s: string): string {
 function persistedPath(profileId: string, company: string, role: string): string {
   return path.join(
     profilePath(profileId, 'interview-prep-dir'),
-    slugify(company) + '-' + slugify(role) + '-tech-prep.md',
+    `${slugify(company)}-${slugify(role)}-tech-prep.md`,
   );
 }
 
@@ -57,7 +58,9 @@ function parseStdoutMeta(stdout: string): TechPrepMeta {
   const meta: TechPrepMeta = {};
   const grab = (re: RegExp): number | undefined => {
     const m = re.exec(stdout);
-    if (!m) return undefined;
+    if (!m) {
+      return undefined;
+    }
     const n = parseInt(m[1], 10);
     return Number.isFinite(n) ? n : undefined;
   };
@@ -76,7 +79,7 @@ function spawnTechPrep(
     let stderr = '';
 
     const { child: p } = spawnAgentWithMode('tech-prep', url, {
-      profileId: profileId,
+      profileId,
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
@@ -86,8 +89,11 @@ function spawnTechPrep(
     });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolve({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -96,7 +102,9 @@ export const GET = wrap(
   'tech-prep',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     return { cached: readCached(profileId, job.company ?? '', job.role ?? '') };
   },
@@ -106,9 +114,13 @@ export const POST = wrap(
   'tech-prep',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
-    if (!job.url) badRequest('Job has no URL');
+    if (!job.url) {
+      badRequest('Job has no URL');
+    }
 
     // De-dup: if a tech-prep file already exists for this company+role and
     // the caller didn't explicitly request regeneration, return the cached
@@ -131,7 +143,7 @@ export const POST = wrap(
     logEvent('tech-prep', 'Generating tech-prep plan', {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' · ' + (job.role || '?'),
+      message: `${job.company || '?'} · ${job.role || '?'}`,
     });
 
     try {

@@ -39,7 +39,7 @@ async function call(locals?: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/notifications', () => {
+describe('gET /api/notifications', () => {
   it('returns events for the authenticated user', async () => {
     const r = await call();
     expect(r.status).toBe(200);

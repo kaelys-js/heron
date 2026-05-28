@@ -70,26 +70,22 @@ export function reportApplyFailure(input: ReportApplyFailureInput): void {
   const profileId = input.profileId ?? getActiveProfileId();
 
   // 1. Issue with stable dedupeKey so retries don't multiply rows in Inbox.
-  const summary =
-    SUMMARY_PREFIX[mode] +
-    ' · ' +
-    (company || '?') +
-    (role ? ' — ' + role : '') +
-    (portal !== 'unknown' ? ' (' + portal + ')' : '');
-  const detailBody =
+  const summary = `${SUMMARY_PREFIX[mode]} · ${company || '?'}${
+    role ? ' — ' + role : ''
+  }${portal !== 'unknown' ? ' (' + portal + ')' : ''}`;
+  const detailBody = `${
     (detail ? detail + '\n\n' : '') +
     (url ? 'Posting: ' + url + '\n' : '') +
-    (screenshotPath ? 'Screenshot: ' + screenshotPath + '\n' : '') +
-    'Job ID: ' +
-    jobId;
+    (screenshotPath ? 'Screenshot: ' + screenshotPath + '\n' : '')
+  }Job ID: ${jobId}`;
 
   reportIssue({
     severity: mode === 'error' ? 'error' : 'warn',
-    source: 'apply-' + portal,
+    source: `apply-${portal}`,
     summary,
     detail: detailBody,
     fix: url ? { label: FIX_LABELS[mode], href: url } : undefined,
-    dedupeKey: 'apply:' + jobId,
+    dedupeKey: `apply:${jobId}`,
   });
 
   // 2. Flip status to ManualApplyNeeded in applications.md.
@@ -99,7 +95,7 @@ export function reportApplyFailure(input: ReportApplyFailureInput): void {
         profileId,
         url,
         'ManualApplyNeeded',
-        'Auto-apply: ' + mode + (detail ? ' — ' + detail : ''),
+        `Auto-apply: ${mode}${detail ? ' — ' + detail : ''}`,
       );
     } catch (e) {
       // markStatus reports its own server error; we don't double-log.
@@ -108,7 +104,7 @@ export function reportApplyFailure(input: ReportApplyFailureInput): void {
   }
 
   // 3. Activity feed event -- warn level so the bell highlights.
-  logEvent('apply-' + portal, summary, {
+  logEvent(`apply-${portal}`, summary, {
     level: 'warn',
     category: 'application',
     message: detail,

@@ -28,14 +28,20 @@ function ensureDir() {
 
 function readAll(): Issue[] {
   try {
-    if (!fs.existsSync(ISSUES_PATH)) return [];
+    if (!fs.existsSync(ISSUES_PATH)) {
+      return [];
+    }
     const txt = fs.readFileSync(ISSUES_PATH, 'utf8');
     const out: Issue[] = [];
     for (const line of txt.split('\n')) {
-      if (!line.trim()) continue;
+      if (!line.trim()) {
+        continue;
+      }
       try {
         const ev = JSON.parse(line) as Issue;
-        if (ev.id && ev.ts) out.push(ev);
+        if (ev.id && ev.ts) {
+          out.push(ev);
+        }
       } catch {
         // Truncated JSON line (crash mid-write) -- drop and keep loading.
         // Re-entering logEvent from issues.ts could loop if log+issue
@@ -63,12 +69,16 @@ function writeAll(issues: Issue[]): void {
 
 function appendOne(issue: Issue): void {
   ensureDir();
-  fs.appendFileSync(ISSUES_PATH, JSON.stringify(issue) + '\n');
+  fs.appendFileSync(ISSUES_PATH, `${JSON.stringify(issue)}\n`);
 }
 
 function visibleToUser(issue: Issue, userId: string): boolean {
-  if (!issue.userId) return true; // system-wide → everyone sees
-  if (issue.userId === SYSTEM_USER_ID) return true;
+  if (!issue.userId) {
+    return true;
+  } // system-wide → everyone sees
+  if (issue.userId === SYSTEM_USER_ID) {
+    return true;
+  }
   return issue.userId === userId;
 }
 
@@ -141,7 +151,9 @@ export function reportIssue(input: {
     }
     return existing;
   });
-  if (!replaced) filtered.push(next);
+  if (!replaced) {
+    filtered.push(next);
+  }
   writeAll(filtered);
   // Mirror the dedup'd row into app.db.issues.
   try {
@@ -186,12 +198,18 @@ export function resolveIssue(id: string): Issue | null {
   const all = readAll();
   let found: Issue | null = null;
   const next = all.map((i) => {
-    if (i.id !== id) return i;
-    if (!visibleToUser(i, userId)) return i; // pretend it doesn't exist
+    if (i.id !== id) {
+      return i;
+    }
+    if (!visibleToUser(i, userId)) {
+      return i;
+    } // pretend it doesn't exist
     found = { ...i, resolvedAt: Date.now() };
     return found;
   });
-  if (!found) return null;
+  if (!found) {
+    return null;
+  }
   writeAll(next);
   // Mirror resolution into app.db.issues.
   try {

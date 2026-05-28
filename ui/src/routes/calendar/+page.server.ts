@@ -35,25 +35,27 @@ export async function load({ url }: { url: URL }) {
   const horizon = now + days * 24 * HOUR;
 
   for (const { jobId, interviewer } of findUpcomingInterviews(days, profileId)) {
-    if (!interviewer.scheduledAt) continue;
+    if (!interviewer.scheduledAt) {
+      continue;
+    }
     const job = resolveJobAndProfile(jobId, url)?.job;
     entries.push({
-      id: 'iv:' + jobId + ':' + interviewer.slug,
+      id: `iv:${jobId}:${interviewer.slug}`,
       kind: 'interview',
       startAt: interviewer.scheduledAt,
       endAt: interviewer.scheduledAt + HOUR,
-      title: interviewer.stage + ' — ' + interviewer.name,
+      title: `${interviewer.stage} — ${interviewer.name}`,
       company: job?.company,
       jobId,
       interviewerSlug: interviewer.slug,
-      href: '/job/' + jobId + '#interviewer-' + interviewer.slug,
+      href: `/job/${jobId}#interviewer-${interviewer.slug}`,
     });
     const leadMs =
       interviewer.stage === 'onsite' || interviewer.stage === 'final-round' ? HOURS_48 : HOURS_24;
     const prepAt = interviewer.scheduledAt - leadMs;
     if (prepAt > now && prepAt < horizon) {
       entries.push({
-        id: 'prep:' + jobId + ':' + interviewer.slug,
+        id: `prep:${jobId}:${interviewer.slug}`,
         kind: 'prep-block',
         startAt: prepAt,
         endAt: prepAt + HOUR,
@@ -62,33 +64,41 @@ export async function load({ url }: { url: URL }) {
         jobId,
         interviewerSlug: interviewer.slug,
         hasResources: !!interviewer.dossierPath,
-        href: '/job/' + jobId + '#interviewer-' + interviewer.slug,
+        href: `/job/${jobId}#interviewer-${interviewer.slug}`,
       });
     }
   }
 
   for (const offer of listActiveOffers(profileId)) {
-    if (!offer.decisionDeadline) continue;
-    if (offer.decisionDeadline < now || offer.decisionDeadline > horizon) continue;
+    if (!offer.decisionDeadline) {
+      continue;
+    }
+    if (offer.decisionDeadline < now || offer.decisionDeadline > horizon) {
+      continue;
+    }
     const job = resolveJobAndProfile(offer.jobId, url)?.job;
     entries.push({
-      id: 'dd:' + offer.jobId,
+      id: `dd:${offer.jobId}`,
       kind: 'decision-deadline',
       startAt: offer.decisionDeadline,
-      title: 'Offer decision · ' + (job?.company ?? '?'),
+      title: `Offer decision · ${job?.company ?? '?'}`,
       company: job?.company,
       jobId: offer.jobId,
-      href: '/job/' + offer.jobId + '#offer',
+      href: `/job/${offer.jobId}#offer`,
     });
   }
 
   const stage = listAllStageState(profileId);
   for (const [jobId, state] of Object.entries(stage)) {
-    if (!state.nextActionDue) continue;
-    if (state.nextActionDue.dueAt < now || state.nextActionDue.dueAt > horizon) continue;
+    if (!state.nextActionDue) {
+      continue;
+    }
+    if (state.nextActionDue.dueAt < now || state.nextActionDue.dueAt > horizon) {
+      continue;
+    }
     const job = resolveJobAndProfile(jobId, url)?.job;
     entries.push({
-      id: 'na:' + jobId + ':' + state.nextActionDue.kind,
+      id: `na:${jobId}:${state.nextActionDue.kind}`,
       kind: 'next-action',
       startAt: state.nextActionDue.dueAt,
       title:
@@ -96,7 +106,7 @@ export async function load({ url }: { url: URL }) {
         (state.nextActionDue.interviewerName ? ' · ' + state.nextActionDue.interviewerName : ''),
       company: job?.company,
       jobId,
-      href: '/job/' + jobId,
+      href: `/job/${jobId}`,
     });
   }
   entries.sort((a, b) => a.startAt - b.startAt);

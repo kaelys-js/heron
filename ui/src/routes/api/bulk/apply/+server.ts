@@ -41,8 +41,12 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
   const ids = Array.isArray(body?.jobIds)
     ? body!.jobIds.filter((s): s is string => typeof s === 'string')
     : [];
-  if (ids.length === 0) badRequest('jobIds required (non-empty array)');
-  if (ids.length > MAX_BULK) badRequest('At most ' + MAX_BULK + ' jobs per bulk run');
+  if (ids.length === 0) {
+    badRequest('jobIds required (non-empty array)');
+  }
+  if (ids.length > MAX_BULK) {
+    badRequest('At most ' + MAX_BULK + ' jobs per bulk run');
+  }
 
   const jobs = loadAllJobs();
   const groups: Group[] = [];
@@ -63,7 +67,9 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
       isLinkedIn: isLinkedInHost(j.url),
     });
   }
-  if (groups.length === 0) badRequest('No jobs found for the given ids');
+  if (groups.length === 0) {
+    badRequest('No jobs found for the given ids');
+  }
 
   const linkedIn = groups.filter((g) => g.isLinkedIn);
   const others = groups.filter((g) => !g.isLinkedIn);
@@ -75,7 +81,7 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
     try {
       markApplied(g.url, g.company, g.role);
     } catch (e: any) {
-      logEvent('bulk-apply', 'Failed to mark Applied: ' + g.url, {
+      logEvent('bulk-apply', `Failed to mark Applied: ${g.url}`, {
         level: 'error',
         category: 'application',
         message: e?.message ?? String(e),
@@ -83,7 +89,7 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
     }
   }
   if (others.length > 0) {
-    logEvent('bulk-apply', others.length + ' jobs marked Applied', {
+    logEvent('bulk-apply', `${others.length} jobs marked Applied`, {
       level: 'success',
       category: 'application',
       message: 'Open the postings in new tabs to finish the manual form fill',

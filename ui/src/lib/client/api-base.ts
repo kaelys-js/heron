@@ -4,7 +4,8 @@
  *  backend-discovery (localhost / mDNS / Tailscale / production).
  *  `apiBaseSync()` returns the cached value (or '' before first
  *  resolve) for code that can't await. */
-import { resolveBackend, type BackendSource } from './backend-discovery';
+import { resolveBackend } from './backend-discovery';
+import type { BackendSource } from './backend-discovery';
 
 let cachedBase: string | null = null;
 let resolving: Promise<string> | null = null;
@@ -44,8 +45,12 @@ export function onBackendStatusChange(fn: (s: BackendStatus) => void): () => voi
  * after a long backgrounded period, when the LAN IP may have changed).
  */
 export async function getApiBase(): Promise<string> {
-  if (cachedBase !== null) return cachedBase;
-  if (resolving) return resolving;
+  if (cachedBase !== null) {
+    return cachedBase;
+  }
+  if (resolving) {
+    return resolving;
+  }
 
   // Same-origin path: any browser whose `window.location.origin` is an
   // actual http(s) URL already speaks the same origin as the backend.
@@ -76,8 +81,12 @@ export async function getApiBase(): Promise<string> {
     try {
       const { getSharedTailscaleUrl, getSharedProductionUrl } = await import('./native-bridge');
       const [ts, prod] = await Promise.all([getSharedTailscaleUrl(), getSharedProductionUrl()]);
-      if (ts) tailscaleHost = ts;
-      if (prod) productionUrl = prod;
+      if (ts) {
+        tailscaleHost = ts;
+      }
+      if (prod) {
+        productionUrl = prod;
+      }
     } catch {
       // native-bridge unavailable on web -- fall through with undefined
       // values, resolver will skip the corresponding candidates.

@@ -36,13 +36,21 @@ function listJobFiles(): JobFile[] {
   const out: JobFile[] = [];
   for (const entry of fs.readdirSync(JOBS_DIR)) {
     // Index module + types + registry helpers + pure listeners aren't jobs.
-    if (entry === 'index.ts' || entry === 'types.ts' || entry === 'registry.ts') continue;
-    if (!entry.endsWith('.ts')) continue;
-    if (entry.endsWith('.test.ts')) continue;
+    if (entry === 'index.ts' || entry === 'types.ts' || entry === 'registry.ts') {
+      continue;
+    }
+    if (!entry.endsWith('.ts')) {
+      continue;
+    }
+    if (entry.endsWith('.test.ts')) {
+      continue;
+    }
     const abs = path.join(JOBS_DIR, entry);
     const source = fs.readFileSync(abs, 'utf8');
     // Skip bus-listener-only modules -- they don't register a JobDef.
-    if (!/\bregister\(\s*{/.test(source)) continue;
+    if (!/\bregister\(\s*{/.test(source)) {
+      continue;
+    }
     const idMatch = source.match(/\bregister\([\s\S]*?\bid:\s*['"]([^'"]+)['"]/);
     const perUserMatch = source.match(/\bregister\([\s\S]*?\bperUser:\s*(true|false)\b/);
     out.push({
@@ -56,7 +64,7 @@ function listJobFiles(): JobFile[] {
   return out.sort((a, b) => a.file.localeCompare(b.file));
 }
 
-describe('Jobs — multi-user safety (perUser flag)', () => {
+describe('jobs — multi-user safety (perUser flag)', () => {
   const jobs = listJobFiles();
 
   it('discovers at least 10 registered jobs (sanity check)', () => {
@@ -100,8 +108,8 @@ describe('Jobs — multi-user safety (perUser flag)', () => {
   });
 });
 
-describe('Jobs — types contract', () => {
-  it('JobDef.perUser is declared as a required boolean field', () => {
+describe('jobs — types contract', () => {
+  it('jobDef.perUser is declared as a required boolean field', () => {
     const typesPath = path.join(JOBS_DIR, 'types.ts');
     const src = fs.readFileSync(typesPath, 'utf8');
     // Must be present, must not be optional (no `perUser?:`), must be boolean.

@@ -47,7 +47,7 @@ async function post(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/autopilot', () => {
+describe('gET /api/autopilot', () => {
   it('returns the current config', async () => {
     const r = await get();
     expect(r.status).toBe(200);
@@ -55,7 +55,7 @@ describe('GET /api/autopilot', () => {
   });
 });
 
-describe('POST /api/autopilot', () => {
+describe('pOST /api/autopilot', () => {
   it('400 when body is null', async () => {
     const r = await post('null');
     expect(r.status).toBe(400);

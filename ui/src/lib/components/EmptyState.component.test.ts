@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/svelte';
 import EmptyState from './EmptyState.svelte';
 
-describe('EmptyState', () => {
+describe('emptyState', () => {
   it('renders without any props', () => {
     const { container } = render(EmptyState);
     expect(container.querySelector('div')).toBeTruthy();

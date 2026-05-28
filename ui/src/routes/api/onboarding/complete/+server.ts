@@ -39,7 +39,7 @@ export const POST = wrap('onboarding-complete', async ({ request }: { request: R
   logEvent('onboarding', skip ? 'Onboarding skipped (advanced)' : 'Onboarding complete', {
     level: skip ? 'info' : 'success',
     category: 'system',
-    message: state.completedSteps.length + ' / ' + 6 + ' steps completed',
+    message: `${state.completedSteps.length} / ${6} steps completed`,
   });
 
   // Fire the form-answers seed in the background. We do this on BOTH

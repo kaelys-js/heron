@@ -117,9 +117,13 @@ export type PatternsResult = {
 
 function readCache(): PatternsResult | null {
   try {
-    if (!fs.existsSync(cachePath())) return null;
+    if (!fs.existsSync(cachePath())) {
+      return null;
+    }
     const parsed = JSON.parse(fs.readFileSync(cachePath(), 'utf8')) as PatternsResult;
-    if (!parsed.generatedAt || Date.now() - parsed.generatedAt > CACHE_TTL_MS) return null;
+    if (!parsed.generatedAt || Date.now() - parsed.generatedAt > CACHE_TTL_MS) {
+      return null;
+    }
     return parsed;
   } catch {
     return null;
@@ -140,7 +144,9 @@ function spawnAnalyze(profileId?: string): Promise<PatternsResult> {
     let stdout = '';
     let stderr = '';
     const args = ['scripts/tracker/analyze-patterns.mjs'];
-    if (profileId) args.push('--profile', profileId);
+    if (profileId) {
+      args.push('--profile', profileId);
+    }
     const p = spawn('node', args, {
       cwd: ROOT,
       env: userContextEnv(),
@@ -154,7 +160,7 @@ function spawnAnalyze(profileId?: string): Promise<PatternsResult> {
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error('analyze-patterns.mjs exited ' + code + ': ' + stderr.slice(0, 300)));
+        reject(new Error(`analyze-patterns.mjs exited ${code}: ${stderr.slice(0, 300)}`));
         return;
       }
       try {
@@ -163,8 +169,9 @@ function spawnAnalyze(profileId?: string): Promise<PatternsResult> {
       } catch (err) {
         reject(
           new Error(
-            'Failed to parse analyze-patterns JSON: ' +
-              (err instanceof Error ? err.message : String(err)),
+            `Failed to parse analyze-patterns JSON: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
           ),
         );
       }
@@ -178,7 +185,9 @@ export async function getPatterns(opts?: {
 }): Promise<PatternsResult> {
   if (!opts?.force) {
     const cached = readCache();
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
   }
   const fresh = await spawnAnalyze(opts?.profileId);
   writeCache(fresh);

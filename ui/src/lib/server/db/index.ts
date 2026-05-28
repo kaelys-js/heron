@@ -29,7 +29,9 @@ function resolveDataDir(): string {
   // HERON_DATA_DIR override is already baked into DATA_ROOT (files.ts).
   // Vitest's per-process tmpdir is preserved as a second branch so
   // unit tests stay isolated even when HERON_DATA_DIR isn't set.
-  if (process.env.HERON_DATA_DIR) return DATA_ROOT;
+  if (process.env.HERON_DATA_DIR) {
+    return DATA_ROOT;
+  }
   if (IS_TEST) {
     // Per-process tmpdir so parallel test workers don't clobber each
     // other's auth.db. pid is enough; vitest re-uses process pools but
@@ -90,6 +92,7 @@ export const appSqliteHandle = appSqlite;
 // gets a populated schema. ensureSchema is idempotent + guarded by
 // its own `migrated` flag.
 import { ensureSchema as __ensureSchema } from './migrate';
+
 __ensureSchema();
 
 /** Tear down -- used in tests + the verifier. */

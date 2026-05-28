@@ -19,7 +19,7 @@ vi.mock('$lib/server/files', () => ({
 }));
 
 vi.mock('$lib/server/profile-paths', () => ({
-  activePath: (key: string) => '/tmp/' + key,
+  activePath: (key: string) => `/tmp/${key}`,
 }));
 
 vi.mock('$lib/config/branding', () => ({
@@ -29,8 +29,12 @@ vi.mock('$lib/config/branding', () => ({
 
 const fsMock = {
   readdirSync: vi.fn((p: string) => {
-    if (p === '/tmp/modes') return ['evaluate.md', 'apply.md', 'scan.md'];
-    if (p.includes('reports')) return ['001.md', '002.md', '003.md'];
+    if (p === '/tmp/modes') {
+      return ['evaluate.md', 'apply.md', 'scan.md'];
+    }
+    if (p.includes('reports')) {
+      return ['001.md', '002.md', '003.md'];
+    }
     return [];
   }),
 };
@@ -48,7 +52,9 @@ vi.mock('$lib/server/auth-helpers', async () => {
   const { error } = await import('@sveltejs/kit');
   return {
     requireUserId: (locals: { user?: { id: string } | null }) => {
-      if (!locals?.user) throw error(401, 'unauthenticated');
+      if (!locals?.user) {
+        throw error(401, 'unauthenticated');
+      }
       return locals.user.id;
     },
   };
@@ -92,7 +98,7 @@ async function post(body: unknown, locals: App.Locals = FAKE_LOCALS) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/agent-chat', () => {
+describe('pOST /api/agent-chat', () => {
   it('400 when history is provided but not an array', async () => {
     const r = await post({ history: 'not-an-array' });
     expect(r.status).toBe(400);
@@ -120,8 +126,12 @@ describe('POST /api/agent-chat', () => {
 
   it('includes the most recent 5 reports in the system prompt', async () => {
     fsMock.readdirSync.mockImplementation((p: string) => {
-      if (p === '/tmp/modes') return ['evaluate.md'];
-      if (p.includes('reports')) return Array.from({ length: 10 }, (_, i) => 'r' + i + '.md');
+      if (p === '/tmp/modes') {
+        return ['evaluate.md'];
+      }
+      if (p.includes('reports')) {
+        return Array.from({ length: 10 }, (_, i) => 'r' + i + '.md');
+      }
       return [];
     });
     await post({});

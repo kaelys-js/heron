@@ -13,6 +13,8 @@ import { compPreflightForJob } from '$lib/server/comp-preflight';
 
 export const GET = wrap('comp-preflight', async ({ params }: { params: { id: string } }) => {
   const preflight = compPreflightForJob(params.id);
-  if (!preflight) return { ok: false, error: 'Job not found' };
+  if (!preflight) {
+    return { ok: false, error: 'Job not found' };
+  }
   return { ok: true, ...preflight };
 });

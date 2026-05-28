@@ -72,7 +72,7 @@ export const POST = wrap('profile-reprocess', async ({ url }: { url: URL }) => {
 
   logEvent('profile-reprocess', 'Reprocessing CV via Claude', {
     category: 'user',
-    message: cv.length.toLocaleString() + ' chars · model=claude-opus-4-7',
+    message: `${cv.length.toLocaleString()} chars · model=claude-opus-4-7`,
   });
 
   const text = await complete(SYSTEM_PROMPT, cv, { maxTokens: 4000, thinking: false });
@@ -90,7 +90,7 @@ export const POST = wrap('profile-reprocess', async ({ url }: { url: URL }) => {
     logEvent('profile-reprocess', 'CV reprocessing failed (parse)', {
       level: 'error',
       category: 'user',
-      message: (e instanceof Error ? e.message : 'unknown') + ' · raw=' + text.slice(0, 200),
+      message: `${e instanceof Error ? e.message : 'unknown'} · raw=${text.slice(0, 200)}`,
     });
     badRequest(
       'Failed to parse extracted profile JSON. Try again or edit profile fields manually.',
@@ -103,20 +103,30 @@ export const POST = wrap('profile-reprocess', async ({ url }: { url: URL }) => {
   if (suggestion.candidate) {
     const c = suggestion.candidate;
     const filled = (Object.keys(c) as (keyof typeof c)[]).filter((k) => c[k]);
-    if (filled.length > 0) populated.push(filled.length + ' identity fields');
+    if (filled.length > 0) {
+      populated.push(filled.length + ' identity fields');
+    }
   }
-  if (suggestion.narrative?.headline) populated.push('headline');
-  if (suggestion.narrative?.exit_story) populated.push('exit story');
-  if (suggestion.narrative?.superpowers?.length)
+  if (suggestion.narrative?.headline) {
+    populated.push('headline');
+  }
+  if (suggestion.narrative?.exit_story) {
+    populated.push('exit story');
+  }
+  if (suggestion.narrative?.superpowers?.length) {
     populated.push(suggestion.narrative.superpowers.length + ' superpowers');
-  if (suggestion.narrative?.proof_points?.length)
+  }
+  if (suggestion.narrative?.proof_points?.length) {
     populated.push(suggestion.narrative.proof_points.length + ' proof points');
-  if (suggestion.location?.city || suggestion.location?.country) populated.push('location');
+  }
+  if (suggestion.location?.city || suggestion.location?.country) {
+    populated.push('location');
+  }
 
   logEvent('profile-reprocess', 'CV reprocessing finished', {
     level: 'success',
     category: 'user',
-    message: 'Extracted: ' + (populated.length > 0 ? populated.join(' · ') : 'no usable fields'),
+    message: `Extracted: ${populated.length > 0 ? populated.join(' · ') : 'no usable fields'}`,
   });
 
   return { suggestion };

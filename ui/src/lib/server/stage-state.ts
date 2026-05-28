@@ -45,7 +45,9 @@ function statePath(profileId?: string): string {
 function readAll(profileId?: string): Record<string, JobStageState> {
   const p = statePath(profileId);
   try {
-    if (!fs.existsSync(p)) return {};
+    if (!fs.existsSync(p)) {
+      return {};
+    }
     const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? (parsed as Record<string, JobStageState>) : {};
@@ -98,7 +100,9 @@ export function setNextAction(
 ): JobStageState | undefined {
   const all = readAll(profileId);
   const existing = all[jobId];
-  if (!existing) return undefined;
+  if (!existing) {
+    return undefined;
+  }
   existing.nextActionDue = action;
   all[jobId] = existing;
   writeAll(all, profileId);
@@ -107,7 +111,9 @@ export function setNextAction(
 
 export function clearNextAction(jobId: string, profileId?: string): void {
   const all = readAll(profileId);
-  if (!all[jobId]) return;
+  if (!all[jobId]) {
+    return;
+  }
   all[jobId].nextActionDue = undefined;
   writeAll(all, profileId);
 }
@@ -133,7 +139,9 @@ export function listStaleJobs(
   const cutoff = Date.now() - daysToGhost * 24 * 60 * 60 * 1000;
   const out: { jobId: string; daysSinceLastTouch: number; state: JobStageState }[] = [];
   for (const [jobId, state] of Object.entries(all)) {
-    if (state.lastTouchAt > cutoff) continue;
+    if (state.lastTouchAt > cutoff) {
+      continue;
+    }
     const lastStage = state.stageHistory[state.stageHistory.length - 1]?.status;
     if (
       lastStage === 'Accepted' ||
@@ -141,8 +149,9 @@ export function listStaleJobs(
       lastStage === 'Rejected' ||
       lastStage === 'Closed' ||
       lastStage === 'Ghosted'
-    )
+    ) {
       continue;
+    }
     out.push({
       jobId,
       daysSinceLastTouch: Math.floor((Date.now() - state.lastTouchAt) / (24 * 60 * 60 * 1000)),
@@ -156,7 +165,9 @@ export function listStaleJobs(
 export function markGhosted(jobId: string, profileId?: string): JobStageState | undefined {
   const all = readAll(profileId);
   const existing = all[jobId];
-  if (!existing) return undefined;
+  if (!existing) {
+    return undefined;
+  }
   existing.ghostedAt = Date.now();
   existing.stageHistory.push({ status: 'Ghosted', at: Date.now(), note: 'auto-ghost' });
   all[jobId] = existing;
@@ -244,9 +255,15 @@ export function computeFunnelStats(profileId?: string): FunnelStats {
     if (seen.has('Offer') || seen.has('Negotiating') || seen.has('Accepted')) {
       stats.offer++;
     }
-    if (seen.has('Accepted')) stats.accepted++;
-    if (seen.has('Rejected')) stats.rejected++;
-    if (seen.has('Ghosted')) stats.ghosted++;
+    if (seen.has('Accepted')) {
+      stats.accepted++;
+    }
+    if (seen.has('Rejected')) {
+      stats.rejected++;
+    }
+    if (seen.has('Ghosted')) {
+      stats.ghosted++;
+    }
   }
   stats.appliedToScreen = stats.applied ? stats.screened / stats.applied : 0;
   stats.screenToInterview = stats.screened ? stats.interview / stats.screened : 0;

@@ -35,12 +35,14 @@ const retryQueue: Retryable[] = [];
 let installed = false;
 
 function install(): void {
-  if (installed || typeof window === 'undefined') return;
+  if (installed || typeof window === 'undefined') {
+    return;
+  }
   installed = true;
   // Native true-offline detection -- iOS NWPathMonitor.swift dispatches
   // heron:net-status with { online: false } when path goes unsatisfied.
   window.addEventListener(BRAND_EVENTS.netStatus, ((e: Event) => {
-    const detail = (e as CustomEvent<{ online?: boolean }>).detail;
+    const { detail } = e as CustomEvent<{ online?: boolean }>;
     if (detail && detail.online === false) {
       abortAll();
     } else {
@@ -112,7 +114,9 @@ export function enqueueForRetry(entry: Retryable): void {
 /** Replay every queued request once. Strips the entries first so a
  *  failing replay can't re-enqueue itself in the same tick. */
 function drainQueue(): void {
-  if (retryQueue.length === 0) return;
+  if (retryQueue.length === 0) {
+    return;
+  }
   const batch = retryQueue.splice(0, retryQueue.length);
   for (const entry of batch) {
     void fetch(entry.url, entry.init).then(
@@ -140,8 +144,12 @@ export function __reset(): void {
 /** True if the request is safe to auto-retry. GETs are idempotent by
  *  HTTP contract; mutations require explicit caller opt-in. */
 export function isRetryable(init: RequestInit, optIn: boolean | undefined): boolean {
-  if (optIn === true) return true;
-  if (optIn === false) return false;
+  if (optIn === true) {
+    return true;
+  }
+  if (optIn === false) {
+    return false;
+  }
   const method = (init.method ?? 'GET').toUpperCase();
   return method === 'GET' || method === 'HEAD';
 }

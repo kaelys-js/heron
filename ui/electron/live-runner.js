@@ -16,7 +16,7 @@ const reloadWatcher = {
 ///*
 function runBuild() {
   return new Promise((resolve, _reject) => {
-    let tempChild = cp.spawn(npmCmd, ['run', 'build']);
+    const tempChild = cp.spawn(npmCmd, ['run', 'build']);
     tempChild.once('exit', () => {
       resolve();
     });

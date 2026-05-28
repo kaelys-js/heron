@@ -43,40 +43,34 @@ describe('interview-schedule — listSchedule', () => {
   });
 
   it('parses well-formed JSONL', () => {
-    mockFile =
-      JSON.stringify({ jobId: 'j1', scheduledAt: 1000, setAt: 100 }) +
-      '\n' +
-      JSON.stringify({ jobId: 'j2', scheduledAt: 2000, setAt: 200 }) +
-      '\n';
+    mockFile = `${JSON.stringify({ jobId: 'j1', scheduledAt: 1000, setAt: 100 })}\n${JSON.stringify(
+      { jobId: 'j2', scheduledAt: 2000, setAt: 200 },
+    )}\n`;
     expect(listSchedule('default').map((e) => e.jobId)).toEqual(['j1', 'j2']);
   });
 
   it('skips corrupted lines but keeps valid ones', () => {
-    mockFile =
-      JSON.stringify({ jobId: 'j1', scheduledAt: 1000, setAt: 100 }) +
-      '\nNOT-JSON\n' +
-      JSON.stringify({ jobId: 'j2', scheduledAt: 2000, setAt: 200 }) +
-      '\n';
+    mockFile = `${JSON.stringify({
+      jobId: 'j1',
+      scheduledAt: 1000,
+      setAt: 100,
+    })}\nNOT-JSON\n${JSON.stringify({ jobId: 'j2', scheduledAt: 2000, setAt: 200 })}\n`;
     expect(listSchedule('default').map((e) => e.jobId)).toEqual(['j1', 'j2']);
   });
 
   it('last-write-wins on jobId (append-log semantics)', () => {
-    mockFile =
-      JSON.stringify({ jobId: 'j1', scheduledAt: 1000, setAt: 100 }) +
-      '\n' +
-      JSON.stringify({ jobId: 'j1', scheduledAt: 3000, setAt: 300 }) +
-      '\n';
+    mockFile = `${JSON.stringify({ jobId: 'j1', scheduledAt: 1000, setAt: 100 })}\n${JSON.stringify(
+      { jobId: 'j1', scheduledAt: 3000, setAt: 300 },
+    )}\n`;
     const list = listSchedule('default');
     expect(list.length).toBe(1);
     expect(list[0].scheduledAt).toBe(3000);
   });
 
   it('sorts ascending by scheduledAt', () => {
-    mockFile =
-      JSON.stringify({ jobId: 'j2', scheduledAt: 2000, setAt: 200 }) +
-      '\n' +
-      JSON.stringify({ jobId: 'j1', scheduledAt: 1000, setAt: 100 }) +
-      '\n';
+    mockFile = `${JSON.stringify({ jobId: 'j2', scheduledAt: 2000, setAt: 200 })}\n${JSON.stringify(
+      { jobId: 'j1', scheduledAt: 1000, setAt: 100 },
+    )}\n`;
     expect(listSchedule('default').map((e) => e.jobId)).toEqual(['j1', 'j2']);
   });
 });
@@ -94,26 +88,24 @@ describe('interview-schedule — getSchedule / setSchedule', () => {
   });
 
   it('setSchedule preserves fired flags when scheduledAt unchanged', () => {
-    mockFile =
-      JSON.stringify({
-        jobId: 'j1',
-        scheduledAt: 5000,
-        setAt: 1,
-        reminders: { fired24h: true, fired30min: false },
-      }) + '\n';
+    mockFile = `${JSON.stringify({
+      jobId: 'j1',
+      scheduledAt: 5000,
+      setAt: 1,
+      reminders: { fired24h: true, fired30min: false },
+    })}\n`;
     setSchedule('default', { jobId: 'j1', scheduledAt: 5000, stage: 'Updated' });
     const r = getSchedule('default', 'j1');
     expect(r?.reminders?.fired24h).toBe(true);
   });
 
   it('setSchedule RESETS fired flags when scheduledAt changes (rescheduled)', () => {
-    mockFile =
-      JSON.stringify({
-        jobId: 'j1',
-        scheduledAt: 5000,
-        setAt: 1,
-        reminders: { fired24h: true, fired30min: true },
-      }) + '\n';
+    mockFile = `${JSON.stringify({
+      jobId: 'j1',
+      scheduledAt: 5000,
+      setAt: 1,
+      reminders: { fired24h: true, fired30min: true },
+    })}\n`;
     setSchedule('default', { jobId: 'j1', scheduledAt: 9999 });
     const r = getSchedule('default', 'j1');
     expect(r?.reminders?.fired24h).toBeUndefined();
@@ -157,25 +149,23 @@ describe('interview-schedule — dueReminders', () => {
 
   it('does NOT fire 30min reminder if already fired', () => {
     const now = 1_000_000;
-    mockFile =
-      JSON.stringify({
-        jobId: 'j',
-        scheduledAt: now + 20 * 60 * 1000,
-        setAt: 0,
-        reminders: { fired30min: true },
-      }) + '\n';
+    mockFile = `${JSON.stringify({
+      jobId: 'j',
+      scheduledAt: now + 20 * 60 * 1000,
+      setAt: 0,
+      reminders: { fired30min: true },
+    })}\n`;
     expect(dueReminders('default', now).thirtyMin.length).toBe(0);
   });
 
   it('does NOT fire 24h reminder if already fired', () => {
     const now = 1_000_000;
-    mockFile =
-      JSON.stringify({
-        jobId: 'j',
-        scheduledAt: now + 24 * 60 * 60 * 1000,
-        setAt: 0,
-        reminders: { fired24h: true },
-      }) + '\n';
+    mockFile = `${JSON.stringify({
+      jobId: 'j',
+      scheduledAt: now + 24 * 60 * 60 * 1000,
+      setAt: 0,
+      reminders: { fired24h: true },
+    })}\n`;
     expect(dueReminders('default', now).twentyFourHour.length).toBe(0);
   });
 

@@ -21,7 +21,9 @@ const INBOX_MBOX = path.join(DATA_ROOT, 'inbox-mbox');
 
 function inboxHasMbox(): boolean {
   try {
-    if (!fs.existsSync(INBOX_MBOX)) return false;
+    if (!fs.existsSync(INBOX_MBOX)) {
+      return false;
+    }
     return fs.readdirSync(INBOX_MBOX).some((n) => n.toLowerCase().endsWith('.mbox'));
   } catch {
     return false;
@@ -41,9 +43,15 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
   const profiles = listProfiles();
 
   const baseChildren: Array<string> = [];
-  if (hasJob('scan-portals')) baseChildren.push('scan-portals');
-  if (hasJob('scan')) baseChildren.push('scan');
-  if (hasJob('scan-curated')) baseChildren.push('scan-curated');
+  if (hasJob('scan-portals')) {
+    baseChildren.push('scan-portals');
+  }
+  if (hasJob('scan')) {
+    baseChildren.push('scan');
+  }
+  if (hasJob('scan-curated')) {
+    baseChildren.push('scan-curated');
+  }
   // P9: skip the authenticated scrapers when their `consecutiveFailures`
   // counter is non-zero -- re-firing into a dead session just produces more
   // failures (and eventually a 3-strike disconnect). The user has to
@@ -56,10 +64,9 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
       logEvent('scan-all', 'Skipping scan-linkedin-auth — recent failures', {
         level: 'warn',
         category: 'task',
-        message:
-          'consecutiveFailures=' +
-          (s.consecutiveFailures ?? 0) +
-          '. Re-login via /sources to clear.',
+        message: `consecutiveFailures=${
+          s.consecutiveFailures ?? 0
+        }. Re-login via /sources to clear.`,
       });
     }
   }
@@ -71,17 +78,18 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
       logEvent('scan-all', 'Skipping scan-indeed-auth — recent failures', {
         level: 'warn',
         category: 'task',
-        message:
-          'consecutiveFailures=' +
-          (s.consecutiveFailures ?? 0) +
-          '. Re-login via /sources to clear.',
+        message: `consecutiveFailures=${
+          s.consecutiveFailures ?? 0
+        }. Re-login via /sources to clear.`,
       });
     }
   }
   if (hasJob('scan-email-imap') && getSource('gmail-imap').connected) {
     baseChildren.push('scan-email-imap');
   }
-  if (hasJob('scan-email') && inboxHasMbox()) baseChildren.push('scan-email');
+  if (hasJob('scan-email') && inboxHasMbox()) {
+    baseChildren.push('scan-email');
+  }
 
   if (baseChildren.length === 0) {
     logEvent('scan-all', 'Nothing to scan', {
@@ -95,12 +103,9 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
   logEvent('scan-all', 'Scan-all dispatched', {
     level: 'info',
     category: 'task',
-    message:
-      profiles.length +
-      ' profile(s) × ' +
-      baseChildren.length +
-      ' scanner(s): ' +
-      baseChildren.join(', '),
+    message: `${profiles.length} profile(s) × ${
+      baseChildren.length
+    } scanner(s): ${baseChildren.join(', ')}`,
   });
 
   // For each profile, fan out scanners in parallel. Profiles iterate
@@ -137,27 +142,27 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
       okCount++;
       const found = (r.meta as { found?: number } | undefined)?.found ?? 0;
       totalFound += found;
-      breakdown.push(r.profileId + '/' + r.id + '=' + found);
+      breakdown.push(`${r.profileId}/${r.id}=${found}`);
     } else {
       failCount++;
-      breakdown.push(r.profileId + '/' + r.id + '=fail(' + (r.error || '?').slice(0, 40) + ')');
+      breakdown.push(`${r.profileId}/${r.id}=fail(${(r.error || '?').slice(0, 40)})`);
     }
   }
 
   logEvent('scan-all', 'Scan-all finished', {
     level: failCount === 0 ? 'success' : okCount > 0 ? 'warn' : 'error',
     category: 'task',
-    message: totalFound + ' total · ' + breakdown.join(' · '),
+    message: `${totalFound} total · ${breakdown.join(' · ')}`,
   });
 
   const totalChildren = results.length;
-  const message = totalFound + ' jobs across ' + okCount + '/' + totalChildren + ' runs';
+  const message = `${totalFound} jobs across ${okCount}/${totalChildren} runs`;
   if (failCount < totalChildren) {
     return { ok: true, message, meta: { totalFound, okCount, failCount, breakdown } };
   }
   return {
     ok: false,
-    error: 'All scanners failed: ' + breakdown.join('; '),
+    error: `All scanners failed: ${breakdown.join('; ')}`,
     meta: { totalFound, okCount, failCount, breakdown },
   };
 }

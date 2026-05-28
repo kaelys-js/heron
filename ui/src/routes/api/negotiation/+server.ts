@@ -5,7 +5,9 @@ import { logEvent } from '$lib/server/events';
 
 export const POST = async ({ request, url }) => {
   const { reportFile, offer } = await request.json();
-  if (!reportFile || !offer) throw error(400, 'reportFile + offer required');
+  if (!reportFile || !offer) {
+    throw error(400, 'reportFile + offer required');
+  }
   // Profile resolution: caller can pass ?profile=<slug>; else active.
   // The report file + CV + profile.yml all live under the profile's dir.
   const queryProfile = url.searchParams.get('profile');

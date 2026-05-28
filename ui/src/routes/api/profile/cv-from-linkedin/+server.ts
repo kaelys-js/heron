@@ -56,11 +56,13 @@ export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Requ
     badRequest('expected JSON body with { url: string }');
   }
   const rawUrl = body.url.trim();
-  if (!rawUrl) badRequest('url is empty');
+  if (!rawUrl) {
+    badRequest('url is empty');
+  }
 
   // Cheap shape check up-front so the user gets a fast error before we
   // spawn Playwright. The python script does its own canonicalisation too.
-  if (!/(linkedin\.com\/in\/[A-Za-z0-9_\-]+)/i.test(rawUrl)) {
+  if (!/(linkedin\.com\/in\/[A-Za-z0-9_-]+)/i.test(rawUrl)) {
     badRequest(
       'Not a LinkedIn /in/ profile URL — paste a link like https://www.linkedin.com/in/your-handle',
     );
@@ -90,7 +92,7 @@ export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Requ
       category: 'user',
       message: msg.slice(0, 240),
     });
-    badRequest('LinkedIn extraction failed: ' + msg);
+    badRequest(`LinkedIn extraction failed: ${msg}`);
   }
 
   if (!extracted || extracted.length < 200) {
@@ -101,7 +103,7 @@ export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Requ
 
   logEvent('cv-from-linkedin', 'LinkedIn profile extracted, converting via Claude', {
     category: 'user',
-    message: extracted.length.toLocaleString() + ' chars · model=claude-opus-4-7',
+    message: `${extracted.length.toLocaleString()} chars · model=claude-opus-4-7`,
   });
 
   const out = await complete(SYSTEM_PROMPT, extracted, { maxTokens: 8000, thinking: false });
@@ -110,17 +112,14 @@ export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Requ
     .replace(/^```(?:markdown|md)?\s*/i, '')
     .replace(/\s*```$/, '')
     .trim();
-  if (!markdown)
+  if (!markdown) {
     badRequest('Claude returned an empty response — try again or paste plain text directly');
+  }
 
   logEvent('cv-from-linkedin', 'LinkedIn CV import succeeded', {
     level: 'success',
     category: 'user',
-    message:
-      extracted.length.toLocaleString() +
-      ' chars in → ' +
-      markdown.length.toLocaleString() +
-      ' chars out',
+    message: `${extracted.length.toLocaleString()} chars in → ${markdown.length.toLocaleString()} chars out`,
   });
 
   return { markdown };
@@ -131,7 +130,7 @@ export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Requ
  *  own error message captured from stderr. */
 function spawnExtractScript(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const venvPython = ROOT + '/.venv/bin/python';
+    const venvPython = `${ROOT}/.venv/bin/python`;
     const py = fs.existsSync(venvPython) ? venvPython : 'python3';
     const p = spawn(py, ['scripts/linkedin/extract-linkedin-profile.py', '--url', url], {
       cwd: ROOT,
@@ -145,10 +144,14 @@ function spawnExtractScript(url: string): Promise<string> {
     // goes wrong upstream.
     const MAX_BYTES = 1_000_000;
     p.stdout?.on('data', (c: Buffer) => {
-      if (stdoutBuf.length < MAX_BYTES) stdoutBuf += c.toString();
+      if (stdoutBuf.length < MAX_BYTES) {
+        stdoutBuf += c.toString();
+      }
     });
     p.stderr?.on('data', (c: Buffer) => {
-      if (stderrBuf.length < MAX_BYTES) stderrBuf += c.toString();
+      if (stderrBuf.length < MAX_BYTES) {
+        stderrBuf += c.toString();
+      }
     });
 
     const timer = setTimeout(() => {
@@ -164,7 +167,9 @@ function spawnExtractScript(url: string): Promise<string> {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code === 0) return resolve(stdoutBuf);
+      if (code === 0) {
+        return resolve(stdoutBuf);
+      }
       // Map well-known exit codes to clear user messages -- the script
       // documents these in its docstring.
       const tail = (stderrBuf || '').slice(-400).trim();
@@ -174,7 +179,7 @@ function spawnExtractScript(url: string): Promise<string> {
         4: 'profile is private or LinkedIn served an auth-wall',
         5: 'timed out fetching the profile page',
       };
-      const hint = map[code ?? -1] ?? 'exited ' + code;
+      const hint = map[code ?? -1] ?? `exited ${code}`;
       reject(new Error(hint + (tail ? ' · ' + tail : '')));
     });
   });

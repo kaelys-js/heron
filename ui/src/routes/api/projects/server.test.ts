@@ -66,7 +66,7 @@ async function post(body: unknown, url = 'http://localhost/api/projects') {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/projects', () => {
+describe('gET /api/projects', () => {
   it('returns the active profile projects when no ?profile= query', async () => {
     projectsStore['default'] = [{ id: 'p1', name: 'P1' }];
     const r = await get();
@@ -90,7 +90,7 @@ describe('GET /api/projects', () => {
   });
 });
 
-describe('POST /api/projects', () => {
+describe('pOST /api/projects', () => {
   it('creates a new project with the given name', async () => {
     const r = await post({ name: 'My Track' });
     expect(r.status).toBe(200);

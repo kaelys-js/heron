@@ -58,7 +58,9 @@ describe('db/migrate — schema parity (drizzle ↔ CREATE TABLE)', () => {
     // backtick template literal so we don't need a TS parser.
     function extractDdl(name: string): string {
       const idx = migrateSrc.indexOf(`const ${name}`);
-      if (idx < 0) throw new Error(`migrate.ts missing const ${name}`);
+      if (idx < 0) {
+        throw new Error(`migrate.ts missing const ${name}`);
+      }
       const tickStart = migrateSrc.indexOf('`', idx);
       const tickEnd = migrateSrc.indexOf('`', tickStart + 1);
       return migrateSrc.slice(tickStart + 1, tickEnd);

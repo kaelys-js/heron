@@ -21,22 +21,34 @@ function pullCountsLast7d(profileId: string): Record<string, { last7d: number; t
 
   const consume = (path: string) => {
     const txt = readSafe(path);
-    if (!txt) return;
+    if (!txt) {
+      return;
+    }
     const lines = txt.split('\n');
     for (let i = 1; i < lines.length; i++) {
       const parts = lines[i].split('\t');
-      if (parts.length < 3) continue;
+      if (parts.length < 3) {
+        continue;
+      }
       const date = parts[1];
       const portal = parts[2];
-      if (!portal) continue;
-      if (!out[portal]) out[portal] = { last7d: 0, total: 0 };
+      if (!portal) {
+        continue;
+      }
+      if (!out[portal]) {
+        out[portal] = { last7d: 0, total: 0 };
+      }
       out[portal].total += 1;
-      if (date >= cutoff) out[portal].last7d += 1;
+      if (date >= cutoff) {
+        out[portal].last7d += 1;
+      }
     }
   };
 
   if (profileId === 'all') {
-    for (const p of listProfiles()) consume(profilePath(p.id, 'scan-history'));
+    for (const p of listProfiles()) {
+      consume(profilePath(p.id, 'scan-history'));
+    }
   } else {
     consume(profilePath(profileId, 'scan-history'));
   }
@@ -106,13 +118,17 @@ function aggregatePullsFor(
     'gmail-imap': ['linkedin-alert-email', 'indeed-alert-email', 'email-digest'],
   };
   const members = groups[sourceId];
-  if (!members) return null;
+  if (!members) {
+    return null;
+  }
   let last7d = 0;
   let total = 0;
   let anyHit = false;
   for (const m of members) {
     const v = pulls[m];
-    if (!v) continue;
+    if (!v) {
+      continue;
+    }
     anyHit = true;
     last7d += v.last7d;
     total += v.total;

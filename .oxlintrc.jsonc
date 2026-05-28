@@ -1,31 +1,42 @@
 // oxlint config — Rust-based JS/TS linter (50-100x faster than ESLint).
 //
-// Status: all rules INTENTIONALLY off. This file exists so the lint
-// infrastructure is wired (lefthook + CI), but no rule fires today.
-// Flipping a rule on later = a one-line PR.
+// Status: curated-safe rule set. Every rule below has a SAFE oxlint
+// auto-fix (`oxlint --fix`) and lives in a plugin relevant to this
+// TS/Node/Vitest repo. Categories stay fully OFF; rules are enabled
+// explicitly so the set is auditable and nothing fires by category
+// default.
 //
-// Why install + wire it but disable everything? Three reasons:
-//   1. Catches parse failures cheaply (oxlint is FAST, < 100 ms even at
-//      full-repo scale) — a syntax error in .ts/.svelte still surfaces.
-//   2. The hook + CI plumbing is the hard part; turning on rules is
-//      incremental once the gate exists.
-//   3. Future-proofs against the day biome's lint half goes stale —
-//      oxlint maintains independent rule coverage (typescript, unicorn,
-//      oxc, jsx-a11y, react, vitest, jest, n, promise, ...).
+// SCOPE: .ts/.js/.mjs/.cjs only. Excluded (see ignorePatterns):
+//   • `.svelte` — oxlint does not model Svelte 5 runes, so its
+//     autofix corrupts reactive state (prefer-const rewrites a `let`
+//     $state rune to `const`, breaking bind:/reassignment).
+//     svelte-check (`pnpm typecheck`) owns Svelte correctness.
+//   • e2e/ + e2e-electron/ — Playwright specs, not vitest; the vitest
+//     plugin otherwise injects a `vitest` import that duplicates the
+//     `@playwright/test` one (hard parse error).
 //
-// How to enable a rule: change the value in `rules` from absent to
-// `"warn"` or `"error"`. Run `pnpm exec oxlint --rules` to see every
-// available rule organised by plugin.
+// Severity is `warn` — the lint gate (`pnpm lint`) has no
+// --deny-warnings, so warnings never fail CI. Promote a rule to
+// `error` once it auto-fixes to zero repo-wide.
+//
+// Deliberately EXCLUDED (safe-fixable but unwanted here):
+//   • capitalized-comments / sort-keys / sort-imports — pure-style
+//     mass churn that fights biome (the formatter of record) and the
+//     repo lowercase-comment convention.
+//   • vitest/no-importing-vitest-globals — contradicts the repo
+//     convention (tests import from "vitest"); we keep its inverse
+//     prefer-importing-vitest-globals instead.
+//   • vitest/prefer-import-in-mock, vitest/prefer-expect-type-of —
+//     oxlint flags these "safe" but the fixes break TypeScript
+//     (vi.mock(import()) changes the factory's expected type;
+//     expectTypeOf is inserted without an import).
+//
+// To add a rule: `oxlint --rules --format json` lists every rule with
+// its `fix` capability; add the ones with a safe fix here.
 //
 // Docs: https://oxc.rs/docs/guide/usage/linter
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  // Turn EVERY category off. Oxlint enables `correctness` by default
-  // (~57 rules at error severity). The user's directive is "wire it
-  // up but disable all rules for now" — so we silence categories
-  // explicitly. `rules: {}` alone does NOT do this; it only overrides
-  // per-rule settings, and unset rules fall back to the category
-  // default. Setting every known category to "off" inverts that.
   "categories": {
     "correctness": "off",
     "suspicious": "off",
@@ -35,8 +46,149 @@
     "style": "off",
     "nursery": "off"
   },
-  "plugins": [],
-  "rules": {},
+  "plugins": ["import", "promise", "node", "vitest", "jsdoc"],
+  "rules": {
+    "arrow-body-style": "warn",
+    "curly": "warn",
+    "func-names": "warn",
+    "no-array-constructor": "warn",
+    "no-compare-neg-zero": "warn",
+    "no-div-regex": "warn",
+    "no-else-return": "warn",
+    "no-extra-boolean-cast": "warn",
+    "no-extra-label": "warn",
+    "no-new-wrappers": "warn",
+    "no-regex-spaces": "warn",
+    "no-unsafe-negation": "warn",
+    "no-unused-labels": "warn",
+    "no-useless-computed-key": "warn",
+    "no-useless-escape": "warn",
+    "no-useless-rename": "warn",
+    "no-var": "warn",
+    "object-shorthand": "warn",
+    "prefer-const": "warn",
+    "prefer-destructuring": "warn",
+    "prefer-exponentiation-operator": "warn",
+    "prefer-numeric-literals": "warn",
+    "prefer-object-has-own": "warn",
+    "prefer-object-spread": "warn",
+    "prefer-template": "warn",
+    "preserve-caught-error": "warn",
+    "unicode-bom": "warn",
+    "use-isnan": "warn",
+    "valid-typeof": "warn",
+    "yoda": "warn",
+    "import/consistent-type-specifier-style": "warn",
+    "import/newline-after-import": "warn",
+    "import/no-empty-named-blocks": "warn",
+    "node/no-exports-assign": "warn",
+    "oxc/double-comparisons": "warn",
+    "oxc/no-const-enum": "warn",
+    "oxc/no-map-spread": "warn",
+    "promise/no-new-statics": "warn",
+    "typescript/array-type": "warn",
+    "typescript/ban-ts-comment": "warn",
+    "typescript/ban-tslint-comment": "warn",
+    "typescript/consistent-generic-constructors": "warn",
+    "typescript/consistent-indexed-object-style": "warn",
+    "typescript/consistent-type-assertions": "warn",
+    "typescript/consistent-type-imports": "warn",
+    "typescript/explicit-member-accessibility": "warn",
+    "typescript/no-confusing-void-expression": "warn",
+    "typescript/no-duplicate-type-constituents": "warn",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-extra-non-null-assertion": "warn",
+    "typescript/no-import-type-side-effects": "warn",
+    "typescript/no-meaningless-void-operator": "warn",
+    "typescript/no-restricted-types": "warn",
+    "typescript/no-unnecessary-template-expression": "warn",
+    "typescript/no-unnecessary-type-arguments": "warn",
+    "typescript/no-unnecessary-type-assertion": "warn",
+    "typescript/no-useless-empty-export": "warn",
+    "typescript/no-wrapper-object-types": "warn",
+    "typescript/prefer-as-const": "warn",
+    "typescript/prefer-function-type": "warn",
+    "typescript/prefer-includes": "warn",
+    "typescript/prefer-namespace-keyword": "warn",
+    "typescript/prefer-nullish-coalescing": "warn",
+    "typescript/prefer-reduce-type-parameter": "warn",
+    "typescript/prefer-return-this-type": "warn",
+    "typescript/prefer-ts-expect-error": "warn",
+    "typescript/promise-function-async": "warn",
+    "typescript/return-await": "warn",
+    "unicorn/catch-error-name": "warn",
+    "unicorn/consistent-assert": "warn",
+    "unicorn/consistent-date-clone": "warn",
+    "unicorn/consistent-existence-index-check": "warn",
+    "unicorn/consistent-template-literal-escape": "warn",
+    "unicorn/empty-brace-spaces": "warn",
+    "unicorn/escape-case": "warn",
+    "unicorn/explicit-length-check": "warn",
+    "unicorn/no-array-reverse": "warn",
+    "unicorn/no-array-sort": "warn",
+    "unicorn/no-console-spaces": "warn",
+    "unicorn/no-hex-escape": "warn",
+    "unicorn/no-instanceof-array": "warn",
+    "unicorn/no-length-as-slice-end": "warn",
+    "unicorn/no-nested-ternary": "warn",
+    "unicorn/no-single-promise-in-promise-methods": "warn",
+    "unicorn/no-typeof-undefined": "warn",
+    "unicorn/no-unnecessary-array-splice-count": "warn",
+    "unicorn/no-unnecessary-await": "warn",
+    "unicorn/no-unnecessary-slice-end": "warn",
+    "unicorn/no-useless-fallback-in-spread": "warn",
+    "unicorn/no-useless-iterator-to-array": "warn",
+    "unicorn/no-useless-promise-resolve-reject": "warn",
+    "unicorn/no-useless-undefined": "warn",
+    "unicorn/no-zero-fractions": "warn",
+    "unicorn/number-literal-case": "warn",
+    "unicorn/numeric-separators-style": "warn",
+    "unicorn/prefer-array-flat-map": "warn",
+    "unicorn/prefer-bigint-literals": "warn",
+    "unicorn/prefer-class-fields": "warn",
+    "unicorn/prefer-classlist-toggle": "warn",
+    "unicorn/prefer-code-point": "warn",
+    "unicorn/prefer-date-now": "warn",
+    "unicorn/prefer-default-parameters": "warn",
+    "unicorn/prefer-dom-node-append": "warn",
+    "unicorn/prefer-dom-node-dataset": "warn",
+    "unicorn/prefer-dom-node-text-content": "warn",
+    "unicorn/prefer-import-meta-properties": "warn",
+    "unicorn/prefer-keyboard-event-key": "warn",
+    "unicorn/prefer-math-min-max": "warn",
+    "unicorn/prefer-negative-index": "warn",
+    "unicorn/prefer-node-protocol": "warn",
+    "unicorn/prefer-optional-catch-binding": "warn",
+    "unicorn/prefer-prototype-methods": "warn",
+    "unicorn/prefer-query-selector": "warn",
+    "unicorn/prefer-regexp-test": "warn",
+    "unicorn/prefer-set-size": "warn",
+    "unicorn/prefer-spread": "warn",
+    "unicorn/prefer-string-raw": "warn",
+    "unicorn/prefer-string-replace-all": "warn",
+    "unicorn/prefer-string-slice": "warn",
+    "unicorn/prefer-string-starts-ends-with": "warn",
+    "unicorn/prefer-string-trim-start-end": "warn",
+    "unicorn/prefer-type-error": "warn",
+    "unicorn/relative-url-style": "warn",
+    "unicorn/require-array-join-separator": "warn",
+    "unicorn/require-module-specifiers": "warn",
+    "unicorn/require-number-to-fixed-digits-argument": "warn",
+    "unicorn/switch-case-braces": "warn",
+    "unicorn/text-encoding-identifier-case": "warn",
+    "unicorn/throw-new-error": "warn",
+    "vitest/consistent-test-it": "warn",
+    "vitest/consistent-vitest-vi": "warn",
+    "vitest/no-alias-methods": "warn",
+    "vitest/no-focused-tests": "warn",
+    "vitest/no-test-prefixes": "warn",
+    "vitest/no-unneeded-async-expect-function": "warn",
+    "vitest/padding-around-after-all-blocks": "warn",
+    "vitest/prefer-importing-vitest-globals": "warn",
+    "vitest/prefer-lowercase-title": "warn",
+    "vitest/prefer-todo": "warn",
+    "vitest/valid-title": "warn"
+  },
   "ignorePatterns": [
     "node_modules/**",
     "**/node_modules/**",
@@ -55,6 +207,10 @@
     "ui/electron/app/**",
     "ui/ios/App/Pods/**",
     "ui/android/build/**",
+    "**/e2e/**",
+    "**/e2e-electron/**",
+    "**/*.svelte",
+    "*.svelte",
     "**/*.bak"
   ]
 }

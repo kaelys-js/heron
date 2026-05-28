@@ -40,16 +40,26 @@ const BAND_ADVICE: Record<TimingBand, string> = {
 
 /** Classify a job's age into one of 4 bands. */
 function bandFor(days: number | null): TimingBand {
-  if (days == null) return 'late';
-  if (days <= 3) return 'fresh';
-  if (days <= 7) return 'good';
-  if (days <= 14) return 'fading';
+  if (days == null) {
+    return 'late';
+  }
+  if (days <= 3) {
+    return 'fresh';
+  }
+  if (days <= 7) {
+    return 'good';
+  }
+  if (days <= 14) {
+    return 'fading';
+  }
   return 'late';
 }
 
 function daysBetween(iso: string): number {
-  const t0 = Date.parse(iso + 'T00:00:00Z');
-  if (!Number.isFinite(t0)) return Number.NaN;
+  const t0 = Date.parse(`${iso}T00:00:00Z`);
+  if (!Number.isFinite(t0)) {
+    return Number.NaN;
+  }
   const todayStart = new Date();
   todayStart.setUTCHours(0, 0, 0, 0);
   const diff = todayStart.getTime() - t0;
@@ -62,14 +72,22 @@ function readFirstSeen(profileId: string, url: string): string | null {
   // we need the raw url → firstSeen row.
   try {
     const p = profilePath(profileId, 'scan-history');
-    if (!fs.existsSync(p)) return null;
+    if (!fs.existsSync(p)) {
+      return null;
+    }
     const txt = fs.readFileSync(p, 'utf8');
     for (const line of txt.split('\n').slice(1)) {
-      if (!line.trim()) continue;
+      if (!line.trim()) {
+        continue;
+      }
       const cells = line.split('\t');
-      if (cells[0] !== url) continue;
+      if (cells[0] !== url) {
+        continue;
+      }
       const fs = cells[1];
-      if (/^\d{4}-\d{2}-\d{2}$/.test(fs)) return fs;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(fs)) {
+        return fs;
+      }
     }
   } catch {
     // scan-history.tsv read failure -- return null so the UI degrades to

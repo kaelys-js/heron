@@ -63,7 +63,9 @@ const AUTH_NAMES = new Set(AUTH_ROUTES.map((r) => r.name));
 let cachedAuthToken: string | null = null;
 
 async function mintAuthToken(page: import('playwright-core').Page): Promise<string> {
-  if (cachedAuthToken) return cachedAuthToken;
+  if (cachedAuthToken) {
+    return cachedAuthToken;
+  }
   const resp = await page.request.post(`${BASE_URL}/api/auth/e2e-login`, {
     data: { userId: 'u_e2e' },
     failOnStatusCode: false,
@@ -186,8 +188,11 @@ const config: CustomProjectConfig = {
       const RealDate = Date;
       class FrozenDate extends RealDate {
         constructor(...args: unknown[]) {
-          if (args.length === 0) super(FIXED_MS);
-          else super(...(args as ConstructorParameters<typeof Date>));
+          if (args.length === 0) {
+            super(FIXED_MS);
+          } else {
+            super(...(args as ConstructorParameters<typeof Date>));
+          }
         }
         static now(): number {
           return FIXED_MS;

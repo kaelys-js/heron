@@ -36,7 +36,9 @@ vi.mock('$lib/server/auth', () => ({
   auth: {
     api: {
       getSession: async ({ headers }: { headers: Headers }) => {
-        if (invalidSessionThrows) throw new Error('forced auth failure');
+        if (invalidSessionThrows) {
+          throw new Error('forced auth failure');
+        }
         const tok = headers.get('cookie') ?? headers.get('authorization') ?? '';
         const match = tok.match(/sid=([\w-]+)/) ?? tok.match(/Bearer\s+([\w-]+)/);
         const sid = match?.[1];
@@ -77,7 +79,9 @@ vi.mock('$lib/server/db', () => ({
     delete: () => ({
       where: (cond: { value?: string }) => ({
         run: () => {
-          if (cond.value) deletedInviteIds.push(cond.value);
+          if (cond.value) {
+            deletedInviteIds.push(cond.value);
+          }
         },
       }),
     }),
@@ -150,7 +154,7 @@ async function run(event: ReturnType<typeof evt>, resolved?: () => Response): Pr
 }
 
 describe('hooks — CORS preflight', () => {
-  it('OPTIONS from Capacitor origin returns 204 + CORS headers', async () => {
+  it('oPTIONS from Capacitor origin returns 204 + CORS headers', async () => {
     const e = evt('http://localhost:5173/api/jobs', {
       method: 'OPTIONS',
       headers: { Origin: 'heron://localhost' },
@@ -162,7 +166,7 @@ describe('hooks — CORS preflight', () => {
     expect(r.headers.get('Access-Control-Allow-Headers')).toContain('Authorization');
   });
 
-  it('OPTIONS from unknown origin does NOT 204 (falls through)', async () => {
+  it('oPTIONS from unknown origin does NOT 204 (falls through)', async () => {
     const e = evt('http://localhost:5173/api/jobs', {
       method: 'OPTIONS',
       headers: { Origin: 'https://evil.example.com' },
@@ -172,13 +176,13 @@ describe('hooks — CORS preflight', () => {
     expect(r.status).toBe(401);
   });
 
-  it('OPTIONS without an Origin header does NOT 204', async () => {
+  it('oPTIONS without an Origin header does NOT 204', async () => {
     const e = evt('http://localhost:5173/api/jobs', { method: 'OPTIONS' });
     const r = await run(e);
     expect(r.status).not.toBe(204);
   });
 
-  it('GET from allowed origin echoes CORS headers on the response', async () => {
+  it('gET from allowed origin echoes CORS headers on the response', async () => {
     sessions.set('s1', { user: { id: 'u-1', email: 'a@b' }, session: { id: 's1' } });
     const e = evt('http://localhost:5173/api/jobs', {
       headers: { Origin: 'http://localhost:5174', Cookie: 'sid=s1' },
@@ -286,19 +290,19 @@ describe('hooks -- security headers', () => {
     expect(r.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
   });
 
-  it('Permissions-Policy allows microphone (mock-interview) + denies geo', async () => {
+  it('permissions-Policy allows microphone (mock-interview) + denies geo', async () => {
     const r = await run(evt('http://localhost:5173/login'));
     const pp = r.headers.get('Permissions-Policy') ?? '';
     expect(pp).toContain('microphone=(self)');
     expect(pp).toContain('geolocation=()');
   });
 
-  it('HSTS is set on HTTPS responses', async () => {
+  it('hSTS is set on HTTPS responses', async () => {
     const r = await run(evt('https://heron.example.com/login'));
     expect(r.headers.get('Strict-Transport-Security')).toContain('max-age=');
   });
 
-  it('HSTS is NOT set on HTTP (localhost)', async () => {
+  it('hSTS is NOT set on HTTP (localhost)', async () => {
     const r = await run(evt('http://localhost:5173/login'));
     expect(r.headers.get('Strict-Transport-Security')).toBeNull();
   });

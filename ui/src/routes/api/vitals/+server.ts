@@ -83,8 +83,8 @@ export const POST = async ({ request }: { request: Request }) => {
  * when Playwright's client-side route handler doesn't fire on
  * sendBeacon().
  */
-export const GET = async () => {
-  return new Response(
+export const GET = async () =>
+  new Response(
     JSON.stringify({
       count: beaconCount,
       lastAt: lastBeaconAt,
@@ -96,4 +96,3 @@ export const GET = async () => {
       headers: { 'content-type': 'application/json' },
     },
   );
-};

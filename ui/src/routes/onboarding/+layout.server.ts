@@ -22,8 +22,12 @@ const PROFILE_TEMPLATE = path.join(ROOT, 'modes', '_profile.template.md');
 
 function seedProfileMd(profileId: string): void {
   const target = profilePath(profileId, 'profile-md');
-  if (fs.existsSync(target)) return;
-  if (!fs.existsSync(PROFILE_TEMPLATE)) return;
+  if (fs.existsSync(target)) {
+    return;
+  }
+  if (!fs.existsSync(PROFILE_TEMPLATE)) {
+    return;
+  }
   try {
     ensureProfileDirs(profileId);
     fs.copyFileSync(PROFILE_TEMPLATE, target);
@@ -42,7 +46,7 @@ export async function load({ url, locals }: { url: URL; locals: App.Locals }) {
       throw redirect(302, '/onboarding/account');
     }
     if (!locals.user) {
-      throw redirect(302, '/login?redirectTo=' + encodeURIComponent(url.pathname + url.search));
+      throw redirect(302, `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`);
     }
   }
 
@@ -62,7 +66,9 @@ export async function load({ url, locals }: { url: URL; locals: App.Locals }) {
     targetProfileId = getActiveProfileId();
   }
 
-  if (targetProfileId) seedProfileMd(targetProfileId);
+  if (targetProfileId) {
+    seedProfileMd(targetProfileId);
+  }
 
   const state = readOnboarding();
   const progress = progressSummary().map((p) =>

@@ -17,7 +17,9 @@
 import { DEVTOOLS_STORAGE_KEY, DEVTOOLS_COOKIE } from '$lib/devtools-keys';
 
 function read(): boolean {
-  if (typeof localStorage === 'undefined') return false;
+  if (typeof localStorage === 'undefined') {
+    return false;
+  }
   try {
     return localStorage.getItem(DEVTOOLS_STORAGE_KEY) === '1';
   } catch {
@@ -35,8 +37,11 @@ export function setDevtools(on: boolean): void {
   enabled = on;
   if (typeof localStorage !== 'undefined') {
     try {
-      if (on) localStorage.setItem(DEVTOOLS_STORAGE_KEY, '1');
-      else localStorage.removeItem(DEVTOOLS_STORAGE_KEY);
+      if (on) {
+        localStorage.setItem(DEVTOOLS_STORAGE_KEY, '1');
+      } else {
+        localStorage.removeItem(DEVTOOLS_STORAGE_KEY);
+      }
     } catch {
       // private-mode / storage-disabled: the cookie below still carries the flag
     }

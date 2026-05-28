@@ -54,7 +54,7 @@ async function runAutoTriage(): Promise<JobResult> {
     logEvent('auto-triage', 'Triage failed', {
       level: 'error',
       category: 'system',
-      message: s1.stderr.slice(0, 200) || 'exit ' + s1.code,
+      message: s1.stderr.slice(0, 200) || `exit ${s1.code}`,
     });
     return { ok: false, error: 'triage step failed' };
   }
@@ -68,7 +68,7 @@ async function runAutoTriage(): Promise<JobResult> {
     logEvent('auto-triage', 'update-pipeline failed', {
       level: 'error',
       category: 'system',
-      message: s2.stderr.slice(0, 200) || 'exit ' + s2.code,
+      message: s2.stderr.slice(0, 200) || `exit ${s2.code}`,
     });
     return { ok: false, error: 'update-pipeline step failed' };
   }
@@ -81,7 +81,7 @@ async function runAutoTriage(): Promise<JobResult> {
     logEvent('auto-triage', 'build-batch-input failed', {
       level: 'warn',
       category: 'system',
-      message: s3.stderr.slice(0, 200) || 'exit ' + s3.code,
+      message: s3.stderr.slice(0, 200) || `exit ${s3.code}`,
     });
     // Soft failure -- we still got triage + pipeline-marking benefit.
   }
@@ -90,16 +90,16 @@ async function runAutoTriage(): Promise<JobResult> {
   // Summary event drives the bell.
   logEvent(
     'auto-triage',
-    'Triage · ' + survivors + ' survivors · ' + skipped + ' skipped · ' + offers + ' batch input',
+    `Triage · ${survivors} survivors · ${skipped} skipped · ${offers} batch input`,
     {
       level: 'success',
       category: 'system',
-      message: 'pipeline.md self-classified · ' + marked + ' marked · batch ready',
+      message: `pipeline.md self-classified · ${marked} marked · batch ready`,
     },
   );
   return {
     ok: true,
-    message: survivors + ' survivors · ' + skipped + ' skipped',
+    message: `${survivors} survivors · ${skipped} skipped`,
     meta: { survivors, skipped, marked, batchOffers: offers },
   };
 }
