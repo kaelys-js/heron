@@ -89,17 +89,19 @@ it('toSummary: structures md; detail empty for prose-only', () => {
   assert.equal(prose.detail, '', 'prose-only -> no collapsible');
 });
 
-it('toSummary: missing md is pending; completed producer -> not reported', () => {
-  // No markdown + producer not finished -> still pending (waiting on artifact).
-  assert.equal(toSummary('perf', null).status, 'pending');
-  assert.equal(toSummary('perf', null, new Set()).status, 'pending');
-  // No markdown but the producer COMPLETED for this commit -> not reported.
-  assert.equal(toSummary('perf', null, new Set(['perf'])).status, 'skip');
-  // A completed producer that DID emit md still derives from the md.
+it('toSummary: missing md is "not reported" unless the producer is in-flight', () => {
+  // No markdown + producer NOT running -> not reported (it never fired or had
+  // nothing to emit). This is the fix for the "9 pending forever" bug.
+  assert.equal(toSummary('perf', null).status, 'skip');
+  assert.equal(toSummary('perf', null, new Set()).status, 'skip');
+  // No markdown + producer still running for this commit -> pending.
+  assert.equal(toSummary('perf', null, new Set(['perf'])).status, 'pending');
+  // Markdown present -> derive from it regardless of the inflight set.
   assert.equal(
     toSummary('perf', mk(EMOJI.pass, 'Lighthouse: ok'), new Set(['perf'])).status,
     'pass',
   );
+  assert.equal(toSummary('perf', mk(EMOJI.fail, 'Lighthouse: bad'), new Set()).status, 'fail');
 });
 
 // ── classify ─────────────────────────────────────────────────────
@@ -183,10 +185,14 @@ it('renderComment: alert + full table; failure auto-expands', () => {
 });
 
 // ── replaceDescriptionBlock ──────────────────────────────────────
-it('replaceDescriptionBlock: replaces block; passing verdict', () => {
+it('replaceDescriptionBlock: replaces stale block with the SHA-stamped rollup', () => {
   const desc = `Intro\n\n${DESC_MARKER_START}\nstale\n<!-- CI-STATUS-MARKER-END -->\n\nOutro`;
-  const out = replaceDescriptionBlock(desc, [{ domain: 'quality', status: 'pass' }]);
-  assert.ok(out.includes('**CI:**'));
+  const out = replaceDescriptionBlock(desc, [{ domain: 'quality', status: 'pass' }], {
+    sha: 'abcdef1234',
+  });
+  assert.ok(out.includes('> [!NOTE]'), 'rollup alert present');
+  assert.ok(out.includes('`abcdef1`'), 'commit SHA stamped');
+  assert.ok(out.includes('1 passed'));
   assert.ok(!out.includes('stale'));
   assert.ok(out.includes('Intro') && out.includes('Outro'));
 });

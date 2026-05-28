@@ -769,6 +769,11 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+          # Full history + tags so the Fastlane changelog can list every commit
+          # since the last release tag (git log <tag>..HEAD). A shallow checkout
+          # (the default depth 1) has no tags and only HEAD, which is why
+          # "What to Test" previously showed just the most recent commit.
+          fetch-depth: 0
 
       # macos-26 ships Xcode 26 (the iOS 26 SDK App Store now requires) as its
       # default. If the image also carries a newer versioned Xcode 26.x, prefer

@@ -782,16 +782,40 @@ platform :ios do
       "DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} MARKETING_VERSION=#{marketing_version}"
   end
 
-  # Pull the last commit's message as TestFlight changelog. Truncates to
-  # 4000 chars (the App Store Connect limit). Falls back to a default
-  # if git isn't available.
+  # TestFlight changelog for a non-release (dispatch / dev) build: a bulleted
+  # list of EVERY commit subject since the last release tag, so "What to Test"
+  # reflects everything in the build rather than just the latest commit. Falls
+  # back to the whole history when there is no release tag yet, then to the last
+  # commit, then to a generic line. Truncated to ASC's 4000-char cap.
+  # NB: requires a non-shallow checkout (native-release.yml uses fetch-depth: 0);
+  # a depth-1 clone has only HEAD + no tags, which is why this used to show one
+  # commit.
   def changelog_for_this_build
     begin
-      msg = sh("git log -1 --pretty=%B").strip
-      msg.length > 4000 ? msg[0...3997] + "..." : msg
+      last_tag = (sh("git describe --tags --abbrev=0 --match 'v*'", log: false).strip rescue "")
+      range = last_tag.empty? ? "" : "#{last_tag}..HEAD"
+      list = sh("git log #{range} --no-merges --pretty=format:'- %s'", log: false).strip
+      list = sh("git log -1 --pretty=%B", log: false).strip if list.empty?
+      list = "heron automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})" if list.empty?
+      url = changes_url
+      # Leave room for the trailing compare link under ASC's 4000-char cap.
+      list = list[0...3800] + "..." if list.length > 3800
+      url && !url.empty? ? "#{list}\n\nFull changes: #{url}" : list
     rescue
       "heron automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
     end
+  end
+
+  # GitHub compare (or commits) URL covering everything in this build, appended
+  # to the TestFlight notes so testers can click straight to the full diff.
+  def changes_url
+    remote = (sh("git config --get remote.origin.url", log: false).strip rescue "")
+    slug = remote[%r{github\.com[:/](.+?)(?:\.git)?\z}, 1]
+    return nil unless slug
+    sha = (sh("git rev-parse HEAD", log: false).strip rescue "")
+    return nil if sha.empty?
+    last_tag = (sh("git describe --tags --abbrev=0 --match 'v*'", log: false).strip rescue "")
+    last_tag.empty? ? "https://github.com/#{slug}/commits/#{sha}" : "https://github.com/#{slug}/compare/#{last_tag}...#{sha}"
   end
 
   # TestFlight "What to Test" source.

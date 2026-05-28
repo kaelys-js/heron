@@ -126,20 +126,22 @@ jobs:
           find . -path './raw-*' -name '*.md' -exec cp -f {} flat/ \; 2>/dev/null || true
           gathered=$(find flat -maxdepth 1 -type f -name '*.md' -printf '%f ' 2>/dev/null || true)
           echo "::notice::Gathered summaries: ${gathered:-none}"
-          # Which producer comment-workflows have a COMPLETED run for this SHA?
-          # Map "PR <domain> comment" -> "<domain>" so the assembler can render
-          # a finished-but-silent producer as "not reported" rather than leave
-          # it stuck on "pending" forever (the bug that made the comment look
-          # perpetually incomplete).
-          completed=$(echo "$runs_json" | jq -r '
+          # Which producer comment-workflows are STILL RUNNING for this SHA?
+          # Map "PR <domain> comment" -> "<domain>". The assembler renders a
+          # missing artifact as "pending" ONLY for these in-flight producers;
+          # every other missing domain reads "not reported" (its source workflow
+          # is path-filtered and never fired, or it ran with nothing to emit).
+          # This is the fix for the "9 pending forever" comment: producers that
+          # never run for an unrelated change no longer sit pending.
+          pending=$(echo "$runs_json" | jq -r '
             [ .workflow_runs[]
-              | select(.status=="completed")
+              | select(.status != "completed")
               | .name
               | select(startswith("PR ") and endswith(" comment"))
               | ltrimstr("PR ") | rtrimstr(" comment") ]
             | unique | join(",")')
-          echo "completed=$completed" >> "$GITHUB_OUTPUT"
-          echo "::notice::Completed producers: ${completed:-none}"
+          echo "pending=$pending" >> "$GITHUB_OUTPUT"
+          echo "::notice::In-flight producers: ${pending:-none}"
 
       - name: Assemble the unified comment + description block
         if: steps.ctx.outputs.skip != 'true'
@@ -148,12 +150,12 @@ jobs:
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ steps.ctx.outputs.pr_num }}
           HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
-          COMPLETED: ${{ steps.gather.outputs.completed }}
+          PENDING: ${{ steps.gather.outputs.pending }}
         run: |
           set -euo pipefail
           gh pr view "$PR_NUM" --repo "$GH_REPO" --json body --jq '.body // ""' > desc.current.md
           node .github/scripts/sticky/assemble-summary.mjs \
-            --dir flat --out body.md --sha "$HEAD_SHA" --completed "$COMPLETED" \
+            --dir flat --out body.md --sha "$HEAD_SHA" --pending "$PENDING" \
             --desc-in desc.current.md --desc-out desc.new.md
 
       - name: Upsert the unified summary comment
