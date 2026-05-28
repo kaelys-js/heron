@@ -59,16 +59,15 @@ IOS_TEST_SCHEMES = [
   "AppLiveActivityTests",
   "AppShareExtensionTests",
   "AppTests",
-  # XCUITest cases live in the AppUITests target. It is intentionally NOT in the
-  # coverage test_ci run: its ScreenshotUITests producer needs a seeded
-  # screenshot-mode backend on :4173 to paint the dashboard, which test_ci does
-  # not boot, so running it here would either hang on the connect screen or fail
-  # the paint assertion. The screenshots run via the dedicated
-  # `.github/workflows/ios-screenshots.yml` (`pnpm screenshots:ios`), which boots
-  # that backend. The old pbxproj conflict (AppUITests setting both
-  # USES_XCTRUNNER and TEST_HOST) is resolved: add-xcode-targets.rb strips
-  # TEST_HOST/BUNDLE_LOADER for ui-testing targets and binds via TEST_TARGET_NAME,
-  # so `xcodebuild build-for-testing -scheme AppUITests` now succeeds.
+  # H.F -- XCUITest cases live in the AppUITests target.
+  # [user-approved-deferral] TASK-6 in TODO-INSTRUCTIONS.md.
+  # The scheme's project.pbxproj has a config conflict:
+  #   xcodebuild: error: Invalid configuration: AppUITests sets both
+  #   USES_XCTRUNNER and either TEST_HOST or RUNTIME_TEST_HOST
+  # set by add-xcode-targets.rb during H.F.8. UI tests need
+  # USES_XCTRUNNER (their own XCTRunner binary) WITHOUT a TEST_HOST.
+  # Re-enable after fixing the pbxproj.
+  # "AppUITests"
 ].freeze
 WATCH_TEST_SCHEME = "WatchTests"
 SCHEME = "App"
