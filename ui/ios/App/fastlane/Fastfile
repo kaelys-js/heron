@@ -641,7 +641,9 @@ platform :ios do
     # it disabled. The edit is to the runner's checkout only (never committed).
     if ENV["RECORD_MODE"] == "1"
       %w[WidgetTests WatchTests].each do |s|
-        scheme_path = "App.xcodeproj/xcshareddata/xcschemes/#{s}.xcscheme"
+        # Anchor to __dir__ (fastlane/), not the process cwd: fastlane runs
+        # Ruby from the fastlane/ dir, so a project-root-relative path fails.
+        scheme_path = File.expand_path("../App.xcodeproj/xcshareddata/xcschemes/#{s}.xcscheme", __dir__)
         xml = File.read(scheme_path)
         xml = xml.sub(/(key = "RECORD_MODE"\s+value = "1"\s+isEnabled = ")NO(")/, '\1YES\2')
         File.write(scheme_path, xml)
