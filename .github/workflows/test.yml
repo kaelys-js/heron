@@ -32,6 +32,14 @@ permissions:
   contents: read
   pull-requests: read
 
+# Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
+# absent turbo falls back to the local actions/cache. Declared workflow-level
+# so every turbo-running job (ts, ios, android, lost-pixel, format, coverage,
+# verify-full) inherits it without per-job duplication.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -232,10 +240,6 @@ jobs:
       CI: "true"
       BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
       FORCE_COLOR: "3"
-      # Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
-      # absent turbo falls back to the local actions/cache.
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
     steps:
       # Skip-stub. When the path filter says no TS-touching files changed
@@ -1747,11 +1751,6 @@ jobs:
     timeout-minutes: 25
     permissions:
       contents: read
-    env:
-      # Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
-      # absent turbo falls back to the local actions/cache.
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
