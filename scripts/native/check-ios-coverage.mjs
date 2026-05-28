@@ -2,9 +2,8 @@
 /**
  * check-ios-coverage.mjs -- enforce per-target iOS coverage thresholds.
  *
- * Replaces the xcov gem (1.9.0, unmaintained -- can't read xcresult
- * bundles from non-default paths). Parses slather's cobertura output
- * per scheme + applies per-target thresholds + reports a clean diff.
+ * Parses the per-scheme cobertura.xml emitted by xccov-to-cobertura.mjs
+ * + applies per-target aggregate thresholds + reports a clean diff.
  *
  * Expected layout (produced by Fastfile::test_ci):
  *
@@ -14,8 +13,8 @@
  *   ui/ios/App/fastlane/coverage/AppShareExtensionTests/cobertura.xml
  *   ui/ios/App/fastlane/coverage/WatchTests/cobertura.xml
  *
- * Each XML carries a top-level `line-rate` attribute (slather emits
- * the same format Codecov ingests). We compute % = line-rate * 100,
+ * Each XML carries a top-level `line-rate` attribute (the Cobertura
+ * format Codecov also ingests). We compute % = line-rate * 100,
  * compare against the threshold below, fail with a clear table if
  * any miss.
  *
