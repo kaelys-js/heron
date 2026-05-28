@@ -126,21 +126,24 @@ const SCHEMES = [
     },
     binaryBasename: 'App',
   },
-  // [user-approved-deferral] TASK-6 in TODO-INSTRUCTIONS.md.
-  // AppUITests scheme is currently disabled in fastlane/Fastfile's
-  // IOS_TEST_SCHEMES because the project.pbxproj has a
-  // USES_XCTRUNNER + TEST_HOST conflict. Re-enable here after
-  // TASK-6 fixes the pbxproj.
-  // {
-  //   scheme: 'AppUITests', target: 'App.app (XCUITest user-flow)',
-  //   threshold: 50.0, perFileThreshold: 50.0,
-  //   perFileThresholdOverrides: {
-  //     'NativePlugin.swift': 80.0,
-  //     'AppDelegate.swift': 80.0,
-  //     'BridgeViewController.swift': 80.0,
-  //   },
-  //   binaryBasename: 'App',
-  // },
+  {
+    scheme: 'AppUITests',
+    target: 'App.app (XCUITest user-flow)',
+    // The XCUITest suite drives a real cold launch + WebView load, which
+    // exercises the AppDelegate launch sequence, BridgeViewController
+    // WebView setup, and NativePlugin registration -- so the public
+    // bridge surface is gated at 80% while the aggregate App.app floor
+    // stays at 50% (the user-flow doesn't reach every background-only
+    // file the way AppTests' unit suite does).
+    threshold: 50.0,
+    perFileThreshold: 50.0,
+    perFileThresholdOverrides: {
+      'NativePlugin.swift': 80.0,
+      'AppDelegate.swift': 80.0,
+      'BridgeViewController.swift': 80.0,
+    },
+    binaryBasename: 'App',
+  },
   {
     scheme: 'WidgetTests',
     target: 'AppWidget (logic test bundle)',

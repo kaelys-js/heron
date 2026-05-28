@@ -6,7 +6,7 @@ name: 'CodeQL Analysis'
 # Matrix legs run in parallel on independent runners.
 #   • javascript-typescript -- ubuntu, autobuild (just `pnpm install`)
 #   • python                -- ubuntu, autobuild (scripts/ pure Python)
-#   • swift                 -- macos-15, manual build (xcodebuild)
+#   • swift                 -- macos-latest, manual build (xcodebuild)
 #
 # Go was dropped in commit 7b15e50 (the Go TUI was superseded by the
 # SvelteKit dashboard).
@@ -116,7 +116,7 @@ jobs:
     name: Analyze (${{ matrix.language }})
     needs: changes
     # Swift needs macOS; everything else stays on ubuntu for speed + cost.
-    runs-on: ${{ matrix.language == 'swift' && 'macos-15' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 30
     permissions:
       actions: read
@@ -246,7 +246,8 @@ jobs:
         uses: github/codeql-action/autobuild@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4
 
       # Swift needs an explicit xcodebuild step so CodeQL can extract the
-      # full module graph. Match the test.yml ios job's Xcode pin.
+      # full module graph. Uses macos-latest's default Xcode 26 (matches
+      # the test.yml ios job, which selects Xcode 26 the same way).
       #
       # Capacitor 8 uses SPM (Swift Package Manager) -- there is NO
       # App.xcworkspace at the project root. Build against
@@ -255,8 +256,6 @@ jobs:
       # package references.
       - name: Build Swift target
         if: steps.gate.outputs.should_run == 'true' && matrix.language == 'swift'
-        env:
-          DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
         working-directory: ui/ios/App
         run: |
           # Generate any missing Xcode targets first (matches `pnpm setup:native`).
