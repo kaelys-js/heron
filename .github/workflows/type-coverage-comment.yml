@@ -40,6 +40,15 @@ jobs:
         with:
           experimental: true
           cache: true
+      # Cache the pnpm store (mise-action's cache only covers tool binaries).
+      # Same key as the setup-toolchain composite -> shared across workflows.
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.local/share/pnpm/store/v3
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
       - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Run type-coverage on PR head

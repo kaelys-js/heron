@@ -54,6 +54,18 @@ jobs:
           # tree is unchanged.
           turbo_cache: true
 
+      # Cache the resolved Fastlane gem set so `bundle install` is a near
+      # no-op on a hit (mirrors the test.yml ios job). Keyed by Gemfile.lock.
+      - name: Cache Bundler gems (Fastlane)
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            ~/.bundle
+            ~/.gem
+          key: bundler-${{ runner.os }}-${{ hashFiles('ui/ios/App/Gemfile.lock') }}
+          restore-keys: |
+            bundler-${{ runner.os }}-
+
       # fastlane lives in ui/ios/App/Gemfile; install it before the lane runs.
       - name: Install fastlane gems
         working-directory: ui/ios/App
