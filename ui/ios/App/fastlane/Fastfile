@@ -357,20 +357,31 @@ platform :ios do
           # existing tester via the group's relationships endpoint, else
           # create the tester with the group relationship in one POST.
           existing = (Spaceship::ConnectAPI::BetaTester.all(filter: { email: owner }).first rescue nil)
-          if existing
-            client.post("v1/betaGroups/#{group.id}/relationships/betaTesters", {
-              data: [{ type: "betaTesters", id: existing.id }]
-            })
-          else
-            client.post("v1/betaTesters", {
-              data: {
-                type: "betaTesters",
-                attributes: { email: owner, firstName: "Heron", lastName: "Maintainer" },
-                relationships: { betaGroups: { data: [{ type: "betaGroups", id: group.id }] } }
-              }
-            })
+          begin
+            if existing
+              client.post("v1/betaGroups/#{group.id}/relationships/betaTesters", {
+                data: [{ type: "betaTesters", id: existing.id }]
+              })
+            else
+              client.post("v1/betaTesters", {
+                data: {
+                  type: "betaTesters",
+                  attributes: { email: owner, firstName: "Heron", lastName: "Maintainer" },
+                  relationships: { betaGroups: { data: [{ type: "betaGroups", id: group.id }] } }
+                }
+              })
+            end
+            UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
+          rescue StandardError => e
+            # Internal groups auto-include App Store Connect users by ASC role.
+            # The account holder already receives every build, so ASC refuses an
+            # explicit assignment with "Tester(s) cannot be assigned" / "state of
+            # another resource". That is the expected steady state once the
+            # maintainer is set up -- treat it as already-covered, not a failure.
+            # Re-raise anything genuinely unexpected.
+            raise unless e.message =~ /cannot be assigned|state of another resource|already exists/i
+            UI.message("internal delivery: #{owner} already covered (internal ASC user)")
           end
-          UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
         end
       end
     rescue => e
@@ -783,20 +794,38 @@ platform :ios do
     end
   end
 
-  # TestFlight "What to Test" source. Prefer the CHANGELOG.md section for the
-  # current marketing version (the Release Please source, same as the App Store
-  # lane) so internal testers see real release notes. release_notes_for_version
-  # returns its generic "Maintenance and improvements." fallback when the
-  # version has no CHANGELOG section yet (keepalive / dispatch / pre-release
-  # builds) — in that case the last commit message is more specific, so use it.
-  # Always non-empty.
+  # TestFlight "What to Test" source.
+  #
+  # On a REAL release build (HEAD is exactly the vX.Y.Z tag) internal testers
+  # should see the published release notes, so use the CHANGELOG.md section for
+  # the current marketing version (the Release Please source, same as the App
+  # Store lane).
+  #
+  # On a dispatch / dev / keepalive build HEAD is AHEAD of the last tag, so the
+  # CHANGELOG section for the last released version is STALE -- it describes the
+  # prior baseline, not what this build actually contains (e.g. every dispatch
+  # of v0.1.0 would otherwise show the "Initial release post-fork" baseline as
+  # "What to Test"). The last commit message is what is genuinely being tested,
+  # so use it. Always non-empty.
   def testflight_changelog
-    notes = release_notes_for_version(marketing_version).to_s.strip
-    if notes.empty? || notes == "Maintenance and improvements."
-      commit = changelog_for_this_build.to_s.strip
-      return commit unless commit.empty?
+    if head_is_release_tag?
+      notes = release_notes_for_version(marketing_version).to_s.strip
+      return notes unless notes.empty? || notes == "Maintenance and improvements."
     end
+    commit = changelog_for_this_build.to_s.strip
+    return commit unless commit.empty?
+    notes = release_notes_for_version(marketing_version).to_s.strip
     notes.empty? ? "Maintenance and improvements." : notes
+  end
+
+  # True only when HEAD is checked out exactly at a release tag (tag-push /
+  # workflow_call release path). A workflow_dispatch / branch build is ahead of
+  # the last tag and returns false, so it uses the commit message above.
+  def head_is_release_tag?
+    sh("git describe --exact-match --tags HEAD", log: false)
+    true
+  rescue StandardError
+    false
   end
 
   # App Store "What's New" for a marketing version, pulled from CHANGELOG.md
