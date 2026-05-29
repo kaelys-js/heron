@@ -7,13 +7,18 @@
  */
 
 import { BRAND } from '$lib/client/brand';
+
 const STORAGE_KEY = `${BRAND.name}:sidebar-pin-excluded`;
 
 function readSet(): Set<string> {
-  if (typeof window === 'undefined') return new Set();
+  if (typeof window === 'undefined') {
+    return new Set();
+  }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return new Set();
+    if (!raw) {
+      return new Set();
+    }
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed)
       ? new Set(parsed.filter((v): v is string => typeof v === 'string'))
@@ -24,7 +29,9 @@ function readSet(): Set<string> {
 }
 
 function writeSet(s: Set<string>): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...s]));
   } catch {}
@@ -46,13 +53,17 @@ class PinStore {
 
   unpinAll(ids: string[]) {
     const next = new Set(this.excluded);
-    for (const id of ids) next.add(id);
+    for (const id of ids) {
+      next.add(id);
+    }
     this.excluded = next;
     writeSet(next);
   }
 
   pin(id: string) {
-    if (!this.excluded.has(id)) return;
+    if (!this.excluded.has(id)) {
+      return;
+    }
     const next = new Set(this.excluded);
     next.delete(id);
     this.excluded = next;

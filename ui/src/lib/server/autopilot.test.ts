@@ -76,8 +76,10 @@ beforeEach(() => {
   __mockFiles.clear();
   __existsSync.mockImplementation((p: string) => __mockFiles.has(p));
   __readFileSync.mockImplementation((p: string) => {
-    if (__mockFiles.has(p)) return __mockFiles.get(p)!;
-    throw new Error('ENOENT: ' + p);
+    if (__mockFiles.has(p)) {
+      return __mockFiles.get(p)!;
+    }
+    throw new Error(`ENOENT: ${p}`);
   });
   __writeFileSync.mockImplementation((p: string, body: string | Buffer) => {
     __mockFiles.set(p, typeof body === 'string' ? body : body.toString());

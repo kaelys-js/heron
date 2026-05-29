@@ -52,7 +52,9 @@ describe('apiCall — every 4xx throws ApiError with that status', () => {
       throw new Error('did not throw');
     } catch (e) {
       expect(e).toBeInstanceOf(ApiError);
-      if (e instanceof ApiError) expect(e.status).toBe(status);
+      if (e instanceof ApiError) {
+        expect(e.status).toBe(status);
+      }
     }
   });
 });
@@ -64,7 +66,9 @@ describe('apiCall — every 5xx throws ApiError with that status', () => {
       await apiCall('/api/x', { silent: true });
       throw new Error('did not throw');
     } catch (e) {
-      if (e instanceof ApiError) expect(e.status).toBe(status);
+      if (e instanceof ApiError) {
+        expect(e.status).toBe(status);
+      }
     }
   });
 });
@@ -81,7 +85,9 @@ describe('apiCall — error envelope variations', () => {
       await apiCall('/api/x', { silent: true });
       throw new Error('did not throw');
     } catch (e) {
-      if (e instanceof ApiError) expect(e.message.length).toBeGreaterThan(0);
+      if (e instanceof ApiError) {
+        expect(e.message.length).toBeGreaterThan(0);
+      }
     }
   });
 });
@@ -116,7 +122,7 @@ describe('apiCall — body serialisation', () => {
     { null_value: null },
     { bool_true: true },
     { bool_false: false },
-  ])('POST body %o round-trips through JSON', async (body) => {
+  ])('pOST body %o round-trips through JSON', async (body) => {
     let captured: any;
     server.use(
       http.post('*/api/x', async ({ request }) => {
@@ -131,7 +137,7 @@ describe('apiCall — body serialisation', () => {
   });
 });
 
-describe('ApiError — instance hygiene', () => {
+describe('apiError — instance hygiene', () => {
   it.each([200, 400, 401, 422, 500, 503])('status %i sets ApiError.status', (s) => {
     const e = new ApiError('test', { status: s });
     expect(e.status).toBe(s);

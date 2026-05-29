@@ -17,7 +17,9 @@ const TMP = fs.mkdtempSync(path.join(tmpdir(), 'heron-apply-timing-'));
 
 vi.mock('./profile-paths', () => ({
   profilePath: (_p: string, kind: string) => {
-    if (kind === 'scan-history') return path.join(TMP, 'scan-history.tsv');
+    if (kind === 'scan-history') {
+      return path.join(TMP, 'scan-history.tsv');
+    }
     return path.join(TMP, kind);
   },
 }));
@@ -38,15 +40,19 @@ function writeHistory(rows: Array<{ url: string; firstSeen: string }>): void {
   fs.mkdirSync(TMP, { recursive: true });
   const header = 'url\tfirstSeen\tlastSeen\tsource\n';
   const body = rows.map((r) => `${r.url}\t${r.firstSeen}\t${r.firstSeen}\tlinkedin`).join('\n');
-  fs.writeFileSync(path.join(TMP, 'scan-history.tsv'), header + body + '\n');
+  fs.writeFileSync(path.join(TMP, 'scan-history.tsv'), `${header + body}\n`);
 }
 
 describe('applyTimingFor', () => {
   beforeEach(() => {
-    if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+    if (fs.existsSync(TMP)) {
+      fs.rmSync(TMP, { recursive: true, force: true });
+    }
   });
   afterEach(() => {
-    if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+    if (fs.existsSync(TMP)) {
+      fs.rmSync(TMP, { recursive: true, force: true });
+    }
   });
 
   it('"fresh" band for 0-3 days old', () => {

@@ -24,8 +24,10 @@ export function modesDirFor(profileId?: string): string {
     const v = p?.language?.modes_dir;
     if (typeof v === 'string' && v.trim()) {
       const trimmed = v.trim().replace(/^modes\/?/i, '');
-      if (!trimmed) return 'modes';
-      return VALID_LANG_DIRS.has(trimmed) ? 'modes/' + trimmed : 'modes';
+      if (!trimmed) {
+        return 'modes';
+      }
+      return VALID_LANG_DIRS.has(trimmed) ? `modes/${trimmed}` : 'modes';
     }
   } catch {
     /* fall through */
@@ -40,7 +42,9 @@ export function modesDirFor(profileId?: string): string {
 export function modesPathFor(name: string, profileId?: string): string {
   const dir = modesDirFor(profileId);
   const localized = path.join(ROOT, dir, name);
-  if (fs.existsSync(localized)) return localized;
+  if (fs.existsSync(localized)) {
+    return localized;
+  }
   // Fall back to English (top-level modes/) for files that haven't been
   // translated yet.
   return path.join(MODES_ROOT, name);
@@ -48,7 +52,9 @@ export function modesPathFor(name: string, profileId?: string): string {
 
 /** Language tag (en/de/fr/ja/pt/ru/es) inferred from a modes_dir string. */
 export function languageTag(modesDir: string): string {
-  if (modesDir === 'modes') return 'en';
+  if (modesDir === 'modes') {
+    return 'en';
+  }
   const m = modesDir.match(/^modes\/([a-z]{2})$/);
   return m ? m[1] : 'en';
 }

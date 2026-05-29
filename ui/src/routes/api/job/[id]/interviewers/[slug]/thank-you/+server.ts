@@ -12,6 +12,7 @@ import { getInterviewer, upsertInterviewer } from '$lib/server/interviewers';
 import { touchJob } from '$lib/server/stage-state';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const TIMEOUT_MS = 90_000;
 
 function spawnThankYou(args: {
@@ -55,7 +56,7 @@ function spawnThankYou(args: {
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('thank-you timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`thank-you timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -63,8 +64,11 @@ function spawnThankYou(args: {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolveP({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolveP({ stdout, stderr });
+      }
     });
   });
 }
@@ -86,10 +90,14 @@ export const POST = wrap(
     request: Request;
   }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const interviewer = getInterviewer(job.id, params.slug, profileId);
-    if (!interviewer) badRequest('Interviewer not found: ' + params.slug);
+    if (!interviewer) {
+      badRequest('Interviewer not found: ' + params.slug);
+    }
     const body = (await request.json().catch(() => ({}))) as {
       talkingPoints?: string;
       tone?: 'formal' | 'friendly' | 'enthusiastic';

@@ -4,7 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { isOnline, OfflineError, onlineStore } from './online-status.svelte';
 
-describe('OfflineError — instance shape', () => {
+describe('offlineError — instance shape', () => {
   it.each([
     'name === "OfflineError"',
     'isOffline === true',
@@ -12,10 +12,18 @@ describe('OfflineError — instance shape', () => {
     'extends Error',
   ])('property %s', (kind) => {
     const e = new OfflineError();
-    if (kind.startsWith('name')) expect(e.name).toBe('OfflineError');
-    if (kind.startsWith('isOffline')) expect(e.isOffline).toBe(true);
-    if (kind.startsWith('message')) expect(e.message).toBe('Offline');
-    if (kind.startsWith('extends')) expect(e).toBeInstanceOf(Error);
+    if (kind.startsWith('name')) {
+      expect(e.name).toBe('OfflineError');
+    }
+    if (kind.startsWith('isOffline')) {
+      expect(e.isOffline).toBe(true);
+    }
+    if (kind.startsWith('message')) {
+      expect(e.message).toBe('Offline');
+    }
+    if (kind.startsWith('extends')) {
+      expect(e).toBeInstanceOf(Error);
+    }
   });
 });
 
@@ -88,7 +96,9 @@ describe('onlineStore — reason persistence', () => {
   ])('reason %s after offline transition', (reason) => {
     onlineStore.online = true;
     (onlineStore as any).update(false, reason ?? 'probe');
-    if (reason) expect(onlineStore.reason).toBe(reason);
+    if (reason) {
+      expect(onlineStore.reason).toBe(reason);
+    }
     onlineStore.destroy();
   });
 });
@@ -107,7 +117,9 @@ describe('onlineStore — listener removal', () => {
         counts[i]++;
       }),
     );
-    for (const off of offs) off();
+    for (const off of offs) {
+      off();
+    }
     (onlineStore as any).update(false, 'probe');
     for (let i = 0; i < n; i++) {
       expect(counts[i]).toBe(0);

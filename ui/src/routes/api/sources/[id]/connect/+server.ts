@@ -33,7 +33,7 @@ export const POST = wrap(
     // change them; members must not be able to overwrite the install's
     // billing-attached API keys or take over the LinkedIn cookie jar.
     requireOwner(locals);
-    const id = params.id;
+    const { id } = params;
     const body = await request.json().catch(() => ({}));
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
@@ -45,15 +45,15 @@ export const POST = wrap(
         await spawnPlaywrightLogin(portal);
         const meta = id === 'linkedin-auth' ? { portal: 'linkedin' } : { portal: 'indeed' };
         recordSuccess(id, meta);
-        logEvent('sources', portal + ' connected', {
+        logEvent('sources', `${portal} connected`, {
           level: 'success',
           category: 'system',
-          message: 'Saved Playwright session at .playwright-' + portal + '/',
+          message: `Saved Playwright session at .playwright-${portal}/`,
         });
-        return { ok: true, message: portal + ' login confirmed.' };
+        return { ok: true, message: `${portal} login confirmed.` };
       } catch (err) {
         recordFailure(id, err);
-        reportServerError('sources', portal + ' login failed', err, { category: 'system' });
+        reportServerError('sources', `${portal} login failed`, err, { category: 'system' });
         return { ok: false, error: err instanceof Error ? err.message : String(err) };
       }
     }
@@ -72,7 +72,9 @@ export const POST = wrap(
       // of scope for this audit. Owner-only is the safe default until
       // that lands; the requireOwner() guard above enforces it.
       const { host, user, password, label } = body as Record<string, string>;
-      if (!host || !user || !password) badRequest('host, user, password required');
+      if (!host || !user || !password) {
+        badRequest('host, user, password required');
+      }
       try {
         await testImapConnection(host, user, password, label || 'INBOX');
         const env = readEnv();
@@ -87,7 +89,7 @@ export const POST = wrap(
         logEvent('sources', 'Gmail IMAP connected', {
           level: 'success',
           category: 'system',
-          message: user + ' · label=' + (label || 'INBOX'),
+          message: `${user} · label=${label || 'INBOX'}`,
         });
         return { ok: true, message: 'IMAP login verified · creds saved to .env' };
       } catch (err) {
@@ -102,14 +104,14 @@ export const POST = wrap(
       try {
         await testApiKey(id);
         recordSuccess(id);
-        return { ok: true, message: id + ' API probe succeeded.' };
+        return { ok: true, message: `${id} API probe succeeded.` };
       } catch (err) {
         recordFailure(id, err);
         return { ok: false, error: err instanceof Error ? err.message : String(err) };
       }
     }
 
-    badRequest('Unknown source id: ' + id);
+    badRequest(`Unknown source id: ${id}`);
   },
 );
 
@@ -124,7 +126,7 @@ export const POST = wrap(
  */
 function spawnPlaywrightLogin(portal: 'linkedin' | 'indeed'): Promise<void> {
   return new Promise((resolve, reject) => {
-    const venvPython = ROOT + '/.venv/bin/python';
+    const venvPython = `${ROOT}/.venv/bin/python`;
     const fs = require('node:fs') as typeof import('node:fs');
     const py = fs.existsSync(venvPython) ? venvPython : 'python3';
 
@@ -157,9 +159,11 @@ function spawnPlaywrightLogin(portal: 'linkedin' | 'indeed'): Promise<void> {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code === 0) return resolve();
+      if (code === 0) {
+        return resolve();
+      }
       const tail = (stderrBuf || stdoutBuf || '').slice(-400).trim();
-      reject(new Error('Login exited ' + code + (tail ? ': ' + tail : '')));
+      reject(new Error(`Login exited ${code}${tail ? ': ' + tail : ''}`));
     });
   });
 }
@@ -206,7 +210,9 @@ async function testImapConnection(
 async function testApiKey(provider: 'anthropic' | 'gemini' | 'adzuna'): Promise<void> {
   const env = readEnv();
   if (provider === 'anthropic') {
-    if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not set');
+    if (!env.ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY not set');
+    }
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -222,30 +228,33 @@ async function testApiKey(provider: 'anthropic' | 'gemini' | 'adzuna'): Promise<
     });
     if (!r.ok) {
       const txt = await r.text();
-      throw new Error('Anthropic ' + r.status + ': ' + txt.slice(0, 200));
+      throw new Error(`Anthropic ${r.status}: ${txt.slice(0, 200)}`);
     }
     return;
   }
   if (provider === 'gemini') {
-    if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
+    if (!env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not set');
+    }
     const r = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models?key=' + env.GEMINI_API_KEY,
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${env.GEMINI_API_KEY}`,
     );
-    if (!r.ok) throw new Error('Gemini ' + r.status);
+    if (!r.ok) {
+      throw new Error('Gemini ' + r.status);
+    }
     return;
   }
   if (provider === 'adzuna') {
     if (!env.ADZUNA_APP_ID || !env.ADZUNA_APP_KEY) {
       throw new Error('ADZUNA_APP_ID and ADZUNA_APP_KEY required');
     }
-    const u =
-      'https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=' +
-      env.ADZUNA_APP_ID +
-      '&app_key=' +
-      env.ADZUNA_APP_KEY +
-      '&results_per_page=1';
+    const u = `https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=${env.ADZUNA_APP_ID}&app_key=${
+      env.ADZUNA_APP_KEY
+    }&results_per_page=1`;
     const r = await fetch(u);
-    if (!r.ok) throw new Error('Adzuna ' + r.status);
+    if (!r.ok) {
+      throw new Error('Adzuna ' + r.status);
+    }
     return;
   }
 }

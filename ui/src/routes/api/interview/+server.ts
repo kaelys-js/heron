@@ -10,13 +10,15 @@ import { logEvent } from '$lib/server/events';
 
 export const POST = async ({ request, url }) => {
   const { reportFile, archetype } = await request.json();
-  if (!reportFile) throw error(400, 'reportFile required');
+  if (!reportFile) {
+    throw error(400, 'reportFile required');
+  }
   const queryProfile = url.searchParams.get('profile');
   const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   try {
     logEvent('interview', 'Generating interview prep', {
       category: 'task',
-      message: reportFile + ' · profile=' + profileId,
+      message: `${reportFile} · profile=${profileId}`,
     });
     const md = await generateInterviewPrep(profileId, reportFile, archetype);
     logEvent('interview', 'Interview prep ready', {

@@ -41,7 +41,9 @@ describe('validateRequired', () => {
   it('fails on empty', () => {
     const r = validateRequired('');
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.message).toBe('Required');
+    if (!r.ok) {
+      expect(r.message).toBe('Required');
+    }
   });
   it('fails on whitespace-only', () => {
     expect(validateRequired('   ').ok).toBe(false);
@@ -79,7 +81,7 @@ describe('validateEmail', () => {
     expect(validateEmail('jane@example').ok).toBe(false);
   });
   it('fails on >254 chars', () => {
-    const long = 'a'.repeat(250) + '@e.co';
+    const long = `${'a'.repeat(250)}@e.co`;
     expect(validateEmail(long).ok).toBe(false);
   });
 });
@@ -143,7 +145,9 @@ describe('validateLinkedIn', () => {
   it('fails on non-linkedin hosts', () => {
     const r = validateLinkedIn('https://twitter.com/jane');
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.message).toContain('LinkedIn');
+    if (!r.ok) {
+      expect(r.message).toContain('LinkedIn');
+    }
   });
 });
 

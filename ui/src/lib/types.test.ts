@@ -18,10 +18,8 @@ import {
   TAB_PRESETS,
   tabLabel,
   tabStatuses,
-  type Status,
-  type ApplicationStatus,
-  type BgRisk,
 } from './types';
+import type { Status, ApplicationStatus, BgRisk } from './types';
 
 const STATUS_UNION: Status[] = [
   'New',
@@ -48,7 +46,7 @@ const STATUS_UNION: Status[] = [
   'ManualApplyNeeded',
 ];
 
-describe('STATUS_ORDER', () => {
+describe('sTATUS_ORDER', () => {
   it('starts with the early-pipeline statuses', () => {
     expect(STATUS_ORDER.slice(0, 4)).toEqual(['New', 'Scoring', 'Scored', 'Ready']);
   });
@@ -68,7 +66,7 @@ describe('STATUS_ORDER', () => {
   });
 });
 
-describe('STATUS_TINTS', () => {
+describe('sTATUS_TINTS', () => {
   it('has a tint class for every Status', () => {
     for (const s of STATUS_UNION) {
       expect(STATUS_TINTS[s]).toBeTruthy();
@@ -77,7 +75,7 @@ describe('STATUS_TINTS', () => {
   });
 });
 
-describe('STATUS_EMPTY_COPY', () => {
+describe('sTATUS_EMPTY_COPY', () => {
   it('has empty-state copy for every Status', () => {
     for (const s of STATUS_UNION) {
       expect(STATUS_EMPTY_COPY[s]).toBeTruthy();
@@ -87,7 +85,7 @@ describe('STATUS_EMPTY_COPY', () => {
   });
 });
 
-describe('APPLICATION_STATUS_TINTS', () => {
+describe('aPPLICATION_STATUS_TINTS', () => {
   it('has tints for SKIP and Discarded synonyms', () => {
     const keys = Object.keys(APPLICATION_STATUS_TINTS) as ApplicationStatus[];
     expect(keys.length).toBeGreaterThanOrEqual(3);
@@ -95,7 +93,7 @@ describe('APPLICATION_STATUS_TINTS', () => {
   });
 });
 
-describe('BG_TINTS', () => {
+describe('bG_TINTS', () => {
   it('covers LOW, MEDIUM, HIGH, BLOCKED', () => {
     const required: NonNullable<BgRisk>[] = ['LOW', 'MEDIUM', 'HIGH', 'BLOCKED'];
     for (const k of required) {
@@ -105,7 +103,7 @@ describe('BG_TINTS', () => {
   });
 });
 
-describe('SOURCE_LABELS', () => {
+describe('sOURCE_LABELS', () => {
   it('has at least the major job-board sources', () => {
     const keys = Object.keys(SOURCE_LABELS);
     expect(keys.length).toBeGreaterThan(5);
@@ -118,7 +116,7 @@ describe('SOURCE_LABELS', () => {
   });
 });
 
-describe('TAB_PRESETS', () => {
+describe('tAB_PRESETS', () => {
   it('has all/ready/applied presets', () => {
     const values = TAB_PRESETS.map((p) => p.value);
     expect(values).toEqual(expect.arrayContaining(['all', 'ready', 'applied']));
@@ -158,7 +156,7 @@ describe('tabLabel', () => {
   });
 });
 
-describe('DEFAULT_FILTER', () => {
+describe('dEFAULT_FILTER', () => {
   it('has minScore 0', () => {
     expect(DEFAULT_FILTER.minScore).toBe(0);
   });

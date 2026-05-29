@@ -30,7 +30,9 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
     if (typeof args?.company === 'string' && args.company.trim()) {
       cliArgs.push('--company', args.company.trim());
     }
-    if (args?.dryRun === true) cliArgs.push('--dry-run');
+    if (args?.dryRun === true) {
+      cliArgs.push('--dry-run');
+    }
 
     let stdout = '';
     let stderr = '';
@@ -68,28 +70,28 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
         logEvent('scan-portals', 'Portal scan failed', {
           level: 'error',
           category: 'task',
-          message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 150) : ''),
+          message: `exit ${code}${stderr ? ' · ' + stderr.slice(0, 150) : ''}`,
         });
         try {
-          recordFailure('scan-portals', new Error('scan.mjs exited ' + code));
+          recordFailure('scan-portals', new Error(`scan.mjs exited ${code}`));
         } catch {
           // sources counter best-effort -- the outer logEvent above
           // already surfaced the scan failure to the user.
         }
-        resolve({ ok: false, error: 'scan.mjs exited ' + code });
+        resolve({ ok: false, error: `scan.mjs exited ${code}` });
         return;
       }
       logEvent('scan-portals', 'Portal scan finished', {
         level: 'success',
         category: 'task',
-        message: found + ' jobs found',
+        message: `${found} jobs found`,
       });
       try {
         recordSuccess('scan-portals');
       } catch {
         // sources counter best-effort -- scan success is already logged.
       }
-      resolve({ ok: true, message: found + ' jobs found', meta: { found } });
+      resolve({ ok: true, message: `${found} jobs found`, meta: { found } });
     });
   });
 }

@@ -14,7 +14,9 @@ import { saveAvatar, readAvatar, clearAvatar } from '$lib/server/ui-prefs';
 
 export const GET = wrap('avatar', async () => {
   const r = readAvatar();
-  if (!r) error(404, 'No avatar set');
+  if (!r) {
+    error(404, 'No avatar set');
+  }
   // We need to short-circuit wrap's JSON serialization; throw a Response.
   throw new Response(new Uint8Array(r.buffer) as unknown as BodyInit, {
     status: 200,
@@ -28,13 +30,19 @@ export const GET = wrap('avatar', async () => {
 
 export const POST = wrap('avatar', async ({ request }: { request: Request }) => {
   const ct = request.headers.get('content-type') ?? '';
-  if (!ct.includes('multipart/form-data')) badRequest('multipart/form-data required');
+  if (!ct.includes('multipart/form-data')) {
+    badRequest('multipart/form-data required');
+  }
   const form = await request.formData();
   const file = form.get('avatar');
-  if (!(file instanceof File)) badRequest('avatar file required');
+  if (!(file instanceof File)) {
+    badRequest('avatar file required');
+  }
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = saveAvatar(buffer, file.type);
-  if (!result.ok) badRequest(result.error ?? 'upload failed');
+  if (!result.ok) {
+    badRequest(result.error ?? 'upload failed');
+  }
   return { ok: true, path: result.path };
 });
 

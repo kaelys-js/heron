@@ -14,7 +14,9 @@ import { logEvent } from '$lib/server/events';
 export const POST = wrap('account-restore', async ({ locals }: { locals: App.Locals }) => {
   const userId = requireUserId(locals);
   const ok = restoreUser(userId);
-  if (!ok) badRequest('No pending deletion to restore.');
+  if (!ok) {
+    badRequest('No pending deletion to restore.');
+  }
   recordAuditEvent('account-restored', { userId });
   logEvent('account-restore', 'Account restored from pending deletion', {
     level: 'info',

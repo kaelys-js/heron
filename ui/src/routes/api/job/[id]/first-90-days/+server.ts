@@ -10,6 +10,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const TIMEOUT_MS = 180_000;
 
 type Body = {
@@ -55,7 +56,7 @@ function spawnPlan(
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('first-90-days timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`first-90-days timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -63,8 +64,11 @@ function spawnPlan(
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolveP({ stdout });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolveP({ stdout });
+      }
     });
   });
 }
@@ -78,7 +82,9 @@ export const POST = wrap(
   'first-90-days',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => ({}))) as Body;
     try {

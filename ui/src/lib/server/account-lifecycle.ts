@@ -27,7 +27,7 @@ const GRACE_DAYS = 30;
 const GRACE_MS = GRACE_DAYS * 24 * 60 * 60 * 1000;
 
 export function newPdId(): string {
-  return 'pd_' + crypto.randomBytes(6).toString('hex');
+  return `pd_${crypto.randomBytes(6).toString('hex')}`;
 }
 
 /** Mark the user soft-deleted. Reversible via restoreUser() until the
@@ -84,7 +84,9 @@ export function restoreUser(userId: string): boolean {
     .from(pendingDeletions)
     .where(eq(pendingDeletions.userId, userId))
     .get();
-  if (!row || row.completedAt) return false;
+  if (!row || row.completedAt) {
+    return false;
+  }
   const now = Date.now();
   authDb
     .update(authUsers)

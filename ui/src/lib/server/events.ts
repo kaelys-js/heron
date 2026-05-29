@@ -7,7 +7,7 @@ import { ROOT, DATA_ROOT } from './files';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 
 const LOG_FILE = path.join(DATA_ROOT, 'activity.jsonl');
-const LOG_BACKUP = LOG_FILE + '.1';
+const LOG_BACKUP = `${LOG_FILE}.1`;
 const MAX_BUFFER = 500;
 /** Rotate the activity log when it exceeds this size on append.
  *  Keeps one backup (`activity.jsonl.1`) so total disk usage is bounded
@@ -26,8 +26,11 @@ const MAX_LOG_BYTES = 50 * 1024 * 1024; // 50MB
  */
 function safeConsole(level: 'log' | 'error', ...args: unknown[]): void {
   try {
-    if (level === 'error') console.error(...args);
-    else console.log(...args);
+    if (level === 'error') {
+      console.error(...args);
+    } else {
+      console.log(...args);
+    }
   } catch {
     // Intentionally empty -- we cannot do anything useful if console itself
     // is throwing, and any logEvent call from here would re-enter.
@@ -64,13 +67,15 @@ class Bus extends EventEmitter {
       try {
         fd = fs.openSync(LOG_FILE, 'r');
       } catch (e) {
-        if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+          return;
+        }
         throw e;
       }
       let txt: string;
       try {
         const stat = fs.fstatSync(fd);
-        const size = stat.size;
+        const { size } = stat;
         const TAIL_BYTES = 256 * 1024; // 256KB tail is more than 500 events worth
         if (size > TAIL_BYTES) {
           const buf = Buffer.alloc(TAIL_BYTES);
@@ -78,7 +83,9 @@ class Bus extends EventEmitter {
           txt = buf.toString('utf8');
           // Drop the first (probably partial) line
           const nl = txt.indexOf('\n');
-          if (nl >= 0) txt = txt.slice(nl + 1);
+          if (nl >= 0) {
+            txt = txt.slice(nl + 1);
+          }
         } else {
           const buf = Buffer.alloc(size);
           fs.readSync(fd, buf, 0, size, 0);
@@ -89,10 +96,14 @@ class Bus extends EventEmitter {
       }
       const lines = txt.trim().split('\n').slice(-MAX_BUFFER);
       for (const line of lines) {
-        if (!line) continue;
+        if (!line) {
+          continue;
+        }
         try {
           const ev = JSON.parse(line);
-          if (ev.id && ev.ts) this.buf.push(ev);
+          if (ev.id && ev.ts) {
+            this.buf.push(ev);
+          }
         } catch {
           // Truncated final line from a crash mid-write -- skip and continue
           // loading the rest of the buffer. Logging here would re-enter
@@ -111,12 +122,16 @@ class Bus extends EventEmitter {
       // `js/file-system-race`.
       let size: number;
       try {
-        size = fs.statSync(LOG_FILE).size;
+        ({ size } = fs.statSync(LOG_FILE));
       } catch (e) {
-        if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+          return;
+        }
         throw e;
       }
-      if (size <= MAX_LOG_BYTES) return;
+      if (size <= MAX_LOG_BYTES) {
+        return;
+      }
       // Move the current log out of the way; the next append re-creates it.
       // Replace any existing .1 (we keep only one backup to bound disk use).
       try {
@@ -143,7 +158,7 @@ class Bus extends EventEmitter {
       try {
         fs.writeFileSync(
           LOG_FILE,
-          JSON.stringify({
+          `${JSON.stringify({
             id: crypto.randomBytes(6).toString('hex'),
             ts: Date.now(),
             level: 'info',
@@ -152,7 +167,7 @@ class Bus extends EventEmitter {
             title: 'Activity log rotated',
             message:
               'previous file moved to activity.jsonl.1 (' + Math.round(size / 1024 / 1024) + 'MB)',
-          }) + '\n',
+          })}\n`,
           { flag: 'wx' },
         );
       } catch {
@@ -170,7 +185,7 @@ class Bus extends EventEmitter {
     try {
       fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
       this.rotateIfNeeded();
-      fs.appendFileSync(LOG_FILE, JSON.stringify(ev) + '\n');
+      fs.appendFileSync(LOG_FILE, `${JSON.stringify(ev)}\n`);
     } catch (e) {
       safeConsole('error', '[events] failed to persist', e);
     }
@@ -178,7 +193,9 @@ class Bus extends EventEmitter {
 
   emitEvent(ev: ActivityEvent) {
     // ---- recursion + burst guards ----
-    if (this.depth > 8) return; // stop runaway recursion at ~depth 8
+    if (this.depth > 8) {
+      return;
+    } // stop runaway recursion at ~depth 8
     const now = Date.now();
     const BURST_WINDOW = 1000;
     const BURST_LIMIT = 200; // events per second across the whole bus
@@ -192,13 +209,15 @@ class Bus extends EventEmitter {
           category: 'system',
           source: 'events',
           title: 'Bus rate-limited',
-          message: 'Dropped ' + this.droppedThisWindow + ' events in the last second.',
+          message: `Dropped ${this.droppedThisWindow} events in the last second.`,
         };
         this.droppedThisWindow = 0;
         this.windowStart = now;
         this.windowCount = 1;
         this.buf.push(note);
-        if (this.buf.length > MAX_BUFFER) this.buf.shift();
+        if (this.buf.length > MAX_BUFFER) {
+          this.buf.shift();
+        }
         this.appendToDisk(note);
         this.depth++;
         try {
@@ -218,7 +237,9 @@ class Bus extends EventEmitter {
     }
 
     this.buf.push(ev);
-    if (this.buf.length > MAX_BUFFER) this.buf.shift();
+    if (this.buf.length > MAX_BUFFER) {
+      this.buf.shift();
+    }
     this.appendToDisk(ev);
     // Mirror to app.db.activity_events for indexed per-user queries. The
     // JSONL stays the source of truth (cheap append, easy tail-tailing);
@@ -344,12 +365,14 @@ export function logEvent(
   bus.emitEvent(ev);
   const prefix =
     ev.level === 'error' ? '✗' : ev.level === 'warn' ? '⚠' : ev.level === 'success' ? '✓' : 'ℹ';
-  const head = prefix + ' [' + source + '] ' + title + (opts.message ? ' — ' + opts.message : '');
+  const head = `${prefix} [${source}] ${title}${opts.message ? ' — ' + opts.message : ''}`;
   // safeConsole swallows EPIPE/EBADF from intercepted-console extensions --
   // see comment at the top of this file.
   if (ev.level === 'error') {
     safeConsole('error', head);
-    if (opts.stack) safeConsole('error', opts.stack);
+    if (opts.stack) {
+      safeConsole('error', opts.stack);
+    }
   } else {
     safeConsole('log', head);
   }

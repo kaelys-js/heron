@@ -55,7 +55,7 @@ async function get() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/funnel', () => {
+describe('gET /api/funnel', () => {
   it('returns funnel stats + ok=true', async () => {
     const r = await get();
     expect(r.status).toBe(200);

@@ -15,7 +15,9 @@ const { theme } = await import('./theme.svelte');
 
 describe('theme store', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     theme.destroy();
     theme.mode = 'system';
     theme.resolved = 'dark';

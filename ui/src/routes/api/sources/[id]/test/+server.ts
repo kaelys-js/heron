@@ -24,7 +24,7 @@ export const POST = wrap(
   async ({ params, locals }: { params: { id: string }; locals: App.Locals }) => {
     requireOwner(locals);
     const userId = requireUserId(locals);
-    const id = params.id;
+    const { id } = params;
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
@@ -41,7 +41,7 @@ export const POST = wrap(
       try {
         await spawnSessionCheck(portal);
         recordSuccess(id);
-        return { ok: true, message: portal + ' session is alive.' };
+        return { ok: true, message: `${portal} session is alive.` };
       } catch (err) {
         recordFailure(id, err);
         return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -109,7 +109,7 @@ export const POST = wrap(
 
     // Unknown id -- explicit "no probe available" rather than fake success.
     const s = getSource(id);
-    return { ok: false, error: 'No probe available for source: ' + id, state: s };
+    return { ok: false, error: `No probe available for source: ${id}`, state: s };
   },
 );
 
@@ -122,7 +122,9 @@ async function probeApiKey(
 ): Promise<{ ok: boolean; message: string }> {
   const env = readEnv();
   if (id === 'anthropic') {
-    if (!env.ANTHROPIC_API_KEY) return { ok: false, message: 'ANTHROPIC_API_KEY not set' };
+    if (!env.ANTHROPIC_API_KEY) {
+      return { ok: false, message: 'ANTHROPIC_API_KEY not set' };
+    }
     try {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -137,21 +139,27 @@ async function probeApiKey(
           messages: [{ role: 'user', content: 'hi' }],
         }),
       });
-      if (r.ok) return { ok: true, message: 'Anthropic key round-trip OK.' };
+      if (r.ok) {
+        return { ok: true, message: 'Anthropic key round-trip OK.' };
+      }
       const txt = await r.text();
-      return { ok: false, message: 'Anthropic ' + r.status + ': ' + txt.slice(0, 200) };
+      return { ok: false, message: `Anthropic ${r.status}: ${txt.slice(0, 200)}` };
     } catch (e) {
       return { ok: false, message: e instanceof Error ? e.message : String(e) };
     }
   }
   if (id === 'gemini') {
-    if (!env.GEMINI_API_KEY) return { ok: false, message: 'GEMINI_API_KEY not set' };
+    if (!env.GEMINI_API_KEY) {
+      return { ok: false, message: 'GEMINI_API_KEY not set' };
+    }
     try {
       const r = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models?key=' + env.GEMINI_API_KEY,
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${env.GEMINI_API_KEY}`,
       );
-      if (r.ok) return { ok: true, message: 'Gemini key round-trip OK.' };
-      return { ok: false, message: 'Gemini ' + r.status };
+      if (r.ok) {
+        return { ok: true, message: 'Gemini key round-trip OK.' };
+      }
+      return { ok: false, message: `Gemini ${r.status}` };
     } catch (e) {
       return { ok: false, message: e instanceof Error ? e.message : String(e) };
     }
@@ -161,15 +169,14 @@ async function probeApiKey(
     return { ok: false, message: 'ADZUNA_APP_ID + ADZUNA_APP_KEY not both set' };
   }
   try {
-    const u =
-      'https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=' +
-      env.ADZUNA_APP_ID +
-      '&app_key=' +
-      env.ADZUNA_APP_KEY +
-      '&results_per_page=1';
+    const u = `https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=${env.ADZUNA_APP_ID}&app_key=${
+      env.ADZUNA_APP_KEY
+    }&results_per_page=1`;
     const r = await fetch(u);
-    if (r.ok) return { ok: true, message: 'Adzuna key round-trip OK.' };
-    return { ok: false, message: 'Adzuna ' + r.status };
+    if (r.ok) {
+      return { ok: true, message: 'Adzuna key round-trip OK.' };
+    }
+    return { ok: false, message: `Adzuna ${r.status}` };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
   }
@@ -208,7 +215,7 @@ function probeAlwaysOnScanner(
       try {
         p.kill('SIGTERM');
       } catch {}
-      resolve({ ok: false, message: id + ' probe timed out after 30s' });
+      resolve({ ok: false, message: `${id} probe timed out after 30s` });
     }, 30_000);
     p.on('error', (err: Error) => {
       clearTimeout(timer);
@@ -220,10 +227,10 @@ function probeAlwaysOnScanner(
         // Surface a count-style line from stdout if the script emitted one,
         // otherwise a generic success message.
         const tail = stdout.trim().split('\n').slice(-3).join(' · ').slice(0, 200);
-        resolve({ ok: true, message: id + ' probe OK' + (tail ? ' · ' + tail : '') });
+        resolve({ ok: true, message: `${id} probe OK${tail ? ' · ' + tail : ''}` });
       } else {
         const tail = (stderr || stdout).trim().slice(-200);
-        resolve({ ok: false, message: id + ' probe exited ' + code + (tail ? ': ' + tail : '') });
+        resolve({ ok: false, message: `${id} probe exited ${code}${tail ? ': ' + tail : ''}` });
       }
     });
   });
@@ -263,9 +270,11 @@ function spawnSessionCheck(portal: 'linkedin' | 'indeed'): Promise<void> {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code === 0) return resolve();
+      if (code === 0) {
+        return resolve();
+      }
       const tail = (stderr || stdout || '').slice(-300).trim();
-      reject(new Error('Session check exited ' + code + (tail ? ': ' + tail : '')));
+      reject(new Error(`Session check exited ${code}${tail ? ': ' + tail : ''}`));
     });
   });
 }

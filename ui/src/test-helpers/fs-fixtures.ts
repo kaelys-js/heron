@@ -77,7 +77,7 @@ export async function writeApplicationsFixture(
         `| ${r.num} | ${r.date} | ${r.company} | ${r.role} | ${r.score} | ${r.status} | ✅ | [${r.num}](reports/${r.num}-${r.company.toLowerCase()}-${r.date}.md) |  |`,
     )
     .join('\n');
-  await writeFixture(root, 'data/applications.md', header + body + '\n');
+  await writeFixture(root, 'data/applications.md', `${header + body}\n`);
 }
 
 /** Repo root for tests that want to read the real codebase. */

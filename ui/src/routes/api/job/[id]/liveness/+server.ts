@@ -17,9 +17,13 @@ export const POST = wrap(
   'job-liveness',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
-    if (!job.url) badRequest('Job has no URL — cannot check liveness');
+    if (!job.url) {
+      badRequest('Job has no URL — cannot check liveness');
+    }
 
     const outcome = await checkOne(job.url);
     let closed = false;
@@ -36,12 +40,11 @@ export const POST = wrap(
         logEvent('job-liveness', 'Could not auto-close after expired verdict', {
           level: 'warn',
           category: 'application',
-          message:
-            (job.company || '?') + ' — ' + (err instanceof Error ? err.message : String(err)),
+          message: `${job.company || '?'} — ${err instanceof Error ? err.message : String(err)}`,
         });
       }
     }
-    logEvent('liveness', 'Per-job check: ' + outcome.verdict, {
+    logEvent('liveness', `Per-job check: ${outcome.verdict}`, {
       level: outcome.verdict === 'expired' ? 'warn' : 'info',
       category: 'system',
       message:

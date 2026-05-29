@@ -44,7 +44,9 @@ vi.mock('electron', () => ({
     getVersion: __appGetVersion,
     on: __appOn,
     get dock() {
-      if (__dockShape === 'missing') return undefined;
+      if (__dockShape === 'missing') {
+        return undefined;
+      }
       return { setBadge: __appDockSetBadge, hide: __appDockHide, show: __appDockShow };
     },
   },
@@ -120,7 +122,7 @@ function handlers() {
   };
 }
 
-describe('DesktopTray -- constructor', () => {
+describe('desktopTray -- constructor', () => {
   it('reads menubar-only.pref absence and defaults to false', async () => {
     __existsSync.mockReturnValue(false);
     const { DesktopTray } = await import('./tray.js');
@@ -145,7 +147,7 @@ describe('DesktopTray -- constructor', () => {
   });
 });
 
-describe('DesktopTray -- start', () => {
+describe('desktopTray -- start', () => {
   it('creates a Tray instance with the icon', async () => {
     const { DesktopTray } = await import('./tray.js');
     const t = new DesktopTray(handlers());
@@ -184,7 +186,7 @@ describe('DesktopTray -- start', () => {
   });
 });
 
-describe('DesktopTray -- stop', () => {
+describe('desktopTray -- stop', () => {
   it('clears the poll interval', async () => {
     const clearIntSpy = vi.spyOn(globalThis, 'clearInterval');
     const { DesktopTray } = await import('./tray.js');
@@ -209,7 +211,7 @@ describe('DesktopTray -- stop', () => {
   });
 });
 
-describe('DesktopTray -- click handlers', () => {
+describe('desktopTray -- click handlers', () => {
   it('left-click on non-mac invokes handlers.onOpen', async () => {
     Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
     const h = handlers();
@@ -265,7 +267,7 @@ function lastMenuTemplate(): import('electron').MenuItemConstructorOptions[] {
   return (lastCall?.[0] ?? []) as import('electron').MenuItemConstructorOptions[];
 }
 
-describe('DesktopTray -- refresh + menu', () => {
+describe('desktopTray -- refresh + menu', () => {
   it('refresh sets a context menu via Menu.buildFromTemplate', async () => {
     const t = await startAndRefresh(handlers());
     expect(__menuBuildFromTemplate).toHaveBeenCalled();
@@ -399,8 +401,8 @@ describe('DesktopTray -- refresh + menu', () => {
   });
 });
 
-describe('DesktopTray -- macOS Menu Bar Only', () => {
-  it('Menu Bar Only checkbox click hides Dock + persists pref', async () => {
+describe('desktopTray -- macOS Menu Bar Only', () => {
+  it('menu Bar Only checkbox click hides Dock + persists pref', async () => {
     Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
     const t = await startAndRefresh(handlers());
     const items = lastMenuTemplate();
@@ -424,7 +426,7 @@ describe('DesktopTray -- macOS Menu Bar Only', () => {
     t.stop();
   });
 
-  it('Menu Bar Only no-op on linux', async () => {
+  it('menu Bar Only no-op on linux', async () => {
     Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
     const t = await startAndRefresh(handlers());
     const items = lastMenuTemplate();
@@ -450,7 +452,7 @@ describe('DesktopTray -- macOS Menu Bar Only', () => {
   });
 });
 
-describe('DesktopTray -- defensive paths', () => {
+describe('desktopTray -- defensive paths', () => {
   // Tests for the `!app.dock` branches in updateDockBadge + setMenuBarOnly.
   // app.dock is normally always present on darwin, but very-old Electron /
   // headless mode can leave it undefined. The early-return is defensive.
@@ -479,7 +481,7 @@ describe('DesktopTray -- defensive paths', () => {
   });
 });
 
-describe('DesktopTray -- runTask + toggleAutopilot (mocked tray-http)', () => {
+describe('desktopTray -- runTask + toggleAutopilot (mocked tray-http)', () => {
   // For this block we override the tray-http module to give the tray
   // real stats + a successful postEmpty, so the autopilot toggle path
   // (postEmpty -> .then -> refresh) is exercised.

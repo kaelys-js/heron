@@ -3,7 +3,8 @@ import { reportServerError, logEvent } from '$lib/server/events';
 import { auth } from '$lib/server/auth';
 import { runWithUser, SYSTEM_USER_ID } from '$lib/server/user-context';
 import { screenshotBypassUser } from '$lib/server/screenshot-bypass';
-import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
+import { json, redirect } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { building, dev } from '$app/environment';
 
 // bootOnce() runs at module-load time (top of hooks.server.ts, BEFORE
@@ -40,21 +41,31 @@ try {
 const BENIGN_IO_CODES = new Set(['EPIPE', 'EBADF', 'ECONNRESET']);
 
 function isBenignIO(err: unknown): boolean {
-  if (!err) return false;
-  const code = (err as NodeJS.ErrnoException).code;
-  if (code && BENIGN_IO_CODES.has(code)) return true;
+  if (!err) {
+    return false;
+  }
+  const { code } = err as NodeJS.ErrnoException;
+  if (code && BENIGN_IO_CODES.has(code)) {
+    return true;
+  }
   const msg = err instanceof Error ? err.message : String(err);
-  if (typeof msg === 'string' && /\b(EPIPE|EBADF|ECONNRESET)\b/.test(msg)) return true;
+  if (typeof msg === 'string' && /\b(EPIPE|EBADF|ECONNRESET)\b/.test(msg)) {
+    return true;
+  }
   return false;
 }
 
 if (typeof process !== 'undefined') {
   process.on('uncaughtException', (err: Error) => {
-    if (isBenignIO(err)) return; // swallow -- see comment above
+    if (isBenignIO(err)) {
+      return;
+    } // swallow -- see comment above
     reportServerError('process', 'uncaughtException', err);
   });
   process.on('unhandledRejection', (reason: unknown) => {
-    if (isBenignIO(reason)) return;
+    if (isBenignIO(reason)) {
+      return;
+    }
     reportServerError('process', 'unhandledRejection', reason);
   });
 }
@@ -92,15 +103,21 @@ const PUBLIC_PREFIXES = [
 
 function isPublicPath(pathname: string, devServer: boolean): boolean {
   // Root '/' is public -- the layout decides whether to show login or dashboard.
-  if (pathname === '/') return true;
+  if (pathname === '/') {
+    return true;
+  }
   // View gallery -- reachable WITHOUT a session only under the live dev server.
   // In a built/native app the owner reaches it via their real session; the
   // dev-tools opt-in cookie only relaxes the onboarding redirect (see
   // +layout.server.ts), NOT this auth gate -- a client-settable cookie must not
   // grant session-less access. Exact-segment match so /development etc. don't slip.
-  if (devServer && (pathname === '/dev' || pathname.startsWith('/dev/'))) return true;
+  if (devServer && (pathname === '/dev' || pathname.startsWith('/dev/'))) {
+    return true;
+  }
   for (const prefix of PUBLIC_PREFIXES) {
-    if (pathname === prefix || pathname.startsWith(prefix)) return true;
+    if (pathname === prefix || pathname.startsWith(prefix)) {
+      return true;
+    }
   }
   return false;
 }
@@ -143,16 +160,22 @@ const populateAuth: Handle = async ({ event, resolve }) => {
  *  + `pnpm dev:ios` + `pnpm build:ios`.
  */
 const guard: Handle = async ({ event, resolve }) => {
-  if (building) return resolve(event);
+  if (building) {
+    return resolve(event);
+  }
   const path = event.url.pathname;
-  if (isPublicPath(path, dev)) return resolve(event);
-  if (event.locals.user) return resolve(event);
+  if (isPublicPath(path, dev)) {
+    return resolve(event);
+  }
+  if (event.locals.user) {
+    return resolve(event);
+  }
 
   // API requests get a JSON 401; HTML page navigations get redirected to login.
   if (path.startsWith('/api/')) {
     return json({ ok: false, error: 'unauthenticated' }, { status: 401 });
   }
-  throw redirect(302, '/login?redirectTo=' + encodeURIComponent(path));
+  throw redirect(302, `/login?redirectTo=${encodeURIComponent(path)}`);
 };
 
 /** Wraps every request in an AsyncLocalStorage context so legacy server-lib
@@ -214,7 +237,9 @@ const authLifecycleObserver: Handle = async ({ event, resolve }) => {
  */
 const signupGate: Handle = async ({ event, resolve }) => {
   const path = event.url.pathname;
-  if (!path.startsWith('/api/auth/sign-up/')) return resolve(event);
+  if (!path.startsWith('/api/auth/sign-up/')) {
+    return resolve(event);
+  }
 
   // Lazy-import to avoid pulling the auth DB into adapter-static's
   // build graph (the auth-DB import path bottoms out at better-sqlite3
@@ -225,7 +250,9 @@ const signupGate: Handle = async ({ event, resolve }) => {
   const { inviteCodes } = await import('$lib/server/db/auth-schema');
 
   const [{ n }] = authDb.select({ n: sql<number>`count(*)` }).from(users).all();
-  if (n === 0) return resolve(event); // first-user path -- open
+  if (n === 0) {
+    return resolve(event);
+  } // first-user path -- open
 
   const code = event.request.headers.get('x-invite-code')?.trim();
   if (!code || !/^\d{6}$/.test(code)) {
@@ -285,7 +312,9 @@ const ALLOWED_ORIGIN_PATTERNS: RegExp[] = [
 ];
 
 function isAllowedOrigin(origin: string | null): origin is string {
-  if (!origin) return false;
+  if (!origin) {
+    return false;
+  }
   return ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin));
 }
 
@@ -359,14 +388,19 @@ const cors: Handle = async ({ event, resolve }) => {
  */
 const securityHeaders: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
-  const url = event.url;
+  const { url } = event;
   const isHttps = url.protocol === 'https:';
-  const headers = response.headers;
+  const { headers } = response;
   // Don't clobber if SvelteKit / the route already set these.
-  if (!headers.has('X-Content-Type-Options')) headers.set('X-Content-Type-Options', 'nosniff');
-  if (!headers.has('X-Frame-Options')) headers.set('X-Frame-Options', 'DENY');
-  if (!headers.has('Referrer-Policy'))
+  if (!headers.has('X-Content-Type-Options')) {
+    headers.set('X-Content-Type-Options', 'nosniff');
+  }
+  if (!headers.has('X-Frame-Options')) {
+    headers.set('X-Frame-Options', 'DENY');
+  }
+  if (!headers.has('Referrer-Policy')) {
     headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  }
   if (!headers.has('Permissions-Policy')) {
     headers.set(
       'Permissions-Policy',
@@ -394,10 +428,12 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
       ].join(', '),
     );
   }
-  if (!headers.has('Cross-Origin-Opener-Policy'))
+  if (!headers.has('Cross-Origin-Opener-Policy')) {
     headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-  if (!headers.has('Cross-Origin-Resource-Policy'))
+  }
+  if (!headers.has('Cross-Origin-Resource-Policy')) {
     headers.set('Cross-Origin-Resource-Policy', 'same-site');
+  }
   if (isHttps && !headers.has('Strict-Transport-Security')) {
     headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
@@ -407,8 +443,8 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 /** Sequence: cors (short-circuits OPTIONS) → populateAuth → guard
  *  → withUserContext → securityHeaders → user handler. CORS runs first
  *  so preflights don't even touch auth or per-user context. */
-export const handle: Handle = async ({ event, resolve }) => {
-  return cors({
+export const handle: Handle = async ({ event, resolve }) =>
+  cors({
     event,
     resolve: (e0) =>
       populateAuth({
@@ -436,11 +472,10 @@ export const handle: Handle = async ({ event, resolve }) => {
           }),
       }),
   });
-};
 
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
   const url = event.url.pathname;
-  reportServerError('server', '[' + status + '] ' + url, error);
+  reportServerError('server', `[${status}] ${url}`, error);
   const code = (error as Record<string, unknown>)?.code as string | undefined;
   const details = (error as Record<string, unknown>)?.details;
   return {

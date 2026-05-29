@@ -76,7 +76,9 @@ function statePath(profileId?: string): string {
 function readAll(profileId?: string): Record<string, OfferRecord> {
   const p = statePath(profileId);
   try {
-    if (!fs.existsSync(p)) return {};
+    if (!fs.existsSync(p)) {
+      return {};
+    }
     const parsed = JSON.parse(fs.readFileSync(p, 'utf8'));
     return parsed && typeof parsed === 'object' ? (parsed as Record<string, OfferRecord>) : {};
   } catch {
@@ -138,7 +140,9 @@ export function appendRound(
 ): OfferRecord | undefined {
   const all = readAll(profileId);
   const existing = all[jobId];
-  if (!existing) return undefined;
+  if (!existing) {
+    return undefined;
+  }
   existing.rounds.push(round);
   existing.cachedTc = annualisedTc(round);
   existing.cachedTcAt = Date.now();
@@ -154,7 +158,9 @@ export function closeOffer(
 ): OfferRecord | undefined {
   const all = readAll(profileId);
   const existing = all[jobId];
-  if (!existing) return undefined;
+  if (!existing) {
+    return undefined;
+  }
   existing.closedAt = Date.now();
   existing.closedOutcome = outcome;
   all[jobId] = existing;
@@ -169,7 +175,9 @@ export function attachBenchmark(
 ): OfferRecord | undefined {
   const all = readAll(profileId);
   const existing = all[jobId];
-  if (!existing) return undefined;
+  if (!existing) {
+    return undefined;
+  }
   existing.benchmark = benchmark;
   all[jobId] = existing;
   writeAll(all, profileId);
@@ -182,16 +190,28 @@ export function attachBenchmark(
 export function batnaScore(jobId: string, profileId?: string): number {
   const all = listActiveOffers(profileId);
   const target = all.find((o) => o.jobId === jobId);
-  if (!target || !target.cachedTc) return 0;
+  if (!target || !target.cachedTc) {
+    return 0;
+  }
   const others = all.filter((o) => o.jobId !== jobId && o.cachedTc);
-  if (others.length === 0) return 0;
+  if (others.length === 0) {
+    return 0;
+  }
   const bestAlt = Math.max(...others.map((o) => o.cachedTc!));
   // BATNA strength as a ratio: 1.0 means alternative matches current,
   // higher means the alternative is BETTER (strong `leverage`).
   const ratio = bestAlt / target.cachedTc;
-  if (ratio >= 1.15) return 100;
-  if (ratio >= 1.05) return 80;
-  if (ratio >= 0.95) return 60;
-  if (ratio >= 0.8) return 40;
+  if (ratio >= 1.15) {
+    return 100;
+  }
+  if (ratio >= 1.05) {
+    return 80;
+  }
+  if (ratio >= 0.95) {
+    return 60;
+  }
+  if (ratio >= 0.8) {
+    return 40;
+  }
   return 20;
 }

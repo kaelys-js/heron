@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const TMP = path.join(tmpdir(), 'heron-user-secrets-' + Date.now() + '-' + process.pid);
+const TMP = path.join(tmpdir(), `heron-user-secrets-${Date.now()}-${process.pid}`);
 
 // MUST run before importing user-secrets so the module-load-time
 // `userSharedPathForUser` resolves under the mocked ROOT.
@@ -136,7 +136,9 @@ describe('user-secrets — at-rest encryption', () => {
 
   it('file mode is 0600 (owner read/write only)', () => {
     // Skip on non-POSIX systems -- Windows file modes don't map.
-    if (process.platform === 'win32') return;
+    if (process.platform === 'win32') {
+      return;
+    }
     setSecret(TEST_USER_A, 'X', 'y');
     const mode = fs.statSync(secretsFileFor(TEST_USER_A)).mode & 0o777;
     expect(mode).toBe(0o600);
@@ -186,12 +188,14 @@ describe('user-secrets — getCredential resolver (per-user store + .env fallbac
 });
 
 describe('user-secrets — Python parity (scripts/lib/user_secrets.py decrypts TS-written files)', () => {
-  it('TS-written secret round-trips via scripts/lib/user_secrets.py', async () => {
+  it('tS-written secret round-trips via scripts/lib/user_secrets.py', async () => {
     // Skip if the .venv isn't present (e.g. running on a CI box that
     // hasn't bootstrapped Python yet). The TS/MJS parity case below
     // still gives us byte-level confidence in the format.
     const venvPython = path.resolve(__dirname, '..', '..', '..', '..', '.venv', 'bin', 'python');
-    if (!fs.existsSync(venvPython)) return;
+    if (!fs.existsSync(venvPython)) {
+      return;
+    }
 
     setSecret(TEST_USER_A, 'PYTHON_PARITY_KEY', 'PY-LONG-VAL-9876XYZ');
 
@@ -230,7 +234,7 @@ describe('user-secrets — Python parity (scripts/lib/user_secrets.py decrypts T
 });
 
 describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', () => {
-  it('TS-written secret round-trips via scripts/lib/user-secrets.mjs', async () => {
+  it('tS-written secret round-trips via scripts/lib/user-secrets.mjs', async () => {
     setSecret(TEST_USER_A, 'GEMINI_API_KEY', 'AIza-parity-LONG-VALUE-1234');
     // The mjs side reads HERON_DATA_DIR (overrides the hardcoded
     // repo-relative path). Our TS impl wrote under {TMP}/data/users/...,
@@ -244,8 +248,11 @@ describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', (
       const out = mjs.getSecret(TEST_USER_A, 'GEMINI_API_KEY');
       expect(out).toBe('AIza-parity-LONG-VALUE-1234');
     } finally {
-      if (prevHeron === undefined) delete process.env.HERON_DATA_DIR;
-      else process.env.HERON_DATA_DIR = prevHeron;
+      if (prevHeron === undefined) {
+        delete process.env.HERON_DATA_DIR;
+      } else {
+        process.env.HERON_DATA_DIR = prevHeron;
+      }
     }
   });
 
@@ -264,12 +271,21 @@ describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', (
       delete process.env.HERON_USER_ID;
       expect(mjs.getCredential('ANTHROPIC_API_KEY')).toBe('env-LOSES');
     } finally {
-      if (prevHeron === undefined) delete process.env.HERON_DATA_DIR;
-      else process.env.HERON_DATA_DIR = prevHeron;
-      if (prevUser === undefined) delete process.env.HERON_USER_ID;
-      else process.env.HERON_USER_ID = prevUser;
-      if (prevEnv === undefined) delete process.env.ANTHROPIC_API_KEY;
-      else process.env.ANTHROPIC_API_KEY = prevEnv;
+      if (prevHeron === undefined) {
+        delete process.env.HERON_DATA_DIR;
+      } else {
+        process.env.HERON_DATA_DIR = prevHeron;
+      }
+      if (prevUser === undefined) {
+        delete process.env.HERON_USER_ID;
+      } else {
+        process.env.HERON_USER_ID = prevUser;
+      }
+      if (prevEnv === undefined) {
+        delete process.env.ANTHROPIC_API_KEY;
+      } else {
+        process.env.ANTHROPIC_API_KEY = prevEnv;
+      }
     }
   });
 });

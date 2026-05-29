@@ -137,58 +137,58 @@ describe('classifyEmail -- take-home branch', () => {
 });
 
 describe('classifyEmail -- interview-scheduling stages', () => {
-  it('Onsite stage from "onsite"', () => {
+  it('onsite stage from "onsite"', () => {
     const r = classifyEmail(email('subj', "We'd like to invite you to an onsite interview."));
     expect(r.kind).toBe('interview-scheduling');
     expect(r.stage).toBe('Onsite');
   });
 
-  it('Onsite stage from "panel"', () => {
+  it('onsite stage from "panel"', () => {
     const r = classifyEmail(email('subj', 'We would like to schedule a panel interview.'));
     expect(r.stage).toBe('Onsite');
   });
 
-  it('Final stage from "final round"', () => {
+  it('final stage from "final round"', () => {
     const r = classifyEmail(email('subj', 'We would like to schedule the final round interview.'));
     expect(r.stage).toBe('Final');
   });
 
-  it('Technical stage from "technical interview"', () => {
+  it('technical stage from "technical interview"', () => {
     const r = classifyEmail(email('subj', 'We would like to schedule a technical interview.'));
     expect(r.stage).toBe('Technical');
   });
 
-  it('Technical stage from "system design"', () => {
+  it('technical stage from "system design"', () => {
     const r = classifyEmail(email('subj', 'We would like to schedule a system design interview.'));
     expect(r.stage).toBe('Technical');
   });
 
-  it('PhoneScreen stage from "phone screen"', () => {
+  it('phoneScreen stage from "phone screen"', () => {
     const r = classifyEmail(email('subj', 'We would like to schedule a phone screen.'));
     expect(r.stage).toBe('PhoneScreen');
   });
 
-  it('PhoneScreen stage from "intro call"', () => {
+  it('phoneScreen stage from "intro call"', () => {
     const r = classifyEmail(email('subj', 'We would like to schedule an intro call.'));
     expect(r.stage).toBe('PhoneScreen');
   });
 
-  it('Defaults to PhoneScreen when stage ambiguous', () => {
+  it('defaults to PhoneScreen when stage ambiguous', () => {
     const r = classifyEmail(email('Chat', "Let's schedule a call when you're available."));
     expect(r.stage).toBe('PhoneScreen');
   });
 
-  it('Calendly link elevates confidence to HIGH', () => {
+  it('calendly link elevates confidence to HIGH', () => {
     const r = classifyEmail(email('Chat', "Here's my calendly.com/recruiter."));
     expect(r.confidence).toBe('high');
   });
 
-  it('SavvyCal link elevates confidence to HIGH', () => {
+  it('savvyCal link elevates confidence to HIGH', () => {
     const r = classifyEmail(email('Chat', 'savvycal link: https://savvycal.com/x'));
     expect(r.confidence).toBe('high');
   });
 
-  it('No scheduling-tool link -> MEDIUM confidence', () => {
+  it('no scheduling-tool link -> MEDIUM confidence', () => {
     const r = classifyEmail(email('Chat', "Let's schedule a call."));
     expect(r.confidence).toBe('medium');
   });

@@ -17,12 +17,8 @@ import { wrap } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { userContextEnv } from '$lib/server/user-context';
-import {
-  readAuditReport,
-  writeAuditReport,
-  classifySnapshot,
-  type LinkedInAuditReport,
-} from '$lib/server/linkedin-audit';
+import { readAuditReport, writeAuditReport, classifySnapshot } from '$lib/server/linkedin-audit';
+import type { LinkedInAuditReport } from '$lib/server/linkedin-audit';
 
 const TIMEOUT_MS = 240_000;
 
@@ -42,7 +38,9 @@ function runScraper(headed: boolean): Promise<{ stdout: string; stderr: string; 
     let stdout = '';
     let stderr = '';
     const args = [path.join(ROOT, 'scripts/linkedin/linkedin-audit.py'), '--json'];
-    if (headed) args.push('--headed');
+    if (headed) {
+      args.push('--headed');
+    }
     const p = spawn(pythonBin(), args, {
       cwd: ROOT,
       env: userContextEnv(),
@@ -57,7 +55,7 @@ function runScraper(headed: boolean): Promise<{ stdout: string; stderr: string; 
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('linkedin-audit.py timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`linkedin-audit.py timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -97,14 +95,12 @@ export const POST = wrap('linkedin-audit', async ({ request }: { request: Reques
           : Math.round(((findings.length - open) / findings.length) * 100),
     };
     writeAuditReport(report);
-    logEvent('linkedin-audit', findings.length + ' findings · grade ' + report.grade, {
+    logEvent('linkedin-audit', `${findings.length} findings · grade ${report.grade}`, {
       level: open === 0 ? 'success' : open > 5 ? 'warn' : 'info',
       category: 'user',
-      message:
-        findings.filter((f) => f.severity === 'error').length +
-        ' errors · ' +
-        findings.filter((f) => f.severity === 'warn').length +
-        ' warns',
+      message: `${findings.filter((f) => f.severity === 'error').length} errors · ${
+        findings.filter((f) => f.severity === 'warn').length
+      } warns`,
     });
     if (stderr) {
       reportServerError(

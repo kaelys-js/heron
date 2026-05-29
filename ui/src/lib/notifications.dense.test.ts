@@ -12,7 +12,7 @@ const { notifications } = await import('./notifications.svelte');
 
 function ev(over: Partial<any> = {}) {
   return {
-    id: 'ev-' + Math.random().toString(36).slice(2),
+    id: `ev-${Math.random().toString(36).slice(2)}`,
     ts: Date.now(),
     level: 'info' as const,
     category: 'system' as const,
@@ -43,12 +43,16 @@ describe('notifications.add — every category', () => {
 describe('notifications.add — bulk insert', () => {
   beforeEach(() => notifications.clear());
   it.each([1, 5, 10, 50, 100, 199, 200])('inserts %i events without exceeding cap', (n) => {
-    for (let i = 0; i < n; i++) notifications.add(ev({ id: `bulk-${i}` }));
+    for (let i = 0; i < n; i++) {
+      notifications.add(ev({ id: `bulk-${i}` }));
+    }
     expect(notifications.events.length).toBe(Math.min(n, 200));
   });
 
   it.each([201, 250, 500, 1000])('caps at 200 when over (%i input)', (n) => {
-    for (let i = 0; i < n; i++) notifications.add(ev({ id: `over-${i}` }));
+    for (let i = 0; i < n; i++) {
+      notifications.add(ev({ id: `over-${i}` }));
+    }
     expect(notifications.events.length).toBe(200);
   });
 });
@@ -56,9 +60,13 @@ describe('notifications.add — bulk insert', () => {
 describe('notifications.markRead — bulk', () => {
   beforeEach(() => notifications.clear());
   it.each([1, 5, 10, 50])('marks %i read', (n) => {
-    for (let i = 0; i < n; i++) notifications.add(ev({ id: `r-${i}` }));
+    for (let i = 0; i < n; i++) {
+      notifications.add(ev({ id: `r-${i}` }));
+    }
     expect(notifications.unreadIds.size).toBe(n);
-    for (let i = 0; i < n; i++) notifications.markRead(`r-${i}`);
+    for (let i = 0; i < n; i++) {
+      notifications.markRead(`r-${i}`);
+    }
     expect(notifications.unreadIds.size).toBe(0);
   });
 });
@@ -66,7 +74,9 @@ describe('notifications.markRead — bulk', () => {
 describe('notifications.markAllRead — at various counts', () => {
   beforeEach(() => notifications.clear());
   it.each([0, 1, 5, 50, 200])('clears unreadIds when %i pending', (n) => {
-    for (let i = 0; i < n; i++) notifications.add(ev({ id: `a-${i}` }));
+    for (let i = 0; i < n; i++) {
+      notifications.add(ev({ id: `a-${i}` }));
+    }
     notifications.markAllRead();
     expect(notifications.unreadIds.size).toBe(0);
   });
@@ -77,7 +87,9 @@ describe('notifications.clear — preserves shape', () => {
     0, 1, 10, 100, 200,
   ])('after clear with %i events, events=[] and unreadIds.size=0', (n) => {
     notifications.clear();
-    for (let i = 0; i < n; i++) notifications.add(ev({ id: `c-${i}` }));
+    for (let i = 0; i < n; i++) {
+      notifications.add(ev({ id: `c-${i}` }));
+    }
     notifications.clear();
     expect(notifications.events).toEqual([]);
     expect(notifications.unreadIds.size).toBe(0);
@@ -87,7 +99,9 @@ describe('notifications.clear — preserves shape', () => {
 describe('notifications.add — dedup by id under repeated inserts', () => {
   beforeEach(() => notifications.clear());
   it.each([1, 2, 5, 10])('inserts same id %i times → events.length=1', (n) => {
-    for (let i = 0; i < n; i++) notifications.add(ev({ id: 'dup' }));
+    for (let i = 0; i < n; i++) {
+      notifications.add(ev({ id: 'dup' }));
+    }
     expect(notifications.events.length).toBe(1);
   });
 });

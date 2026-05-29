@@ -16,13 +16,15 @@ import {
   listSuggestions,
   applySuggestion,
   logSuggestionApplied,
-  type StructuredSuggestion,
 } from '$lib/server/pattern-suggestions';
+import type { StructuredSuggestion } from '$lib/server/pattern-suggestions';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 function resolveProfileId(url: URL): string {
   const q = url.searchParams.get('profile');
-  if (q && q !== 'all' && getProfile(q)) return q;
+  if (q && q !== 'all' && getProfile(q)) {
+    return q;
+  }
   return getActiveProfileId();
 }
 
@@ -41,7 +43,9 @@ export const POST = wrap(
   async ({ request, url }: { request: Request; url: URL }) => {
     const profileId = resolveProfileId(url);
     const body = (await request.json().catch(() => ({}))) as Partial<StructuredSuggestion>;
-    if (!body?.op) badRequest('op required');
+    if (!body?.op) {
+      badRequest('op required');
+    }
     const result = applySuggestion(body as StructuredSuggestion, profileId);
     if (result.ok) {
       logSuggestionApplied(body as StructuredSuggestion, result.summary ?? '');

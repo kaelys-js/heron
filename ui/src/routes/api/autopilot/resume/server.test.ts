@@ -39,7 +39,7 @@ async function post() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/autopilot/resume', () => {
+describe('pOST /api/autopilot/resume', () => {
   it('passes through the resumeAutopilot result envelope', async () => {
     const r = await post();
     expect(r.status).toBe(200);

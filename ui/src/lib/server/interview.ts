@@ -31,7 +31,7 @@ function slugify(s: string): string {
 }
 
 function persistedInterviewPath(profileId: string, jobId: string): string {
-  return path.join(profilePath(profileId, 'interview-prep-dir'), slugify(jobId) + '.md');
+  return path.join(profilePath(profileId, 'interview-prep-dir'), `${slugify(jobId)}.md`);
 }
 
 /**
@@ -62,17 +62,21 @@ export function loadWritingSamples(profileId?: string): string {
   const id = resolveId(profileId);
   try {
     const dir = profilePath(id, 'writing-samples-dir');
-    if (!fs.existsSync(dir)) return '';
+    if (!fs.existsSync(dir)) {
+      return '';
+    }
     const samples: string[] = [];
     let used = 0;
     for (const f of fs
       .readdirSync(dir)
       .filter((n) => n.endsWith('.md'))
       .sort()) {
-      if (used >= 3000) break;
+      if (used >= 3000) {
+        break;
+      }
       const body = readSafe(path.join(dir, f));
       const slice = body.slice(0, 1500);
-      samples.push('## ' + f.replace(/\.md$/, '') + '\n' + slice);
+      samples.push(`## ${f.replace(/\.md$/, '')}\n${slice}`);
       used += slice.length;
     }
     return samples.join('\n\n').slice(0, 3000);
@@ -96,7 +100,9 @@ export function readPersistedInterviewPrep(arg1: string | undefined, arg2?: stri
   const jobId = arg2 !== undefined ? arg2 : (arg1 as string);
   const id = resolveId(profileId);
   const full = persistedInterviewPath(id, jobId);
-  if (!fs.existsSync(full)) return null;
+  if (!fs.existsSync(full)) {
+    return null;
+  }
   try {
     return fs.readFileSync(full, 'utf8');
   } catch {
@@ -137,19 +143,16 @@ export async function generateInterviewPrep(
   // D26: per-profile per-user writing samples. See loadWritingSamples()
   // for the per-profile path + cap details.
   const writingSamples = loadWritingSamples(id);
-  const sys =
-    'You are a senior interview-prep coach. Use the report (Block A/B/F) to produce a focused brief.\n\n' +
-    (interviewPrepMode || 'Generate a comprehensive interview prep brief.');
-  const user =
-    '# Report\n' +
-    reportContent +
-    '\n\n# CV\n' +
-    cv.slice(0, 3000) +
-    (storyBank ? '\n\n# Story bank (use these wherever a STAR fits)\n' + storyBank : '') +
-    (articleDigest ? '\n\n# Article digest / proof points\n' + articleDigest : '') +
-    (writingSamples ? '\n\n# Writing samples (match this voice)\n' + writingSamples : '') +
-    '\n\n# Task\nProduce a Markdown brief: 8-12 likely questions, STAR map, 5-topic study plan, 3 talking points, red flags, 5 questions to ask back.' +
-    (archetypeOverride ? '\n\nReframe for archetype: ' + archetypeOverride : '');
+  const sys = `You are a senior interview-prep coach. Use the report (Block A/B/F) to produce a focused brief.\n\n${
+    interviewPrepMode || 'Generate a comprehensive interview prep brief.'
+  }`;
+  const user = `# Report\n${reportContent}\n\n# CV\n${cv.slice(0, 3000)}${
+    storyBank ? '\n\n# Story bank (use these wherever a STAR fits)\n' + storyBank : ''
+  }${articleDigest ? '\n\n# Article digest / proof points\n' + articleDigest : ''}${
+    writingSamples ? '\n\n# Writing samples (match this voice)\n' + writingSamples : ''
+  }\n\n# Task\nProduce a Markdown brief: 8-12 likely questions, STAR map, 5-topic study plan, 3 talking points, red flags, 5 questions to ask back.${
+    archetypeOverride ? '\n\nReframe for archetype: ' + archetypeOverride : ''
+  }`;
   const md = await complete(sys, user, { maxTokens: 16000, thinking: true });
   if (persistJobId) {
     try {
@@ -177,14 +180,9 @@ export async function generateNegotiationBrief(
   const reportContent = readSafe(path.join(profilePath(id, 'reports-dir'), reportFile));
   const profile = readSafe(profilePath(id, 'profile-yml'));
   const negMode = loadModeFile('negotiation.md', id);
-  const sys = 'You are a senior compensation and negotiation coach.\n\n' + (negMode || '');
-  const user =
-    '# Report\n' +
-    reportContent +
-    '\n\n# Profile\n' +
-    profile +
-    '\n\n# Offer\n' +
-    offerDetails +
-    '\n\nProduce: percentile table, leverage stance, draft email, 2 alternates, recruiter response handling.';
+  const sys = `You are a senior compensation and negotiation coach.\n\n${negMode || ''}`;
+  const user = `# Report\n${reportContent}\n\n# Profile\n${profile}\n\n# Offer\n${
+    offerDetails
+  }\n\nProduce: percentile table, leverage stance, draft email, 2 alternates, recruiter response handling.`;
   return complete(sys, user, { maxTokens: 16000, thinking: true });
 }

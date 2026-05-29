@@ -70,9 +70,13 @@ function ensureDir() {
 
 export function readOnboarding(): OnboardingState {
   try {
-    if (!fs.existsSync(statePath())) return { ...ZERO_STATE };
+    if (!fs.existsSync(statePath())) {
+      return { ...ZERO_STATE };
+    }
     const txt = fs.readFileSync(statePath(), 'utf8');
-    if (!txt.trim()) return { ...ZERO_STATE };
+    if (!txt.trim()) {
+      return { ...ZERO_STATE };
+    }
     const parsed = JSON.parse(txt) as Partial<OnboardingState>;
     return {
       ...ZERO_STATE,
@@ -91,7 +95,7 @@ export function readOnboarding(): OnboardingState {
 function writeOnboarding(state: OnboardingState): OnboardingState {
   ensureDir();
   try {
-    fs.writeFileSync(statePath(), JSON.stringify(state, null, 2) + '\n');
+    fs.writeFileSync(statePath(), `${JSON.stringify(state, null, 2)}\n`);
   } catch (e) {
     reportServerError('onboarding', 'Failed to write onboarding-state.json', e, {
       category: 'system',
@@ -105,7 +109,9 @@ function writeOnboarding(state: OnboardingState): OnboardingState {
  *  step's successor (so resume lands on the next pending one). */
 export function markStepComplete(step: OnboardingStep): OnboardingState {
   const state = readOnboarding();
-  if (!state.completedSteps.includes(step)) state.completedSteps.push(step);
+  if (!state.completedSteps.includes(step)) {
+    state.completedSteps.push(step);
+  }
   // Drop from skippedSteps if it had been skipped previously (user came back).
   state.skippedSteps = state.skippedSteps.filter((s) => s !== step);
   const idx = STEPS.indexOf(step);
@@ -115,7 +121,9 @@ export function markStepComplete(step: OnboardingStep): OnboardingState {
 
 export function markStepSkipped(step: OnboardingStep): OnboardingState {
   const state = readOnboarding();
-  if (!state.skippedSteps.includes(step)) state.skippedSteps.push(step);
+  if (!state.skippedSteps.includes(step)) {
+    state.skippedSteps.push(step);
+  }
   state.completedSteps = state.completedSteps.filter((s) => s !== step);
   const idx = STEPS.indexOf(step);
   state.currentStep = idx >= 0 && idx + 1 < STEPS.length ? STEPS[idx + 1] : 'done';
@@ -149,7 +157,9 @@ export function reset(): OnboardingState {
  */
 export function isFreshInstall(): boolean {
   const state = readOnboarding();
-  if (state.completed) return false;
+  if (state.completed) {
+    return false;
+  }
 
   // Required files for any Heron workflow to function. Each one would
   // cause a downstream feature to silently fail (or 500) if missing.
@@ -160,13 +170,17 @@ export function isFreshInstall(): boolean {
     activePath('profile-md'), // user-customisable mode fragment (per-profile)
   ];
   for (const p of requiredFiles) {
-    if (!fs.existsSync(p)) return true;
+    if (!fs.existsSync(p)) {
+      return true;
+    }
   }
 
   // ANTHROPIC_API_KEY is also required for the deep-eval pipeline. Missing
   // key = onboarding incomplete.
   const env = readEnv();
-  if (!env.ANTHROPIC_API_KEY) return true;
+  if (!env.ANTHROPIC_API_KEY) {
+    return true;
+  }
 
   return false;
 }
@@ -179,9 +193,15 @@ export function progressSummary(): Array<{
 }> {
   const state = readOnboarding();
   return STEPS.map((step) => {
-    if (state.completedSteps.includes(step)) return { step, status: 'complete' as const };
-    if (state.skippedSteps.includes(step)) return { step, status: 'skipped' as const };
-    if (state.currentStep === step) return { step, status: 'current' as const };
+    if (state.completedSteps.includes(step)) {
+      return { step, status: 'complete' as const };
+    }
+    if (state.skippedSteps.includes(step)) {
+      return { step, status: 'skipped' as const };
+    }
+    if (state.currentStep === step) {
+      return { step, status: 'current' as const };
+    }
     return { step, status: 'pending' as const };
   });
 }

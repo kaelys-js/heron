@@ -34,7 +34,7 @@ function spawnPostRejection(url: string, notes: Notes, profileId: string): Promi
     let stderr = '';
     const { child: p } = spawnAgentWithMode(
       'post-rejection',
-      url + ' --notes ' + JSON.stringify(JSON.stringify(notes)),
+      `${url} --notes ${JSON.stringify(JSON.stringify(notes))}`,
       { profileId },
     );
     p.stdout?.on('data', (c: Buffer) => {
@@ -46,7 +46,7 @@ function spawnPostRejection(url: string, notes: Notes, profileId: string): Promi
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+        reject(new Error(`claude -p exited ${code}: ${stderr.slice(0, 300)}`));
         return;
       }
       resolve(stdout);
@@ -57,8 +57,8 @@ function spawnPostRejection(url: string, notes: Notes, profileId: string): Promi
 function appendToStoryBank(jobLabel: string, content: string): string {
   fs.mkdirSync(path.dirname(storyBankPath()), { recursive: true });
   const stamp = new Date().toISOString().slice(0, 10);
-  const header = '\n\n---\n\n## ' + stamp + ' · ' + jobLabel + '\n\n';
-  const block = header + content.trim() + '\n';
+  const header = `\n\n---\n\n## ${stamp} · ${jobLabel}\n\n`;
+  const block = `${header + content.trim()}\n`;
   fs.appendFileSync(storyBankPath(), block);
   return path.relative(ROOT, storyBankPath());
 }
@@ -67,9 +67,13 @@ export const POST = wrap(
   'post-rejection',
   async ({ params, request, url }: { params: { id: string }; request: Request; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
-    if (!job.url) badRequest('Job has no URL — cannot capture rejection learning');
+    if (!job.url) {
+      badRequest('Job has no URL — cannot capture rejection learning');
+    }
 
     const body = (await request.json().catch(() => ({}))) as Notes;
     const notes: Notes = {
@@ -81,7 +85,7 @@ export const POST = wrap(
     logEvent('post-rejection', 'Capturing rejection learning', {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' · ' + (job.role || '?'),
+      message: `${job.company || '?'} · ${job.role || '?'}`,
     });
 
     try {

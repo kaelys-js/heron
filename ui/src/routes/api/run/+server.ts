@@ -21,7 +21,9 @@ export const GET = wrap('run', async () => ({ running: listRunning() }));
 export const POST = wrap('run', async ({ request }: any) => {
   const body = await request.json().catch(() => ({}));
   const { task, autoSubmit, args } = body ?? {};
-  if (!task) badRequest('task required');
+  if (!task) {
+    badRequest('task required');
+  }
   // Profile id can be passed two ways: as a top-level body field, or
   // nested under body.args for the registry path. Normalise here.
   const profileId =
@@ -57,11 +59,11 @@ export const POST = wrap('run', async ({ request }: any) => {
   // the promise itself rejects.
   if (hasJob(task)) {
     runById(task, body?.args ?? {}).catch((err) =>
-      reportServerError('run', 'Background job ' + task + ' rejected', err, {
+      reportServerError('run', `Background job ${task} rejected`, err, {
         category: 'task',
       }),
     );
     return { running: listRunning() };
   }
-  badRequest('unknown task: ' + String(task), { task });
+  badRequest(`unknown task: ${String(task)}`, { task });
 });

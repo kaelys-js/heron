@@ -16,13 +16,17 @@ const KEY = `${BRAND_STORAGE_PREFIX}:sidebar-pin-excluded`;
 
 describe('pinStore', () => {
   beforeEach(() => {
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
     pinStore.resetAll();
   });
 
   afterEach(() => {
     pinStore.resetAll();
-    if (typeof localStorage !== 'undefined') localStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
   });
 
   it('starts with empty excluded set', () => {

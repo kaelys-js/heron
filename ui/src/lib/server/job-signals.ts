@@ -29,17 +29,23 @@ const DAY = 24 * 60 * 60 * 1000;
 
 function readScanHistory(profileId: string): { url: string; ts: number }[] {
   const p = profilePath(profileId, 'scan-history');
-  if (!fs.existsSync(p)) return [];
+  if (!fs.existsSync(p)) {
+    return [];
+  }
   try {
     const text = fs.readFileSync(p, 'utf8');
     return text
       .split('\n')
       .map((line) => {
         const parts = line.split('\t');
-        if (parts.length < 2) return null;
+        if (parts.length < 2) {
+          return null;
+        }
         const ts = Date.parse(parts[0]);
         const url = parts[1]?.trim();
-        if (!ts || !url) return null;
+        if (!ts || !url) {
+          return null;
+        }
         return { url, ts };
       })
       .filter((x): x is { url: string; ts: number } => x !== null);
@@ -49,7 +55,9 @@ function readScanHistory(profileId: string): { url: string; ts: number }[] {
 }
 
 function readReport(reportFile?: string): string {
-  if (!reportFile) return '';
+  if (!reportFile) {
+    return '';
+  }
   try {
     const p = path.isAbsolute(reportFile) ? reportFile : path.join(ROOT, reportFile);
     return fs.readFileSync(p, 'utf8');
@@ -74,16 +82,16 @@ export function dysfunctionSignal(job: Job, profileId: string): DysfunctionSigna
 
   if (daysOpen !== undefined && daysOpen >= 90) {
     reasons.push(
-      'Posting has been live for ' +
-        daysOpen +
-        ' days. Real hiring closes inside 6-8 weeks — long-open postings are often dysfunctional, frozen, or phantom listings.',
+      `Posting has been live for ${
+        daysOpen
+      } days. Real hiring closes inside 6-8 weeks — long-open postings are often dysfunctional, frozen, or phantom listings.`,
     );
     verdict = 'concern';
   } else if (daysOpen !== undefined && daysOpen >= 60) {
     reasons.push(
-      'Posting has been live for ' +
-        daysOpen +
-        ' days. Reaching that 60-day mark is a yellow flag — ask the recruiter why the role is still open.',
+      `Posting has been live for ${
+        daysOpen
+      } days. Reaching that 60-day mark is a yellow flag — ask the recruiter why the role is still open.`,
     );
     verdict = verdict === 'ok' ? 'risk' : verdict;
   }
@@ -91,9 +99,9 @@ export function dysfunctionSignal(job: Job, profileId: string): DysfunctionSigna
   const reListings = matches.length;
   if (reListings >= 3) {
     reasons.push(
-      'Posting has been re-listed ' +
-        reListings +
-        ' times. Re-listing pattern usually means a hire was made + lost (bad fit / bad culture) OR the spec keeps shifting.',
+      `Posting has been re-listed ${
+        reListings
+      } times. Re-listing pattern usually means a hire was made + lost (bad fit / bad culture) OR the spec keeps shifting.`,
     );
     verdict = 'concern';
   } else if (reListings === 2) {
@@ -105,16 +113,16 @@ export function dysfunctionSignal(job: Job, profileId: string): DysfunctionSigna
 
   // Report-text signals
   const report = readReport(job.reportFile);
-  const haystack = (job.role + ' ' + job.location + ' ' + report).toLowerCase();
+  const haystack = `${job.role} ${job.location} ${report}`.toLowerCase();
   if (
     /urgently hiring|immediate start|asap|need to fill quickly/i.test(haystack) &&
     daysOpen &&
     daysOpen > 30
   ) {
     reasons.push(
-      'JD says "urgent" but the role is already ' +
-        daysOpen +
-        ' days old. Mismatch = manager not actually empowered to close.',
+      `JD says "urgent" but the role is already ${
+        daysOpen
+      } days old. Mismatch = manager not actually empowered to close.`,
     );
     verdict = verdict === 'ok' ? 'risk' : verdict;
   }
@@ -198,7 +206,7 @@ const ONSITE_MARKERS = [
 
 export function remoteReality(job: Job, profileId?: string): RemoteRealityCheck {
   const report = readReport(job.reportFile);
-  const haystack = (job.role + ' ' + job.location + ' ' + report).toLowerCase();
+  const haystack = `${job.role} ${job.location} ${report}`.toLowerCase();
   const evidence: string[] = [];
   let verdict: RemoteVerdict = 'unclear';
   let downgraded = false;
@@ -213,7 +221,7 @@ export function remoteReality(job: Job, profileId?: string): RemoteRealityCheck 
   for (const marker of FULLY_REMOTE_MARKERS) {
     if (marker.test(haystack)) {
       verdict = 'fully-remote';
-      evidence.push('Fully-remote marker: ' + marker.source);
+      evidence.push(`Fully-remote marker: ${marker.source}`);
       break;
     }
   }
@@ -221,7 +229,7 @@ export function remoteReality(job: Job, profileId?: string): RemoteRealityCheck 
   for (const marker of ONSITE_MARKERS) {
     if (marker.test(haystack)) {
       verdict = 'onsite';
-      evidence.push('On-site marker: ' + marker.source);
+      evidence.push(`On-site marker: ${marker.source}`);
     }
   }
 
@@ -229,7 +237,9 @@ export function remoteReality(job: Job, profileId?: string): RemoteRealityCheck 
   for (const { pattern, severity } of HYBRID_DISGUISES) {
     if (pattern.test(haystack)) {
       const matched = haystack.match(pattern)?.[0];
-      if (matched) evidence.push('Hybrid hint: "' + matched.trim().slice(0, 80) + '"');
+      if (matched) {
+        evidence.push('Hybrid hint: "' + matched.trim().slice(0, 80) + '"');
+      }
       // Pick the most-restrictive verdict
       if (severity === 'hybrid') {
         verdict = 'hybrid';

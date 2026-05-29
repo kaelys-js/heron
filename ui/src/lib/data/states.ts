@@ -99,9 +99,17 @@ export const AU_STATES: State[] = [
  */
 export function statesForCountry(country: string): State[] {
   const c = country.trim().toLowerCase();
-  if (!c) return [];
-  if (c === 'us' || c === 'usa' || c === 'united states') return US_STATES;
-  if (c === 'ca' || c === 'can' || c === 'canada') return CA_PROVINCES;
-  if (c === 'au' || c === 'aus' || c === 'australia') return AU_STATES;
+  if (!c) {
+    return [];
+  }
+  if (c === 'us' || c === 'usa' || c === 'united states') {
+    return US_STATES;
+  }
+  if (c === 'ca' || c === 'can' || c === 'canada') {
+    return CA_PROVINCES;
+  }
+  if (c === 'au' || c === 'aus' || c === 'australia') {
+    return AU_STATES;
+  }
   return [];
 }

@@ -12,13 +12,17 @@ import { logEvent } from '$lib/server/events';
 
 export const POST = wrap('linkedin-audit-fix', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => ({}))) as { kind?: string };
-  if (!body.kind) badRequest('kind is required');
+  if (!body.kind) {
+    badRequest('kind is required');
+  }
   const updated = markFindingResolved(body.kind!);
-  if (!updated) return { ok: false, error: 'No audit report on disk' };
-  logEvent('linkedin-audit', 'Finding resolved · ' + body.kind, {
+  if (!updated) {
+    return { ok: false, error: 'No audit report on disk' };
+  }
+  logEvent('linkedin-audit', `Finding resolved · ${body.kind}`, {
     level: 'success',
     category: 'user',
-    message: 'grade now ' + updated.grade + '/100',
+    message: `grade now ${updated.grade}/100`,
   });
   return { ok: true, report: updated };
 });

@@ -50,7 +50,9 @@ export type ScanHistorySummary = {
 
 function readRowsForProfile(profileId: string): ScanRow[] {
   const historyPath = profilePath(profileId, 'scan-history');
-  if (!fs.existsSync(historyPath)) return [];
+  if (!fs.existsSync(historyPath)) {
+    return [];
+  }
   let text = '';
   try {
     text = fs.readFileSync(historyPath, 'utf8');
@@ -60,9 +62,13 @@ function readRowsForProfile(profileId: string): ScanRow[] {
   const lines = text.split('\n').slice(1); // skip header
   const out: ScanRow[] = [];
   for (const line of lines) {
-    if (!line.trim()) continue;
+    if (!line.trim()) {
+      continue;
+    }
     const cells = line.split('\t');
-    if (cells.length < 6) continue;
+    if (cells.length < 6) {
+      continue;
+    }
     out.push({
       url: cells[0],
       firstSeen: cells[1],
@@ -78,7 +84,9 @@ function readRowsForProfile(profileId: string): ScanRow[] {
 function readRows(profileId?: string): ScanRow[] {
   if (profileId === 'all') {
     const all: ScanRow[] = [];
-    for (const p of listProfiles()) all.push(...readRowsForProfile(p.id));
+    for (const p of listProfiles()) {
+      all.push(...readRowsForProfile(p.id));
+    }
     return all;
   }
   return readRowsForProfile(resolveId(profileId));
@@ -106,9 +114,13 @@ export function readScanHistorySummary(profileId?: string): ScanHistorySummary {
       bucket.duplicates++;
       totalDuplicates++;
     }
-    if (!lastRunDate || r.firstSeen > lastRunDate) lastRunDate = r.firstSeen;
+    if (!lastRunDate || r.firstSeen > lastRunDate) {
+      lastRunDate = r.firstSeen;
+    }
     portalCounts.set(r.portal, (portalCounts.get(r.portal) ?? 0) + 1);
-    if (r.company) companyCounts.set(r.company, (companyCounts.get(r.company) ?? 0) + 1);
+    if (r.company) {
+      companyCounts.set(r.company, (companyCounts.get(r.company) ?? 0) + 1);
+    }
   }
 
   const recent = [...byDate.values()].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 30);

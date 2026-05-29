@@ -44,19 +44,19 @@ function runNormalize(): Promise<JobResult> {
     p.on('close', (code: number | null) => {
       if (code !== 0) {
         // Non-zero exit isn't a hard error here -- script may have nothing to do
-        resolve({ ok: false, error: 'normalize exited with code ' + code });
+        resolve({ ok: false, error: `normalize exited with code ${code}` });
         return;
       }
       const m = stdout.match(COUNT_RE);
       const count = m ? parseInt(m[1], 10) : 0;
       if (count > 0) {
-        logEvent('normalize', 'Normalized ' + count + ' status' + (count === 1 ? '' : 'es'), {
+        logEvent('normalize', `Normalized ${count} status${count === 1 ? '' : 'es'}`, {
           level: 'info',
           category: 'application',
           message: 'Hygiene sweep — applications.md self-corrected',
         });
       }
-      resolve({ ok: true, message: 'Normalized ' + count, meta: { count } });
+      resolve({ ok: true, message: `Normalized ${count}`, meta: { count } });
     });
   });
 }

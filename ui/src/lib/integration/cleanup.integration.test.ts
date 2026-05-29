@@ -19,7 +19,7 @@ function exists(rel: string): boolean {
   return fs.existsSync(path.join(REPO_ROOT, rel));
 }
 
-describe('Cleanup invariants — no stray dev artefacts', () => {
+describe('cleanup invariants — no stray dev artefacts', () => {
   // .DS_Store files exist on every macOS developer's machine and DON'T
   // get committed (.gitignore catches them). The verifier originally
   // tried to fail on their presence -- we relax to "they're gitignored",
@@ -38,7 +38,7 @@ describe('Cleanup invariants — no stray dev artefacts', () => {
   });
 });
 
-describe('Cleanup invariants — directory structure', () => {
+describe('cleanup invariants — directory structure', () => {
   it('ui/build/ is gitignored when present', () => {
     const gi = fs.readFileSync(path.join(REPO_ROOT, '.gitignore'), 'utf8');
     expect(gi).toMatch(/build\/|^\/?ui\/build/m);
@@ -55,7 +55,7 @@ describe('Cleanup invariants — directory structure', () => {
   });
 });
 
-describe('Cleanup — extended structural checks (replaces obsolete verify-cleanup.mjs spot-checks)', () => {
+describe('cleanup — extended structural checks (replaces obsolete verify-cleanup.mjs spot-checks)', () => {
   // The legacy verifier had ~30 specific symbol/file checks that drifted
   // over time as the cleanup phases finished. We assert the high-level
   // invariants here -- anything more granular is covered by per-module

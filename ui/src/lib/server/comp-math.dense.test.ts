@@ -4,7 +4,8 @@
  * Exercises every base/equity combination over a parametric grid.
  */
 import { describe, expect, it } from 'vitest';
-import { compareOffers, evaluateOffer, type OfferInput, type EquityType } from './comp-math';
+import { compareOffers, evaluateOffer } from './comp-math';
+import type { OfferInput, EquityType } from './comp-math';
 
 function offer(over: Partial<OfferInput> = {}): OfferInput {
   return {
@@ -74,8 +75,11 @@ describe('evaluateOffer — growth rate banding', () => {
     const higher = evaluateOffer(
       offer({ equity: { type: 'rsu-public', grantValueToday: 100_000, growthRatePct: growth } }),
     );
-    if (growth > 0) expect(higher.equityNpv).toBeGreaterThan(lower.equityNpv);
-    else expect(higher.equityNpv).toBeCloseTo(lower.equityNpv, 1);
+    if (growth > 0) {
+      expect(higher.equityNpv).toBeGreaterThan(lower.equityNpv);
+    } else {
+      expect(higher.equityNpv).toBeCloseTo(lower.equityNpv, 1);
+    }
   });
 });
 

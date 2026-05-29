@@ -61,7 +61,9 @@ vi.mock('../user-context', () => ({
 
 vi.mock('../sources', () => ({
   getSource: (sourceId: string) => {
-    if (sourceId !== 'gmail-imap') return { connected: false, consecutiveFailures: 0 };
+    if (sourceId !== 'gmail-imap') {
+      return { connected: false, consecutiveFailures: 0 };
+    }
     return { connected: !!ctx.connected[ctx.activeUser], consecutiveFailures: 0 };
   },
   recordSuccess: vi.fn(),
@@ -74,13 +76,13 @@ vi.mock('./registry', () => ({
   runById: async (id: string) => {
     const u = ctx.activeUser;
     ctx.runByIdCalls.push({ user: u, id });
-    ctx.trace.push('start-' + u);
+    ctx.trace.push(`start-${u}`);
     if (ctx.delayMs > 0) {
       await new Promise((r) => setTimeout(r, ctx.delayMs));
     }
-    ctx.trace.push('end-' + u);
+    ctx.trace.push(`end-${u}`);
     if (ctx.throwsOnRun.has(u)) {
-      throw new Error(u + '-failed');
+      throw new Error(`${u}-failed`);
     }
     return { ok: true };
   },
@@ -121,7 +123,9 @@ describe('scan-email-imap.job — daemon multi-user fan-out (F14/F19/F27)', () =
     // SYSTEM_USER_ID is filtered out by tickOnce.
     expect(ctx.runAsUserCalls.sort()).toEqual([USER_A, USER_B, USER_C].sort());
     expect(ctx.runByIdCalls.map((c) => c.user).sort()).toEqual([USER_A, USER_B, USER_C].sort());
-    for (const c of ctx.runByIdCalls) expect(c.id).toBe('scan-email-imap');
+    for (const c of ctx.runByIdCalls) {
+      expect(c.id).toBe('scan-email-imap');
+    }
   });
 
   it('skips users with gmail-imap disconnected', async () => {

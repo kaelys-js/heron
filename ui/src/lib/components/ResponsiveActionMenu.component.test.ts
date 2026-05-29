@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/svelte';
 import ResponsiveActionMenuHarness from './__test__/ResponsiveActionMenuHarness.svelte';
 
-describe('ResponsiveActionMenu', () => {
+describe('responsiveActionMenu', () => {
   it('mounts without throwing', () => {
     expect(() => render(ResponsiveActionMenuHarness)).not.toThrow();
   });

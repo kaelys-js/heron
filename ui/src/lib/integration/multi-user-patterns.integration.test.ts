@@ -65,7 +65,7 @@ function grepLines(args: string[]): string[] {
 /** ──────────────────────────────────────────────────────────────────────
  *  F13 -- spawn-env injection
  *  ──────────────────────────────────────────────────────────────────── */
-describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () => {
+describe('multi-user — every spawn() injects userContextEnv (F13 guard)', () => {
   it('no bare `env: { ...process.env }` in server modules + api routes', () => {
     // Extended in the final audit loop -- `routes/api/**` had 4 missed
     // spawn sites because the original grep only covered lib/server/.
@@ -103,7 +103,7 @@ describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () =
 /** ──────────────────────────────────────────────────────────────────────
  *  F9 -- no module-level config singletons crossing users
  *  ──────────────────────────────────────────────────────────────────── */
-describe('Multi-user — no module-singleton user config caches (F9 guard)', () => {
+describe('multi-user — no module-singleton user config caches (F9 guard)', () => {
   // Files that legitimately have module-scope state that's NOT
   // user-data (e.g. an HMR-idempotence flag, a service-wide counter).
   // Adding to this list requires a PR-review confirmation that the
@@ -155,15 +155,15 @@ describe('Multi-user — no module-singleton user config caches (F9 guard)', () 
 /** ──────────────────────────────────────────────────────────────────────
  *  F11 -- bus listeners scope to ev.userId
  *  ──────────────────────────────────────────────────────────────────── */
-describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
+describe('multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
   it('auto-queue + auto-interview-prep both reference ev.userId + runAsUser', () => {
     for (const rel of [
       'ui/src/lib/server/jobs/auto-queue.ts',
       'ui/src/lib/server/jobs/auto-interview-prep.ts',
     ]) {
       const src = fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
-      expect(src, rel + ' must read ev.userId').toMatch(/\bev\.userId\b/);
-      expect(src, rel + ' must wrap work in runAsUser(...)').toMatch(/\brunAsUser\(/);
+      expect(src, `${rel} must read ev.userId`).toMatch(/\bev\.userId\b/);
+      expect(src, `${rel} must wrap work in runAsUser(...)`).toMatch(/\brunAsUser\(/);
     }
   });
 
@@ -182,7 +182,9 @@ describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
     for (const abs of candidates) {
       const src = fs.readFileSync(abs, 'utf8');
       const touchesUserData = /\bloadAllJobs\(|\bmarkStatus\(|\bgenerateInterviewPrep\(/.test(src);
-      if (!touchesUserData) continue;
+      if (!touchesUserData) {
+        continue;
+      }
       if (!/\bev\.userId\b/.test(src)) {
         offenders.push(path.relative(REPO_ROOT, abs));
       }
@@ -197,7 +199,7 @@ describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
 /** ──────────────────────────────────────────────────────────────────────
  *  F15 -- daemons route through runById (registry fan-out)
  *  ──────────────────────────────────────────────────────────────────── */
-describe('Multi-user — setInterval daemons in jobs/ go through runById (F15 guard)', () => {
+describe('multi-user — setInterval daemons in jobs/ go through runById (F15 guard)', () => {
   it('interview-reminder daemon calls runById, not the raw function', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'jobs/interview-reminder.job.ts'), 'utf8');
     // F15 requires the daemon to import `runById` and fire it, NOT call
@@ -219,7 +221,7 @@ describe('Multi-user — setInterval daemons in jobs/ go through runById (F15 gu
 /** ──────────────────────────────────────────────────────────────────────
  *  F17 -- apply-counter is per-user
  *  ──────────────────────────────────────────────────────────────────── */
-describe('Multi-user — apply-counter is per-user (F17 guard)', () => {
+describe('multi-user — apply-counter is per-user (F17 guard)', () => {
   it('apply-counter.ts resolves via userSharedPath, not ROOT/data/apply-counter.json', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'apply-counter.ts'), 'utf8');
     expect(src).toContain("userSharedPath('apply-counter')");
@@ -231,7 +233,7 @@ describe('Multi-user — apply-counter is per-user (F17 guard)', () => {
 /** ──────────────────────────────────────────────────────────────────────
  *  F10 -- autopilot scheduler tick fans out per user
  *  ──────────────────────────────────────────────────────────────────── */
-describe('Multi-user — autopilot tick fans out across users (F10 guard)', () => {
+describe('multi-user — autopilot tick fans out across users (F10 guard)', () => {
   it('tick() iterates listSchedulableUsers + wraps in runAsUser', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'autopilot.ts'), 'utf8');
     // The tick body must call listSchedulableUsers AND runAsUser.
@@ -245,7 +247,7 @@ describe('Multi-user — autopilot tick fans out across users (F10 guard)', () =
 /** ──────────────────────────────────────────────────────────────────────
  *  F12 -- circuit breaker per-user state
  *  ──────────────────────────────────────────────────────────────────── */
-describe('Multi-user — circuit breaker per-user state (F12 guard)', () => {
+describe('multi-user — circuit breaker per-user state (F12 guard)', () => {
   it('autopilot-circuit-breaker.ts uses Map for consecutiveLinkedInFailures', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'autopilot-circuit-breaker.ts'), 'utf8');
     // F12: must be `const consecutiveLinkedInFailures = new Map<string,
@@ -263,7 +265,7 @@ describe('Multi-user — circuit breaker per-user state (F12 guard)', () => {
 /** ──────────────────────────────────────────────────────────────────────
  *  F14/F30 -- IMAP reactor in-process (no HTTP roundtrip)
  *  ──────────────────────────────────────────────────────────────────── */
-describe('Multi-user — IMAP reactor in-process (F14/F30 guard)', () => {
+describe('multi-user — IMAP reactor in-process (F14/F30 guard)', () => {
   it('scan-email-imap.mjs no longer POSTs to /api/email/react', () => {
     const src = fs.readFileSync(path.join(REPO_ROOT, 'scripts/scan/scan-email-imap.mjs'), 'utf8');
     expect(

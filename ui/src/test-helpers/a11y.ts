@@ -32,9 +32,11 @@ export async function expectNoAxeViolations(
     rules: { ...DEFAULT_DISABLED_RULES, ...(opts.rules ?? {}) },
     runOnly: { type: 'tag', values: opts.tags ?? ['wcag2a', 'wcag2aa'] },
   });
-  if (results.violations.length === 0) return;
+  if (results.violations.length === 0) {
+    return;
+  }
   const lines = results.violations.map((v) => {
-    const nodes = v.nodes.map((n) => '    ' + n.target.join(', ')).join('\n');
+    const nodes = v.nodes.map((n) => `    ${n.target.join(', ')}`).join('\n');
     return `  ${v.id} [${v.impact}] — ${v.help} (${v.helpUrl})\n${nodes}`;
   });
   throw new Error(

@@ -44,7 +44,7 @@ async function probe(url: string, timeoutMs = DEFAULT_PROBE_TIMEOUT): Promise<bo
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(url.replace(/\/$/, '') + '/api/health', {
+    const res = await fetch(`${url.replace(/\/$/, '')}/api/health`, {
       signal: ctrl.signal,
       // Don't carry cookies across origins -- keeps the probe stateless.
       credentials: 'omit',
@@ -79,7 +79,9 @@ async function browseMdns(timeoutMs = 1500): Promise<string | null> {
         w.__HERON_MDNS_BROWSE__(BRAND.serviceType),
         new Promise<null>((r) => setTimeout(() => r(null), timeoutMs)),
       ]);
-      if (result && typeof result === 'string') return result;
+      if (result && typeof result === 'string') {
+        return result;
+      }
     } catch {
       // Swallow -- mDNS is opportunistic, not authoritative.
     }
@@ -100,14 +102,20 @@ async function browseMdns(timeoutMs = 1500): Promise<string | null> {
 async function readCache(): Promise<ResolvedBackend | null> {
   try {
     const { value } = await Preferences.get({ key: CACHE_KEY });
-    if (!value) return null;
+    if (!value) {
+      return null;
+    }
     const parsed = JSON.parse(value) as ResolvedBackend;
-    if (Date.now() - parsed.resolvedAt > CACHE_TTL_MS) return null;
+    if (Date.now() - parsed.resolvedAt > CACHE_TTL_MS) {
+      return null;
+    }
     // 250ms ± 50ms jitter -- tight enough to refuse stale IPs that
     // respond slowly, loose enough that a healthy backend on a slow
     // wifi link still validates.
     const jitter = 250 + Math.floor(Math.random() * 100) - 50;
-    if (await probe(parsed.url, jitter)) return parsed;
+    if (await probe(parsed.url, jitter)) {
+      return parsed;
+    }
     return null;
   } catch {
     return null;
@@ -184,7 +192,9 @@ export async function resolveBackend(opts: ResolverOptions = {}): Promise<Resolv
 async function resolveBackendInner(opts: ResolverOptions = {}): Promise<ResolvedBackend> {
   if (!opts.forceRefresh) {
     const cached = await readCache();
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
   }
 
   const probeTimeout = opts.probeTimeoutMs ?? DEFAULT_PROBE_TIMEOUT;

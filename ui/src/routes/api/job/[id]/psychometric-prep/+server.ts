@@ -12,6 +12,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const TIMEOUT_MS = 120_000;
 
 // Test-vendor detection patterns. `substrings` are case-insensitive substring
@@ -61,8 +62,12 @@ const DETECTION_PATTERNS: Array<{ id: string; substrings: string[]; regexes?: Re
 function detectTestId(inviteText: string): string {
   const lower = inviteText.toLowerCase();
   for (const { id, substrings, regexes } of DETECTION_PATTERNS) {
-    if (substrings.some((s) => lower.includes(s.toLowerCase()))) return id;
-    if (regexes?.some((r) => r.test(inviteText))) return id;
+    if (substrings.some((s) => lower.includes(s.toLowerCase()))) {
+      return id;
+    }
+    if (regexes?.some((r) => r.test(inviteText))) {
+      return id;
+    }
   }
   return 'unknown';
 }
@@ -104,7 +109,7 @@ function spawnPrep(args: {
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('psychometric-prep timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`psychometric-prep timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -112,8 +117,11 @@ function spawnPrep(args: {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolveP({ stdout });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolveP({ stdout });
+      }
     });
   });
 }
@@ -127,14 +135,18 @@ export const POST = wrap(
   'psychometric-prep',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => ({}))) as {
       testIdentifier?: string;
       inviteText?: string;
       dueDate?: string;
     };
-    if (!body.inviteText) badRequest('inviteText is required');
+    if (!body.inviteText) {
+      badRequest('inviteText is required');
+    }
     const testIdentifier =
       body.testIdentifier && body.testIdentifier !== 'unknown'
         ? body.testIdentifier
@@ -150,7 +162,7 @@ export const POST = wrap(
         dueDate: body.dueDate,
       });
       const psychometricPath = parsePsychometricPath(stdout);
-      logEvent('psychometric-prep', testIdentifier + ' prep drafted', {
+      logEvent('psychometric-prep', `${testIdentifier} prep drafted`, {
         level: 'success',
         category: 'application',
         message: psychometricPath ?? '(no path emitted)',

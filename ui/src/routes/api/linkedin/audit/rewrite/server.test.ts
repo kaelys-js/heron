@@ -32,7 +32,9 @@ vi.mock('$lib/server/spawn-agent', () => ({
           p.emit('error', nextRun.errors);
           return;
         }
-        if (nextRun.stdout) p.stdout.emit('data', Buffer.from(nextRun.stdout));
+        if (nextRun.stdout) {
+          p.stdout.emit('data', Buffer.from(nextRun.stdout));
+        }
         p.emit('close', nextRun.exitCode ?? 0);
       });
       return { child: p, tempPromptPath: '/tmp/fake.md' };
@@ -80,7 +82,7 @@ async function post(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/linkedin/audit/rewrite', () => {
+describe('pOST /api/linkedin/audit/rewrite', () => {
   it('returns ok=false when no audit report exists', async () => {
     const r = await post({});
     expect(r.body.ok).toBe(false);

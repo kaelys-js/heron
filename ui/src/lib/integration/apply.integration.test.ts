@@ -21,7 +21,7 @@ function readFile(rel: string): string {
   return fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 }
 
-describe('Apply pipeline — code surface', () => {
+describe('apply pipeline — code surface', () => {
   it('apply-dispatcher.ts exists', () => {
     expect(exists('ui/src/lib/server/apply-dispatcher.ts')).toBe(true);
   });
@@ -40,19 +40,21 @@ describe('Apply pipeline — code surface', () => {
   });
 });
 
-describe('Apply pipeline — portal adapters', () => {
+describe('apply pipeline — portal adapters', () => {
   // Each adapter lives under jobs/apply-*.job.ts. We assert at least the
   // LinkedIn + the dispatcher exist; the others have grown / shrunk over
   // time and the legacy verifier is the ground truth.
   it('at least one portal job exists under jobs/', () => {
     const dir = path.join(REPO_ROOT, 'ui/src/lib/server/jobs');
-    if (!fs.existsSync(dir)) return;
+    if (!fs.existsSync(dir)) {
+      return;
+    }
     const files = fs.readdirSync(dir).filter((f) => f.includes('apply'));
     expect(files.length).toBeGreaterThan(0);
   });
 });
 
-describe('Apply pipeline — endpoint', () => {
+describe('apply pipeline — endpoint', () => {
   it('/api/job/[id]/apply endpoint exists', () => {
     expect(exists('ui/src/routes/api/job/[id]/apply/+server.ts')).toBe(true);
   });
@@ -62,7 +64,7 @@ describe('Apply pipeline — endpoint', () => {
   });
 });
 
-describe('Apply pipeline — autonomous-apply circuit breaker', () => {
+describe('apply pipeline — autonomous-apply circuit breaker', () => {
   it('autopilot-circuit-breaker.ts exists', () => {
     expect(exists('ui/src/lib/server/autopilot-circuit-breaker.ts')).toBe(true);
   });

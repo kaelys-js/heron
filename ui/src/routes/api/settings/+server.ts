@@ -35,7 +35,7 @@ export const POST = wrap(
       writeEnv(updates);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      throw new Error('failed to write .env: ' + msg);
+      throw new Error(`failed to write .env: ${msg}`);
     }
     const changedKeys = Object.keys(updates).filter(
       (k) => updates[k] && !String(updates[k]).startsWith('****'),
@@ -43,7 +43,7 @@ export const POST = wrap(
     logEvent('settings', 'Settings updated', {
       level: 'success',
       category: 'user',
-      message: changedKeys.length ? changedKeys.join(', ') + ' changed' : 'no key changes',
+      message: changedKeys.length ? `${changedKeys.join(', ')} changed` : 'no key changes',
     });
     return { current: readEnvMasked() };
   },

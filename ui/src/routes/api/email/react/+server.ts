@@ -11,7 +11,8 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { requireUserId } from '$lib/server/auth-helpers';
-import { reactToEmail, type EmailInput, listLeads } from '$lib/server/email-reactor';
+import { reactToEmail, listLeads } from '$lib/server/email-reactor';
+import type { EmailInput } from '$lib/server/email-reactor';
 
 export const POST = wrap(
   'email-react',

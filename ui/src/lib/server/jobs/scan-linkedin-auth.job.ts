@@ -38,7 +38,9 @@ function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
     if (typeof args?.profileId === 'string' && args.profileId.trim()) {
       cliArgs.push('--profile', args.profileId.trim());
     }
-    if (args?.dryRun === true) cliArgs.push('--dry-run');
+    if (args?.dryRun === true) {
+      cliArgs.push('--dry-run');
+    }
     if (typeof args?.maxPages === 'number' && args.maxPages > 0) {
       cliArgs.push('--max-pages', String(Math.floor(args.maxPages)));
     }
@@ -79,9 +81,9 @@ function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
             ? 'session expired'
             : tail.toLowerCase().includes('captcha')
               ? 'captcha'
-              : 'exit ' + code;
+              : `exit ${code}`;
         recordFailure('linkedin-auth', new Error(reason));
-        logEvent('scan-linkedin-auth', 'Scrape failed · ' + reason, {
+        logEvent('scan-linkedin-auth', `Scrape failed · ${reason}`, {
           level: 'error',
           category: 'task',
           message: tail || 'no stderr',
@@ -90,12 +92,12 @@ function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
         return;
       }
       recordSuccess('linkedin-auth');
-      logEvent('scan-linkedin-auth', 'Scrape finished · ' + found + ' new', {
+      logEvent('scan-linkedin-auth', `Scrape finished · ${found} new`, {
         level: 'success',
         category: 'task',
         message: 'Authenticated session healthy',
       });
-      resolve({ ok: true, message: found + ' new offers', meta: { found } });
+      resolve({ ok: true, message: `${found} new offers`, meta: { found } });
     });
   });
 }

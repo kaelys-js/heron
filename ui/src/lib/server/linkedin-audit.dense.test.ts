@@ -25,7 +25,9 @@ vi.mock('node:fs', async () => {
       ...actual,
       existsSync: (p: string) => __mockFiles.has(p),
       readFileSync: (p: string) => {
-        if (__mockFiles.has(p)) return __mockFiles.get(p)!;
+        if (__mockFiles.has(p)) {
+          return __mockFiles.get(p)!;
+        }
         throw new Error('ENOENT');
       },
       writeFileSync: (p: string, body: string | Buffer) => {
@@ -35,7 +37,9 @@ vi.mock('node:fs', async () => {
     },
     existsSync: (p: string) => __mockFiles.has(p),
     readFileSync: (p: string) => {
-      if (__mockFiles.has(p)) return __mockFiles.get(p)!;
+      if (__mockFiles.has(p)) {
+        return __mockFiles.get(p)!;
+      }
       throw new Error('ENOENT');
     },
     writeFileSync: (p: string, body: string | Buffer) => {
@@ -217,7 +221,7 @@ describe('classifySnapshot — experience + skills + activity + security branche
 
   it('does NOT emit skills finding when 15+ skills present', () => {
     const findings = classifySnapshot(
-      snapshot({ skills: Array.from({ length: 20 }, (_, i) => 'skill-' + i) }),
+      snapshot({ skills: Array.from({ length: 20 }, (_, i) => `skill-${i}`) }),
     );
     expect(findings.some((f) => f.kind.includes('skills'))).toBe(false);
   });

@@ -39,9 +39,13 @@ type SecretKey = (typeof _KNOWN_KEYS)[number];
  *  shows '****abcd' / blank consistently between .env-fallback and
  *  per-user paths. */
 function mask(value: string | null): string {
-  if (!value) return '';
-  if (value.length < 8) return '****';
-  return '****' + value.slice(-4);
+  if (!value) {
+    return '';
+  }
+  if (value.length < 8) {
+    return '****';
+  }
+  return `****${value.slice(-4)}`;
 }
 
 export const GET = wrap('settings.secrets', async ({ locals }: { locals: App.Locals }) => {
@@ -85,7 +89,7 @@ export const POST = wrap(
       const val = (v as string).trim();
       if (val === '') {
         deleteSecret(userId, k);
-        changed.push(k + ' (deleted)');
+        changed.push(`${k} (deleted)`);
       } else if (val.startsWith('****')) {
         /* unchanged masked round-trip -- skip */
       } else {
@@ -107,7 +111,9 @@ export const DELETE = wrap(
   async ({ url, locals }: { url: URL; locals: App.Locals }) => {
     const userId = requireUserId(locals);
     const key = url.searchParams.get('key');
-    if (!key) badRequest('missing ?key query param');
+    if (!key) {
+      badRequest('missing ?key query param');
+    }
     if (!(_KNOWN_KEYS as readonly string[]).includes(key)) {
       badRequest(`unknown key: ${key}`);
     }

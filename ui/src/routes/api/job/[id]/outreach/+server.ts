@@ -14,6 +14,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const VALID_PERSONAS = ['hiring-manager', 'recruiter', 'peer'] as const;
 type Persona = (typeof VALID_PERSONAS)[number];
 
@@ -30,7 +31,7 @@ function slugify(s: string): string {
 function persistedPath(profileId: string, jobId: string, persona: Persona): string {
   return path.join(
     profilePath(profileId, 'interview-prep-dir'),
-    slugify(jobId) + '-outreach-' + persona + '.md',
+    `${slugify(jobId)}-outreach-${persona}.md`,
   );
 }
 
@@ -44,8 +45,8 @@ function spawnContacto(
     let stdout = '';
     let stderr = '';
 
-    const { child: p } = spawnAgentWithMode('outreach', url + ' --persona ' + persona, {
-      profileId: profileId,
+    const { child: p } = spawnAgentWithMode('outreach', `${url} --persona ${persona}`, {
+      profileId,
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
@@ -56,7 +57,7 @@ function spawnContacto(
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+        reject(new Error(`claude -p exited ${code}: ${stderr.slice(0, 300)}`));
         return;
       }
       try {
@@ -81,20 +82,24 @@ export const POST = wrap(
       : 'hiring-manager';
 
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
-    if (!job.url) badRequest('Job has no URL — cannot draft outreach');
+    if (!job.url) {
+      badRequest('Job has no URL — cannot draft outreach');
+    }
 
-    logEvent('outreach', 'Drafting outreach · ' + persona, {
+    logEvent('outreach', `Drafting outreach · ${persona}`, {
       level: 'info',
       category: 'application',
-      message: (job.company || '?') + ' · ' + (job.role || '?'),
+      message: `${job.company || '?'} · ${job.role || '?'}`,
     });
 
     try {
       const filePath = await spawnContacto(job.url, persona, job.id, profileId);
       const content = fs.readFileSync(path.join(ROOT, filePath), 'utf8');
-      logEvent('outreach', 'Outreach draft ready · ' + persona, {
+      logEvent('outreach', `Outreach draft ready · ${persona}`, {
         level: 'success',
         category: 'application',
         message: filePath,

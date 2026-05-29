@@ -19,7 +19,9 @@ import { error } from '@sveltejs/kit';
 
 function splitId(rawId: string): { urlId: string; profileHint?: string } {
   const colon = rawId.indexOf(':');
-  if (colon < 0) return { urlId: rawId };
+  if (colon < 0) {
+    return { urlId: rawId };
+  }
   return {
     urlId: rawId.slice(0, colon),
     profileHint: rawId.slice(colon + 1),
@@ -42,7 +44,7 @@ export async function load({ params, url }: { params: { id: string }; url: URL }
         : getActiveProfileId();
 
   // Single-profile lookup: load that profile's jobs and find by raw urlId.
-  let jobs = loadAllJobs(profileId);
+  const jobs = loadAllJobs(profileId);
   let job = jobs.find((j) => j.id === urlId || j.id === params.id);
 
   // Fallback for legacy links / mixed-profile views: scan every profile
@@ -50,7 +52,9 @@ export async function load({ params, url }: { params: { id: string }; url: URL }
   let resolvedProfileId = profileId;
   if (!job) {
     for (const p of listProfiles()) {
-      if (p.id === profileId) continue;
+      if (p.id === profileId) {
+        continue;
+      }
       const found = loadAllJobs(p.id).find((j) => j.id === urlId);
       if (found) {
         job = found;
@@ -59,7 +63,9 @@ export async function load({ params, url }: { params: { id: string }; url: URL }
       }
     }
   }
-  if (!job) throw error(404, 'Job not found');
+  if (!job) {
+    throw error(404, 'Job not found');
+  }
 
   const report = job.reportFile
     ? readSafe(path.join(profilePath(resolvedProfileId, 'reports-dir'), job.reportFile))

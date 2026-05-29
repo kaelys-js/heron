@@ -22,19 +22,19 @@ function freshUid(): string {
   return `prefs-dense-${process.pid}-${__uidCounter}-${Date.now().toString(36)}`;
 }
 
-describe('APPEARANCE_OPTIONS', () => {
+describe('aPPEARANCE_OPTIONS', () => {
   it('exports the canonical 3 options', () => {
     expect(APPEARANCE_OPTIONS).toEqual(['system', 'light', 'dark']);
   });
 });
 
-describe('THEME_OPTIONS', () => {
+describe('tHEME_OPTIONS', () => {
   it('exports the canonical 6 themes', () => {
     expect(THEME_OPTIONS).toEqual(['default', 'fuchsia', 'emerald', 'amber', 'blue', 'rose']);
   });
 });
 
-describe('DEFAULT_PREFS', () => {
+describe('dEFAULT_PREFS', () => {
   it('appearance defaults to system', () => {
     expect(DEFAULT_PREFS.appearance).toBe('system');
   });
@@ -157,7 +157,7 @@ describe('readPrefs / writePrefs (per-user via ALS)', () => {
   });
 });
 
-describe('SYSTEM_USER_ID branches', () => {
+describe('sYSTEM_USER_ID branches', () => {
   it('readPrefs returns DEFAULT_PREFS without touching the DB outside any ALS context', () => {
     const prefs = readPrefs();
     expect(prefs).toEqual({ ...DEFAULT_PREFS });

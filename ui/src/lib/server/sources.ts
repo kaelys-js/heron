@@ -140,11 +140,17 @@ function ensureDir() {
  *  can default per-source. Never throws. */
 export function readSources(): Record<string, SourceState> {
   try {
-    if (!fs.existsSync(sourcesPath())) return {};
+    if (!fs.existsSync(sourcesPath())) {
+      return {};
+    }
     const txt = fs.readFileSync(sourcesPath(), 'utf8');
-    if (!txt.trim()) return {};
+    if (!txt.trim()) {
+      return {};
+    }
     const parsed = JSON.parse(txt);
-    if (parsed && typeof parsed === 'object') return parsed as Record<string, SourceState>;
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, SourceState>;
+    }
     return {};
   } catch (e) {
     reportServerError('sources', 'Failed to read sources.json', e, { category: 'system' });
@@ -174,7 +180,7 @@ export function updateSource(id: string, patch: Partial<SourceState>): SourceSta
   const next: SourceState = merged;
   all[id] = next;
   try {
-    fs.writeFileSync(sourcesPath(), JSON.stringify(all, null, 2) + '\n');
+    fs.writeFileSync(sourcesPath(), `${JSON.stringify(all, null, 2)}\n`);
   } catch (e) {
     reportServerError('sources', 'Failed to write sources.json', e, { category: 'system' });
   }
@@ -209,10 +215,10 @@ export function recordFailure(id: string, error: unknown): SourceState {
   const next = prev.consecutiveFailures + 1;
   const willDisconnect = next >= FAIL_THRESHOLD && prev.connected;
   if (willDisconnect) {
-    logEvent('sources', 'Source disconnected after ' + FAIL_THRESHOLD + ' failures', {
+    logEvent('sources', `Source disconnected after ${FAIL_THRESHOLD} failures`, {
       level: 'warn',
       category: 'system',
-      message: id + ' — ' + message,
+      message: `${id} — ${message}`,
     });
   }
   return updateSource(id, {
@@ -232,7 +238,7 @@ export function resetSource(id: string): void {
   delete all[id];
   ensureDir();
   try {
-    fs.writeFileSync(sourcesPath(), JSON.stringify(all, null, 2) + '\n');
+    fs.writeFileSync(sourcesPath(), `${JSON.stringify(all, null, 2)}\n`);
   } catch (e) {
     reportServerError('sources', 'Failed to reset source', e, { category: 'system' });
   }

@@ -42,7 +42,7 @@ function slugify(s: string): string {
 function workingDir(profileId: string, company: string, role: string): string {
   return path.join(
     profilePath(profileId, 'interview-prep-dir'),
-    slugify(company) + '-' + slugify(role) + '-take-home',
+    `${slugify(company)}-${slugify(role)}-take-home`,
   );
 }
 
@@ -177,7 +177,9 @@ export function scaffoldTakeHome(input: {
     );
     createdFiles.push(path.relative(ROOT, readmePath));
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') {
+      throw e;
+    }
   }
   const checklistPath = path.join(dir, 'CHECKLIST.md');
   // CodeQL js/file-system-race: same exclusive-create pattern.
@@ -185,7 +187,9 @@ export function scaffoldTakeHome(input: {
     fs.writeFileSync(checklistPath, CHECKLIST_TEMPLATE(input.company, input.role), { flag: 'wx' });
     createdFiles.push(path.relative(ROOT, checklistPath));
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') {
+      throw e;
+    }
   }
 
   const statePath = path.join(dir, 'state.json');
@@ -197,7 +201,9 @@ export function scaffoldTakeHome(input: {
   try {
     existingState = fs.readFileSync(statePath, 'utf8');
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw e;
+    }
   }
   if (existingState !== null) {
     state = JSON.parse(existingState) as TakeHomeState;
@@ -213,10 +219,12 @@ export function scaffoldTakeHome(input: {
       milestones: [],
     };
     try {
-      fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + '\n', { flag: 'wx' });
+      fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`, { flag: 'wx' });
       createdFiles.push(path.relative(ROOT, statePath));
     } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') {
+        throw e;
+      }
       // Someone else seeded it between our read and write -- adopt theirs.
       state = JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState;
     }
@@ -232,7 +240,9 @@ export function readTakeHomeState(
 ): TakeHomeState | null {
   const dir = workingDir(profileId, company, role);
   const statePath = path.join(dir, 'state.json');
-  if (!fs.existsSync(statePath)) return null;
+  if (!fs.existsSync(statePath)) {
+    return null;
+  }
   try {
     return JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState;
   } catch {
@@ -255,13 +265,15 @@ export function updateTakeHomeState(
   try {
     raw = fs.readFileSync(statePath, 'utf8');
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null;
+    }
     return null;
   }
   try {
     const cur = JSON.parse(raw) as TakeHomeState;
     const next: TakeHomeState = { ...cur, ...patch };
-    fs.writeFileSync(statePath, JSON.stringify(next, null, 2) + '\n');
+    fs.writeFileSync(statePath, `${JSON.stringify(next, null, 2)}\n`);
     return next;
   } catch {
     return null;
@@ -272,10 +284,14 @@ export function updateTakeHomeState(
  *  company/role). */
 export function findTakeHomeForJob(jobId: string): { state: TakeHomeState; dir: string } | null {
   const job = loadAllJobs('all').find((j) => j.id === jobId);
-  if (!job || !job.profileId) return null;
+  if (!job || !job.profileId) {
+    return null;
+  }
   const dir = workingDir(job.profileId, job.company ?? '', job.role ?? '');
   const statePath = path.join(dir, 'state.json');
-  if (!fs.existsSync(statePath)) return null;
+  if (!fs.existsSync(statePath)) {
+    return null;
+  }
   try {
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState;
     return { state, dir: path.relative(ROOT, dir) };

@@ -44,16 +44,24 @@ function loadSourceMap(profileId: string): Record<string, string> {
   const out: Record<string, string> = {};
   try {
     const text = readSafe(profilePath(profileId, 'scan-history'));
-    if (!text) return out;
+    if (!text) {
+      return out;
+    }
     const lines = text.split('\n');
     // Header: url\tfirst_seen\tportal\ttitle\tcompany\tstatus
     for (let i = 1; i < lines.length; i++) {
       const parts = lines[i].split('\t');
-      if (parts.length < 3) continue;
+      if (parts.length < 3) {
+        continue;
+      }
       const url = parts[0];
       const portal = parts[2];
-      if (!url || !portal) continue;
-      if (!(url in out)) out[url] = portal;
+      if (!url || !portal) {
+        continue;
+      }
+      if (!(url in out)) {
+        out[url] = portal;
+      }
     }
   } catch {
     /* tolerate */
@@ -76,9 +84,13 @@ export function parsePipeline(profileId?: string): Job[] {
     const m = /^- \[[ x!]\] (https?:\/\/\S+?)\s*\|\s*(.*?)\s*\|\s*(.*?)(?:\s*\|\s*(.*?))?$/.exec(
       line.trim(),
     );
-    if (!m) continue;
+    if (!m) {
+      continue;
+    }
     const url = m[1];
-    if (seen.has(url)) continue;
+    if (seen.has(url)) {
+      continue;
+    }
     seen.add(url);
     out.push({
       id: urlId(url),
@@ -98,16 +110,22 @@ export function parseGeminiScores(
 ): Record<string, { score: number; reason: string }> {
   const id = resolveId(profileId);
   const text = readSafe(profilePath(id, 'gemini-scores'));
-  if (!text) return {};
+  if (!text) {
+    return {};
+  }
   const out: Record<string, { score: number; reason: string }> = {};
   const lines = text.split('\n');
   for (let i = 1; i < lines.length; i++) {
     const parts = lines[i].split('\t');
-    if (parts.length < 7) continue;
+    if (parts.length < 7) {
+      continue;
+    }
     const url = parts[2];
     const score = parseFloat(parts[1]);
     const reason = parts[6];
-    if (!isNaN(score)) out[urlId(url)] = { score, reason };
+    if (!isNaN(score)) {
+      out[urlId(url)] = { score, reason };
+    }
   }
   return out;
 }
@@ -121,7 +139,9 @@ export function parseApplications(
   const out: Record<string, Partial<Job>> = {};
 
   for (const line of text.split('\n')) {
-    if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) continue;
+    if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) {
+      continue;
+    }
     const cells = line.split('|').map((c) => c.trim());
 
     let scoreStr: string, status: string, pdf: string, report: string, notes: string;
@@ -141,7 +161,9 @@ export function parseApplications(
       const reportFile = path.basename((report.match(/\(([^)]+)\)/) || ['', report])[1]);
       jobIdStr = reportFileToUrlId[reportFile];
     }
-    if (!jobIdStr) continue;
+    if (!jobIdStr) {
+      continue;
+    }
 
     const score = parseFloat(scoreStr);
     out[jobIdStr] = {
@@ -180,18 +202,25 @@ function mapStatus(s: string): Status {
 
   // Autonomous-apply states -- produced by the apply-queue drain
   // writing back to applications.md.
-  if (lower === 'queued') return 'Queued';
-  if (lower === 'applying' || up.includes('APPLYING')) return 'Applying';
+  if (lower === 'queued') {
+    return 'Queued';
+  }
+  if (lower === 'applying' || up.includes('APPLYING')) {
+    return 'Applying';
+  }
   if (
     lower === 'manualapplyneeded' ||
     lower === 'manual-apply-needed' ||
     lower === 'manual apply needed' ||
     up.includes('MANUALAPPLYNEEDED')
-  )
+  ) {
     return 'ManualApplyNeeded';
+  }
 
   // Pipeline-stage substring matches (legacy heuristic).
-  if (up.includes('READY')) return 'Ready';
+  if (up.includes('READY')) {
+    return 'Ready';
+  }
 
   // Interview sub-stages -- checked BEFORE the generic 'screen'/'interview'
   // catch-alls so "Phone Screen" → PhoneScreen and "Tech Interview" →
@@ -203,8 +232,9 @@ function mapStatus(s: string): Status {
     lower === 'phone' ||
     lower.includes('hr screen') ||
     lower.includes('recruiter screen')
-  )
+  ) {
     return 'PhoneScreen';
+  }
   if (
     lower === 'technical' ||
     lower.includes('tech screen') ||
@@ -212,16 +242,18 @@ function mapStatus(s: string): Status {
     lower.includes('technical interview') ||
     lower.includes('coding interview') ||
     lower === 'tech'
-  )
+  ) {
     return 'Technical';
+  }
   if (
     lower === 'takehome' ||
     lower.includes('take-home') ||
     lower.includes('take home') ||
     lower.includes('coding test') ||
     lower.includes('coding challenge')
-  )
+  ) {
     return 'TakeHome';
+  }
   if (
     lower === 'onsite' ||
     lower.includes('on-site') ||
@@ -230,8 +262,9 @@ function mapStatus(s: string): Status {
     lower === 'panel' ||
     lower === 'super day' ||
     lower === 'loop'
-  )
+  ) {
     return 'Onsite';
+  }
   if (
     lower === 'final' ||
     lower.includes('final round') ||
@@ -240,8 +273,9 @@ function mapStatus(s: string): Status {
     lower.includes('hiring committee') ||
     lower.includes('hiring manager final') ||
     lower === 'leadership'
-  )
+  ) {
     return 'Final';
+  }
 
   // Post-offer stages -- checked BEFORE generic OFFER/REJECT catch-alls.
   if (
@@ -249,24 +283,45 @@ function mapStatus(s: string): Status {
     lower === 'negotiation' ||
     lower === 'in-negotiation' ||
     lower === 'counter'
-  )
+  ) {
     return 'Negotiating';
-  if (lower === 'accepted' || lower === 'signed' || lower === 'accepted-offer') return 'Accepted';
-  if (lower === 'declined' || lower === 'walked-away' || lower === 'declined-offer')
+  }
+  if (lower === 'accepted' || lower === 'signed' || lower === 'accepted-offer') {
+    return 'Accepted';
+  }
+  if (lower === 'declined' || lower === 'walked-away' || lower === 'declined-offer') {
     return 'Declined';
-  if (lower === 'ghosted' || lower === 'no-response' || lower === 'silence') return 'Ghosted';
+  }
+  if (lower === 'ghosted' || lower === 'no-response' || lower === 'silence') {
+    return 'Ghosted';
+  }
 
-  if (up.includes('SCREEN')) return 'Screened';
-  if (up.includes('INTERVIEW') || lower === 'entrevista') return 'Interview';
-  if (up.includes('OFFER') || lower === 'oferta') return 'Offer';
-  if (up.includes('REJECT') || lower === 'rechazado' || lower === 'rechazada') return 'Rejected';
-  if (up.includes('APPLIED') || ['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower))
+  if (up.includes('SCREEN')) {
+    return 'Screened';
+  }
+  if (up.includes('INTERVIEW') || lower === 'entrevista') {
+    return 'Interview';
+  }
+  if (up.includes('OFFER') || lower === 'oferta') {
+    return 'Offer';
+  }
+  if (up.includes('REJECT') || lower === 'rechazado' || lower === 'rechazada') {
+    return 'Rejected';
+  }
+  if (up.includes('APPLIED') || ['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower)) {
     return 'Applied';
+  }
 
   // states.yml canonical + Spanish aliases mapped onto pipeline.
-  if (lower === 'responded' || lower === 'respondido') return 'Screened';
-  if (lower === 'discarded' || ['descartado', 'descartada', 'cerrada', 'cancelada'].includes(lower))
+  if (lower === 'responded' || lower === 'respondido') {
+    return 'Screened';
+  }
+  if (
+    lower === 'discarded' ||
+    ['descartado', 'descartada', 'cerrada', 'cancelada'].includes(lower)
+  ) {
     return 'Closed';
+  }
   if (
     up.includes('CLOSE') ||
     up.includes('SKIP') ||
@@ -274,13 +329,15 @@ function mapStatus(s: string): Status {
     lower === 'no_aplicar' ||
     lower === 'monitor' ||
     lower === 'geo blocker'
-  )
+  ) {
     return 'Closed';
+  }
   if (
     lower === 'evaluated' ||
     ['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower)
-  )
+  ) {
     return 'Scored';
+  }
 
   return 'Scored';
 }
@@ -294,37 +351,83 @@ function mapStatus(s: string): Status {
 function extractApplicationStatus(s: string): import('$lib/types').ApplicationStatus | undefined {
   const lower = s.toLowerCase().replace(/\*\*/g, '').trim();
   // Direct match against canonical ids.
-  if (lower === 'evaluated') return 'evaluated';
-  if (lower === 'applied') return 'applied';
-  if (lower === 'responded') return 'responded';
-  if (lower === 'interview') return 'interview';
-  if (lower === 'offer') return 'offer';
-  if (lower === 'rejected') return 'rejected';
-  if (lower === 'discarded') return 'discarded';
-  if (lower === 'skip') return 'skip';
-  // Spanish + legacy aliases (mirror normalize-statuses.mjs aliases).
-  if (['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower))
+  if (lower === 'evaluated') {
     return 'evaluated';
-  if (['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower)) return 'applied';
-  if (lower === 'respondido') return 'responded';
-  if (lower === 'entrevista') return 'interview';
-  if (lower === 'oferta') return 'offer';
-  if (['rechazado', 'rechazada'].includes(lower)) return 'rejected';
-  if (['descartado', 'descartada', 'cerrada', 'cancelada'].includes(lower)) return 'discarded';
-  if (['no aplicar', 'no_aplicar', 'monitor', 'geo blocker'].includes(lower)) return 'skip';
+  }
+  if (lower === 'applied') {
+    return 'applied';
+  }
+  if (lower === 'responded') {
+    return 'responded';
+  }
+  if (lower === 'interview') {
+    return 'interview';
+  }
+  if (lower === 'offer') {
+    return 'offer';
+  }
+  if (lower === 'rejected') {
+    return 'rejected';
+  }
+  if (lower === 'discarded') {
+    return 'discarded';
+  }
+  if (lower === 'skip') {
+    return 'skip';
+  }
+  // Spanish + legacy aliases (mirror normalize-statuses.mjs aliases).
+  if (['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower)) {
+    return 'evaluated';
+  }
+  if (['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower)) {
+    return 'applied';
+  }
+  if (lower === 'respondido') {
+    return 'responded';
+  }
+  if (lower === 'entrevista') {
+    return 'interview';
+  }
+  if (lower === 'oferta') {
+    return 'offer';
+  }
+  if (['rechazado', 'rechazada'].includes(lower)) {
+    return 'rejected';
+  }
+  if (['descartado', 'descartada', 'cerrada', 'cancelada'].includes(lower)) {
+    return 'discarded';
+  }
+  if (['no aplicar', 'no_aplicar', 'monitor', 'geo blocker'].includes(lower)) {
+    return 'skip';
+  }
   return undefined;
 }
 
 function classifyWorkMode(raw: string): WorkMode {
-  if (!raw) return 'unknown';
+  if (!raw) {
+    return 'unknown';
+  }
   const s = raw.toLowerCase();
-  if (/\bon[\s-]?site\b|\bin[\s-]?office\b/.test(s)) return 'onsite';
-  if (/\bhybrid\b|\d+\s*day(?:s)?\s*\/?\s*(?:per\s+)?week|\bhq\s*\d/.test(s)) return 'hybrid';
-  if (/\bfully\s*remote\b|\bremote[\s-]?(first|friendly|ok)\b|\bdistributed\b|\banywhere\b/.test(s))
+  if (/\bon[\s-]?site\b|\bin[\s-]?office\b/.test(s)) {
+    return 'onsite';
+  }
+  if (/\bhybrid\b|\d+\s*day(?:s)?\s*\/?\s*(?:per\s+)?week|\bhq\s*\d/.test(s)) {
+    return 'hybrid';
+  }
+  if (
+    /\bfully\s*remote\b|\bremote[\s-]?(first|friendly|ok)\b|\bdistributed\b|\banywhere\b/.test(s)
+  ) {
     return 'remote';
-  if (/^yes\b|^remote\b/.test(s)) return 'remote';
-  if (/\bno\b|\bmust be (in|located|based) (in)?\s/.test(s)) return 'onsite';
-  if (/\b(based in|located in)\s+[A-Z]/.test(raw)) return 'hybrid';
+  }
+  if (/^yes\b|^remote\b/.test(s)) {
+    return 'remote';
+  }
+  if (/\bno\b|\bmust be (in|located|based) (in)?\s/.test(s)) {
+    return 'onsite';
+  }
+  if (/\b(based in|located in)\s+[A-Z]/.test(raw)) {
+    return 'hybrid';
+  }
   return 'unknown';
 }
 
@@ -344,7 +447,9 @@ export function indexReports(
   for (const file of listReportsFor(id)) {
     const text = readSafe(path.join(reportsDir, file));
     const urlMatch = /\*\*URL:\*\*\s*(https?:\/\/\S+)/.exec(text);
-    if (!urlMatch) continue;
+    if (!urlMatch) {
+      continue;
+    }
     const jobIdStr = urlId(urlMatch[1]);
     const scoreMatch = /\*\*Score:\*\*\s*([0-9.]+)/.exec(text);
     const bgMatch = /\*\*Background Check Risk:\*\*\s*(LOW|MEDIUM|HIGH|HARD STOP|BLOCKED)/.exec(
@@ -394,7 +499,7 @@ export function loadAllJobs(profileId?: string): Job[] {
         // De-collide ids across profiles so id-keyed maps in the UI work.
         // Without this, jobs A.url and B.url where urlId(A.url)===urlId(B.url)
         // would collide. Suffix with profileId.
-        j.id = j.id + ':' + p.id;
+        j.id = `${j.id}:${p.id}`;
       }
       out.push(...jobs);
     }
@@ -404,7 +509,9 @@ export function loadAllJobs(profileId?: string): Job[] {
   const jobs = loadJobsForProfile(id);
   // Stamp profileId on every job for single-profile callers too -- the
   // UI uses this to decide whether to render a profile chip on each row.
-  for (const j of jobs) j.profileId = id;
+  for (const j of jobs) {
+    j.profileId = id;
+  }
   return jobs;
 }
 
@@ -413,7 +520,9 @@ function loadJobsForProfile(id: string): Job[] {
   const gemini = parseGeminiScores(id);
   const reports = indexReports(id);
   const reportFileToUrlId: Record<string, string> = {};
-  for (const [jobIdStr, r] of Object.entries(reports)) reportFileToUrlId[r.file] = jobIdStr;
+  for (const [jobIdStr, r] of Object.entries(reports)) {
+    reportFileToUrlId[r.file] = jobIdStr;
+  }
   const apps = parseApplications(reportFileToUrlId, id);
   const sourceByUrl = loadSourceMap(id);
 
@@ -422,18 +531,34 @@ function loadJobsForProfile(id: string): Job[] {
     const a = apps[job.id];
     const r = reports[job.id];
 
-    if (g) job.geminiScore = g.score;
+    if (g) {
+      job.geminiScore = g.score;
+    }
     if (r) {
-      if (r.score !== undefined) job.score = r.score;
-      if (r.bgRisk) job.bgRisk = r.bgRisk;
-      if (r.workMode) job.workMode = r.workMode;
-      if (r.salary) job.salary = r.salary;
+      if (r.score !== undefined) {
+        job.score = r.score;
+      }
+      if (r.bgRisk) {
+        job.bgRisk = r.bgRisk;
+      }
+      if (r.workMode) {
+        job.workMode = r.workMode;
+      }
+      if (r.salary) {
+        job.salary = r.salary;
+      }
       job.reportFile = r.file;
     }
-    if (g && job.status === 'New') job.status = 'Scored';
-    if (a) Object.assign(job, a);
+    if (g && job.status === 'New') {
+      job.status = 'Scored';
+    }
+    if (a) {
+      Object.assign(job, a);
+    }
     const src = sourceByUrl[job.url];
-    if (src) job.source = src;
+    if (src) {
+      job.source = src;
+    }
   }
   return pipeline;
 }
@@ -443,7 +568,9 @@ export function groupByStatus(jobs: Job[]): Record<Status, Job[]> {
     (acc, s) => ({ ...acc, [s]: [] }),
     {} as Record<Status, Job[]>,
   );
-  for (const j of jobs) (grouped[j.status] ||= []).push(j);
+  for (const j of jobs) {
+    (grouped[j.status] ||= []).push(j);
+  }
   for (const s of STATUS_ORDER) {
     grouped[s].sort((a, b) => (b.score ?? b.geminiScore ?? -1) - (a.score ?? a.geminiScore ?? -1));
   }

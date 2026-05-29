@@ -64,7 +64,7 @@ beforeEach(() => {
 });
 
 describe('apiCall — happy path', () => {
-  it('GET returns parsed JSON body', async () => {
+  it('gET returns parsed JSON body', async () => {
     server.use(http.get('*/api/x', () => HttpResponse.json({ hello: 'world' })));
     const r = await apiCall('/api/x');
     expect(r).toEqual({ hello: 'world' });
@@ -76,7 +76,7 @@ describe('apiCall — happy path', () => {
     expect(r.value).toBe(1);
   });
 
-  it('POST sends JSON body', async () => {
+  it('pOST sends JSON body', async () => {
     let captured: any;
     server.use(
       http.post('*/api/x', async ({ request }) => {
@@ -92,7 +92,7 @@ describe('apiCall — happy path', () => {
     expect(captured).toEqual({ name: 'Jane' });
   });
 
-  it('POST with no body sends {}', async () => {
+  it('pOST with no body sends {}', async () => {
     let captured: any;
     server.use(
       http.post('*/api/x', async ({ request }) => {
@@ -108,7 +108,7 @@ describe('apiCall — happy path', () => {
     expect(captured).toEqual({});
   });
 
-  it('PUT sends JSON body', async () => {
+  it('pUT sends JSON body', async () => {
     let captured: any;
     server.use(
       http.put('*/api/x', async ({ request }) => {
@@ -124,11 +124,11 @@ describe('apiCall — happy path', () => {
     expect(captured).toEqual({ v: 2 });
   });
 
-  it('DELETE works', async () => {
+  it('dELETE works', async () => {
     let method: string | undefined;
     server.use(
       http.delete('*/api/x', ({ request }) => {
-        method = request.method;
+        ({ method } = request);
         return HttpResponse.json({ ok: true });
       }),
     );
@@ -325,8 +325,9 @@ describe('apiCall — bearer token', () => {
     );
     await apiCall('/api/x');
     expect(auth).toBe('Bearer test-token-123');
-    if (typeof localStorage !== 'undefined')
+    if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(BRAND_STORAGE_KEYS.bearerToken);
+    }
   });
 
   it('omits Authorization when no token stored', async () => {
@@ -342,7 +343,7 @@ describe('apiCall — bearer token', () => {
   });
 });
 
-describe('ApiError class', () => {
+describe('apiError class', () => {
   it('has name "ApiError"', () => {
     const e = new ApiError('test', { status: 400 });
     expect(e.name).toBe('ApiError');

@@ -58,12 +58,12 @@ afterEach(() => {
 
 async function get(qs = '') {
   const r = (await (GET as unknown as (e: unknown) => Promise<Response>)({
-    url: new URL('http://localhost/api/calendar' + qs),
+    url: new URL(`http://localhost/api/calendar${qs}`),
   } as unknown)) as Response;
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/calendar', () => {
+describe('gET /api/calendar', () => {
   it('returns ok + empty entries on a fresh install', async () => {
     const r = await get();
     expect(r.status).toBe(200);

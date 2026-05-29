@@ -87,12 +87,12 @@ describe('substituteModeTokensForUser', () => {
       expect(out).toMatch(/\/reports\/\{n\}-\{slug\}-\{date\}\.md$/);
     });
 
-    it('LEAVES unknown __UPPERCASE__ tokens as literal text', () => {
+    it('lEAVES unknown __UPPERCASE__ tokens as literal text', () => {
       const out = substituteModeTokensForUser(USER, PROFILE, '__NOT_A_REAL_TOKEN__');
       expect(out).toBe('__NOT_A_REAL_TOKEN__');
     });
 
-    it('LEAVES lowercase __cv__ alone (case-sensitive)', () => {
+    it('lEAVES lowercase __cv__ alone (case-sensitive)', () => {
       const out = substituteModeTokensForUser(USER, PROFILE, '__cv__');
       expect(out).toBe('__cv__');
     });
@@ -139,7 +139,7 @@ describe('substituteModeTokensForUser', () => {
       expect(bob).toContain('bob-uuid');
     });
 
-    it('SYSTEM_USER_ID resolves to the legacy data/profiles/ layout', () => {
+    it('sYSTEM_USER_ID resolves to the legacy data/profiles/ layout', () => {
       const out = substituteModeTokensForUser(SYSTEM_USER_ID, PROFILE, '__CV__');
       expect(out).toMatch(/profiles\/default\/cv\.md$/);
       expect(out).not.toContain('/users/');

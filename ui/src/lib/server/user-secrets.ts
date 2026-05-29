@@ -88,7 +88,9 @@ function emptyFile(): SecretsFile {
  *  in-memory record if the file doesn't exist. Doesn't write. */
 function readFile(userId: string): SecretsFile {
   const p = userSharedPathForUser(userId, 'secrets');
-  if (!fs.existsSync(p)) return emptyFile();
+  if (!fs.existsSync(p)) {
+    return emptyFile();
+  }
   const raw = fs.readFileSync(p, 'utf8');
   let parsed: SecretsFile;
   try {
@@ -114,13 +116,13 @@ function readFile(userId: string): SecretsFile {
 function writeFile(userId: string, data: SecretsFile): void {
   const p = userSharedPathForUser(userId, 'secrets');
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  const tmp = p + '.tmp';
+  const tmp = `${p}.tmp`;
   // Open with explicit mode so the FILE itself is created 0600 from
   // the start -- not 0644-then-chmod, which races against any reader
   // hitting the file in the window between rename and chmod.
   const fd = fs.openSync(tmp, 'w', 0o600);
   try {
-    fs.writeSync(fd, JSON.stringify(data, null, 2) + '\n');
+    fs.writeSync(fd, `${JSON.stringify(data, null, 2)}\n`);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
@@ -138,7 +140,9 @@ function writeFile(userId: string, data: SecretsFile): void {
 export function getSecret(userId: string, key: string): string | null {
   const data = readFile(userId);
   const entry = data.entries[key];
-  if (!entry) return null;
+  if (!entry) {
+    return null;
+  }
   const aesKey = deriveKey(data.salt);
   const iv = Buffer.from(entry.iv, 'base64');
   const tag = Buffer.from(entry.tag, 'base64');
@@ -172,9 +176,13 @@ export function setSecret(userId: string, key: string, value: string): void {
 /** Remove a key. No-op if the key (or the file) doesn't exist. */
 export function deleteSecret(userId: string, key: string): void {
   const p = userSharedPathForUser(userId, 'secrets');
-  if (!fs.existsSync(p)) return;
+  if (!fs.existsSync(p)) {
+    return;
+  }
   const data = readFile(userId);
-  if (!(key in data.entries)) return;
+  if (!(key in data.entries)) {
+    return;
+  }
   delete data.entries[key];
   writeFile(userId, data);
 }
@@ -184,7 +192,9 @@ export function deleteSecret(userId: string, key: string): void {
  *  configured without exposing the underlying values. */
 export function listSecretKeys(userId: string): string[] {
   const p = userSharedPathForUser(userId, 'secrets');
-  if (!fs.existsSync(p)) return [];
+  if (!fs.existsSync(p)) {
+    return [];
+  }
   const data = readFile(userId);
   return Object.keys(data.entries);
 }
@@ -205,9 +215,13 @@ export function getCredential(userId: string, key: string): string | null {
   // becomes hot enough to need memoization, cache the result at the
   // call site (e.g. an Anthropic client singleton keyed by userId).
   const fromStore = getSecret(userId, key);
-  if (fromStore !== null) return fromStore;
+  if (fromStore !== null) {
+    return fromStore;
+  }
   const fromEnv = process.env[key];
-  if (typeof fromEnv === 'string' && fromEnv.length > 0) return fromEnv;
+  if (typeof fromEnv === 'string' && fromEnv.length > 0) {
+    return fromEnv;
+  }
   return null;
 }
 
@@ -266,7 +280,9 @@ export const MIGRATABLE_KEYS = [
  * per-user copies work; documented in AGENTS.md.
  */
 export async function migrateEnvToUserSecrets(): Promise<void> {
-  if (!process.env.BETTER_AUTH_SECRET) return;
+  if (!process.env.BETTER_AUTH_SECRET) {
+    return;
+  }
 
   let ownerId: string;
   try {
@@ -279,16 +295,22 @@ export async function migrateEnvToUserSecrets(): Promise<void> {
   // We don't want to silently populate SYSTEM's secrets -- wait for a
   // real owner to register first.
   const { SYSTEM_USER_ID } = await import('./user-context');
-  if (ownerId === SYSTEM_USER_ID) return;
+  if (ownerId === SYSTEM_USER_ID) {
+    return;
+  }
 
   const migrated: string[] = [];
   for (const key of MIGRATABLE_KEYS) {
     const envVal = process.env[key];
-    if (typeof envVal !== 'string' || envVal.length === 0) continue;
+    if (typeof envVal !== 'string' || envVal.length === 0) {
+      continue;
+    }
     // Don't clobber an existing per-user value -- once the user has
     // configured a key in Settings, .env never wins over it (the
     // resolver's per-user-first contract).
-    if (getSecret(ownerId, key) !== null) continue;
+    if (getSecret(ownerId, key) !== null) {
+      continue;
+    }
     try {
       setSecret(ownerId, key, envVal);
       migrated.push(key);
@@ -304,9 +326,9 @@ export async function migrateEnvToUserSecrets(): Promise<void> {
       logEvent('settings.secrets', 'Auto-migrated .env credentials to per-user store', {
         level: 'info',
         category: 'system',
-        message:
-          migrated.join(', ') +
-          ' moved into encrypted per-user store. .env values still work as fallback.',
+        message: `${migrated.join(
+          ', ',
+        )} moved into encrypted per-user store. .env values still work as fallback.`,
       });
     } catch {
       // Events unavailable -- fine. The migration itself succeeded.

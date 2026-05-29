@@ -22,7 +22,9 @@ const isNative = (): boolean => Capacitor.isNativePlatform();
 // ──────────────────────────────────────────────────────────────────────
 
 export async function hapticLight(): Promise<void> {
-  if (!isNative()) return;
+  if (!isNative()) {
+    return;
+  }
   try {
     const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
     await Haptics.impact({ style: ImpactStyle.Light });
@@ -32,7 +34,9 @@ export async function hapticLight(): Promise<void> {
 }
 
 export async function hapticSuccess(): Promise<void> {
-  if (!isNative()) return;
+  if (!isNative()) {
+    return;
+  }
   try {
     const { Haptics, NotificationType } = await import('@capacitor/haptics');
     await Haptics.notification({ type: NotificationType.Success });
@@ -42,7 +46,9 @@ export async function hapticSuccess(): Promise<void> {
 }
 
 export async function hapticError(): Promise<void> {
-  if (!isNative()) return;
+  if (!isNative()) {
+    return;
+  }
   try {
     const { Haptics, NotificationType } = await import('@capacitor/haptics');
     await Haptics.notification({ type: NotificationType.Error });
@@ -152,7 +158,9 @@ export async function launchUrl(url: string): Promise<boolean> {
     try {
       const { AppLauncher } = await import('@capacitor/app-launcher');
       const can = await AppLauncher.canOpenUrl({ url });
-      if (!can.value) return false;
+      if (!can.value) {
+        return false;
+      }
       await AppLauncher.openUrl({ url });
       return true;
     } catch {
@@ -171,7 +179,9 @@ export async function launchUrl(url: string): Promise<boolean> {
 export type KeyboardListener = (event: { keyboardHeight: number }) => void;
 
 export async function onKeyboardShow(cb: KeyboardListener): Promise<() => void> {
-  if (!isNative()) return () => {};
+  if (!isNative()) {
+    return () => {};
+  }
   try {
     const { Keyboard } = await import('@capacitor/keyboard');
     const handle = await Keyboard.addListener('keyboardWillShow', cb);
@@ -184,7 +194,9 @@ export async function onKeyboardShow(cb: KeyboardListener): Promise<() => void> 
 }
 
 export async function onKeyboardHide(cb: () => void): Promise<() => void> {
-  if (!isNative()) return () => {};
+  if (!isNative()) {
+    return () => {};
+  }
   try {
     const { Keyboard } = await import('@capacitor/keyboard');
     const handle = await Keyboard.addListener('keyboardWillHide', cb);
@@ -267,7 +279,9 @@ export async function screenReaderEnabled(): Promise<boolean> {
 
 /** Announce text via VoiceOver / TalkBack. No-op when no screen reader. */
 export async function announceForAccessibility(value: string): Promise<void> {
-  if (!isNative()) return;
+  if (!isNative()) {
+    return;
+  }
   try {
     const { ScreenReader } = await import('@capacitor/screen-reader');
     await ScreenReader.speak({ value });
@@ -282,11 +296,15 @@ export async function announceForAccessibility(value: string): Promise<void> {
 // ──────────────────────────────────────────────────────────────────────
 
 export async function registerPushNotifications(): Promise<string | null> {
-  if (!isNative()) return null;
+  if (!isNative()) {
+    return null;
+  }
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
     const perm = await PushNotifications.requestPermissions();
-    if (perm.receive !== 'granted') return null;
+    if (perm.receive !== 'granted') {
+      return null;
+    }
     await PushNotifications.register();
     return new Promise((resolve) => {
       const handle = PushNotifications.addListener('registration', (token) => {

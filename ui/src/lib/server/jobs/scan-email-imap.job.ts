@@ -34,8 +34,12 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
     if (typeof args?.profileId === 'string' && args.profileId.trim()) {
       cliArgs.push('--profile', args.profileId.trim());
     }
-    if (args?.dryRun === true) cliArgs.push('--dry-run');
-    if (args?.keepUnread === true) cliArgs.push('--keep-unread');
+    if (args?.dryRun === true) {
+      cliArgs.push('--dry-run');
+    }
+    if (args?.keepUnread === true) {
+      cliArgs.push('--keep-unread');
+    }
 
     let stdout = '';
     let stderr = '';
@@ -65,13 +69,13 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
       const found = parseInt(stdout.match(FOUND_RE)?.[1] ?? '0', 10);
       if (code !== 0) {
         const tail = (stderr || stdout).slice(-300).trim();
-        recordFailure('gmail-imap', new Error(tail || 'exit ' + code));
+        recordFailure('gmail-imap', new Error(tail || `exit ${code}`));
         logEvent('scan-email-imap', 'Gmail poll failed', {
           level: 'error',
           category: 'task',
-          message: 'exit ' + code + (tail ? ' · ' + tail : ''),
+          message: `exit ${code}${tail ? ' · ' + tail : ''}`,
         });
-        resolve({ ok: false, error: 'exit ' + code });
+        resolve({ ok: false, error: `exit ${code}` });
         return;
       }
 
@@ -88,7 +92,9 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
       try {
         const { reactToEmail } = await import('../email-reactor');
         for (const line of stdout.split('\n')) {
-          if (!line.startsWith('INBOUND_REACTION: ')) continue;
+          if (!line.startsWith('INBOUND_REACTION: ')) {
+            continue;
+          }
           reactedTotal++;
           try {
             const payload = JSON.parse(line.slice('INBOUND_REACTION: '.length));
@@ -109,17 +115,15 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
       }
 
       recordSuccess('gmail-imap');
-      const reactedSuffix = reactedTotal
-        ? ' · reactor: ' + reactedActed + '/' + reactedTotal + ' acted'
-        : '';
-      logEvent('scan-email-imap', 'Gmail poll finished · ' + found + ' new' + reactedSuffix, {
+      const reactedSuffix = reactedTotal ? ` · reactor: ${reactedActed}/${reactedTotal} acted` : '';
+      logEvent('scan-email-imap', `Gmail poll finished · ${found} new${reactedSuffix}`, {
         level: 'success',
         category: 'task',
         message: 'IMAP session healthy',
       });
       resolve({
         ok: true,
-        message: found + ' new offers' + reactedSuffix,
+        message: `${found} new offers${reactedSuffix}`,
         meta: { found, reactedActed, reactedTotal },
       });
     });
@@ -169,14 +173,18 @@ let pollerHandle: ReturnType<typeof setInterval> | null = null;
  *  Errors per user are isolated: a malformed credential on user A
  *  doesn't stop user B's poll from running. */
 export async function tickOnce(): Promise<void> {
-  if (!hasJob('scan-email-imap')) return;
+  if (!hasJob('scan-email-imap')) {
+    return;
+  }
   const userIds = await listSchedulableUsers();
   // Filter out SYSTEM_USER_ID -- legacy single-user installs that
   // haven't yet completed onboarding have nothing real to poll, and
   // SYSTEM's sources.json is the install-wide fallback we don't want
   // running automatically.
   const realUsers = userIds.filter((u) => u !== SYSTEM_USER_ID);
-  if (realUsers.length === 0) return;
+  if (realUsers.length === 0) {
+    return;
+  }
 
   // Run polls SEQUENTIALLY rather than in parallel: each poll spawns
   // a child process that consumes network + IMAP-connection slots, and
@@ -187,13 +195,15 @@ export async function tickOnce(): Promise<void> {
   for (const userId of realUsers) {
     await runAsUser(userId, async () => {
       try {
-        if (!getSource('gmail-imap').connected) return;
+        if (!getSource('gmail-imap').connected) {
+          return;
+        }
         await runById('scan-email-imap');
       } catch (err) {
         // Per-user error -- log + continue to the next user. NEVER let a
         // single bad credential or transient IMAP failure halt the
         // whole fan-out.
-        reportServerError('scan-email-imap', 'Daemon poll rejected for user ' + userId, err, {
+        reportServerError('scan-email-imap', `Daemon poll rejected for user ${userId}`, err, {
           category: 'task',
           userId,
         });

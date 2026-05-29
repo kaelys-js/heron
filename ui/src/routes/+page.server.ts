@@ -15,8 +15,10 @@ import { building } from '$app/environment';
  * SSR path (node adapter, real requests) is unaffected.
  */
 export async function load({ url }: { url: URL }) {
-  if (building) return {};
-  const search = url.search; // includes leading "?" or empty string
+  if (building) {
+    return {};
+  }
+  const { search } = url; // includes leading "?" or empty string
   // Project deep-links target the Pipeline. Forward those preserved.
   if (
     url.searchParams.has('from') ||
@@ -27,7 +29,7 @@ export async function load({ url }: { url: URL }) {
     url.searchParams.has('pdf') ||
     url.searchParams.has('report')
   ) {
-    throw redirect(307, '/pipeline' + search);
+    throw redirect(307, `/pipeline${search}`);
   }
   throw redirect(307, '/inbox');
 }

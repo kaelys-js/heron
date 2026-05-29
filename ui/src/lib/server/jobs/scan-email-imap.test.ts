@@ -66,10 +66,17 @@ function fakeChild(opts: { stdout?: string; stderr?: string; code?: number; err?
   child.stdout = new EventEmitter();
   child.stderr = new EventEmitter();
   queueMicrotask(() => {
-    if (opts.stdout) child.stdout.emit('data', Buffer.from(opts.stdout));
-    if (opts.stderr) child.stderr.emit('data', Buffer.from(opts.stderr));
-    if (opts.err) child.emit('error', opts.err);
-    else child.emit('close', opts.code ?? 0);
+    if (opts.stdout) {
+      child.stdout.emit('data', Buffer.from(opts.stdout));
+    }
+    if (opts.stderr) {
+      child.stderr.emit('data', Buffer.from(opts.stderr));
+    }
+    if (opts.err) {
+      child.emit('error', opts.err);
+    } else {
+      child.emit('close', opts.code ?? 0);
+    }
   });
   return child;
 }
@@ -269,7 +276,9 @@ describe('tickOnce', () => {
     let call = 0;
     __runById.mockImplementation(async () => {
       call++;
-      if (call === 1) throw new Error('per-user fail');
+      if (call === 1) {
+        throw new Error('per-user fail');
+      }
       return { ok: true };
     });
     const { tickOnce } = await import('./scan-email-imap.job');

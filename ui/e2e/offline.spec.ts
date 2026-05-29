@@ -11,40 +11,27 @@ import { test, expect } from './fixtures/auth-fixtures';
 import { mockOffline, restoreOnline } from './_helpers/network-mocks';
 
 test.describe('Offline mode', () => {
-  // [user-approved-deferral] TASK-2 in TODO-INSTRUCTIONS.md.
-  // OfflineIndicator's onlineStore $state reactivity doesn't update on
-  // webkit/mobile-safari despite dispatched offline events + brand
-  // :net-status custom-event. Passes on chromium + firefox + mobile-chrome.
-  test.skip(
-    ({ browserName }) => browserName === 'webkit' || browserName === 'mobile-safari',
-    'webkit/mobile-safari: onlineStore reactivity gap -- see TODO-INSTRUCTIONS.md TASK-2',
-  );
-
   test('offline indicator or unreachable-overlay surfaces when offline', async ({
     authenticatedPage,
   }) => {
     await authenticatedPage.goto('/inbox');
-    // Wait for `load` (full page load incl. JS chunks) AND networkidle
-    // so no in-flight /api/* request can be aborted by setOffline +
-    // route('**/api/**', abort), which previously caused
-    // "Execution context was destroyed" on the next page.evaluate AND
-    // left WebKit in a partially-hydrated state where the OfflineIndicator's
-    // onMount listener wasn't registered yet.
+    // Wait for `load` (full page load incl. JS chunks) AND networkidle so the
+    // app has hydrated and onlineStore.init() has registered its listeners
+    // before we go offline. (The HTTP-preview CSP fix in svelte.config.ts is
+    // what lets webkit hydrate here at all -- upgrade-insecure-requests used to
+    // rewrite every subresource to https:// and the handshake failed.)
     await authenticatedPage.waitForLoadState('load');
     await authenticatedPage.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-    // Belt-and-braces: wait for the global loading bar to clear --
-    // OfflineIndicator's onMount may not run until after the loading
-    // bar resolves.
+    // Belt-and-braces: wait for the global loading bar to clear.
     await authenticatedPage
       .locator('[role="progressbar"][aria-label="Loading"]')
       .waitFor({ state: 'detached', timeout: 5000 })
       .catch(() => {});
     await mockOffline(authenticatedPage);
-    // Trigger the offline event AND nudge onlineStore directly.
-    // webkit-under-Playwright doesn't always wire
-    // `window.dispatchEvent('offline')` to the store's addEventListener,
-    // so we ALSO dispatch the brand-namespaced `<brand>:net-status`
-    // event the store explicitly listens for as a native-hint path.
+    // setOffline already flips navigator.onLine; dispatch the `offline` event
+    // so the store's listener runs synchronously without waiting for the 15s
+    // health-probe interval. Also exercise the brand-namespaced `:net-status`
+    // native-hint path (iOS/Electron forward net changes through it).
     await authenticatedPage.evaluate(() => {
       window.dispatchEvent(new Event('offline'));
       const lsKeys = Object.keys(localStorage);

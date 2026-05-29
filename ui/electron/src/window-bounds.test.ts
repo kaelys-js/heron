@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isWindowVisible, clampWindowBounds, type Rect } from './window-bounds';
+import { isWindowVisible, clampWindowBounds } from './window-bounds';
+import type { Rect } from './window-bounds';
 
 // A single 1440x900 laptop display at the origin (work area below the menu bar).
 const LAPTOP: Rect[] = [{ x: 0, y: 25, width: 1440, height: 875 }];

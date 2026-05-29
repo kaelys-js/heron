@@ -27,11 +27,15 @@ class OnlineStore {
   /** Wire up everything at app boot. Idempotent. */
   init(backendUrl: string | null): void {
     this.backendUrl = backendUrl;
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
     // Restore last-known state for instant UI on cold boot
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) this.online = raw === '1';
+      if (raw) {
+        this.online = raw === '1';
+      }
     } catch {
       // localStorage denied (Safari private mode, iframe sandbox).
       // Cold boot will start with default `online: true` and the first
@@ -78,7 +82,9 @@ class OnlineStore {
   /** Update the resolved backend URL -- called by BackendBootGuard. */
   setBackend(url: string | null): void {
     this.backendUrl = url;
-    if (url) void this.probe();
+    if (url) {
+      void this.probe();
+    }
   }
 
   /** Subscribe to online↔offline transitions. */
@@ -99,18 +105,24 @@ class OnlineStore {
   }
 
   destroy(): void {
-    if (this.timer) clearInterval(this.timer);
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
     this.listeners.clear();
   }
 
   private startProbing(): void {
-    if (this.timer) return;
+    if (this.timer) {
+      return;
+    }
     this.timer = setInterval(() => void this.probe(), PROBE_INTERVAL_MS);
     void this.probe();
   }
 
   private async probe(): Promise<void> {
-    if (!this.backendUrl) return;
+    if (!this.backendUrl) {
+      return;
+    }
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       // OS says offline -- trust it, don't waste a request
       this.update(false, 'navigator');
@@ -119,13 +131,16 @@ class OnlineStore {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), PROBE_TIMEOUT_MS);
     try {
-      const res = await fetch(this.backendUrl.replace(/\/$/, '') + '/api/health', {
+      const res = await fetch(`${this.backendUrl.replace(/\/$/, '')}/api/health`, {
         signal: ctrl.signal,
         credentials: 'omit',
         method: 'GET',
       });
-      if (res.ok) this.update(true, null);
-      else this.update(false, 'probe');
+      if (res.ok) {
+        this.update(true, null);
+      } else {
+        this.update(false, 'probe');
+      }
     } catch {
       this.update(false, 'probe');
     } finally {
@@ -135,12 +150,16 @@ class OnlineStore {
 
   private update(online: boolean, reason: string | null): void {
     if (online === this.online) {
-      if (online) this.lastOk = Date.now();
+      if (online) {
+        this.lastOk = Date.now();
+      }
       return;
     }
     this.online = online;
     this.reason = online ? null : reason;
-    if (online) this.lastOk = Date.now();
+    if (online) {
+      this.lastOk = Date.now();
+    }
     try {
       localStorage.setItem(STORAGE_KEY, online ? '1' : '0');
     } catch {

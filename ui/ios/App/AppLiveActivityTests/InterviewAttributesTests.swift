@@ -7,6 +7,7 @@
 //
 import ActivityKit
 import Foundation
+import SwiftUI
 import XCTest
 
 @available(iOS 16.1, *)
@@ -124,5 +125,38 @@ final class InterviewAttributesTests: XCTestCase {
         let link = Brand.deepLink("interview-prep/abc")
         XCTAssertTrue(link.hasSuffix("interview-prep/abc"))
         XCTAssertNotNil(URL(string: link))
+    }
+
+    // MARK: - View rendering
+
+    // ActivityConfiguration can't be invoked without an ActivityViewContext
+    // the framework reserves, so the lock-screen + Dynamic Island UI is
+    // extracted into standalone views (see LiveActivity.swift). Rendering
+    // them via ImageRenderer forces SwiftUI to evaluate body{}, exercising
+    // the view code that the ActivityConfiguration composes verbatim.
+    @MainActor
+    private func render(_ view: some View) {
+        let renderer = ImageRenderer(content: view.frame(width: 320, height: 140))
+        XCTAssertNotNil(renderer.uiImage)
+    }
+
+    @MainActor
+    func testLockScreenViewRenders() {
+        render(HeronInterviewLockScreenView(state: makeState()))
+    }
+
+    @MainActor
+    func testDynamicIslandLeadingRenders() {
+        render(HeronInterviewDILeadingView(state: makeState()))
+    }
+
+    @MainActor
+    func testDynamicIslandTrailingRenders() {
+        render(HeronInterviewDITrailingView(state: makeState()))
+    }
+
+    @MainActor
+    func testDynamicIslandBottomRenders() {
+        render(HeronInterviewDIBottomView(state: makeState(), jobId: "job-123"))
     }
 }

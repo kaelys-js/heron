@@ -21,7 +21,9 @@ export type CompPreflight = {
  *  Block A + location to refine the band. */
 export function compPreflightForJob(jobId: string): CompPreflight | null {
   const job = loadAllJobs('all').find((j) => j.id === jobId);
-  if (!job) return null;
+  if (!job) {
+    return null;
+  }
   const profile = readProfile(job.profileId) as unknown as {
     compensation?: {
       target_range?: string;

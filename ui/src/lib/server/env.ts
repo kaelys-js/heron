@@ -37,7 +37,9 @@ export function readEnv(): EnvVars {
   const out: EnvVars = {};
   for (const k of KEYS) {
     const v = process.env[k];
-    if (v) out[k] = v;
+    if (v) {
+      out[k] = v;
+    }
   }
   return out;
 }
@@ -47,27 +49,35 @@ export function readEnvMasked(): Record<string, string> {
   const e = readEnv();
   for (const k of KEYS) {
     const v = e[k];
-    if (!v) out[k] = '';
-    else if (v.length < 8) out[k] = '****';
-    else out[k] = '****' + v.slice(-4);
+    if (!v) {
+      out[k] = '';
+    } else if (v.length < 8) {
+      out[k] = '****';
+    } else {
+      out[k] = '****' + v.slice(-4);
+    }
   }
   return out;
 }
 
 export function writeEnv(updates: Partial<EnvVars>) {
-  let existing: Record<string, string> = {};
+  const existing: Record<string, string> = {};
   // CodeQL js/file-system-race: read directly and treat ENOENT as empty
   // rather than racing existsSync against the subsequent read.
   let txt: string | null = null;
   try {
     txt = fs.readFileSync(ENV_FILE, 'utf8');
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw e;
+    }
   }
   if (txt !== null) {
     for (const line of txt.split('\n')) {
       const m = /^([A-Z_]+)=(.*)$/.exec(line.trim());
-      if (m) existing[m[1]] = m[2];
+      if (m) {
+        existing[m[1]] = m[2];
+      }
     }
   }
   for (const [k, v] of Object.entries(updates)) {
@@ -79,9 +89,8 @@ export function writeEnv(updates: Partial<EnvVars>) {
       delete process.env[k];
     }
   }
-  const out =
-    Object.entries(existing)
-      .map(([k, v]) => k + '=' + v)
-      .join('\n') + '\n';
+  const out = `${Object.entries(existing)
+    .map(([k, v]) => k + '=' + v)
+    .join('\n')}\n`;
   fs.writeFileSync(ENV_FILE, out);
 }

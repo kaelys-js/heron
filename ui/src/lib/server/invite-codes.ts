@@ -24,7 +24,7 @@ export type InviteCode = {
 };
 
 function newId(): string {
-  return 'inv_' + crypto.randomBytes(8).toString('hex');
+  return `inv_${crypto.randomBytes(8).toString('hex')}`;
 }
 
 /** Cryptographically random 6-digit code, zero-padded. */
@@ -75,7 +75,9 @@ export function createInvite(ownerUserId: string): InviteCode {
         })
         .run();
       const row = authDb.select().from(inviteCodes).where(eq(inviteCodes.id, id)).get();
-      if (row) return toJson(row);
+      if (row) {
+        return toJson(row);
+      }
     } catch {
       // UNIQUE collision -- retry with a new code.
     }
@@ -104,7 +106,9 @@ export function lookupInvite(code: string): InviteCode | null {
  *  should refuse the signup attempt. */
 export function claimInvite(code: string, claimingUserId: string): InviteCode | null {
   const candidate = lookupInvite(code);
-  if (!candidate) return null;
+  if (!candidate) {
+    return null;
+  }
   const now = Date.now();
   authDb
     .update(inviteCodes)

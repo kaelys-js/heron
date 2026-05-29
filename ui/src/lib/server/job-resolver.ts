@@ -15,7 +15,9 @@ export type JobWithProfile = { job: Job; profileId: string };
 
 function splitSuffix(rawId: string): { urlId: string; profileHint?: string } {
   const colon = rawId.indexOf(':');
-  if (colon < 0) return { urlId: rawId };
+  if (colon < 0) {
+    return { urlId: rawId };
+  }
   return { urlId: rawId.slice(0, colon), profileHint: rawId.slice(colon + 1) };
 }
 
@@ -45,10 +47,14 @@ export function resolveJobAndProfile(rawId: string, url?: URL): JobWithProfile |
   // Fallback: scan every other profile (handles legacy bare-urlId links and
   // cross-profile job-detail navigations).
   for (const p of listProfiles()) {
-    if (p.id === preferredProfile) continue;
+    if (p.id === preferredProfile) {
+      continue;
+    }
     const jobs = loadAllJobs(p.id);
     const found = jobs.find((j) => j.id === urlId);
-    if (found) return { job: found, profileId: p.id };
+    if (found) {
+      return { job: found, profileId: p.id };
+    }
   }
   return null;
 }

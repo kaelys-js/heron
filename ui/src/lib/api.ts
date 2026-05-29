@@ -42,7 +42,9 @@ async function getBearerToken(): Promise<string | null> {
   // the very first call before Preferences resolves doesn't miss the token.
   try {
     const { value } = await Preferences.get({ key: BEARER_KEY });
-    if (value) return value;
+    if (value) {
+      return value;
+    }
   } catch {
     /* Preferences not available -- fall through to localStorage */
   }
@@ -149,7 +151,9 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
     'Content-Type': 'application/json',
     ...((init.headers as Record<string, string> | undefined) ?? {}),
   };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   // AbortController registration -- the network-resilience module fires
   // ctrl.abort() on every in-flight request when iOS NWPathMonitor
@@ -226,7 +230,9 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
                 reject(new ApiError(msg, { status: replayResponse.status }));
                 return;
               }
-              if (method === 'GET') void setCached(url, data);
+              if (method === 'GET') {
+                void setCached(url, data);
+              }
               resolve(data as T);
             } catch (parseErr) {
               reject(parseErr);
@@ -244,7 +250,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
     if (!silent && !inlineError) {
       // For non-retryable failures (mutations, opt-outs), show a clear
       // toast with the URL so the user knows what was lost.
-      const description = aborted ? url : fullUrl + ' — ' + message;
+      const description = aborted ? url : `${fullUrl} — ${message}`;
       toast.error(aborted ? 'Network dropped — request cancelled' : 'Network error', {
         description,
         duration: 10_000,
@@ -334,7 +340,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
 
     if (!silent && !inlineError) {
       toast.error(message, {
-        description: response.status + ' · ' + url,
+        description: `${response.status} · ${url}`,
         duration: 10_000,
         action: {
           label: 'Details',

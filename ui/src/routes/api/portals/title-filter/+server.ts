@@ -18,7 +18,9 @@ export const POST = wrap(
       positive?: unknown;
       negative?: unknown;
     } | null;
-    if (!body) badRequest('expected JSON body with { positive: string[], negative: string[] }');
+    if (!body) {
+      badRequest('expected JSON body with { positive: string[], negative: string[] }');
+    }
     const { positive, negative } = body;
     if (!Array.isArray(positive) || !Array.isArray(negative)) {
       badRequest('positive and negative must both be arrays of strings');
@@ -34,15 +36,9 @@ export const POST = wrap(
     logEvent('portals-title-filter', 'Title filter updated', {
       level: 'info',
       category: 'user',
-      message:
-        'profile=' +
-        profileId +
-        ' · ' +
-        cleanPos.length +
-        ' positive · ' +
-        cleanNeg.length +
-        ' negative · ' +
-        (snapshot.exists ? 'wrote portals.yml' : 'bootstrap from template'),
+      message: `profile=${profileId} · ${cleanPos.length} positive · ${
+        cleanNeg.length
+      } negative · ${snapshot.exists ? 'wrote portals.yml' : 'bootstrap from template'}`,
     });
     return { snapshot };
   },

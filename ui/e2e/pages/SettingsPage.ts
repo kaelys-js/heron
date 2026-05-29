@@ -43,12 +43,14 @@ export class SettingsPage {
     });
     const target: 'Light' | 'Dark' = current === 'dark' ? 'Light' : 'Dark';
     await this.themeToggle.click();
-    // The menu may be a Sheet (mobile) or DropdownMenu (desktop);
-    // both render their items with the option label as accessible
-    // name. menuitem role works for both. Use .first() to be safe in
-    // case a sub-menu items contains the same label as the trigger.
+    // The menu is a DropdownMenu on desktop (items are role="menuitem")
+    // and a bottom-Sheet on mobile (items are plain role="button" rows --
+    // see ResponsiveActionItem.svelte). Match either role by accessible
+    // name so the helper works across every viewport.
+    const option = new RegExp(`^${target}\\b`, 'i');
     await this.page
-      .getByRole('menuitem', { name: new RegExp(`^${target}\\b`, 'i') })
+      .getByRole('menuitem', { name: option })
+      .or(this.page.getByRole('button', { name: option }))
       .first()
       .click();
   }

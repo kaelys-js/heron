@@ -35,25 +35,31 @@ describe('brand.json is the source of truth for urlScheme', () => {
 });
 
 describe('iOS Info.plist registers the URL scheme', () => {
-  it('CFBundleURLTypes contains the urlScheme', () => {
-    if (!exists('ui/ios/App/App/Info.plist')) return;
+  it('cFBundleURLTypes contains the urlScheme', () => {
+    if (!exists('ui/ios/App/App/Info.plist')) {
+      return;
+    }
     const plist = readFile('ui/ios/App/App/Info.plist');
     expect(plist).toContain('CFBundleURLTypes');
     expect(plist).toContain(expectedScheme);
   });
 });
 
-describe('Android manifest registers the URL scheme', () => {
+describe('android manifest registers the URL scheme', () => {
   it('intent-filter declares the scheme', () => {
-    if (!exists('ui/android/app/src/main/AndroidManifest.xml')) return;
+    if (!exists('ui/android/app/src/main/AndroidManifest.xml')) {
+      return;
+    }
     const mf = readFile('ui/android/app/src/main/AndroidManifest.xml');
     expect(mf).toContain(expectedScheme);
   });
 });
 
-describe('Generated TS brand constants', () => {
+describe('generated TS brand constants', () => {
   it('ui/src/lib/client/brand.ts exports urlScheme', () => {
-    if (!exists('ui/src/lib/client/brand.ts')) return;
+    if (!exists('ui/src/lib/client/brand.ts')) {
+      return;
+    }
     const ts = readFile('ui/src/lib/client/brand.ts');
     expect(ts).toContain('urlScheme');
     // Either quote style is fine -- apply-brand writes double quotes
@@ -63,7 +69,7 @@ describe('Generated TS brand constants', () => {
   });
 });
 
-describe('Hardcoded scheme leaks (forbidden outside generated files)', () => {
+describe('hardcoded scheme leaks (forbidden outside generated files)', () => {
   // Source code MUST use BRAND.urlScheme. Hardcoded literals in runtime
   // code break the rebrand pipeline. Generated brand.ts files + Swift
   // constants are the only place the literal is allowed in CODE; comments
@@ -87,20 +93,30 @@ describe('Hardcoded scheme leaks (forbidden outside generated files)', () => {
     const offending = out
       .split('\n')
       .filter((line) => line.trim().length > 0)
-      .filter((line) => !allowedPaths.some((allow) => line.startsWith(allow + ':')))
+      .filter((line) => !allowedPaths.some((allow) => line.startsWith(`${allow}:`)))
       .filter((line) => {
         // Strip the file:line:column prefix
         const body = line.replace(/^[^:]+:\d+:\s*/, '');
         const trimmed = body.trim();
         // Allow comment markers + code-fence (`...`) which Svelte
         // multi-line HTML comments use for inline literals.
-        if (trimmed.startsWith('//')) return false;
-        if (trimmed.startsWith('*')) return false;
-        if (trimmed.startsWith('<!--')) return false;
-        if (trimmed.startsWith('/*')) return false;
+        if (trimmed.startsWith('//')) {
+          return false;
+        }
+        if (trimmed.startsWith('*')) {
+          return false;
+        }
+        if (trimmed.startsWith('<!--')) {
+          return false;
+        }
+        if (trimmed.startsWith('/*')) {
+          return false;
+        }
         // If the literal appears INSIDE backticks (e.g. `heron://`)
         // it's a documentation quote, not executable code.
-        if (/`[^`]*heron:\/\/[^`]*`/.test(body)) return false;
+        if (/`[^`]*heron:\/\/[^`]*`/.test(body)) {
+          return false;
+        }
         return true;
       });
     expect(offending).toEqual([]);

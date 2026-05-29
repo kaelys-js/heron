@@ -1,5 +1,6 @@
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { readProfile, writeProfile, type ProfileEdit } from '$lib/server/profile';
+import { readProfile, writeProfile } from '$lib/server/profile';
+import type { ProfileEdit } from '$lib/server/profile';
 import { getProfile, getActiveProfileId } from '$lib/server/profiles';
 import { logEvent } from '$lib/server/events';
 
@@ -20,19 +21,21 @@ function resolveProfileId(url: URL): string {
   return q && getProfile(q) ? q : getActiveProfileId();
 }
 
-export const GET = wrap('profile', async ({ url }: { url: URL }) => {
-  return readProfile(resolveProfileId(url));
-});
+export const GET = wrap('profile', async ({ url }: { url: URL }) =>
+  readProfile(resolveProfileId(url)),
+);
 
 export const POST = wrap('profile', async ({ request, url }: { request: Request; url: URL }) => {
   const body = (await request.json().catch(() => null)) as ProfileEdit | null;
-  if (!body || typeof body !== 'object') badRequest('expected JSON profile patch');
+  if (!body || typeof body !== 'object') {
+    badRequest('expected JSON profile patch');
+  }
   const id = resolveProfileId(url);
   const next = writeProfile(id, body);
   logEvent('profile', 'Profile updated', {
     level: 'success',
     category: 'user',
-    message: 'profile=' + id,
+    message: `profile=${id}`,
   });
   return next;
 });

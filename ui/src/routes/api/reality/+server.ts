@@ -32,7 +32,7 @@ export const GET = wrap('reality', async () => {
       if (hours > 0 && hours < 72) {
         leverage.push({
           kind: 'decision-deadline',
-          signal: 'Offer decision due in ' + hours + 'h',
+          signal: `Offer decision due in ${hours}h`,
           jobId: o.jobId,
         });
       }
@@ -40,7 +40,7 @@ export const GET = wrap('reality', async () => {
     if (o.rounds.length > 1) {
       leverage.push({
         kind: 'active-negotiation',
-        signal: 'Negotiation round ' + o.rounds.length + ' in progress',
+        signal: `Negotiation round ${o.rounds.length} in progress`,
         jobId: o.jobId,
       });
     }
@@ -52,7 +52,7 @@ export const GET = wrap('reality', async () => {
       .sort((a, b) => b.tc - a.tc);
     leverage.push({
       kind: 'multi-offer',
-      signal: offers.length + ' competing offers — best TC ' + top[0].tc + ' vs next ' + top[1].tc,
+      signal: `${offers.length} competing offers — best TC ${top[0].tc} vs next ${top[1].tc}`,
     });
   }
 

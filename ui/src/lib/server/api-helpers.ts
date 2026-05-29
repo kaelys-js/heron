@@ -54,7 +54,9 @@ export function wrap<E = any>(source: string, handler: Handler<E>): Handler<E> {
   return (async (event: any) => {
     try {
       const result = await handler(event);
-      if (result instanceof Response) return result;
+      if (result instanceof Response) {
+        return result;
+      }
       return okJson((result ?? {}) as object);
     } catch (e: any) {
       const url = event?.url?.pathname ?? '?';
@@ -67,9 +69,9 @@ export function wrap<E = any>(source: string, handler: Handler<E>): Handler<E> {
         // 4xx: warn-level log, no stack (validation noise)
         // 5xx: full error reporter with stack
         if (status >= 500) {
-          reportServerError(source, '[' + status + '] ' + url, e, { category: 'api' });
+          reportServerError(source, `[${status}] ${url}`, e, { category: 'api' });
         } else {
-          logEvent(source, '[' + status + '] ' + url, {
+          logEvent(source, `[${status}] ${url}`, {
             level: 'warn',
             category: 'api',
             message,
@@ -77,7 +79,7 @@ export function wrap<E = any>(source: string, handler: Handler<E>): Handler<E> {
         }
         return errJson(message, { status, code: body.code, details: body.details });
       }
-      reportServerError(source, '[500] ' + url, e, { category: 'api' });
+      reportServerError(source, `[500] ${url}`, e, { category: 'api' });
       const message = e?.message || String(e);
       return errJson(message, { status: 500, code: 'INTERNAL' });
     }

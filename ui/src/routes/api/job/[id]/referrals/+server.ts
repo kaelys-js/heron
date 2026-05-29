@@ -14,6 +14,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const TIMEOUT_MS = 240_000;
 
 export type ReferralCandidate = {
@@ -31,7 +32,7 @@ export type ReferralCandidate = {
 
 function referralsPath(profileId: string, jobId: string): string {
   const base = profilePath(profileId, 'profile-dir');
-  return path.join(base, 'referrals', jobId + '.json');
+  return path.join(base, 'referrals', `${jobId}.json`);
 }
 
 function spawnReferralDiscovery(args: {
@@ -68,7 +69,7 @@ function spawnReferralDiscovery(args: {
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('referral-discovery timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`referral-discovery timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -76,8 +77,11 @@ function spawnReferralDiscovery(args: {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolveP({ stdout });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolveP({ stdout });
+      }
     });
   });
 }
@@ -86,10 +90,14 @@ export const GET = wrap(
   'referrals',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const p = referralsPath(profileId, job.id);
-    if (!fs.existsSync(p)) return { ok: true, candidates: [], generatedAt: null };
+    if (!fs.existsSync(p)) {
+      return { ok: true, candidates: [], generatedAt: null };
+    }
     try {
       const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as {
         candidates: ReferralCandidate[];
@@ -106,7 +114,9 @@ export const POST = wrap(
   'referrals',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => ({}))) as {
       maxResults?: number;
@@ -123,8 +133,9 @@ export const POST = wrap(
         locationFilter: body.locationFilter,
       });
       const p = referralsPath(profileId, job.id);
-      if (!fs.existsSync(p))
+      if (!fs.existsSync(p)) {
         return { ok: false, error: 'Discovery did not produce a referrals file' };
+      }
       const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as {
         candidates: ReferralCandidate[];
         generatedAt: number;
@@ -132,7 +143,7 @@ export const POST = wrap(
       logEvent('referrals', 'Referral discovery complete', {
         level: 'success',
         category: 'application',
-        message: (job.company || '?') + ' · ' + (parsed.candidates?.length ?? 0) + ' candidates',
+        message: `${job.company || '?'} · ${parsed.candidates?.length ?? 0} candidates`,
       });
       return { ok: true, candidates: parsed.candidates ?? [], generatedAt: parsed.generatedAt };
     } catch (err) {

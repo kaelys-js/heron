@@ -14,7 +14,9 @@ export const GET = wrap(
   'signals',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     return {
       ok: true,

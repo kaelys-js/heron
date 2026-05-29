@@ -26,7 +26,7 @@ import { stringify as devalueStringify } from 'devalue';
  */
 if (typeof window !== 'undefined' && !window.location.protocol.startsWith('http')) {
   const origFetch = window.fetch.bind(window);
-  window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  window.fetch = function fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const url =
       typeof input === 'string'
         ? input
@@ -124,7 +124,7 @@ if (typeof window !== 'undefined' && !window.location.protocol.startsWith('http'
  */
 export const handleError: HandleClientError = ({ error, event, status, message }) => {
   const url = event?.url?.pathname ?? '?';
-  reportClientError('sveltekit', '[' + status + '] ' + url, error);
+  reportClientError('sveltekit', `[${status}] ${url}`, error);
   return {
     message: status >= 500 ? 'Something broke on our end.' : message,
     code: (error as { code?: string })?.code,
@@ -133,13 +133,15 @@ export const handleError: HandleClientError = ({ error, event, status, message }
 
 if (typeof window !== 'undefined') {
   window.addEventListener('error', (e: ErrorEvent) => {
-    if (!e.error && !e.message) return;
+    if (!e.error && !e.message) {
+      return;
+    }
     const stackFrame =
       (e.error?.stack ?? '').split('\n')[0] ||
-      (e.filename ? e.filename + ':' + e.lineno + ':' + e.colno : '');
+      (e.filename ? `${e.filename}:${e.lineno}:${e.colno}` : '');
     reportClientError('window', 'Uncaught error', e.error ?? e.message, {
       message: stackFrame
-        ? (e.error?.message ?? e.message) + ' · ' + stackFrame
+        ? `${e.error?.message ?? e.message} · ${stackFrame}`
         : (e.error?.message ?? e.message),
     });
   });
@@ -148,7 +150,7 @@ if (typeof window !== 'undefined') {
     const code = (e.reason as { code?: string })?.code;
     reportClientError('promise', 'Unhandled promise rejection', e.reason, {
       message: code
-        ? '[' + code + '] ' + (e.reason instanceof Error ? e.reason.message : String(e.reason))
+        ? `[${code}] ${e.reason instanceof Error ? e.reason.message : String(e.reason)}`
         : undefined,
     });
   });

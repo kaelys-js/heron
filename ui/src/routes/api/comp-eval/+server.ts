@@ -12,17 +12,22 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { evaluateOffer, compareOffers, type OfferInput } from '$lib/server/comp-math';
+import { evaluateOffer, compareOffers } from '$lib/server/comp-math';
+import type { OfferInput } from '$lib/server/comp-math';
 
 export const POST = wrap('comp-eval', async ({ request }: { request: Request }) => {
   const body = await request.json().catch(() => ({}));
   if (body?.compare && body.compare === true) {
     const a = body?.a as OfferInput | undefined;
     const b = body?.b as OfferInput | undefined;
-    if (!a || !b) badRequest('Both offers (a, b) required for comparison');
+    if (!a || !b) {
+      badRequest('Both offers (a, b) required for comparison');
+    }
     return compareOffers(a!, b!, body?.metric ?? '4yr-discounted');
   }
   const offer = body as OfferInput;
-  if (typeof offer?.base !== 'number') badRequest('base (number) required');
+  if (typeof offer?.base !== 'number') {
+    badRequest('base (number) required');
+  }
   return evaluateOffer(offer);
 });

@@ -4,39 +4,37 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 
-const TMP = path.join(tmpdir(), 'heron-ai-test-' + Date.now() + '-' + process.pid);
+const TMP = path.join(tmpdir(), `heron-ai-test-${Date.now()}-${process.pid}`);
 
 vi.mock('./files', () => ({ ROOT: TMP, DATA_ROOT: path.join(TMP, 'data'), readSafe: () => '' }));
 
 // Track instantiations so we can assert client memoization works correctly.
 const instances: Array<{ apiKey: string; createCalls: any[] }> = [];
 
-vi.mock('@anthropic-ai/sdk', () => {
-  return {
-    default: class FakeAnthropic {
-      apiKey: string;
-      createCalls: any[] = [];
-      messages: {
-        create: (p: any) => Promise<{ content: Array<{ type: string; text: string }> }>;
+vi.mock('@anthropic-ai/sdk', () => ({
+  default: class FakeAnthropic {
+    apiKey: string;
+    createCalls: any[] = [];
+    messages: {
+      create: (p: any) => Promise<{ content: Array<{ type: string; text: string }> }>;
+    };
+    constructor(opts: { apiKey: string }) {
+      this.apiKey = opts.apiKey;
+      instances.push(this);
+      // bind `this` lexically -- the SDK lets you pull `messages.create`
+      // off the instance, so the fake needs the same shape.
+      const self = this;
+      this.messages = {
+        create: async (p: any) => {
+          self.createCalls.push(p);
+          return {
+            content: [{ type: 'text', text: `fake-reply for ${self.apiKey.slice(0, 8)}` }],
+          };
+        },
       };
-      constructor(opts: { apiKey: string }) {
-        this.apiKey = opts.apiKey;
-        instances.push(this);
-        // bind `this` lexically -- the SDK lets you pull `messages.create`
-        // off the instance, so the fake needs the same shape.
-        const self = this;
-        this.messages = {
-          create: async (p: any) => {
-            self.createCalls.push(p);
-            return {
-              content: [{ type: 'text', text: `fake-reply for ${self.apiKey.slice(0, 8)}` }],
-            };
-          },
-        };
-      }
-    },
-  };
-});
+    }
+  },
+}));
 
 const { setSecret } = await import('./user-secrets');
 const { runAsUser, SYSTEM_USER_ID } = await import('./user-context');
@@ -54,7 +52,9 @@ beforeEach(() => {
 
 afterEach(async () => {
   const fs = await import('node:fs');
-  if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+  if (fs.existsSync(TMP)) {
+    fs.rmSync(TMP, { recursive: true, force: true });
+  }
 });
 
 describe('ai.ts — getClient() per-user resolution', () => {
@@ -138,7 +138,9 @@ describe('ai.ts — complete() + chat() error path', () => {
     // The two userspaces must NOT have crossed: each one's createCalls
     // appears on its own client instance.
     const byKey: Record<string, any[]> = {};
-    for (const i of instances) byKey[i.apiKey] = i.createCalls;
+    for (const i of instances) {
+      byKey[i.apiKey] = i.createCalls;
+    }
     expect(byKey['sk-a']).toHaveLength(1);
     expect(byKey['sk-b']).toBeUndefined();
   });

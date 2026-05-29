@@ -33,9 +33,13 @@ const AUTHED_KEY = BRAND_STORAGE_KEYS.authed;
  * better-auth's validator happy.
  */
 function safeBaseURL(): string | undefined {
-  if (typeof window === 'undefined') return undefined;
-  const origin = window.location.origin;
-  if (origin.startsWith('http://') || origin.startsWith('https://')) return origin;
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+  const { origin } = window.location;
+  if (origin.startsWith('http://') || origin.startsWith('https://')) {
+    return origin;
+  }
   return 'http://localhost';
 }
 

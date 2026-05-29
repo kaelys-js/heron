@@ -11,17 +11,21 @@ import {
   scaffoldTakeHome,
   findTakeHomeForJob,
   updateTakeHomeState,
-  type TakeHomeState,
 } from '$lib/server/takehome-scaffolder';
+import type { TakeHomeState } from '$lib/server/takehome-scaffolder';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
 
 export const GET = wrap(
   'takehome',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) return { ok: false, error: 'Job not found' };
+    if (!resolved) {
+      return { ok: false, error: 'Job not found' };
+    }
     const r = findTakeHomeForJob(resolved.job.id);
-    if (!r) return { ok: true, exists: false };
+    if (!r) {
+      return { ok: true, exists: false };
+    }
     return { ok: true, exists: true, ...r };
   },
 );
@@ -30,7 +34,9 @@ export const POST = wrap(
   'takehome',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) return { ok: false, error: 'Job not found' };
+    if (!resolved) {
+      return { ok: false, error: 'Job not found' };
+    }
     const body = (await request.json().catch(() => ({}))) as {
       budgetMinutes?: number;
       briefExcerpt?: string;
@@ -51,13 +57,19 @@ export const PATCH = wrap(
   'takehome',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) return { ok: false, error: 'Job not found' };
+    if (!resolved) {
+      return { ok: false, error: 'Job not found' };
+    }
     const body = (await request.json().catch(() => ({}))) as Partial<TakeHomeState> & {
       milestone?: string;
     };
     const patch: Partial<TakeHomeState> = {};
-    if (body.status) patch.status = body.status;
-    if (typeof body.budgetMinutes === 'number') patch.budgetMinutes = body.budgetMinutes;
+    if (body.status) {
+      patch.status = body.status;
+    }
+    if (typeof body.budgetMinutes === 'number') {
+      patch.budgetMinutes = body.budgetMinutes;
+    }
     if (body.milestone) {
       // Append milestone instead of replacing.
       const existing = findTakeHomeForJob(resolved.job.id);
@@ -73,7 +85,9 @@ export const PATCH = wrap(
       resolved.job.role ?? '',
       patch,
     );
-    if (!next) badRequest('Take-home scaffold not found — POST first');
+    if (!next) {
+      badRequest('Take-home scaffold not found — POST first');
+    }
     return { ok: true, state: next };
   },
 );

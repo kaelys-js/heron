@@ -16,10 +16,14 @@ export const POST = wrap(
   'offer-benchmark',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const existing = getOffer(job.id, profileId);
-    if (!existing) badRequest('No offer exists yet — POST /api/job/[id]/offer first');
+    if (!existing) {
+      badRequest('No offer exists yet — POST /api/job/[id]/offer first');
+    }
     const body = (await request.json().catch(() => ({}))) as {
       level?: string;
       manualValues?: { medianTc: number; p25Tc?: number; p75Tc?: number; sourceUrl?: string };
@@ -32,15 +36,16 @@ export const POST = wrap(
       currency: existing.currency,
     };
     if (body.manualValues) {
-      if (typeof body.manualValues.medianTc !== 'number')
+      if (typeof body.manualValues.medianTc !== 'number') {
         badRequest('manualValues.medianTc is required');
+      }
       const bench = manualBenchmark(query, body.manualValues);
       const saved = attachBenchmark(job.id, bench, profileId);
       touchJob(job.id, profileId);
       logEvent('offer-benchmark', 'Manual benchmark attached', {
         level: 'info',
         category: 'application',
-        message: (job.company || '?') + ' · median ' + bench.medianTc + ' ' + bench.currency,
+        message: `${job.company || '?'} · median ${bench.medianTc} ${bench.currency}`,
       });
       return { ok: true, offer: saved };
     }
@@ -54,7 +59,7 @@ export const POST = wrap(
     logEvent('offer-benchmark', 'Auto benchmark attached', {
       level: 'success',
       category: 'application',
-      message: (job.company || '?') + ' · median ' + bench.medianTc + ' ' + bench.currency,
+      message: `${job.company || '?'} · median ${bench.medianTc} ${bench.currency}`,
     });
     return { ok: true, offer: saved };
   },

@@ -8,7 +8,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 
 // Mock the ROOT export so all paths land in a tmpdir.
-const TMP = path.join(tmpdir(), 'heron-apply-counter-' + Date.now());
+const TMP = path.join(tmpdir(), `heron-apply-counter-${Date.now()}`);
 vi.mock('./files', () => ({ ROOT: TMP, DATA_ROOT: path.join(TMP, 'data') }));
 
 const {
@@ -26,16 +26,20 @@ function todayKey() {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
-  return yyyy + '-' + mm + '-' + dd;
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 describe('apply-counter — implicit (SYSTEM_USER fallback)', () => {
   beforeEach(() => {
-    if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+    if (fs.existsSync(TMP)) {
+      fs.rmSync(TMP, { recursive: true, force: true });
+    }
   });
 
   afterEach(() => {
-    if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+    if (fs.existsSync(TMP)) {
+      fs.rmSync(TMP, { recursive: true, force: true });
+    }
   });
 
   it('todayCount returns 0 when file does not exist', () => {
@@ -95,11 +99,15 @@ describe('apply-counter — implicit (SYSTEM_USER fallback)', () => {
 
 describe('apply-counter — multi-user isolation (F17 regression guard)', () => {
   beforeEach(() => {
-    if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+    if (fs.existsSync(TMP)) {
+      fs.rmSync(TMP, { recursive: true, force: true });
+    }
   });
 
   afterEach(() => {
-    if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+    if (fs.existsSync(TMP)) {
+      fs.rmSync(TMP, { recursive: true, force: true });
+    }
   });
 
   it("user A's bumps don't appear in user B's count", async () => {
@@ -142,7 +150,7 @@ describe('apply-counter — multi-user isolation (F17 regression guard)', () => 
     expect(todayCountForUser('user_alice')).toBe(0);
   });
 
-  it('SYSTEM_USER and a real userId map to different files', async () => {
+  it('sYSTEM_USER and a real userId map to different files', async () => {
     // No ALS context → SYSTEM_USER fallback
     bumpApplyCounter();
     expect(todayCount()).toBe(1);

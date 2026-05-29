@@ -13,9 +13,9 @@ import {
   listProfilesForUser,
   getActiveProfile,
   createProfileFor,
-  type ProfileColor,
   PROFILE_COLORS,
 } from '$lib/server/profiles-db';
+import type { ProfileColor } from '$lib/server/profiles-db';
 import { ensureProfileDirs } from '$lib/server/profile-paths';
 import { logEvent } from '$lib/server/events';
 import { requireUserId } from '$lib/server/auth-helpers';
@@ -57,7 +57,7 @@ export const POST = wrap(
       logEvent('profiles-create', 'Profile created', {
         level: 'info',
         category: 'user',
-        message: profile.name + ' (' + profile.slug + ')',
+        message: `${profile.name} (${profile.slug})`,
       });
       return {
         profile: {

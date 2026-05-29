@@ -538,6 +538,19 @@ async function main() {
   // canonicalOutputs above. Single source of truth for the filename.
   console.log('Building web manifest icons...');
   const webDir = path.join(ROOT, 'ui/static/icons');
+  // Prune manifest icons left by a previous brand name (e.g. career-ops-192.png
+  // after the rename to heron). generate-icons never deleted old-prefix files,
+  // so the ui/static/icons/** turbo output glob cached + restored the orphans
+  // on every //#brand cache hit. Drop any manifest-size icon whose prefix is
+  // not the current brand, then render the current set.
+  try {
+    for (const f of await fs.readdir(webDir)) {
+      const m = f.match(/^(.+)-(?:192|256|384|512)\.png$/);
+      if (m && m[1] !== BRAND_NAME) await fs.rm(path.join(webDir, f));
+    }
+  } catch {
+    // dir absent on a fresh tree -- ensureDirs created it, so this is best-effort
+  }
   for (const s of [192, 256, 384, 512]) {
     await renderAtSize(sharp, svgBuffer, s, path.join(webDir, `${BRAND_NAME}-${s}.png`));
   }

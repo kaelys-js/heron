@@ -53,7 +53,7 @@ describe('setManualBackend — every URL shape', () => {
     'https://my.tail-xxxx.ts.net',
     'http://localhost:5173',
     'https://staging.example.com:8443',
-  ])('URL %s → source=manual', async (url) => {
+  ])('uRL %s → source=manual', async (url) => {
     const r = await setManualBackend(url);
     expect(r.source).toBe('manual');
     expect(r.url).toBe(url);
@@ -67,7 +67,7 @@ describe('setManualBackend — resolvedAt timestamp', () => {
     'https://a.example',
     'https://b.example',
     'https://c.example',
-  ])('URL %s sets resolvedAt to recent ms', async (url) => {
+  ])('uRL %s sets resolvedAt to recent ms', async (url) => {
     const before = Date.now();
     const r = await setManualBackend(url);
     expect(r.resolvedAt).toBeGreaterThanOrEqual(before);
@@ -89,7 +89,9 @@ describe('clearBackendCache — every cache state', () => {
 
   it.each([1, 5, 10])('called %i times — idempotent', async (n) => {
     prefsBacking.set(`${BRAND_STORAGE_PREFIX}:backend-resolved`, '{}');
-    for (let i = 0; i < n; i++) await clearBackendCache();
+    for (let i = 0; i < n; i++) {
+      await clearBackendCache();
+    }
     expect(prefsBacking.get(`${BRAND_STORAGE_PREFIX}:backend-resolved`)).toBeUndefined();
   });
 });

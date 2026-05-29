@@ -27,7 +27,9 @@ function runScanVc(args?: JobArgs): Promise<JobResult> {
     if (typeof args?.source === 'string' && args.source.trim()) {
       cliArgs.push('--source', args.source.trim());
     }
-    if (args?.dryRun === true) cliArgs.push('--dry-run');
+    if (args?.dryRun === true) {
+      cliArgs.push('--dry-run');
+    }
 
     let stdout = '';
     let stderr = '';
@@ -57,17 +59,17 @@ function runScanVc(args?: JobArgs): Promise<JobResult> {
         logEvent('scan-vc', 'VC discovery failed', {
           level: 'error',
           category: 'task',
-          message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 150) : ''),
+          message: `exit ${code}${stderr ? ' · ' + stderr.slice(0, 150) : ''}`,
         });
-        resolve({ ok: false, error: 'scan-vc.mjs exited ' + code });
+        resolve({ ok: false, error: `scan-vc.mjs exited ${code}` });
         return;
       }
       logEvent('scan-vc', 'VC discovery finished', {
         level: 'success',
         category: 'task',
-        message: found + ' candidate companies — review the TSV in data/',
+        message: `${found} candidate companies — review the TSV in data/`,
       });
-      resolve({ ok: true, message: found + ' candidates', meta: { found } });
+      resolve({ ok: true, message: `${found} candidates`, meta: { found } });
     });
   });
 }

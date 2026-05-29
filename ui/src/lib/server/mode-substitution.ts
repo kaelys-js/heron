@@ -14,9 +14,8 @@ import {
   profilePathForUser,
   userSharedPath,
   userSharedPathForUser,
-  type ProfileFileKind,
-  type UserSharedFileKind,
 } from './profile-paths';
+import type { ProfileFileKind, UserSharedFileKind } from './profile-paths';
 import { currentUserIdOrDefault } from './user-context';
 
 /** Map of token -> ProfileFileKind. Per-profile resolution. */

@@ -125,7 +125,9 @@ export function isIos(): boolean {
 }
 
 export async function getLanUrl(): Promise<string | null> {
-  if (!isIos()) return null;
+  if (!isIos()) {
+    return null;
+  }
   try {
     const res = await native.getLanUrl();
     return res.url;
@@ -135,7 +137,9 @@ export async function getLanUrl(): Promise<string | null> {
 }
 
 export async function biometricAvailable(): Promise<boolean> {
-  if (!isIos()) return false;
+  if (!isIos()) {
+    return false;
+  }
   try {
     const res = await native.biometricAvailable();
     return res.available;
@@ -145,7 +149,9 @@ export async function biometricAvailable(): Promise<boolean> {
 }
 
 export async function biometricAuth(reason: string): Promise<boolean> {
-  if (!isIos()) return true; // No gate on web/desktop yet
+  if (!isIos()) {
+    return true;
+  } // No gate on web/desktop yet
   try {
     const res = await native.biometricAuth({ reason });
     return res.ok;
@@ -206,7 +212,9 @@ export async function keychainRemove(key: string): Promise<boolean> {
 }
 
 export async function indexJobs(jobs: JobIndexEntry[]): Promise<number> {
-  if (!isIos()) return 0;
+  if (!isIos()) {
+    return 0;
+  }
   try {
     const res = await native.indexJobs({ jobs });
     return res.indexed;
@@ -216,7 +224,9 @@ export async function indexJobs(jobs: JobIndexEntry[]): Promise<number> {
 }
 
 export async function clearJobIndex(): Promise<boolean> {
-  if (!isIos()) return true;
+  if (!isIos()) {
+    return true;
+  }
   try {
     const res = await native.clearJobIndex();
     return res.ok;
@@ -230,7 +240,9 @@ export async function setUserActivity(
   title: string,
   data: Record<string, unknown>,
 ): Promise<boolean> {
-  if (!isIos()) return true;
+  if (!isIos()) {
+    return true;
+  }
   try {
     const res = await native.setUserActivity({ type, title, data });
     return res.ok;
@@ -242,7 +254,9 @@ export async function setUserActivity(
 /** Subscribe to iOS native network-status changes (NWPathMonitor →
  *  NativePlugin.notifyListeners). Returns a remover. */
 export function onNetStatusChange(handler: (online: boolean) => void): () => void {
-  if (!isIos()) return () => {};
+  if (!isIos()) {
+    return () => {};
+  }
   try {
     const sub = (native as any).addListener?.('netStatusChanged', (e: { online: boolean }) =>
       handler(e.online),
@@ -266,7 +280,9 @@ export function onNetStatusChange(handler: (online: boolean) => void): () => voi
  *  during its flush cycle so iOS native errors land in /api/issues
  *  through the same path web/desktop errors take. */
 export async function drainNativeErrors(): Promise<Array<Record<string, unknown>>> {
-  if (!isIos()) return [];
+  if (!isIos()) {
+    return [];
+  }
   try {
     const res = await native.drainNativeErrors();
     return res.errors ?? [];
@@ -289,7 +305,9 @@ export async function drainNativeErrors(): Promise<Array<Record<string, unknown>
  * microseconds and WidgetCenter coalesces reload requests.
  */
 export async function updateWidgets(update: WidgetUpdate): Promise<boolean> {
-  if (!isIos()) return false;
+  if (!isIos()) {
+    return false;
+  }
   try {
     const res = await native.updateWidgets(update);
     return res.ok;
@@ -308,7 +326,9 @@ export async function updateWidgets(update: WidgetUpdate): Promise<boolean> {
  * header is captured (sign-in / sign-up flows). No-op on web/desktop.
  */
 export async function setSharedBearerToken(token: string | null): Promise<boolean> {
-  if (!isIos()) return false;
+  if (!isIos()) {
+    return false;
+  }
   try {
     if (token === null || token === '') {
       const res = await native.clearSharedBearerToken();
@@ -327,7 +347,9 @@ export async function setSharedBearerToken(token: string | null): Promise<boolea
  * backend-discovery resolves.
  */
 export async function setSharedBackendUrl(url: string | null): Promise<boolean> {
-  if (!isIos()) return false;
+  if (!isIos()) {
+    return false;
+  }
   try {
     const res = await native.setSharedBackendUrl({ url: url ?? '' });
     return res.ok;
@@ -353,10 +375,15 @@ const PRODUCTION_URL_KEY = `${BRAND_STORAGE_PREFIX}:production-url`;
 export async function setSharedTailscaleUrl(url: string | null): Promise<boolean> {
   const value = url ?? '';
   if (typeof localStorage !== 'undefined') {
-    if (value) localStorage.setItem(TAILSCALE_URL_KEY, value);
-    else localStorage.removeItem(TAILSCALE_URL_KEY);
+    if (value) {
+      localStorage.setItem(TAILSCALE_URL_KEY, value);
+    } else {
+      localStorage.removeItem(TAILSCALE_URL_KEY);
+    }
   }
-  if (!isIos()) return true;
+  if (!isIos()) {
+    return true;
+  }
   try {
     const res = await native.setSharedTailscaleUrl({ url: value });
     return res.ok;
@@ -368,10 +395,15 @@ export async function setSharedTailscaleUrl(url: string | null): Promise<boolean
 export async function setSharedProductionUrl(url: string | null): Promise<boolean> {
   const value = url ?? '';
   if (typeof localStorage !== 'undefined') {
-    if (value) localStorage.setItem(PRODUCTION_URL_KEY, value);
-    else localStorage.removeItem(PRODUCTION_URL_KEY);
+    if (value) {
+      localStorage.setItem(PRODUCTION_URL_KEY, value);
+    } else {
+      localStorage.removeItem(PRODUCTION_URL_KEY);
+    }
   }
-  if (!isIos()) return true;
+  if (!isIos()) {
+    return true;
+  }
   try {
     const res = await native.setSharedProductionUrl({ url: value });
     return res.ok;
@@ -424,7 +456,9 @@ export async function getSharedProductionUrl(): Promise<string | null> {
  * and runs the same cross-midnight window logic.
  */
 export async function setSharedQuietHours(json: string): Promise<boolean> {
-  if (!isIos()) return false;
+  if (!isIos()) {
+    return false;
+  }
   try {
     const res = await native.setSharedQuietHours({ json });
     return res.ok;
@@ -456,7 +490,9 @@ export async function setSharedQuietHours(json: string): Promise<boolean> {
  * the moment the session expires).
  */
 export async function clearAllSharedState(): Promise<boolean> {
-  if (!isIos()) return false;
+  if (!isIos()) {
+    return false;
+  }
   try {
     const res = await native.clearAllSharedState();
     return res.ok;

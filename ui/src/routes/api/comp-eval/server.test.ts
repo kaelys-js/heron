@@ -45,7 +45,7 @@ async function post(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/comp-eval — single-offer evaluation', () => {
+describe('pOST /api/comp-eval — single-offer evaluation', () => {
   it('400 when base is missing', async () => {
     const r = await post({});
     expect(r.status).toBe(400);
@@ -64,7 +64,7 @@ describe('POST /api/comp-eval — single-offer evaluation', () => {
   });
 });
 
-describe('POST /api/comp-eval — comparison mode', () => {
+describe('pOST /api/comp-eval — comparison mode', () => {
   it('400 when compare=true and offer a is missing', async () => {
     const r = await post({ compare: true, b: { base: 100 } });
     expect(r.status).toBe(400);

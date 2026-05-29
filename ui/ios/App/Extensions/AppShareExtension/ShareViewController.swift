@@ -51,34 +51,77 @@ class ShareViewController: SLComposeServiceViewController {
         case failed(Int) // Other non-2xx HTTP status
     }
 
+    // MARK: - Pure request/response helpers (testable without extensionContext)
+
+    /// Map an HTTP status code to a ShareOutcome. 2xx is success; 401 is the
+    /// "sign in on the iPhone first" path; anything else is a generic failure
+    /// carrying the status for the alert. Extracted from the URLSession
+    /// completion so it can be unit-tested without a live backend.
+    static func outcome(forStatus status: Int) -> ShareOutcome {
+        if (200 ..< 300).contains(status) { return .success }
+        if status == 401 { return .unauthenticated }
+        return .failed(status)
+    }
+
+    /// Build the POST /api/pipeline request from the resolved backend, bearer
+    /// token, shared URL, and optional compose-sheet note. Returns nil when
+    /// the backend string can't form a URL. Extracted so the request shape
+    /// (path, headers, JSON body) is unit-testable without extensionContext.
+    static func pipelineRequest(backend: String, token: String, url: URL, note: String?) -> URLRequest? {
+        guard let apiUrl = URL(string: backend + "/api/pipeline") else { return nil }
+        var req = URLRequest(url: apiUrl, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 8)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let payload: [String: Any] = ["url": url.absoluteString, "note": note ?? "", "source": "ios-share"]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+        return req
+    }
+
+    /// Short-circuit outcome before any network call: `.unreachable` when no
+    /// backend is cached, `.unauthenticated` when no bearer token is cached,
+    /// or nil when both are present (proceed to POST). Extracted so the
+    /// precondition branches are unit-testable without the App Group/network.
+    static func preflightOutcome(backend: String?, token: String?) -> ShareOutcome? {
+        guard let backend, !backend.isEmpty else { return .unreachable }
+        if token == nil || token?.isEmpty == true { return .unauthenticated }
+        return nil
+    }
+
+    /// Title/message for the outcome alert, or nil for `.success` (which uses
+    /// a haptic, not a modal). Extracted from showOutcome so the user-facing
+    /// copy is unit-testable without presenting a real UIAlertController.
+    static func alertText(for outcome: ShareOutcome) -> (title: String, message: String)? {
+        switch outcome {
+        case .success:
+            return nil
+        case .unauthenticated:
+            return ("Sign in on Heron first",
+                    "Open the Heron app on this iPhone, sign in, then try sharing again.")
+        case .unreachable:
+            return ("Heron backend unreachable",
+                    "Open the Heron app once to discover your backend, then retry sharing.")
+        case let .failed(status):
+            return ("Couldn't save the link",
+                    "Server responded with HTTP \(status). Try again, or check the activity log inside the app.")
+        }
+    }
+
     /// Surface the outcome as a UIAlertController so the user knows
     /// whether their tap on "Post" actually did anything. Without
     /// this, the share sheet just disappears silently and the user
     /// has no way to know if the URL landed in their Inbox.
     @MainActor
     private func showOutcome(_ outcome: ShareOutcome) async {
-        let title: String
-        let message: String
-        switch outcome {
-        case .success:
-            // For success we use the system success haptic instead of
-            // a modal alert — feels native (matches Apple's Reminders
-            // share extension) and doesn't add a tap the user must
-            // dismiss.
+        guard let text = Self.alertText(for: outcome) else {
+            // .success → system success haptic instead of a modal alert —
+            // feels native (matches Apple's Reminders share extension) and
+            // doesn't add a tap the user must dismiss.
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             return
-        case .unauthenticated:
-            title = "Sign in on Heron first"
-            message = "Open the Heron app on this iPhone, sign in, then try sharing again."
-        case .unreachable:
-            title = "Heron backend unreachable"
-            message = "Open the Heron app once to discover your backend, then retry sharing."
-        case let .failed(status):
-            title = "Couldn't save the link"
-            message = "Server responded with HTTP \(status). Try again, or check the activity log inside the app."
         }
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            let alert = UIAlertController(title: text.title, message: text.message, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
                 continuation.resume()
             })
@@ -123,29 +166,19 @@ class ShareViewController: SLComposeServiceViewController {
         // change (see NativePlugin.setSharedBackendUrl /
         // setSharedBearerToken). If either is missing the user hasn't
         // opened + signed in to the host app yet.
-        guard let defaults = UserDefaults(suiteName: Brand.appGroup),
-              let backend = defaults.string(forKey: Brand.DefaultsKey.backendResolvedUrl)
-        else {
-            NSLog("[share] no backend cached — cannot post URL")
+        let defaults = UserDefaults(suiteName: Brand.appGroup)
+        let backend = defaults?.string(forKey: Brand.DefaultsKey.backendResolvedUrl)
+        let token = defaults?.string(forKey: Brand.DefaultsKey.bearerToken)
+        // Short-circuit before the network call: no backend → unreachable,
+        // no bearer token → unauthenticated (server would 401; a clear
+        // "sign in first" message beats a generic HTTP error).
+        if let preflight = Self.preflightOutcome(backend: backend, token: token) {
+            NSLog("[share] preflight outcome: \(preflight)")
+            return preflight
+        }
+        guard let req = Self.pipelineRequest(backend: backend!, token: token!, url: url, note: note) else {
             return .unreachable
         }
-        guard let apiUrl = URL(string: backend + "/api/pipeline") else {
-            return .unreachable
-        }
-        let token = defaults.string(forKey: Brand.DefaultsKey.bearerToken)
-        if token == nil || token?.isEmpty == true {
-            // No token → server will 401. Short-circuit so the user
-            // gets a clear "Sign in first" message instead of a
-            // generic HTTP error.
-            NSLog("[share] no bearer token cached — user must sign in first")
-            return .unauthenticated
-        }
-        var req = URLRequest(url: apiUrl, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 8)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue("Bearer \(token!)", forHTTPHeaderField: "Authorization")
-        let payload: [String: Any] = ["url": url.absoluteString, "note": note ?? "", "source": "ios-share"]
-        req.httpBody = try? JSONSerialization.data(withJSONObject: payload)
 
         return await withCheckedContinuation { (continuation: CheckedContinuation<ShareOutcome, Never>) in
             let task = URLSession.shared.dataTask(with: req) { _, response, error in
@@ -159,13 +192,7 @@ class ShareViewController: SLComposeServiceViewController {
                     return
                 }
                 NSLog("[share] posted, status=\(http.statusCode)")
-                if (200 ..< 300).contains(http.statusCode) {
-                    continuation.resume(returning: .success)
-                } else if http.statusCode == 401 {
-                    continuation.resume(returning: .unauthenticated)
-                } else {
-                    continuation.resume(returning: .failed(http.statusCode))
-                }
+                continuation.resume(returning: Self.outcome(forStatus: http.statusCode))
             }
             task.resume()
         }

@@ -23,17 +23,17 @@ async function runFollowupCadence(): Promise<JobResult> {
     if (total > 0) {
       logEvent(
         'followup-cadence',
-        'Follow-ups due: ' + meta.urgent + ' urgent · ' + meta.overdue + ' overdue',
+        `Follow-ups due: ${meta.urgent} urgent · ${meta.overdue} overdue`,
         {
           level: 'info',
           category: 'application',
-          message: meta.actionable + ' actionable applications · see /applied',
+          message: `${meta.actionable} actionable applications · see /applied`,
         },
       );
     }
     return {
       ok: true,
-      message: 'Refreshed cadence · ' + meta.actionable + ' actionable',
+      message: `Refreshed cadence · ${meta.actionable} actionable`,
       meta: { ...meta },
     };
   } catch (err) {

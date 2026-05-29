@@ -34,12 +34,12 @@ function readApplicationsSafe(source: string, profileId: string): string {
   try {
     return fs.readFileSync(profilePath(profileId, 'applications'), 'utf8');
   } catch (e) {
-    const code = (e as NodeJS.ErrnoException).code;
+    const { code } = e as NodeJS.ErrnoException;
     if (code !== 'ENOENT') {
       logEvent(source, 'Failed to read applications.md', {
         level: 'warn',
         category: 'application',
-        message: code + ': ' + (e instanceof Error ? e.message : String(e)),
+        message: `${code}: ${e instanceof Error ? e.message : String(e)}`,
       });
     }
     return '';
@@ -73,7 +73,9 @@ export function markClosed(arg1: string | undefined, arg2?: string, arg3?: strin
   const id = resolveId(profileId);
 
   let text = readApplicationsSafe('mark-closed', id);
-  if (!text) text = HEADER;
+  if (!text) {
+    text = HEADER;
+  }
   const lines = text.split('\n');
   let updated = false;
   for (let i = 0; i < lines.length; i++) {
@@ -84,8 +86,8 @@ export function markClosed(arg1: string | undefined, arg2?: string, arg3?: strin
       cells[statusIdx] = ' Closed ';
       if (reason && cells[notesIdx] !== undefined) {
         const existing = cells[notesIdx].trim();
-        const tag = 'auto-closed: ' + reason;
-        cells[notesIdx] = ' ' + (existing ? existing + ' · ' + tag : tag) + ' ';
+        const tag = `auto-closed: ${reason}`;
+        cells[notesIdx] = ` ${existing ? existing + ' · ' + tag : tag} `;
       }
       lines[i] = cells.join('|');
       updated = true;
@@ -94,14 +96,9 @@ export function markClosed(arg1: string | undefined, arg2?: string, arg3?: strin
   }
   if (!updated) {
     const today = new Date().toISOString().slice(0, 10);
-    const row =
-      '| - | ' +
-      today +
-      ' | (auto) | ' +
-      url +
-      ' | - | - | Closed | - | - | ' +
-      (reason ?? 'auto-closed') +
-      ' |';
+    const row = `| - | ${today} | (auto) | ${url} | - | - | Closed | - | - | ${
+      reason ?? 'auto-closed'
+    } |`;
     lines.push(row);
   }
   return writeApplicationsSafe('mark-closed', id, lines.join('\n'));
@@ -139,7 +136,9 @@ export function markStatus(
   const id = resolveId(profileId);
 
   let text = readApplicationsSafe('mark-status', id);
-  if (!text) text = HEADER;
+  if (!text) {
+    text = HEADER;
+  }
   const lines = text.split('\n');
   let updated = false;
   for (let i = 0; i < lines.length; i++) {
@@ -147,10 +146,10 @@ export function markStatus(
       const cells = lines[i].split('|');
       const statusIdx = cells.length >= 12 ? 7 : 6;
       const notesIdx = cells.length >= 12 ? 10 : 9;
-      cells[statusIdx] = ' ' + newStatus + ' ';
+      cells[statusIdx] = ` ${newStatus} `;
       if (note && cells[notesIdx] !== undefined) {
         const existing = cells[notesIdx].trim();
-        cells[notesIdx] = ' ' + (existing ? existing + ' · ' + note : note) + ' ';
+        cells[notesIdx] = ` ${existing ? existing + ' · ' + note : note} `;
       }
       lines[i] = cells.join('|');
       updated = true;
@@ -159,16 +158,9 @@ export function markStatus(
   }
   if (!updated) {
     const today = new Date().toISOString().slice(0, 10);
-    const row =
-      '| - | ' +
-      today +
-      ' | (auto) | ' +
-      url +
-      ' | - | - | ' +
-      newStatus +
-      ' | - | - | ' +
-      (note ?? 'auto') +
-      ' |';
+    const row = `| - | ${today} | (auto) | ${url} | - | - | ${newStatus} | - | - | ${
+      note ?? 'auto'
+    } |`;
     lines.push(row);
   }
   const writeOk = writeApplicationsSafe('mark-status', id, lines.join('\n'));
@@ -202,7 +194,9 @@ const INTERVIEW_STAGES = new Set([
 /** Fire tech-prep generation in the background when status moves into an
  *  interview stage. Best-effort: errors are swallowed. */
 function maybeAutoFireTechPrep(profileId: string, url: string, newStatus: string): void {
-  if (!INTERVIEW_STAGES.has(newStatus)) return;
+  if (!INTERVIEW_STAGES.has(newStatus)) {
+    return;
+  }
 
   // Look up the job by URL so we can pass jobId to the endpoint.
   // We import lazily to avoid a circular dep with parsers.ts.
@@ -211,11 +205,12 @@ function maybeAutoFireTechPrep(profileId: string, url: string, newStatus: string
       const { loadAllJobs } = await import('./parsers');
       const jobs = loadAllJobs('all');
       const match = jobs.find((j) => j.url === url);
-      if (!match) return;
+      if (!match) {
+        return;
+      }
       // Fire-and-forget HTTP call to our own tech-prep endpoint.
-      const q = match.profileId ? '?profile=' + encodeURIComponent(match.profileId) : '';
-      const fetchUrl =
-        'http://127.0.0.1:5174/api/job/' + encodeURIComponent(match.id) + '/tech-prep' + q;
+      const q = match.profileId ? `?profile=${encodeURIComponent(match.profileId)}` : '';
+      const fetchUrl = `http://127.0.0.1:5174/api/job/${encodeURIComponent(match.id)}/tech-prep${q}`;
       fetch(fetchUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -225,14 +220,12 @@ function maybeAutoFireTechPrep(profileId: string, url: string, newStatus: string
       });
       // Log the trigger so the user sees it in the bell.
       const { logEvent } = await import('./events');
-      logEvent('auto-tech-prep', 'Tech-prep auto-triggered · ' + newStatus, {
+      logEvent('auto-tech-prep', `Tech-prep auto-triggered · ${newStatus}`, {
         level: 'info',
         category: 'application',
-        message:
-          (match.company || '?') +
-          ' · ' +
-          (match.role || '?') +
-          ' — runs in background, watch the bell for completion.',
+        message: `${match.company || '?'} · ${
+          match.role || '?'
+        } — runs in background, watch the bell for completion.`,
         profileId: match.profileId,
       });
     } catch {
@@ -263,7 +256,9 @@ export function markApplied(
   const id = resolveId(profileId);
 
   let text = readApplicationsSafe('mark-applied', id);
-  if (!text) text = HEADER;
+  if (!text) {
+    text = HEADER;
+  }
   const lines = text.split('\n');
   let updated = false;
   for (let i = 0; i < lines.length; i++) {
@@ -278,16 +273,9 @@ export function markApplied(
   }
   if (!updated) {
     const today = new Date().toISOString().slice(0, 10);
-    const row =
-      '| - | ' +
-      today +
-      ' | ' +
-      (company || '(manual)') +
-      ' | ' +
-      (role || '') +
-      ' | ' +
-      url +
-      ' | - | Applied | - | - | manual mark |';
+    const row = `| - | ${today} | ${company || '(manual)'} | ${role || ''} | ${
+      url
+    } | - | Applied | - | - | manual mark |`;
     lines.push(row);
   }
   return writeApplicationsSafe('mark-applied', id, lines.join('\n'));

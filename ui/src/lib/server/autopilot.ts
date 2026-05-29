@@ -235,7 +235,9 @@ export function readConfig(): AutopilotConfig {
 
 export function readConfigForUser(userId: string): AutopilotConfig {
   const hit = cache.get(userId);
-  if (hit) return hit;
+  if (hit) {
+    return hit;
+  }
   try {
     const p = configPathForUser(userId);
     if (!fs.existsSync(p)) {
@@ -265,7 +267,9 @@ function mergeWithDefaults(partial: Partial<AutopilotConfig>): AutopilotConfig {
     thresholds: { ...DEFAULT_CONFIG.thresholds, ...(partial.thresholds ?? {}) },
     schedules: DEFAULT_CONFIG.schedules.map((d) => {
       const found = partial.schedules?.find((s) => s.id === d.id);
-      if (!found) return { ...d };
+      if (!found) {
+        return { ...d };
+      }
       return {
         ...d,
         enabled: found.enabled ?? d.enabled,
@@ -287,7 +291,7 @@ export function writeConfig(next: AutopilotConfig): void {
 export function writeConfigForUser(userId: string, next: AutopilotConfig): void {
   const p = configPathForUser(userId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify(next, null, 2) + '\n');
+  fs.writeFileSync(p, `${JSON.stringify(next, null, 2)}\n`);
   cache.set(userId, next);
 }
 
@@ -327,8 +331,12 @@ function nextMatchTimestamp(t: DailyTrigger, from: number = Date.now()): number 
     const d = new Date(from);
     d.setDate(d.getDate() + i);
     d.setHours(t.hour, t.minute, 0, 0);
-    if (d.getTime() <= from) continue;
-    if (!days.includes(d.getDay())) continue;
+    if (d.getTime() <= from) {
+      continue;
+    }
+    if (!days.includes(d.getDay())) {
+      continue;
+    }
     return d.getTime();
   }
   return from + 7 * 24 * 60 * 60 * 1000;
@@ -339,30 +347,40 @@ function nextMatchTimestampWeekly(t: WeeklyTrigger, from: number = Date.now()): 
     const d = new Date(from);
     d.setDate(d.getDate() + i);
     d.setHours(t.hour, t.minute, 0, 0);
-    if (d.getTime() <= from) continue;
-    if (d.getDay() !== t.dayOfWeek) continue;
+    if (d.getTime() <= from) {
+      continue;
+    }
+    if (d.getDay() !== t.dayOfWeek) {
+      continue;
+    }
     return d.getTime();
   }
   return from + 7 * 24 * 60 * 60 * 1000;
 }
 
 export function nextRunAt(s: Schedule): number | null {
-  if (!s.enabled) return null;
-  if (s.trigger.type === 'daily') return nextMatchTimestamp(s.trigger);
-  if (s.trigger.type === 'weekly') return nextMatchTimestampWeekly(s.trigger);
+  if (!s.enabled) {
+    return null;
+  }
+  if (s.trigger.type === 'daily') {
+    return nextMatchTimestamp(s.trigger);
+  }
+  if (s.trigger.type === 'weekly') {
+    return nextMatchTimestampWeekly(s.trigger);
+  }
   return null;
 }
 
 async function runTask(s: Schedule): Promise<void> {
   if (listRunning().includes(s.task)) {
-    logEvent('autopilot', 'Skipped: ' + s.name, {
+    logEvent('autopilot', `Skipped: ${s.name}`, {
       level: 'warn',
       category: 'system',
-      message: 'Task ' + s.task + ' already running',
+      message: `Task ${s.task} already running`,
     });
     return;
   }
-  logEvent('autopilot', 'Triggering ' + s.name, { category: 'system', message: 'task=' + s.task });
+  logEvent('autopilot', `Triggering ${s.name}`, { category: 'system', message: `task=${s.task}` });
   patchSchedule(s.id, { lastRunAt: Date.now(), lastRunResult: 'started' });
 
   // Pluggable path: any registered job (the legacy 3 + every hygiene /
@@ -411,10 +429,10 @@ async function runTask(s: Schedule): Promise<void> {
       });
       break;
     default:
-      logEvent('autopilot', 'Unknown task: ' + s.task, {
+      logEvent('autopilot', `Unknown task: ${s.task}`, {
         level: 'error',
         category: 'system',
-        message: 'No registered job and no legacy fallback for ' + s.task,
+        message: `No registered job and no legacy fallback for ${s.task}`,
       });
   }
 }
@@ -436,9 +454,9 @@ async function runScanForCurrentUsersProfiles(): Promise<void> {
       return;
     }
     for (const p of profiles) {
-      logEvent('autopilot', 'Daily scan for profile ' + p.slug, {
+      logEvent('autopilot', `Daily scan for profile ${p.slug}`, {
         category: 'system',
-        message: 'fan-out · profile=' + p.slug,
+        message: `fan-out · profile=${p.slug}`,
       });
       runScan(p.slug);
     }
@@ -459,9 +477,9 @@ async function runGeminiForCurrentUsersProfiles(top: number): Promise<void> {
       return;
     }
     for (const p of profiles) {
-      logEvent('autopilot', 'Gemini for profile ' + p.slug, {
+      logEvent('autopilot', `Gemini for profile ${p.slug}`, {
         category: 'system',
-        message: 'fan-out · profile=' + p.slug + ' · top=' + top,
+        message: `fan-out · profile=${p.slug} · top=${top}`,
       });
       runGemini(top, p.slug);
     }
@@ -483,26 +501,32 @@ function patchSchedule(id: ScheduleId, patch: Partial<Schedule>): void {
 export function runScheduleNow(id: ScheduleId): { ok: boolean; message: string } {
   const cfg = readConfig();
   const s = cfg.schedules.find((x) => x.id === id);
-  if (!s) return { ok: false, message: 'Unknown schedule: ' + id };
+  if (!s) {
+    return { ok: false, message: 'Unknown schedule: ' + id };
+  }
   if (s.trigger.type === 'after') {
     return {
       ok: false,
-      message: 'This schedule runs only when its trigger event fires (' + s.trigger.task + ').',
+      message: `This schedule runs only when its trigger event fires (${s.trigger.task}).`,
     };
   }
   runTask(s);
-  return { ok: true, message: 'Triggered ' + s.name };
+  return { ok: true, message: `Triggered ${s.name}` };
 }
 
 function onTaskCompleted(task: TaskName): void {
   const cfg = readConfig();
-  if (!cfg.globalEnabled) return;
+  if (!cfg.globalEnabled) {
+    return;
+  }
   for (const s of cfg.schedules) {
-    if (!s.enabled) continue;
+    if (!s.enabled) {
+      continue;
+    }
     if (s.trigger.type === 'after' && s.trigger.task === task) {
-      logEvent('autopilot', 'After-trigger: ' + s.name, {
+      logEvent('autopilot', `After-trigger: ${s.name}`, {
         category: 'system',
-        message: 'after ' + task,
+        message: `after ${task}`,
       });
       runTask(s);
     }
@@ -518,8 +542,12 @@ function trackResult(task: TaskName, success: boolean, message?: string): void {
   const cfg = readConfig();
   let dirty = false;
   const next = cfg.schedules.map((s) => {
-    if (s.task !== task) return s;
-    if (s.lastRunResult !== 'started') return s;
+    if (s.task !== task) {
+      return s;
+    }
+    if (s.lastRunResult !== 'started') {
+      return s;
+    }
     dirty = true;
     return {
       ...s,
@@ -527,7 +555,9 @@ function trackResult(task: TaskName, success: boolean, message?: string): void {
       lastRunMessage: message,
     };
   });
-  if (dirty) writeConfig({ ...cfg, schedules: next });
+  if (dirty) {
+    writeConfig({ ...cfg, schedules: next });
+  }
 
   // Registry-declared schedules -- update job-last-run.json. Only flip from
   // 'started' to a terminal state so a manual run doesn't clobber a
@@ -547,13 +577,17 @@ let schedulerInterval: ReturnType<typeof setInterval> | null = null;
 const SCHEDULER_BUS_NAME = 'autopilot/scheduler-task-tracker';
 
 export function startScheduler(): void {
-  if (schedulerStarted) return;
+  if (schedulerStarted) {
+    return;
+  }
   schedulerStarted = true;
 
   // Subscribe to task lifecycle events on the bus (avoids a circular import with orchestrator).
   // installBusListener is HMR-idempotent -- see events.ts.
   installBusListener(SCHEDULER_BUS_NAME, (ev: ActivityEvent) => {
-    if (ev.category !== 'task' && ev.category !== 'system') return;
+    if (ev.category !== 'task' && ev.category !== 'system') {
+      return;
+    }
     const task = ev.source as TaskName;
     // Accept any registered job id OR the 4 legacy task ids. Filtering by
     // an open-ended allowlist is what makes registry-declared schedules
@@ -561,7 +595,9 @@ export function startScheduler(): void {
     // 4 hardcoded ids passed this gate.
     const isLegacy = ['scan', 'gemini', 'apply-linkedin', 'auto-eval'].includes(task);
     const isRegistered = !!getJob(task);
-    if (!isLegacy && !isRegistered) return;
+    if (!isLegacy && !isRegistered) {
+      return;
+    }
     // F10 -- scope the trackResult + after-trigger lookup to ev.userId
     // (if present). Both `trackResult` and `onTaskCompleted` call
     // `readConfig()` / `writeConfig()` which are now per-user. Without
@@ -638,7 +674,9 @@ async function tick(): Promise<void> {
 function tickForCurrentUser(): void {
   try {
     const cfg = readConfig();
-    if (!cfg.globalEnabled) return;
+    if (!cfg.globalEnabled) {
+      return;
+    }
     const now = Date.now();
     const today = startOfTodayLocal();
     const nowDate = new Date(now);
@@ -651,20 +689,38 @@ function tickForCurrentUser(): void {
     const userTaskIds = new Set<string>();
     for (const s of cfg.schedules) {
       userTaskIds.add(s.task);
-      if (!s.enabled) continue;
+      if (!s.enabled) {
+        continue;
+      }
       const t = s.trigger;
       if (t.type === 'daily') {
-        if (t.hour !== hour) continue;
-        if (t.minute !== minute) continue;
+        if (t.hour !== hour) {
+          continue;
+        }
+        if (t.minute !== minute) {
+          continue;
+        }
         const days = t.weekdays.length === 0 ? [0, 1, 2, 3, 4, 5, 6] : t.weekdays;
-        if (!days.includes(weekday)) continue;
-        if (s.lastRunAt && s.lastRunAt >= today) continue;
+        if (!days.includes(weekday)) {
+          continue;
+        }
+        if (s.lastRunAt && s.lastRunAt >= today) {
+          continue;
+        }
         runTask(s);
       } else if (t.type === 'weekly') {
-        if (t.dayOfWeek !== weekday) continue;
-        if (t.hour !== hour) continue;
-        if (t.minute !== minute) continue;
-        if (s.lastRunAt && s.lastRunAt >= today) continue;
+        if (t.dayOfWeek !== weekday) {
+          continue;
+        }
+        if (t.hour !== hour) {
+          continue;
+        }
+        if (t.minute !== minute) {
+          continue;
+        }
+        if (s.lastRunAt && s.lastRunAt >= today) {
+          continue;
+        }
         runTask(s);
       }
       // 'after' triggers fire from onTaskCompleted, not from tick.
@@ -676,24 +732,44 @@ function tickForCurrentUser(): void {
     //     per-user `data/users/{uid}/profiles/_shared/job-last-run.json`
     //     (see job-last-run.ts).
     for (const def of listJobs()) {
-      if (!def.allowManual) continue; // skip pure after-event chains
-      if (userTaskIds.has(def.id)) continue; // user override wins
+      if (!def.allowManual) {
+        continue;
+      } // skip pure after-event chains
+      if (userTaskIds.has(def.id)) {
+        continue;
+      } // user override wins
       const t = def.trigger;
       if (t.type === 'daily') {
-        if (t.hour !== hour) continue;
-        if (t.minute !== minute) continue;
+        if (t.hour !== hour) {
+          continue;
+        }
+        if (t.minute !== minute) {
+          continue;
+        }
         const days = !t.weekdays || t.weekdays.length === 0 ? [0, 1, 2, 3, 4, 5, 6] : t.weekdays;
-        if (!days.includes(weekday)) continue;
+        if (!days.includes(weekday)) {
+          continue;
+        }
       } else if (t.type === 'weekly') {
-        if (t.dayOfWeek !== weekday) continue;
-        if (t.hour !== hour) continue;
-        if (t.minute !== minute) continue;
+        if (t.dayOfWeek !== weekday) {
+          continue;
+        }
+        if (t.hour !== hour) {
+          continue;
+        }
+        if (t.minute !== minute) {
+          continue;
+        }
       } else {
         continue; // manual or after -- not driven by the clock
       }
       const last = readLastRun(def.id);
-      if (last && last.lastRunAt >= today) continue; // already fired today
-      if (isJobRunning(def.id)) continue; // in-flight dedupe
+      if (last && last.lastRunAt >= today) {
+        continue;
+      } // already fired today
+      if (isJobRunning(def.id)) {
+        continue;
+      } // in-flight dedupe
       runRegistryJob(def.id, def.label);
     }
   } catch (e) {
@@ -703,7 +779,7 @@ function tickForCurrentUser(): void {
 
 /** Fire a registry-declared job and record its result in JobLastRun. */
 function runRegistryJob(id: string, label: string): void {
-  logEvent('autopilot', 'Triggering ' + label, { category: 'system', message: 'task=' + id });
+  logEvent('autopilot', `Triggering ${label}`, { category: 'system', message: `task=${id}` });
   writeLastRun(id, { lastRunAt: Date.now(), lastRunResult: 'started' });
   runJobById(id)
     .then((r) => {
@@ -719,6 +795,6 @@ function runRegistryJob(id: string, label: string): void {
         lastRunResult: 'failure',
         lastRunMessage: err instanceof Error ? err.message : String(err),
       });
-      reportServerError('autopilot', 'Registry job ' + id + ' threw', err, { category: 'system' });
+      reportServerError('autopilot', `Registry job ${id} threw`, err, { category: 'system' });
     });
 }

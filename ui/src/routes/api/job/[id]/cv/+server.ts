@@ -20,9 +20,13 @@ export const POST = wrap(
   'job-cv',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
-    if (!job.url) badRequest('Job has no URL — cannot run evaluate');
+    if (!job.url) {
+      badRequest('Job has no URL — cannot run evaluate');
+    }
 
     // Fire and forget -- the activity feed is the source of truth for progress.
     // runEvaluate resolves with {ok, code} rather than throwing, but the outer
@@ -31,7 +35,7 @@ export const POST = wrap(
     // spawning Claude (`evaluate` writes report + PDF into that profile's
     // reports/ + output/ dirs).
     runEvaluate(job.url, 'evaluate', profileId).catch((err) =>
-      reportServerError('job-cv', 'Evaluate rejected for ' + (job.company || job.id), err, {
+      reportServerError('job-cv', `Evaluate rejected for ${job.company || job.id}`, err, {
         category: 'task',
       }),
     );

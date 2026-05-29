@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { AGENT_CLI } from './cli';
 
-describe('AGENT_CLI', () => {
+describe('aGENT_CLI', () => {
   it('is a non-empty string', () => {
     expect(typeof AGENT_CLI).toBe('string');
     expect(AGENT_CLI.length).toBeGreaterThan(0);

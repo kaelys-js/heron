@@ -24,7 +24,9 @@ import { createSseClient } from './sse-client';
 const WIDGET_RELEVANT_SOURCES = ['apply', 'interview', 'scan', 'issue'];
 
 function shouldRefreshWidgets(source?: string): boolean {
-  if (!source) return false;
+  if (!source) {
+    return false;
+  }
   return WIDGET_RELEVANT_SOURCES.some((tag) => source.startsWith(tag));
 }
 
@@ -50,7 +52,9 @@ export function installNotificationsBridge(): () => void {
       } catch {
         return;
       }
-      if (!event) return;
+      if (!event) {
+        return;
+      }
       // Fire a widget-stale event whenever the activity feed reports
       // something that changes widget data -- even for info-level events.
       // The +layout.svelte boot path listens for this and re-fetches

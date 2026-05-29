@@ -6,7 +6,7 @@ import { render } from '@testing-library/svelte';
 import OfflineIndicator from './OfflineIndicator.svelte';
 import { onlineStore } from '$lib/client/online-status.svelte';
 
-describe('OfflineIndicator', () => {
+describe('offlineIndicator', () => {
   beforeEach(() => {
     onlineStore.online = true;
   });

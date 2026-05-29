@@ -23,14 +23,14 @@ function stage(over: Partial<any> = {}) {
   };
 }
 
-describe('JobStageBadge — null / empty', () => {
+describe('jobStageBadge — null / empty', () => {
   it('renders nothing when stage is null', () => {
     const { container } = render(JobStageBadge, { props: { stage: null } });
     expect(container.innerHTML.trim()).toBe('<!---->');
   });
 });
 
-describe('JobStageBadge — days-quiet banding', () => {
+describe('jobStageBadge — days-quiet banding', () => {
   it('< 7 days → emerald tint', () => {
     const { container } = render(JobStageBadge, {
       props: { stage: stage({ lastTouchAt: Date.now() - 2 * DAY }) },
@@ -68,7 +68,7 @@ describe('JobStageBadge — days-quiet banding', () => {
   });
 });
 
-describe('JobStageBadge — ghosted', () => {
+describe('jobStageBadge — ghosted', () => {
   it('shows "ghosted" pill when ghostedAt is set', () => {
     const { container } = render(JobStageBadge, {
       props: { stage: stage({ ghostedAt: Date.now() - DAY }) },
@@ -84,7 +84,7 @@ describe('JobStageBadge — ghosted', () => {
   });
 });
 
-describe('JobStageBadge — next action', () => {
+describe('jobStageBadge — next action', () => {
   it('renders next-action pill when nextActionDue + not compact', () => {
     const { container } = render(JobStageBadge, {
       props: {

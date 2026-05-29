@@ -12,8 +12,12 @@ import fs from 'node:fs';
 export const POST = wrap('status', async ({ request }: any) => {
   const body = await request.json().catch(() => ({}));
   const { url, newStatus, notes } = body ?? {};
-  if (!url) badRequest('url required', { field: 'url' });
-  if (!newStatus) badRequest('newStatus required', { field: 'newStatus' });
+  if (!url) {
+    badRequest('url required', { field: 'url' });
+  }
+  if (!newStatus) {
+    badRequest('newStatus required', { field: 'newStatus' });
+  }
 
   let text = '';
   try {
@@ -30,36 +34,29 @@ export const POST = wrap('status', async ({ request }: any) => {
     if (lines[i].includes(url) && lines[i].startsWith('|')) {
       const cells = lines[i].split('|');
       if (cells.length > 6) {
-        cells[6] = ' ' + newStatus + ' ';
-        if (notes && cells.length > 9) cells[9] = ' ' + notes + ' ';
+        cells[6] = ` ${newStatus} `;
+        if (notes && cells.length > 9) {
+          cells[9] = ' ' + notes + ' ';
+        }
         lines[i] = cells.join('|');
         updated = true;
-        if (cells.length > 4)
+        if (cells.length > 4) {
           companyRole = (cells[3]?.trim() || '') + ' · ' + (cells[4]?.trim() || '');
+        }
       }
       break;
     }
   }
   if (!updated) {
     const today = new Date().toISOString().slice(0, 10);
-    lines.push(
-      '| - | ' +
-        today +
-        ' | (manual) | ' +
-        url +
-        ' | - | ' +
-        newStatus +
-        ' | - | - | ' +
-        (notes ?? '') +
-        ' |',
-    );
+    lines.push(`| - | ${today} | (manual) | ${url} | - | ${newStatus} | - | - | ${notes ?? ''} |`);
   }
   try {
     fs.writeFileSync(activePath('applications'), lines.join('\n'));
   } catch (e: any) {
-    throw new Error('failed to write applications.md: ' + (e?.message ?? String(e)));
+    throw new Error(`failed to write applications.md: ${e?.message ?? String(e)}`);
   }
-  logEvent('status', 'Status changed to ' + newStatus, {
+  logEvent('status', `Status changed to ${newStatus}`, {
     level: 'success',
     category: 'application',
     message: companyRole || url,

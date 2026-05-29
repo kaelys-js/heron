@@ -24,7 +24,9 @@ export function validateOptional(v: string | undefined | null): boolean {
 
 /** Strict required -- empty is a failure. */
 export function validateRequired(v: string | undefined | null): ValidationResult {
-  if (validateOptional(v)) return fail('Required');
+  if (validateOptional(v)) {
+    return fail('Required');
+  }
   return OK;
 }
 
@@ -38,10 +40,16 @@ export function validateRequired(v: string | undefined | null): ValidationResult
  */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function validateEmail(v: string): ValidationResult {
-  if (validateOptional(v)) return OK;
+  if (validateOptional(v)) {
+    return OK;
+  }
   const t = v.trim();
-  if (t.length > 254) return fail('Email is too long (max 254 chars)');
-  if (!EMAIL_RE.test(t)) return fail("Doesn't look like a valid email — check for typos");
+  if (t.length > 254) {
+    return fail('Email is too long (max 254 chars)');
+  }
+  if (!EMAIL_RE.test(t)) {
+    return fail("Doesn't look like a valid email — check for typos");
+  }
   return OK;
 }
 
@@ -53,14 +61,21 @@ export function validateEmail(v: string): ValidationResult {
  * 7-15 digits total (E.164 max), optional leading +.
  */
 export function validatePhone(v: string): ValidationResult {
-  if (validateOptional(v)) return OK;
+  if (validateOptional(v)) {
+    return OK;
+  }
   const t = v.trim();
   // Strip everything that's not a digit or '+' to count digits
   const digits = t.replace(/[^\d]/g, '');
-  if (digits.length < 7) return fail('Too short — phone numbers are at least 7 digits');
-  if (digits.length > 15) return fail('Too long — E.164 max is 15 digits');
-  if (!/^\+?[\d\s\-().]+$/.test(t))
+  if (digits.length < 7) {
+    return fail('Too short — phone numbers are at least 7 digits');
+  }
+  if (digits.length > 15) {
+    return fail('Too long — E.164 max is 15 digits');
+  }
+  if (!/^\+?[\d\s\-().]+$/.test(t)) {
     return fail('Use only digits, spaces, dashes, dots, parens, and an optional leading +');
+  }
   return OK;
 }
 
@@ -72,17 +87,25 @@ export function validatePhone(v: string): ValidationResult {
  */
 function normaliseUrl(v: string): string | null {
   const t = v.trim();
-  if (!t) return null;
+  if (!t) {
+    return null;
+  }
   // Already has a protocol -- use as-is
-  if (/^https?:\/\//i.test(t)) return t;
+  if (/^https?:\/\//i.test(t)) {
+    return t;
+  }
   // Looks like a host (contains a dot, no spaces) -- assume https
-  if (/\./.test(t) && !/\s/.test(t)) return 'https://' + t;
+  if (/\./.test(t) && !/\s/.test(t)) {
+    return 'https://' + t;
+  }
   return null;
 }
 
 function tryParseUrl(v: string): URL | null {
   const norm = normaliseUrl(v);
-  if (!norm) return null;
+  if (!norm) {
+    return null;
+  }
   try {
     return new URL(norm);
   } catch {
@@ -93,9 +116,13 @@ function tryParseUrl(v: string): URL | null {
 // ---- Generic URL ------------------------------------------------------
 
 export function validateUrl(v: string): ValidationResult {
-  if (validateOptional(v)) return OK;
+  if (validateOptional(v)) {
+    return OK;
+  }
   const u = tryParseUrl(v);
-  if (!u) return fail("Doesn't look like a URL — try https://example.com");
+  if (!u) {
+    return fail("Doesn't look like a URL — try https://example.com");
+  }
   if (u.protocol !== 'https:' && u.protocol !== 'http:') {
     return fail('URL must use http or https');
   }
@@ -114,17 +141,19 @@ export function validateUrl(v: string): ValidationResult {
  */
 function makeHostValidator(allowedSuffixes: string[], displayName: string, exampleHint: string) {
   return (v: string): ValidationResult => {
-    if (validateOptional(v)) return OK;
+    if (validateOptional(v)) {
+      return OK;
+    }
     const u = tryParseUrl(v);
-    if (!u) return fail("Doesn't look like a URL — try " + exampleHint);
+    if (!u) {
+      return fail("Doesn't look like a URL — try " + exampleHint);
+    }
     const host = u.hostname.toLowerCase().replace(/^www\./, '');
     const matched = allowedSuffixes.some(
-      (suffix) => host === suffix || host.endsWith('.' + suffix),
+      (suffix) => host === suffix || host.endsWith(`.${suffix}`),
     );
     if (!matched) {
-      return fail(
-        'Expected a ' + displayName + ' URL — host should be ' + allowedSuffixes.join(' or '),
-      );
+      return fail(`Expected a ${displayName} URL — host should be ${allowedSuffixes.join(' or ')}`);
     }
     return OK;
   };
@@ -149,9 +178,15 @@ export const validateTwitter = makeHostValidator(
  * a real URL and not a host typo like "yousite.dev " (trailing space).
  */
 export function validatePortfolio(v: string): ValidationResult {
-  if (validateOptional(v)) return OK;
+  if (validateOptional(v)) {
+    return OK;
+  }
   const u = tryParseUrl(v);
-  if (!u) return fail("Doesn't look like a URL — try https://your-site.dev");
-  if (u.hostname.length < 4) return fail('Hostname looks too short — double-check');
+  if (!u) {
+    return fail("Doesn't look like a URL — try https://your-site.dev");
+  }
+  if (u.hostname.length < 4) {
+    return fail('Hostname looks too short — double-check');
+  }
   return OK;
 }

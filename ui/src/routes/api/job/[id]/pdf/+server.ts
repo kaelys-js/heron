@@ -14,9 +14,13 @@ import { reportServerError } from '$lib/server/events';
 
 export const GET = async ({ params, url }: { params: { id: string }; url: URL }) => {
   const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) throw error(404, 'Job not found');
+  if (!resolved) {
+    throw error(404, 'Job not found');
+  }
   const { job, profileId } = resolved;
-  if (!job.pdfFile) throw error(404, 'No CV PDF generated for this job yet');
+  if (!job.pdfFile) {
+    throw error(404, 'No CV PDF generated for this job yet');
+  }
 
   // Resolve safely under THIS JOB'S profile output dir -- reject traversal.
   const outputDir = profilePath(profileId, 'output-dir');
@@ -26,7 +30,7 @@ export const GET = async ({ params, url }: { params: { id: string }; url: URL })
     throw error(400, 'Invalid PDF path');
   }
   if (!fs.existsSync(candidate)) {
-    throw error(404, 'PDF file missing on disk: ' + job.pdfFile);
+    throw error(404, `PDF file missing on disk: ${job.pdfFile}`);
   }
 
   // existsSync → readFileSync is technically a TOCTOU race; if the file
@@ -40,15 +44,15 @@ export const GET = async ({ params, url }: { params: { id: string }; url: URL })
     } catch (e) {
       reportServerError('job-pdf', 'Failed to read PDF', e, {
         category: 'api',
-        link: '/job/' + params.id,
+        link: `/job/${params.id}`,
       });
-      throw error(404, 'PDF file unreadable: ' + (e instanceof Error ? e.message : String(e)));
+      throw error(404, `PDF file unreadable: ${e instanceof Error ? e.message : String(e)}`);
     }
   })();
   return new Response(buf, {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'inline; filename="' + path.basename(candidate) + '"',
+      'Content-Disposition': `inline; filename="${path.basename(candidate)}"`,
       'Content-Length': String(buf.byteLength),
       // 5 min cache -- tailored CVs don't change after they're written
       'Cache-Control': 'private, max-age=300',

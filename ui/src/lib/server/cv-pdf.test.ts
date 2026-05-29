@@ -13,7 +13,9 @@ const fsMock = {
   readFileSync: vi.fn((p: string) => files[p]?.content ?? ''),
   statSync: vi.fn((p: string) => {
     const f = files[p];
-    if (!f) throw new Error('ENOENT: ' + p);
+    if (!f) {
+      throw new Error('ENOENT: ' + p);
+    }
     return { mtimeMs: f.mtimeMs, size: f.size };
   }),
   writeFileSync: vi.fn(),
@@ -35,9 +37,15 @@ vi.mock('./events', () => ({
 
 vi.mock('./profile-paths', () => ({
   profilePath: (id: string, key: string) => {
-    if (key === 'output-dir') return `/tmp/data/profiles/${id}/output`;
-    if (key === 'cv-md') return `/tmp/data/profiles/${id}/cv.md`;
-    if (key === 'profile-yml') return `/tmp/data/profiles/${id}/profile.yml`;
+    if (key === 'output-dir') {
+      return `/tmp/data/profiles/${id}/output`;
+    }
+    if (key === 'cv-md') {
+      return `/tmp/data/profiles/${id}/cv.md`;
+    }
+    if (key === 'profile-yml') {
+      return `/tmp/data/profiles/${id}/profile.yml`;
+    }
     return `/tmp/data/profiles/${id}`;
   },
   ensureProfileDirs: vi.fn(),
@@ -64,7 +72,9 @@ beforeEach(() => {
   fsMock.readFileSync.mockReset().mockImplementation((p: string) => files[p]?.content ?? '');
   fsMock.statSync.mockReset().mockImplementation((p: string) => {
     const f = files[p];
-    if (!f) throw new Error('ENOENT');
+    if (!f) {
+      throw new Error('ENOENT');
+    }
     return { mtimeMs: f.mtimeMs, size: f.size };
   });
 });

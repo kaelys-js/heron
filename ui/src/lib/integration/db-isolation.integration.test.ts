@@ -66,7 +66,7 @@ describe('test-setup.ts — DB env var is set BEFORE server imports', () => {
 });
 
 describe('runtime check — current test process does NOT use repo data/', () => {
-  it('HERON_DATA_DIR is set + points outside the repo', () => {
+  it('hERON_DATA_DIR is set + points outside the repo', () => {
     const dataDir = process.env.HERON_DATA_DIR;
     expect(dataDir).toBeTruthy();
     // Must NOT be the repo's data/ dir
@@ -75,7 +75,7 @@ describe('runtime check — current test process does NOT use repo data/', () =>
     expect(dataDir!.startsWith(os.tmpdir())).toBe(true);
   });
 
-  it('HERON_DATA_DIR exists on disk + is writable', () => {
+  it('hERON_DATA_DIR exists on disk + is writable', () => {
     const dataDir = process.env.HERON_DATA_DIR!;
     expect(fs.existsSync(dataDir)).toBe(true);
     // Touch + remove a probe file

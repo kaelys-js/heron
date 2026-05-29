@@ -11,6 +11,7 @@ import { getLead, attachDraftPath, setThreadState } from '$lib/server/inbound-le
 import { getActiveProfileId } from '$lib/server/profiles';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const TIMEOUT_MS = 90_000;
 
 type Body = {
@@ -55,7 +56,7 @@ function spawnRecruiterReply(
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('recruiter-reply timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`recruiter-reply timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -63,8 +64,11 @@ function spawnRecruiterReply(
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolveP({ stdout });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolveP({ stdout });
+      }
     });
   });
 }
@@ -79,14 +83,16 @@ export const POST = wrap(
   async ({ params, request }: { params: { id: string }; request: Request }) => {
     const body = (await request.json().catch(() => ({}))) as Body;
     const lead = getLead(params.id);
-    if (!lead) badRequest('Lead not found: ' + params.id);
+    if (!lead) {
+      badRequest('Lead not found: ' + params.id);
+    }
     const profileId = getActiveProfileId();
     // Refuse to draft for scam / mass-blast -- return a stub message.
     if (lead!.kind === 'scam' || lead!.kind === 'mass-blast') {
       return {
         ok: true,
         skipped: lead!.kind,
-        message: 'Lead classified as ' + lead!.kind + ' — drafting refused',
+        message: `Lead classified as ${lead!.kind} — drafting refused`,
       };
     }
     try {
@@ -104,7 +110,7 @@ export const POST = wrap(
         attachDraftPath(lead!.id, replyPath);
         setThreadState(lead!.id, 'drafted');
       }
-      logEvent('recruiter-reply', 'Draft ready for ' + lead!.senderName, {
+      logEvent('recruiter-reply', `Draft ready for ${lead!.senderName}`, {
         level: 'success',
         category: 'application',
         message: replyPath ?? '(no path emitted)',

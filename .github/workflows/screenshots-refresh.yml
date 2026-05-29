@@ -36,6 +36,12 @@ on:
 permissions:
   contents: read
 
+# Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
+# absent turbo falls back to the local actions/cache.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 concurrency:
   group: screenshots-refresh
   cancel-in-progress: false # let a queued run finish; no point cancelling

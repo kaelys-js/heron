@@ -49,7 +49,7 @@ describe('screenshotBypassUser', () => {
     process.env.HERON_DATA_DIR = tmpRoot;
     for (const v of ['0', 'false', '', 'no', 'off']) {
       process.env.HERON_SCREENSHOT_MODE = v;
-      expect(screenshotBypassUser(), 'HERON_SCREENSHOT_MODE=' + JSON.stringify(v)).toBeNull();
+      expect(screenshotBypassUser(), `HERON_SCREENSHOT_MODE=${JSON.stringify(v)}`).toBeNull();
     }
   });
 
@@ -104,7 +104,7 @@ describe('screenshotBypassUser', () => {
 
   // Cross-platform sanity -- macOS tmpdir is /var/folders/..., Linux is /tmp,
   // Windows is C:\Users\...\AppData\Local\Temp. Realpath resolves all three.
-  it('honors realpath of tmpdir on ' + platform(), () => {
+  it(`honors realpath of tmpdir on ${platform()}`, () => {
     process.env.HERON_SCREENSHOT_MODE = '1';
     process.env.HERON_DATA_DIR = tmpRoot;
     expect(screenshotBypassUser()).not.toBeNull();

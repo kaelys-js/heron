@@ -13,14 +13,18 @@ vi.mock('node:fs', async () => {
       ...actual,
       existsSync: (p: string) => p.includes('exists'),
       readFileSync: (p: string) => {
-        if (p.includes('exists')) return 'file contents';
+        if (p.includes('exists')) {
+          return 'file contents';
+        }
         throw new Error('ENOENT');
       },
       readdirSync: (_p: string) => ['evaluate.md', 'apply.md', 'README.md', '_shared.md'],
     },
     existsSync: (p: string) => p.includes('exists'),
     readFileSync: (p: string) => {
-      if (p.includes('exists')) return 'file contents';
+      if (p.includes('exists')) {
+        return 'file contents';
+      }
       throw new Error('ENOENT');
     },
     readdirSync: (_p: string) => ['evaluate.md', 'apply.md', 'README.md', '_shared.md'],
@@ -30,16 +34,16 @@ vi.mock('node:fs', async () => {
 const { ROOT, MODES_DIR, ENV_FILE, readSafe, listModes } = await import('./files');
 
 describe('files exports -- path constants', () => {
-  it('ROOT is an absolute path', () => {
+  it('rOOT is an absolute path', () => {
     expect(ROOT.startsWith('/')).toBe(true);
   });
 
-  it('MODES_DIR is under ROOT', () => {
+  it('mODES_DIR is under ROOT', () => {
     expect(MODES_DIR.startsWith(ROOT)).toBe(true);
     expect(MODES_DIR.endsWith('modes')).toBe(true);
   });
 
-  it('ENV_FILE is named .env under ROOT', () => {
+  it('eNV_FILE is named .env under ROOT', () => {
     expect(ENV_FILE.endsWith('.env')).toBe(true);
   });
 });

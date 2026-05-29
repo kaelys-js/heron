@@ -17,7 +17,9 @@ marked.use({
 
 /** Render markdown to a sanitized HTML string. */
 export function renderMarkdown(md: string | null | undefined): string {
-  if (!md) return '';
+  if (!md) {
+    return '';
+  }
   const raw = marked.parse(md) as string;
   return DOMPurify.sanitize(raw, {
     // Permitted HTML elements. Mirrors GitHub's allowlist plus a few
@@ -133,7 +135,9 @@ export function renderMarkdown(md: string | null | undefined): string {
  *  fields like job titles, company names, etc. where we want bold/italic
  *  emphasis but no headings/lists. */
 export function renderMarkdownInline(md: string | null | undefined): string {
-  if (!md) return '';
+  if (!md) {
+    return '';
+  }
   const raw = marked.parseInline(md) as string;
   return DOMPurify.sanitize(raw, {
     ALLOWED_TAGS: [

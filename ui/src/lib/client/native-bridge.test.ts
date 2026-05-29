@@ -75,7 +75,9 @@ beforeEach(() => {
   __netListener = null;
   __subscriptionRemoved = false;
   Object.values(__pluginShape).forEach((m) => {
-    if (typeof m === 'function' && 'mockReset' in m) m.mockReset();
+    if (typeof m === 'function' && 'mockReset' in m) {
+      m.mockReset();
+    }
   });
   localStorage.clear();
 });

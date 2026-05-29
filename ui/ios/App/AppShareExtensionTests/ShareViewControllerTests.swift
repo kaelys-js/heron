@@ -197,4 +197,105 @@ final class ShareViewControllerTests: XCTestCase {
             XCTAssertNotEqual(status, 401)
         }
     }
+
+    // MARK: - outcome(forStatus:) -- exercises the real mapping in ShareViewController
+
+    func testOutcomeForStatusMapsSuccessRange() {
+        for status in [200, 201, 202, 204, 299] {
+            if case .success = ShareViewController.outcome(forStatus: status) {} else {
+                XCTFail("status \(status) should map to .success")
+            }
+        }
+    }
+
+    func testOutcomeForStatus401MapsUnauthenticated() {
+        if case .unauthenticated = ShareViewController.outcome(forStatus: 401) {} else {
+            XCTFail("401 should map to .unauthenticated")
+        }
+    }
+
+    func testOutcomeForStatusOtherMapsFailed() {
+        for status in [403, 404, 500, 502, 503] {
+            if case let .failed(s) = ShareViewController.outcome(forStatus: status) {
+                XCTAssertEqual(s, status)
+            } else {
+                XCTFail("status \(status) should map to .failed")
+            }
+        }
+    }
+
+    // MARK: - pipelineRequest(...) -- exercises the real request builder
+
+    func testPipelineRequestBuildsPostWithHeadersAndBody() throws {
+        let url = try XCTUnwrap(URL(string: "https://example.com/job/9"))
+        let req = try XCTUnwrap(ShareViewController.pipelineRequest(
+            backend: "http://192.168.1.10:5173", token: "secret-token", url: url, note: "great role"
+        ))
+        XCTAssertEqual(req.url?.absoluteString, "http://192.168.1.10:5173/api/pipeline")
+        XCTAssertEqual(req.httpMethod, "POST")
+        XCTAssertEqual(req.value(forHTTPHeaderField: "Content-Type"), "application/json")
+        XCTAssertEqual(req.value(forHTTPHeaderField: "Authorization"), "Bearer secret-token")
+        let body = try XCTUnwrap(req.httpBody)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+        XCTAssertEqual(json["url"] as? String, "https://example.com/job/9")
+        XCTAssertEqual(json["note"] as? String, "great role")
+        XCTAssertEqual(json["source"] as? String, "ios-share")
+    }
+
+    func testPipelineRequestCoercesNilNoteToEmpty() throws {
+        let url = try XCTUnwrap(URL(string: "https://example.com"))
+        let req = try XCTUnwrap(ShareViewController.pipelineRequest(
+            backend: "http://127.0.0.1:5173", token: "t", url: url, note: nil
+        ))
+        let body = try XCTUnwrap(req.httpBody)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+        XCTAssertEqual(json["note"] as? String, "")
+    }
+
+    // MARK: - preflightOutcome(...) -- precondition branches
+
+    func testPreflightUnreachableWhenBackendMissing() {
+        if case .unreachable = ShareViewController.preflightOutcome(backend: nil, token: "t") {} else {
+            XCTFail("nil backend should be .unreachable")
+        }
+        if case .unreachable = ShareViewController.preflightOutcome(backend: "", token: "t") {} else {
+            XCTFail("empty backend should be .unreachable")
+        }
+    }
+
+    func testPreflightUnauthenticatedWhenTokenMissing() {
+        if case .unauthenticated = ShareViewController.preflightOutcome(backend: "http://x:5173", token: nil) {} else {
+            XCTFail("nil token should be .unauthenticated")
+        }
+        if case .unauthenticated = ShareViewController.preflightOutcome(backend: "http://x:5173", token: "") {} else {
+            XCTFail("empty token should be .unauthenticated")
+        }
+    }
+
+    func testPreflightNilWhenBothPresent() {
+        XCTAssertNil(ShareViewController.preflightOutcome(backend: "http://x:5173", token: "t"))
+    }
+
+    // MARK: - alertText(for:) -- user-facing copy
+
+    func testAlertTextNilForSuccess() {
+        XCTAssertNil(ShareViewController.alertText(for: .success))
+    }
+
+    func testAlertTextForUnauthenticated() {
+        let t = ShareViewController.alertText(for: .unauthenticated)
+        XCTAssertEqual(t?.title, "Sign in on Heron first")
+        XCTAssertNotNil(t?.message)
+    }
+
+    func testAlertTextForUnreachable() {
+        let t = ShareViewController.alertText(for: .unreachable)
+        XCTAssertEqual(t?.title, "Heron backend unreachable")
+    }
+
+    func testAlertTextForFailedIncludesStatus() {
+        let t = ShareViewController.alertText(for: .failed(503))
+        XCTAssertEqual(t?.title, "Couldn't save the link")
+        XCTAssertTrue(t?.message.contains("503") ?? false)
+    }
 }

@@ -48,7 +48,9 @@ function cachePath(profileId: string): string {
 export function readCache(profileId: string): Map<string, FormAnswer> {
   const out = new Map<string, FormAnswer>();
   const p = cachePath(profileId);
-  if (!fs.existsSync(p)) return out;
+  if (!fs.existsSync(p)) {
+    return out;
+  }
   let txt = '';
   try {
     txt = fs.readFileSync(p, 'utf8');
@@ -57,10 +59,14 @@ export function readCache(profileId: string): Map<string, FormAnswer> {
   }
   for (const line of txt.split('\n')) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed) {
+      continue;
+    }
     try {
       const row = JSON.parse(trimmed) as FormAnswer;
-      if (typeof row.key !== 'string' || typeof row.answer !== 'string') continue;
+      if (typeof row.key !== 'string' || typeof row.answer !== 'string') {
+        continue;
+      }
       out.set(row.key, row);
     } catch {
       // Skip corrupt line; keep rest of file usable.
@@ -78,7 +84,9 @@ export function listAnswers(profileId: string): FormAnswer[] {
 /** Look up an answer by question label. Normalizes before lookup. */
 export function lookupAnswer(profileId: string, label: string): FormAnswer | null {
   const key = normalizeQuestion(label);
-  if (!key) return null;
+  if (!key) {
+    return null;
+  }
   const cache = readCache(profileId);
   return cache.get(key) ?? null;
 }
@@ -87,7 +95,9 @@ export function lookupAnswer(profileId: string, label: string): FormAnswer | nul
  *  Returns the persisted row. */
 export function saveAnswer(profileId: string, label: string, answer: string): FormAnswer {
   const key = normalizeQuestion(label);
-  if (!key) throw new Error('saveAnswer: empty question after normalization');
+  if (!key) {
+    throw new Error('saveAnswer: empty question after normalization');
+  }
   const cache = readCache(profileId);
   const prior = cache.get(key);
   const row: FormAnswer = {
@@ -99,7 +109,7 @@ export function saveAnswer(profileId: string, label: string, answer: string): Fo
   };
   const p = cachePath(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.appendFileSync(p, JSON.stringify(row) + '\n');
+  fs.appendFileSync(p, `${JSON.stringify(row)}\n`);
   return row;
 }
 
@@ -111,7 +121,9 @@ export function bumpUseCount(profileId: string, label: string): void {
   const key = normalizeQuestion(label);
   const cache = readCache(profileId);
   const prior = cache.get(key);
-  if (!prior) return;
+  if (!prior) {
+    return;
+  }
   const row: FormAnswer = {
     ...prior,
     useCount: (prior.useCount ?? 0) + 1,
@@ -119,7 +131,7 @@ export function bumpUseCount(profileId: string, label: string): void {
   };
   const p = cachePath(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.appendFileSync(p, JSON.stringify(row) + '\n');
+  fs.appendFileSync(p, `${JSON.stringify(row)}\n`);
 }
 
 /** Delete an answer by normalized key. Returns true on success. The on-disk
@@ -131,7 +143,9 @@ export function bumpUseCount(profileId: string, label: string): void {
  *  (e.g. "Notes" textarea). Future: switch to an explicit deleted flag. */
 export function deleteAnswer(profileId: string, key: string): boolean {
   const cache = readCache(profileId);
-  if (!cache.has(key)) return false;
+  if (!cache.has(key)) {
+    return false;
+  }
   const p = cachePath(profileId);
   // Compact rewrite -- drop the entry. JSONL doesn't have to be append-only,
   // and a full rewrite at delete-time is fine for the typical cache size
@@ -155,8 +169,12 @@ export function cacheStats(profileId: string): {
   let usedToday = 0;
   let lastUpdatedAt: number | null = null;
   for (const row of all) {
-    if (row.updatedAt >= cutoff) usedToday++;
-    if (lastUpdatedAt == null || row.updatedAt > lastUpdatedAt) lastUpdatedAt = row.updatedAt;
+    if (row.updatedAt >= cutoff) {
+      usedToday++;
+    }
+    if (lastUpdatedAt == null || row.updatedAt > lastUpdatedAt) {
+      lastUpdatedAt = row.updatedAt;
+    }
   }
   return { total: all.length, usedToday, lastUpdatedAt };
 }

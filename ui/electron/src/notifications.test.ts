@@ -125,7 +125,9 @@ describe('showOsNotification', () => {
     let attempts = 0;
     __createFromPath.mockImplementation(() => {
       attempts++;
-      if (attempts === 1) throw new Error('bad path');
+      if (attempts === 1) {
+        throw new Error('bad path');
+      }
       return { isEmpty: () => true };
     });
     const { showOsNotification } = await import('./notifications.js');

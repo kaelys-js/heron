@@ -4,18 +4,15 @@
  *    PATCH { jobId, contactName, status, notes? } (replied-yes/no/silent) */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import {
-  listAsks,
-  logAsk,
-  silentAsks,
-  linkedInMutualsUrl,
-  type ReferralAsk,
-} from '$lib/server/referrals';
+import { listAsks, logAsk, silentAsks, linkedInMutualsUrl } from '$lib/server/referrals';
+import type { ReferralAsk } from '$lib/server/referrals';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 function resolveProfileId(url: URL): string {
   const q = url.searchParams.get('profile');
-  if (q && getProfile(q)) return q;
+  if (q && getProfile(q)) {
+    return q;
+  }
   return getActiveProfileId();
 }
 
@@ -59,7 +56,9 @@ export const PATCH = wrap('referrals', async ({ request, url }: { request: Reque
     (a) =>
       a.jobId === body.jobId && a.contactName.toLowerCase() === body.contactName!.toLowerCase(),
   );
-  if (!existing) badRequest('Ask not found — POST first to log the initial ask');
+  if (!existing) {
+    badRequest('Ask not found — POST first to log the initial ask');
+  }
   const ask: ReferralAsk = {
     ...existing!,
     status: body.status!,

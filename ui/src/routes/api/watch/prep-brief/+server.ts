@@ -12,7 +12,9 @@ import { findUpcomingInterviews } from '$lib/server/interviewers';
 import { getActiveProfileId } from '$lib/server/profiles';
 
 function firstBulletInQuestions(questionsPath?: string): string | undefined {
-  if (!questionsPath) return undefined;
+  if (!questionsPath) {
+    return undefined;
+  }
   try {
     const p = path.isAbsolute(questionsPath) ? questionsPath : path.join(ROOT, questionsPath);
     const text = fs.readFileSync(p, 'utf8');

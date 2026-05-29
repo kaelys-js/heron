@@ -16,7 +16,9 @@ export const GET = wrap(
   'apply-timing',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) return { ok: false, error: 'Job not found' };
+    if (!resolved) {
+      return { ok: false, error: 'Job not found' };
+    }
     return { ok: true, ...applyTimingFor(resolved.profileId, resolved.job.url) };
   },
 );

@@ -27,17 +27,17 @@ async function runInterviewReminder(): Promise<JobResult> {
 
     for (const entry of due.thirtyMin) {
       const minutesLeft = Math.max(0, Math.round((entry.scheduledAt - Date.now()) / (60 * 1000)));
-      logEvent('interview-reminder', '⏰ Interview in ' + minutesLeft + ' min', {
+      logEvent('interview-reminder', `⏰ Interview in ${minutesLeft} min`, {
         level: 'warn',
         category: 'application',
-        message:
-          (entry.stage ? entry.stage + ' · ' : '') +
-          (entry.format ? entry.format + ' · ' : '') +
-          "Open the job's dossier + comp-preflight before the call. " +
-          (entry.interviewers && entry.interviewers.length > 0
+        message: `${
+          (entry.stage ? entry.stage + ' · ' : '') + (entry.format ? entry.format + ' · ' : '')
+        }Open the job's dossier + comp-preflight before the call. ${
+          entry.interviewers && entry.interviewers.length > 0
             ? 'Interviewer(s): ' + entry.interviewers.map((i) => i.name).join(', ')
-            : ''),
-        link: '/job/' + encodeURIComponent(entry.jobId),
+            : ''
+        }`,
+        link: `/job/${encodeURIComponent(entry.jobId)}`,
         profileId: p.id,
       });
       markReminderFired(p.id, entry.jobId, '30min');
@@ -48,11 +48,10 @@ async function runInterviewReminder(): Promise<JobResult> {
       logEvent('interview-reminder', '📅 Interview tomorrow', {
         level: 'info',
         category: 'application',
-        message:
-          (entry.stage ? entry.stage + ' · ' : '') +
-          new Date(entry.scheduledAt).toLocaleString() +
-          ". Generate the pre-call dossier today if you haven't; mock the stage tonight.",
-        link: '/job/' + encodeURIComponent(entry.jobId),
+        message: `${
+          (entry.stage ? entry.stage + ' · ' : '') + new Date(entry.scheduledAt).toLocaleString()
+        }. Generate the pre-call dossier today if you haven't; mock the stage tonight.`,
+        link: `/job/${encodeURIComponent(entry.jobId)}`,
         profileId: p.id,
       });
       markReminderFired(p.id, entry.jobId, '24h');
@@ -62,8 +61,7 @@ async function runInterviewReminder(): Promise<JobResult> {
 
   return {
     ok: true,
-    message:
-      'Reminders fired: ' + firedThirtyMin + '× T-30min + ' + firedTwentyFourHour + '× T-24h',
+    message: `Reminders fired: ${firedThirtyMin}× T-30min + ${firedTwentyFourHour}× T-24h`,
     meta: { firedThirtyMin, firedTwentyFourHour },
   };
 }
@@ -97,7 +95,9 @@ const TICK_MS = 15 * 60 * 1000;
 let installed = false;
 
 export function installInterviewReminderDaemon(): void {
-  if (installed) return;
+  if (installed) {
+    return;
+  }
   installed = true;
   // Lazy import to avoid a boot-time circular: registry.ts imports
   // types.ts, this file imports './registry' for `register`, and the

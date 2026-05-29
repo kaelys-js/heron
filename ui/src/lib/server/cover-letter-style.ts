@@ -29,7 +29,9 @@ export function styleSamples(profileId: string, limit = 3): StyleSample[] {
   } catch {
     return out;
   }
-  if (!fs.existsSync(outDir)) return out;
+  if (!fs.existsSync(outDir)) {
+    return out;
+  }
   let entries: string[];
   try {
     entries = fs.readdirSync(outDir);
@@ -39,22 +41,28 @@ export function styleSamples(profileId: string, limit = 3): StyleSample[] {
 
   // Cover letters live as {n}-{slug}-{date}-cover.md
   const coverFiles = entries.filter((f) => /-cover\.md$/.test(f));
-  if (coverFiles.length === 0) return out;
+  if (coverFiles.length === 0) {
+    return out;
+  }
 
   const jobs = loadAllJobs(profileId);
   // Index jobs by their PDF filename → easier to correlate with cover letter.
   const jobByCover = new Map<string, (typeof jobs)[number]>();
   for (const j of jobs) {
-    if (!j.pdfFile) continue;
+    if (!j.pdfFile) {
+      continue;
+    }
     const stem = path.basename(j.pdfFile).replace(/\.pdf$/, '');
-    const expectedCover = stem + '-cover.md';
+    const expectedCover = `${stem}-cover.md`;
     jobByCover.set(expectedCover, j);
   }
 
   for (const f of coverFiles) {
     const full = path.join(outDir, f);
     const job = jobByCover.get(f);
-    if (!job) continue;
+    if (!job) {
+      continue;
+    }
     const high = [
       'Applied',
       'Screened',
@@ -66,7 +74,9 @@ export function styleSamples(profileId: string, limit = 3): StyleSample[] {
       'Final',
       'Offer',
     ];
-    if (!high.includes(job.status)) continue;
+    if (!high.includes(job.status)) {
+      continue;
+    }
     let body = '';
     let mtime = 0;
     try {
@@ -75,7 +85,9 @@ export function styleSamples(profileId: string, limit = 3): StyleSample[] {
     } catch {
       continue;
     }
-    if (!body.trim()) continue;
+    if (!body.trim()) {
+      continue;
+    }
     out.push({
       jobId: job.id,
       company: job.company ?? '',
@@ -96,7 +108,9 @@ export function styleSamples(profileId: string, limit = 3): StyleSample[] {
  *  Used by /api/job/[id]/cover-letter when generating fresh copy. */
 export function buildStyleReferenceBlock(profileId: string): string {
   const samples = styleSamples(profileId, 3);
-  if (samples.length === 0) return '';
+  if (samples.length === 0) {
+    return '';
+  }
   const intro =
     "\n\n## STYLE REFERENCES (the user's prior accepted cover letters)\n\n" +
     'Match these in tone, sentence length, opening style, and voice. The user has previously\n' +

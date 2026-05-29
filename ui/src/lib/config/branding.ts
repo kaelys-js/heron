@@ -28,5 +28,5 @@ export function docTitle(parts: (string | undefined | null)[]): string {
 
 /** Format a slash-command invocation, e.g. cmd('evaluate') → '/heron evaluate'. */
 export function cmd(verb?: string): string {
-  return verb ? '/' + CLI_NAMESPACE + ' ' + verb : '/' + CLI_NAMESPACE;
+  return verb ? `/${CLI_NAMESPACE} ${verb}` : `/${CLI_NAMESPACE}`;
 }

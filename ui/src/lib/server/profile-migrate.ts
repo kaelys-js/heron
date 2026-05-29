@@ -12,7 +12,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, DATA_ROOT } from './files';
 import { ensureProfileDirs, profilePath } from './profile-paths';
-import { writeProfiles, type ProfilesState } from './profiles';
+import { writeProfiles } from './profiles';
+import type { ProfilesState } from './profiles';
 import { logEvent } from './events';
 
 const PROFILES_JSON = path.join(DATA_ROOT, 'profiles.json');
@@ -68,7 +69,7 @@ function backupAndMove(src: string, dst: string, result: MoveResult): void {
       return;
     }
     // 1. Write .bak at src
-    const bak = src + '.bak';
+    const bak = `${src}.bak`;
     try {
       fs.copyFileSync(src, bak);
       result.backedUp.push(path.relative(ROOT, bak));
@@ -76,7 +77,7 @@ function backupAndMove(src: string, dst: string, result: MoveResult): void {
       // .bak failure is non-fatal -- proceed but surface the warning.
       result.errors.push({
         path: path.relative(ROOT, bak),
-        message: 'backup failed: ' + (e instanceof Error ? e.message : String(e)),
+        message: `backup failed: ${e instanceof Error ? e.message : String(e)}`,
       });
     }
     // 2. Make sure dst's parent exists
@@ -85,7 +86,7 @@ function backupAndMove(src: string, dst: string, result: MoveResult): void {
     //    and is non-atomic in failure modes).
     fs.copyFileSync(src, dst);
     fs.unlinkSync(src);
-    result.moved.push(path.relative(ROOT, src) + ' → ' + path.relative(ROOT, dst));
+    result.moved.push(`${path.relative(ROOT, src)} → ${path.relative(ROOT, dst)}`);
   } catch (e) {
     result.errors.push({
       path: path.relative(ROOT, src),
@@ -109,8 +110,12 @@ function moveDirContents(
     fs.mkdirSync(dstDir, { recursive: true });
     for (const name of entries) {
       // Skip already-existing .bak files and .gitkeep markers.
-      if (name.endsWith('.bak') || name === '.gitkeep') continue;
-      if (exclude?.has(name)) continue;
+      if (name.endsWith('.bak') || name === '.gitkeep') {
+        continue;
+      }
+      if (exclude?.has(name)) {
+        continue;
+      }
       const srcPath = path.join(srcDir, name);
       const dstPath = path.join(dstDir, name);
       const stat = fs.statSync(srcPath);
@@ -221,15 +226,9 @@ export function migrateToMultiProfile(): { migrated: boolean; result?: MoveResul
     {
       level: result.errors.length > 0 ? 'warn' : 'success',
       category: 'system',
-      message:
-        result.moved.length +
-        ' moved · ' +
-        result.backedUp.length +
-        ' .bak files written · ' +
-        result.skipped.length +
-        ' missing (skipped) · ' +
-        result.errors.length +
-        ' errors',
+      message: `${result.moved.length} moved · ${result.backedUp.length} .bak files written · ${
+        result.skipped.length
+      } missing (skipped) · ${result.errors.length} errors`,
     },
   );
 

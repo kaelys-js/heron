@@ -67,7 +67,7 @@ describe('buildAppMenu -- macOS', () => {
   it('app menu has About + Preferences + Quit', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
-    const submenu = __buildFromTemplate.mock.calls[0][0][0].submenu;
+    const { submenu } = __buildFromTemplate.mock.calls[0][0][0];
     const labels = submenu.map((s: { label?: string; role?: string }) => s.label ?? s.role);
     expect(labels).toContain('About Heron');
     expect(labels).toContain('Preferences…');
@@ -78,7 +78,7 @@ describe('buildAppMenu -- macOS', () => {
     const { buildAppMenu } = await import('./app-menu.js');
     const h = handlers();
     buildAppMenu(h);
-    const submenu = __buildFromTemplate.mock.calls[0][0][0].submenu;
+    const { submenu } = __buildFromTemplate.mock.calls[0][0][0];
     const aboutItem = submenu.find((s: { label?: string }) => s.label === 'About Heron');
     aboutItem.click();
     expect(h.onAbout).toHaveBeenCalled();
@@ -88,13 +88,13 @@ describe('buildAppMenu -- macOS', () => {
     const { buildAppMenu } = await import('./app-menu.js');
     const h = handlers();
     buildAppMenu(h);
-    const submenu = __buildFromTemplate.mock.calls[0][0][0].submenu;
+    const { submenu } = __buildFromTemplate.mock.calls[0][0][0];
     const prefs = submenu.find((s: { label?: string }) => s.label === 'Preferences…');
     prefs.click();
     expect(h.onPreferences).toHaveBeenCalled();
   });
 
-  it('Window menu has front + window roles on mac', async () => {
+  it('window menu has front + window roles on mac', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
     const template = __buildFromTemplate.mock.calls[0][0];
@@ -104,7 +104,7 @@ describe('buildAppMenu -- macOS', () => {
     expect(roles).toContain('window');
   });
 
-  it('Help menu does NOT have a duplicate About entry on mac', async () => {
+  it('help menu does NOT have a duplicate About entry on mac', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
     const template = __buildFromTemplate.mock.calls[0][0];
@@ -127,7 +127,7 @@ describe('buildAppMenu -- win/linux', () => {
     expect(template[0].label).toBe('&File');
   });
 
-  it('File menu uses quit role (not close) on non-mac', async () => {
+  it('file menu uses quit role (not close) on non-mac', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
     const template = __buildFromTemplate.mock.calls[0][0];
@@ -136,7 +136,7 @@ describe('buildAppMenu -- win/linux', () => {
     expect(lastItem.role).toBe('quit');
   });
 
-  it('Window menu has close (not front/window) on non-mac', async () => {
+  it('window menu has close (not front/window) on non-mac', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
     const template = __buildFromTemplate.mock.calls[0][0];
@@ -146,7 +146,7 @@ describe('buildAppMenu -- win/linux', () => {
     expect(roles).not.toContain('front');
   });
 
-  it('Help menu HAS an About entry on non-mac (no app menu fallback)', async () => {
+  it('help menu HAS an About entry on non-mac (no app menu fallback)', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     const h = handlers();
     buildAppMenu(h);
@@ -192,7 +192,7 @@ describe('buildAppMenu -- common menus', () => {
     );
   });
 
-  it('Help/Documentation click invokes h.onOpenDocs', async () => {
+  it('help/Documentation click invokes h.onOpenDocs', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     const h = handlers();
     buildAppMenu(h);
@@ -203,7 +203,7 @@ describe('buildAppMenu -- common menus', () => {
     expect(h.onOpenDocs).toHaveBeenCalled();
   });
 
-  it('Help/Report a bug click invokes h.onReportBug', async () => {
+  it('help/Report a bug click invokes h.onReportBug', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     const h = handlers();
     buildAppMenu(h);
@@ -214,7 +214,7 @@ describe('buildAppMenu -- common menus', () => {
     expect(h.onReportBug).toHaveBeenCalled();
   });
 
-  it('Help/View on GitHub click invokes shell.openExternal', async () => {
+  it('help/View on GitHub click invokes shell.openExternal', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
     const template = __buildFromTemplate.mock.calls[0][0];
@@ -226,7 +226,7 @@ describe('buildAppMenu -- common menus', () => {
 });
 
 describe('buildAppMenu -- File menu click handlers', () => {
-  it('Import URL navigates focused window to /pipeline (replacing last segment)', async () => {
+  it('import URL navigates focused window to /pipeline (replacing last segment)', async () => {
     const mockWebContents = {
       getURL: vi.fn(() => 'http://localhost:5173/inbox'),
       loadURL: vi.fn(() => Promise.resolve()),
@@ -243,7 +243,7 @@ describe('buildAppMenu -- File menu click handlers', () => {
     expect(target).toContain('/pipeline');
   });
 
-  it('Import URL is a no-op when no window is focused', async () => {
+  it('import URL is a no-op when no window is focused', async () => {
     __getFocusedWindow.mockReturnValue(null);
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
@@ -253,7 +253,7 @@ describe('buildAppMenu -- File menu click handlers', () => {
     expect(() => importUrl.click()).not.toThrow();
   });
 
-  it('Open Pipeline navigates focused window using origin', async () => {
+  it('open Pipeline navigates focused window using origin', async () => {
     const mockWebContents = {
       getURL: vi.fn(() => 'http://localhost:5173/inbox/123'),
       loadURL: vi.fn(() => Promise.resolve()),
@@ -270,7 +270,7 @@ describe('buildAppMenu -- File menu click handlers', () => {
     expect(mockWebContents.loadURL).toHaveBeenCalledWith('http://localhost:5173/pipeline');
   });
 
-  it('Open Pipeline is a no-op when no window is focused', async () => {
+  it('open Pipeline is a no-op when no window is focused', async () => {
     __getFocusedWindow.mockReturnValue(null);
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
@@ -282,7 +282,7 @@ describe('buildAppMenu -- File menu click handlers', () => {
     expect(() => openPipeline.click()).not.toThrow();
   });
 
-  it('Import URL swallows loadURL rejection (catch handler covered)', async () => {
+  it('import URL swallows loadURL rejection (catch handler covered)', async () => {
     const mockWebContents = {
       getURL: vi.fn(() => 'http://localhost:5173/inbox'),
       // Reject to exercise the `.catch(() => {})` arrow.
@@ -300,7 +300,7 @@ describe('buildAppMenu -- File menu click handlers', () => {
     expect(mockWebContents.loadURL).toHaveBeenCalled();
   });
 
-  it('Open Pipeline swallows loadURL rejection (catch handler covered)', async () => {
+  it('open Pipeline swallows loadURL rejection (catch handler covered)', async () => {
     const mockWebContents = {
       getURL: vi.fn(() => 'http://localhost:5173/inbox/123'),
       loadURL: vi.fn(() => Promise.reject(new Error('load failed'))),

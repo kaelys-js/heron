@@ -37,7 +37,9 @@ function readProfileYaml(profileId: string): {
   locations?: string[];
 } {
   const p = profilePath(profileId, 'profile-yml');
-  if (!fs.existsSync(p)) return {};
+  if (!fs.existsSync(p)) {
+    return {};
+  }
   try {
     const text = fs.readFileSync(p, 'utf8');
     // We avoid pulling a YAML parser into this server file; we only need
@@ -65,7 +67,9 @@ function readProfileYaml(profileId: string): {
 }
 
 function readReport(reportFile?: string): string {
-  if (!reportFile) return '';
+  if (!reportFile) {
+    return '';
+  }
   try {
     const p = path.isAbsolute(reportFile) ? reportFile : path.join(ROOT, reportFile);
     return fs.readFileSync(p, 'utf8');
@@ -78,11 +82,13 @@ export const GET = wrap(
   'visa-check',
   async ({ params, url }: { params: { id: string }; url: URL }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const profile = readProfileYaml(profileId);
     const reportText = readReport(job.reportFile);
-    const haystack = (job.role + ' ' + job.location + ' ' + reportText).toLowerCase();
+    const haystack = `${job.role} ${job.location} ${reportText}`.toLowerCase();
     const reasons: string[] = [];
 
     const noSponsor = NO_SPONSOR_RE.test(haystack);
@@ -135,7 +141,7 @@ export const GET = wrap(
     if (!remoteMatch && userLocations.length) {
       const inAllowed = userLocations.some((loc) => jobLocation.includes(loc));
       if (!inAllowed && !willRelocate) {
-        reasons.push('Job location (' + jobLocation + ') is outside your declared locations.');
+        reasons.push(`Job location (${jobLocation}) is outside your declared locations.`);
         return {
           ok: true,
           verdict: 'risk',

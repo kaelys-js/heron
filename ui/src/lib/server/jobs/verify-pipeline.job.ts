@@ -35,7 +35,9 @@ function loadActiveProfileTracker(): { path: string; body: string } | null {
   // to data/profiles/{slug}/applications.md via the SYSTEM_USER_ID
   // branch in profile-paths.ts.
   const p = activePath('applications');
-  if (existsSync(p)) return { path: p, body: readFileSync(p, 'utf8') };
+  if (existsSync(p)) {
+    return { path: p, body: readFileSync(p, 'utf8') };
+  }
   return null;
 }
 
@@ -46,9 +48,13 @@ function parseRows(body: string): { rowIdx: number; cols: string[] }[] {
   let pipeRowsSeen = 0;
   body.split('\n').forEach((raw, i) => {
     const line = raw.trimEnd();
-    if (!line.startsWith('|')) return;
+    if (!line.startsWith('|')) {
+      return;
+    }
     pipeRowsSeen += 1;
-    if (pipeRowsSeen <= 2) return; // header + separator
+    if (pipeRowsSeen <= 2) {
+      return;
+    } // header + separator
     const cols = line
       .slice(1) // strip leading |
       .replace(/\|\s*$/, '') // strip trailing |
@@ -99,8 +105,11 @@ export function runVerifyPipeline(): Promise<JobResult> {
       }
       const dedupKey = `${(company || '').toLowerCase()}|${(role || '').toLowerCase()}`;
       const existing = seen.get(dedupKey);
-      if (existing) existing.push(rowIdx);
-      else seen.set(dedupKey, [rowIdx]);
+      if (existing) {
+        existing.push(rowIdx);
+      } else {
+        seen.set(dedupKey, [rowIdx]);
+      }
     });
 
     // Check 2 -- duplicates
@@ -138,7 +147,9 @@ export function runVerifyPipeline(): Promise<JobResult> {
     // Group findings by class -- one issue per class with stable dedupeKey.
     const groups = new Map<string, Finding[]>();
     for (const f of findings) {
-      if (!groups.has(f.cls)) groups.set(f.cls, []);
+      if (!groups.has(f.cls)) {
+        groups.set(f.cls, []);
+      }
       groups.get(f.cls)!.push(f);
     }
 
@@ -146,13 +157,11 @@ export function runVerifyPipeline(): Promise<JobResult> {
       const errCount = items.filter((i) => i.severity === 'error').length;
       const warnCount = items.length - errCount;
       const severity: 'error' | 'warn' = errCount > 0 ? 'error' : 'warn';
-      const summary =
-        cls +
-        ' (' +
-        (errCount > 0 ? errCount + ' error' + (errCount === 1 ? '' : 's') : '') +
-        (errCount > 0 && warnCount > 0 ? ' · ' : '') +
-        (warnCount > 0 ? warnCount + ' warning' + (warnCount === 1 ? '' : 's') : '') +
-        ')';
+      const summary = `${cls} (${
+        errCount > 0 ? errCount + ' error' + (errCount === 1 ? '' : 's') : ''
+      }${errCount > 0 && warnCount > 0 ? ' · ' : ''}${
+        warnCount > 0 ? warnCount + ' warning' + (warnCount === 1 ? '' : 's') : ''
+      })`;
       const detail =
         items
           .slice(0, 50)
@@ -164,7 +173,7 @@ export function runVerifyPipeline(): Promise<JobResult> {
         summary,
         detail,
         fix: { label: 'Open Settings → Maintenance', href: '/settings#maintenance' },
-        dedupeKey: 'verify-pipeline:' + cls.toLowerCase().replace(/\s+/g, '-'),
+        dedupeKey: `verify-pipeline:${cls.toLowerCase().replace(/\s+/g, '-')}`,
       });
     }
 
@@ -180,14 +189,9 @@ export function runVerifyPipeline(): Promise<JobResult> {
     } else {
       logEvent(
         'verify-pipeline',
-        'Pipeline issues: ' +
-          errors +
-          ' error' +
-          (errors === 1 ? '' : 's') +
-          ' · ' +
-          warnings +
-          ' warning' +
-          (warnings === 1 ? '' : 's'),
+        `Pipeline issues: ${errors} error${errors === 1 ? '' : 's'} · ${warnings} warning${
+          warnings === 1 ? '' : 's'
+        }`,
         {
           level: errors > 0 ? 'warn' : 'info',
           category: 'system',
@@ -198,7 +202,7 @@ export function runVerifyPipeline(): Promise<JobResult> {
 
     resolve({
       ok: true,
-      message: 'Verified · ' + errors + ' errors / ' + warnings + ' warnings',
+      message: `Verified · ${errors} errors / ${warnings} warnings`,
       meta: { errors, warnings, trackerPath: tracker.path },
     });
   });

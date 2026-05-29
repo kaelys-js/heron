@@ -58,8 +58,10 @@ describe('mode-substitution end-to-end', () => {
       try {
         source = readFileSync(abs, 'utf8');
       } catch (e) {
-        const code = (e as NodeJS.ErrnoException).code;
-        if (code === 'ENOENT' || code === 'EISDIR') return;
+        const { code } = e as NodeJS.ErrnoException;
+        if (code === 'ENOENT' || code === 'EISDIR') {
+          return;
+        }
         throw e;
       }
       const substituted = substituteModeTokensForUser(TEST_USER, TEST_PROFILE, source);
@@ -98,7 +100,9 @@ describe('mode-substitution end-to-end', () => {
       for (const abs of modeFiles()) {
         const rel = abs.slice(ROOT.length + 1);
         const src = readFileSync(abs, 'utf8');
-        if (re.test(src)) offenders.push(rel);
+        if (re.test(src)) {
+          offenders.push(rel);
+        }
       }
       expect(
         offenders,

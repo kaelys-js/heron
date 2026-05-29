@@ -7,7 +7,8 @@
  *  Temp file (not inline -p) because realized prompts can exceed 10 KB
  *  and argv length + shell escaping (newlines, backticks, $) make inline
  *  passing fragile. */
-import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import type { ChildProcess, SpawnOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -80,7 +81,9 @@ export function spawnAgentWithMode(
   const env: NodeJS.ProcessEnv = { ...process.env, ...(opts.env ?? {}) };
   // Pass acting userId through so child scripts (generate-pdf.mjs etc.)
   // resolve per-user paths correctly without re-reading AsyncLocalStorage.
-  if (userId) env.HERON_USER_ID = userId;
+  if (userId) {
+    env.HERON_USER_ID = userId;
+  }
 
   const args = [
     '-p',
@@ -114,19 +117,21 @@ export function spawnAgentWithMode(
   // if Claude crashes before producing an exit event.
   let cleaned = false;
   const cleanup = () => {
-    if (cleaned) return;
+    if (cleaned) {
+      return;
+    }
     cleaned = true;
     try {
       fs.unlinkSync(tempPromptPath);
     } catch (e) {
       // The temp dir is typically purged by the OS; we still log so
       // a persistent leak shows up in the activity log.
-      const code = (e as NodeJS.ErrnoException).code;
+      const { code } = e as NodeJS.ErrnoException;
       if (code !== 'ENOENT') {
         logEvent('spawn-agent', 'temp prompt cleanup failed', {
           level: 'warn',
           category: 'system',
-          message: tempPromptPath + ': ' + (e instanceof Error ? e.message : String(e)),
+          message: `${tempPromptPath}: ${e instanceof Error ? e.message : String(e)}`,
         });
       }
     }

@@ -9,7 +9,7 @@ import { render } from '@testing-library/svelte';
 import ConnectionBanner from './ConnectionBanner.svelte';
 import { notifications } from '$lib/notifications.svelte';
 
-describe('ConnectionBanner', () => {
+describe('connectionBanner', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     notifications.connected = 'open';

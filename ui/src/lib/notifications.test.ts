@@ -22,7 +22,7 @@ const { notifications, reportClientError } = await import('./notifications.svelt
 
 function makeEvent(over: Partial<any> = {}): any {
   return {
-    id: 'ev-' + Math.random().toString(36).slice(2, 10),
+    id: `ev-${Math.random().toString(36).slice(2, 10)}`,
     ts: Date.now(),
     level: 'info',
     category: 'system',
@@ -56,7 +56,7 @@ describe('notifications.add', () => {
 
   it('caps the list at 200 events', () => {
     for (let i = 0; i < 250; i++) {
-      notifications.add(makeEvent({ id: 'e' + i }));
+      notifications.add(makeEvent({ id: `e${i}` }));
     }
     expect(notifications.events.length).toBe(200);
   });

@@ -71,7 +71,7 @@ async function get(locals: App.Locals = FAKE_LOCALS) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/email/react', () => {
+describe('pOST /api/email/react', () => {
   it('400 when from is missing', async () => {
     const r = await post({ subject: 'hi' });
     expect(r.status).toBe(400);
@@ -106,9 +106,9 @@ describe('POST /api/email/react', () => {
   });
 });
 
-describe('GET /api/email/react', () => {
+describe('gET /api/email/react', () => {
   it('returns up to 50 inbound-lead rows', async () => {
-    leads = Array.from({ length: 100 }, (_, i) => ({ id: 'l' + i, subject: 's' }));
+    leads = Array.from({ length: 100 }, (_, i) => ({ id: `l${i}`, subject: 's' }));
     const r = await get();
     expect(r.body.leads.length).toBe(50);
   });
@@ -119,15 +119,15 @@ describe('GET /api/email/react', () => {
   });
 });
 
-describe('Auth (F21 defense-in-depth)', () => {
+describe('auth (F21 defense-in-depth)', () => {
   const ANON_LOCALS = { user: null, session: null } as unknown as App.Locals;
 
-  it('POST without locals.user 401s', async () => {
+  it('pOST without locals.user 401s', async () => {
     const r = await post({ from: 'a@b', subject: 's' }, ANON_LOCALS);
     expect(r.status).toBe(401);
   });
 
-  it('GET without locals.user 401s', async () => {
+  it('gET without locals.user 401s', async () => {
     const r = await get(ANON_LOCALS);
     expect(r.status).toBe(401);
   });

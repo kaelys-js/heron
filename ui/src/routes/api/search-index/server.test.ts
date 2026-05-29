@@ -40,7 +40,7 @@ async function get() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/search-index', () => {
+describe('gET /api/search-index', () => {
   it('returns empty array on fresh install', async () => {
     const r = await get();
     expect(r.status).toBe(200);
@@ -88,8 +88,8 @@ describe('GET /api/search-index', () => {
 
   it('handles a large batch (>1000 jobs) without throwing', async () => {
     jobs = Array.from({ length: 1500 }, (_, i) => ({
-      id: 'j' + i,
-      company: 'C' + i,
+      id: `j${i}`,
+      company: `C${i}`,
       role: 'r',
       status: 'Applied',
     }));

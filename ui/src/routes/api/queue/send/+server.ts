@@ -33,16 +33,24 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
   const ids = Array.isArray(body?.jobIds)
     ? body!.jobIds.filter((s): s is string => typeof s === 'string')
     : [];
-  if (ids.length === 0) badRequest('jobIds required (non-empty array)');
-  if (ids.length > MAX_BATCH) badRequest('At most ' + MAX_BATCH + ' jobs per send');
+  if (ids.length === 0) {
+    badRequest('jobIds required (non-empty array)');
+  }
+  if (ids.length > MAX_BATCH) {
+    badRequest('At most ' + MAX_BATCH + ' jobs per send');
+  }
 
   const allJobs = loadAllJobs();
   type Pick = { id: string; url: string; company: string; role: string; isLinkedIn: boolean };
   const picks: Pick[] = [];
   for (const id of ids) {
     const j = allJobs.find((x) => x.id === id);
-    if (!j?.url) continue;
-    if (j.status !== 'Queued') continue;
+    if (!j?.url) {
+      continue;
+    }
+    if (j.status !== 'Queued') {
+      continue;
+    }
     picks.push({
       id: j.id,
       url: j.url,
@@ -53,7 +61,9 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
       isLinkedIn: isLinkedInHost(j.url),
     });
   }
-  if (picks.length === 0) badRequest('No Queued jobs found for the given ids');
+  if (picks.length === 0) {
+    badRequest('No Queued jobs found for the given ids');
+  }
 
   const cfg = readConfig();
   const cap = cfg.thresholds?.maxAppliesPerDay ?? 30;
@@ -69,7 +79,7 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
     try {
       markApplied(g.url, g.company, g.role);
     } catch (err: any) {
-      logEvent('queue-send', 'Failed to mark Applied: ' + g.url, {
+      logEvent('queue-send', `Failed to mark Applied: ${g.url}`, {
         level: 'error',
         category: 'application',
         message: err?.message ?? String(err),
@@ -77,7 +87,7 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
     }
   }
   if (others.length > 0) {
-    logEvent('queue-send', others.length + ' jobs marked Applied from queue', {
+    logEvent('queue-send', `${others.length} jobs marked Applied from queue`, {
       level: 'success',
       category: 'application',
       message: 'Open postings in new tabs to finish form fill',

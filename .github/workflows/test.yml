@@ -5,7 +5,7 @@ name: Tests
 #
 # Three parallel jobs:
 #   ts     -- ubuntu-latest -- typecheck + format + Vitest matrix + Codecov
-#   ios    -- macos-15      -- Fastlane test_ci on iPhone 17 Pro Max sim
+#   ios    -- macos-latest  -- Fastlane test_ci on the latest iOS sim
 #   audit  -- ubuntu-latest -- pnpm audit gate
 #
 # `coverage` job (depends on ts + ios) downloads both artifacts and posts
@@ -32,6 +32,14 @@ permissions:
   contents: read
   pull-requests: read
 
+# Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
+# absent turbo falls back to the local actions/cache. Declared workflow-level
+# so every turbo-running job (ts, ios, android, lost-pixel, format, coverage,
+# verify-full) inherits it without per-job duplication.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -44,14 +52,14 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   # Path-change detector -- decides whether downstream macOS jobs run.
   # ─────────────────────────────────────────────────────────────────
-  # macos-15 is billed at 10× ubuntu minutes. A 7-min iOS test_ci run
+  # macos-latest is billed at 10× ubuntu minutes. A 7-min iOS test_ci run
   # = ~70 ubuntu-min equivalent. When a PR doesn't touch iOS-affecting
-  # files (e.g. a docs-only or pure-TS change), allocating macos-15
+  # files (e.g. a docs-only or pure-TS change), allocating macos-latest
   # and downloading Xcode caches just to no-op is pure waste.
   #
   # This job runs in ~10s on ubuntu, emits `ios=true|false`, and the
-  # ios job below uses dynamic `runs-on` to pick macos-15 only when
-  # needed. The ios job's `name:` is preserved so the required-check
+  # ios job below gates its expensive steps on that flag so macos-latest
+  # is only spent when iOS-affecting paths changed. The ios job's `name:` is preserved so the required-check
   # context still reports a status on every PR (otherwise branch
   # protection would treat a skipped job as missing and block merge).
   changes:
@@ -232,10 +240,6 @@ jobs:
       CI: "true"
       BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
       FORCE_COLOR: "3"
-      # Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
-      # absent turbo falls back to the local actions/cache.
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
     steps:
       # Skip-stub. When the path filter says no TS-touching files changed
@@ -497,11 +501,11 @@ jobs:
             console.log("✓ no banned licenses in prod deps");
           '
 
-      - name: oxlint (Rust-based JS/TS linter — all rules disabled)
-        # All rules currently OFF in .oxlintrc.jsonc per the user's
-        # "wire it up but disable everything for now" directive.
-        # Running anyway catches parse-level failures (~50 ms full-repo)
-        # and keeps the lint-infrastructure live for incremental rollout.
+      - name: oxlint (Rust-based JS/TS linter — curated-safe rules)
+        # 140 curated safe-autofixable rules are enabled in .oxlintrc.jsonc
+        # at `warn` severity (see the config header for the excluded
+        # classes). The gate has no --deny-warnings, so warnings never fail
+        # CI; this still catches parse-level failures (~50 ms full-repo).
         if: needs.changes.outputs.ts == 'true'
         run: pnpm lint
 
@@ -671,7 +675,7 @@ jobs:
           if-no-files-found: warn
 
   # ─────────────────────────────────────────────────────────────────
-  # iOS -- Fastlane test_ci on macOS-15 (Xcode 16, Swift 5.9+)
+  # iOS -- Fastlane test_ci on macos-latest (Xcode 26, Swift 5.9+)
   # ─────────────────────────────────────────────────────────────────
   # Runs XCTest + XCUITest + snapshot tests across AppTests, AppUITests,
   # WidgetTests, WatchTests. xcov produces a Cobertura report consumed by
@@ -679,27 +683,27 @@ jobs:
   ios:
     name: iOS — XCTest + XCUITest + Snapshot
     needs: changes
-    # [user-approved-deferral] TASK-9 in TODO-INSTRUCTIONS.md.
-    # iOS job disabled entirely. Re-enable after fixing the
-    # Fastfile + slather + check-ios-coverage chain end-to-end.
-    if: ${{ vars.ENABLE_DISABLED_JOB == 'true' }}
-    # `runs-on` is FIXED at macos-15. GitHub evaluates `runs-on` at
+    # Path-gated, not disabled: macos-latest is always allocated (cheap), but the
+    # expensive xcodebuild + slather + coverage steps run only when
+    # iOS-affecting paths changed, via the per-step
+    # `if: needs.changes.outputs.ios == 'true'` filter below.
+    # `runs-on` is FIXED at macos-latest. GitHub evaluates `runs-on` at
     # workflow-PARSE time, before any job has run -- so
     # `needs.changes.outputs.X` is not available in this context
     # (confirmed via startup_failure on runs 26179165782 and 26179613200).
     # Only parse-time contexts (vars, inputs, matrix) work for runs-on.
     #
-    # Optimisation strategy here: macos-15 is always ALLOCATED
+    # Optimisation strategy here: macos-latest is always ALLOCATED
     # (~30s provisioning = ~5 ubuntu-min equivalent per PR), but the
     # expensive 4-5min xcodebuild build + 2min post-processing is gated
     # on `needs.changes.outputs.ios == 'true'` via the `if:` filter on
     # every subsequent step. When no iOS-affecting paths changed, only
     # the "Skip iOS" notice step runs -- job total ~30-45s.
     #
-    # Net savings on non-iOS PRs: ~7min of macos-15 build work skipped =
+    # Net savings on non-iOS PRs: ~7min of macos-latest build work skipped =
     # ~70min ubuntu-equivalent saved per such PR. Worth the ~5ubuntu-min
     # provisioning overhead.
-    runs-on: macos-15
+    runs-on: macos-latest
     # 5 test schemes run sequentially (AppTests + WidgetTests +
     # AppLiveActivityTests + AppShareExtensionTests on iOS sim,
     # WatchTests on watchOS sim) + xcov per scheme + slather aggregator.
@@ -712,9 +716,6 @@ jobs:
     env:
       CI: "true"
       FORCE_COLOR: "3"
-      # Pinned Xcode version -- must match .mise.toml's swift entry. When
-      # we bump Xcode, this gets bumped too. Only honoured on macos-15.
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
 
     steps:
       # ── Short-circuit ────────────────────────────────────────────
@@ -730,7 +731,7 @@ jobs:
             echo "### ⏭️ iOS test_ci skipped"
             echo ""
             echo "No iOS-affecting paths changed in this PR. Re-running the"
-            echo "macOS-15 xcodebuild + simulator suite would cost ~7 min of"
+            echo "macos-latest xcodebuild + simulator suite would cost ~7 min of"
             echo "macOS time (10× billing) for no signal."
             echo ""
             echo "Affecting paths: \`ui/ios/**\`, \`branding/**\`,"
@@ -753,6 +754,17 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      # macos-latest ships Xcode 26 (iOS 26 / watchOS 26 SDKs) as its
+      # default. If the image carries several Xcode 26.x, prefer the
+      # newest. Mirrors native-release.yml's "Use Xcode 26" step so the
+      # test + release pipelines build against the same toolchain.
+      - name: Use Xcode 26 (iOS 26 / watchOS 26 SDK)
+        if: needs.changes.outputs.ios == 'true'
+        run: |
+          XC=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
+          [ -n "$XC" ] && sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
 
       - name: Setup mise (Node + pnpm + Ruby + Swift)
         if: needs.changes.outputs.ios == 'true'
@@ -815,7 +827,7 @@ jobs:
 
       - name: Install SwiftLint + SwiftFormat (Brewfile)
         if: needs.changes.outputs.ios == 'true'
-        # On macos-15 runners both formulae are pre-installed; `brew
+        # On macos-latest runners both formulae are pre-installed; `brew
         # install <pkg>` then emits a warning ("already installed and
         # up-to-date") that surfaces as a yellow annotation on the iOS
         # job. `brew list` first lets us short-circuit silently when
@@ -936,11 +948,9 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # [user-approved-deferral] TASK-10 in TODO-INSTRUCTIONS.md.
-    # Android JVM-unit-test job disabled entirely. Re-enable after
-    # validating the kapt + AppSearch compiler chain holds + the
-    # per-CLASS JaCoCo rule passes end-to-end on CI.
-    if: ${{ vars.ENABLE_DISABLED_JOB == 'true' }}
+    # Path-gated, not disabled: the JVM unit-test + JaCoCo coverage steps run
+    # only when Android-affecting paths changed, via the per-step
+    # `if: needs.changes.outputs.android == 'true'` filter below.
     permissions:
       contents: read
       id-token: write # Codecov OIDC upload (G12) -- same as ts + ios jobs
@@ -1446,6 +1456,11 @@ jobs:
         run: pnpm --filter ui exec playwright install --with-deps chromium
 
       - name: Build UI
+        # Served via `vite preview` over plain HTTP -- drop the
+        # upgrade-insecure-requests CSP directive so subresources aren't
+        # rewritten to https:// (see svelte.config.ts HTTP_PREVIEW).
+        env:
+          HERON_HTTP_PREVIEW: "1"
         run: pnpm --filter ui run build
 
       - name: Seed u_e2e (Lost Pixel auth bypass)
@@ -1747,11 +1762,6 @@ jobs:
     timeout-minutes: 25
     permissions:
       contents: read
-    env:
-      # Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
-      # absent turbo falls back to the local actions/cache.
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

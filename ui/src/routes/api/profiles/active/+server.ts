@@ -23,7 +23,7 @@ export const POST = wrap(
       logEvent('profiles', 'Active profile switched', {
         level: 'info',
         category: 'user',
-        message: 'now active: ' + next.name,
+        message: `now active: ${next.name}`,
       });
       const list = listProfilesForUser(userId);
       const active = getActiveProfile(userId);

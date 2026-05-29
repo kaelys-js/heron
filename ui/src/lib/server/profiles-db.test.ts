@@ -57,7 +57,7 @@ describe('slugFromName', () => {
   });
 });
 
-describe('PROFILE_COLORS', () => {
+describe('pROFILE_COLORS', () => {
   it('exports 8 distinct colors', () => {
     expect(PROFILE_COLORS).toHaveLength(8);
     expect(new Set(PROFILE_COLORS).size).toBe(8);
@@ -271,7 +271,9 @@ describe('deleteProfileFor', () => {
     // Delete that, leaving only Solo.
     const list = listProfilesForUser(uid);
     const default_ = list.find((x) => x.slug === 'default');
-    if (default_) deleteProfileFor(uid, default_.slug);
+    if (default_) {
+      deleteProfileFor(uid, default_.slug);
+    }
     expect(() => deleteProfileFor(uid, p.slug)).toThrow(/last profile/);
   });
 

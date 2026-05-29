@@ -8,7 +8,8 @@
  */
 
 import { wrap } from '$lib/server/api-helpers';
-import { readPrefs, writePrefs, type UiPrefs } from '$lib/server/ui-prefs';
+import { readPrefs, writePrefs } from '$lib/server/ui-prefs';
+import type { UiPrefs } from '$lib/server/ui-prefs';
 
 export const GET = wrap('ui-prefs', async () => readPrefs());
 

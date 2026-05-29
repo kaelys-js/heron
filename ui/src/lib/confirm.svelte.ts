@@ -34,7 +34,9 @@ export class ConfirmGate {
 
   arm(key: string) {
     this.armedKey = key;
-    if (this.timer) clearTimeout(this.timer);
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
     this.timer = setTimeout(() => this.disarm(), this.timeoutMs);
   }
 

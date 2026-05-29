@@ -15,6 +15,7 @@ import { getActiveProfileId } from '$lib/server/profiles';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
+
 const TIMEOUT_MS = 180_000;
 
 export type CrossLinkFinding = {
@@ -48,7 +49,7 @@ function spawnAudit(args: { profileId: string }): Promise<{ stdout: string }> {
       try {
         p.kill('SIGTERM');
       } catch {}
-      reject(new Error('cross-link-audit timeout after ' + TIMEOUT_MS + 'ms'));
+      reject(new Error(`cross-link-audit timeout after ${TIMEOUT_MS}ms`));
     }, TIMEOUT_MS);
     p.on('error', (err) => {
       clearTimeout(timer);
@@ -56,8 +57,11 @@ function spawnAudit(args: { profileId: string }): Promise<{ stdout: string }> {
     });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolveP({ stdout });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolveP({ stdout });
+      }
     });
   });
 }
@@ -67,8 +71,9 @@ export const POST = wrap('cross-link-audit', async () => {
   try {
     await spawnAudit({ profileId });
     const out = path.join(profilePath(profileId, 'profile-dir'), 'cross-link-audit.json');
-    if (!fs.existsSync(out))
+    if (!fs.existsSync(out)) {
       return { ok: false, error: 'Audit did not produce cross-link-audit.json' };
+    }
     const parsed = JSON.parse(fs.readFileSync(out, 'utf8')) as {
       findings: CrossLinkFinding[];
       mismatches: number;
@@ -78,7 +83,7 @@ export const POST = wrap('cross-link-audit', async () => {
     logEvent('cross-link-audit', 'Audit complete', {
       level: parsed.mismatches > 0 ? 'warn' : 'success',
       category: 'system',
-      message: parsed.mismatches + ' mismatches · ' + parsed.gaps + ' gaps',
+      message: `${parsed.mismatches} mismatches · ${parsed.gaps} gaps`,
     });
     return { ok: true, ...parsed };
   } catch (err) {
@@ -90,7 +95,9 @@ export const POST = wrap('cross-link-audit', async () => {
 export const GET = wrap('cross-link-audit', async () => {
   const profileId = getActiveProfileId();
   const out = path.join(profilePath(profileId, 'profile-dir'), 'cross-link-audit.json');
-  if (!fs.existsSync(out)) return { ok: true, findings: [], auditedAt: null };
+  if (!fs.existsSync(out)) {
+    return { ok: true, findings: [], auditedAt: null };
+  }
   try {
     const parsed = JSON.parse(fs.readFileSync(out, 'utf8'));
     return { ok: true, ...parsed };

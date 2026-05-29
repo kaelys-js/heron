@@ -20,7 +20,7 @@ async function call() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/health', () => {
+describe('gET /api/health', () => {
   it('returns 200 + { ok: true, service: "heron" }', async () => {
     const r = await call();
     expect(r.status).toBe(200);

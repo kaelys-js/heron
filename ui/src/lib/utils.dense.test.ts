@@ -100,7 +100,7 @@ describe('truncate — boundary cases', () => {
     ['hello world', 100, 'hello world'],
     ['a'.repeat(100), 10, 'aaaaaaaaa…'],
     ['a'.repeat(60), 60, 'a'.repeat(60)],
-    ['a'.repeat(61), 60, 'a'.repeat(59) + '…'],
+    ['a'.repeat(61), 60, `${'a'.repeat(59)}…`],
   ])('truncate("%s", %i) → "%s"', (input, limit, expected) => {
     expect(truncate(input, limit)).toBe(expected);
   });

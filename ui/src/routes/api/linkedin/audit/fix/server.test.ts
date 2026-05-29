@@ -44,7 +44,7 @@ async function post(body: unknown) {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/linkedin/audit/fix', () => {
+describe('pOST /api/linkedin/audit/fix', () => {
   it('400 when kind is missing', async () => {
     const r = await post({});
     expect(r.status).toBe(400);

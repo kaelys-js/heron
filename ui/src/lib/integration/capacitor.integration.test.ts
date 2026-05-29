@@ -27,29 +27,37 @@ const brand = JSON.parse(readFile('branding/brand.json'));
 const { bundleId, urlScheme, appGroup } = brand.identifiers;
 const { name, displayName } = brand;
 
-describe('Capacitor brand consistency — iOS', () => {
-  it('Info.plist contains bundleId', () => {
-    if (!exists('ui/ios/App/App/Info.plist')) return;
+describe('capacitor brand consistency — iOS', () => {
+  it('info.plist contains bundleId', () => {
+    if (!exists('ui/ios/App/App/Info.plist')) {
+      return;
+    }
     const plist = readFile('ui/ios/App/App/Info.plist');
     expect(plist).toContain(bundleId);
   });
 
-  it('Info.plist contains urlScheme', () => {
-    if (!exists('ui/ios/App/App/Info.plist')) return;
+  it('info.plist contains urlScheme', () => {
+    if (!exists('ui/ios/App/App/Info.plist')) {
+      return;
+    }
     expect(readFile('ui/ios/App/App/Info.plist')).toContain(urlScheme);
   });
 
-  it('Brand.swift exposes bundleId', () => {
-    if (!exists('ui/ios/App/App/Brand.swift')) return;
+  it('brand.swift exposes bundleId', () => {
+    if (!exists('ui/ios/App/App/Brand.swift')) {
+      return;
+    }
     expect(readFile('ui/ios/App/App/Brand.swift')).toContain(bundleId);
   });
 
-  it('Brand.swift exposes urlScheme', () => {
-    if (!exists('ui/ios/App/App/Brand.swift')) return;
+  it('brand.swift exposes urlScheme', () => {
+    if (!exists('ui/ios/App/App/Brand.swift')) {
+      return;
+    }
     expect(readFile('ui/ios/App/App/Brand.swift')).toContain(urlScheme);
   });
 
-  it('Every extension target has its own Brand.swift', () => {
+  it('every extension target has its own Brand.swift', () => {
     const targets = ['AppWidget', 'AppLiveActivity', 'AppShareExtension', 'WatchApp'];
     for (const t of targets) {
       const p = `ui/ios/App/${t}/Brand.swift`;
@@ -59,17 +67,21 @@ describe('Capacitor brand consistency — iOS', () => {
     }
   });
 
-  it('WatchApp/Info.plist companion identifier matches bundleId', () => {
+  it('watchApp/Info.plist companion identifier matches bundleId', () => {
     // WKCompanionAppBundleIdentifier must equal the iOS app's bundleId or
     // the watch app won't install. apply-brand derives it from brand.json.
     const p = 'ui/ios/App/WatchApp/Info.plist';
-    if (!exists(p)) return;
+    if (!exists(p)) {
+      return;
+    }
     expect(readFile(p)).toContain(bundleId);
   });
 
-  it('App.entitlements app-group + keychain group derive from brand.json', () => {
+  it('app.entitlements app-group + keychain group derive from brand.json', () => {
     const p = 'ui/ios/App/App/App.entitlements';
-    if (!exists(p)) return;
+    if (!exists(p)) {
+      return;
+    }
     const ent = readFile(p);
     expect(ent).toContain(appGroup);
     expect(ent).toContain(bundleId);
@@ -79,7 +91,9 @@ describe('Capacitor brand consistency — iOS', () => {
     // Every PRODUCT_BUNDLE_IDENTIFIER is bundleId + a target suffix; a
     // stale base here means a target ships under the wrong App ID.
     const p = 'ui/ios/App/App.xcodeproj/project.pbxproj';
-    if (!exists(p)) return;
+    if (!exists(p)) {
+      return;
+    }
     const ids = [...readFile(p).matchAll(/PRODUCT_BUNDLE_IDENTIFIER = ([A-Za-z0-9_.]+);/g)].map(
       (m) => m[1],
     );
@@ -90,26 +104,32 @@ describe('Capacitor brand consistency — iOS', () => {
   });
 });
 
-describe('Capacitor brand consistency — Android', () => {
+describe('capacitor brand consistency — Android', () => {
   it('build.gradle contains bundleId (AndroidManifest uses ${applicationId})', () => {
     // AndroidManifest references the bundle via `${applicationId}`
     // placeholder substituted by Gradle. The literal lives in build.gradle.
     const bg = 'ui/android/app/build.gradle';
-    if (!exists(bg)) return;
+    if (!exists(bg)) {
+      return;
+    }
     expect(readFile(bg)).toContain(bundleId);
   });
 
   it('strings.xml contains displayName', () => {
     const xml = 'ui/android/app/src/main/res/values/strings.xml';
-    if (!exists(xml)) return;
+    if (!exists(xml)) {
+      return;
+    }
     expect(readFile(xml)).toContain(displayName);
   });
 });
 
-describe('Capacitor brand consistency — Web manifest + favicon', () => {
+describe('capacitor brand consistency — Web manifest + favicon', () => {
   it('manifest.webmanifest contains displayName', () => {
     const mf = 'ui/static/manifest.webmanifest';
-    if (!exists(mf)) return;
+    if (!exists(mf)) {
+      return;
+    }
     expect(readFile(mf)).toContain(displayName);
   });
 
@@ -118,29 +138,35 @@ describe('Capacitor brand consistency — Web manifest + favicon', () => {
   });
 });
 
-describe('Capacitor brand consistency — Electron + Fastlane', () => {
+describe('capacitor brand consistency — Electron + Fastlane', () => {
   it('electron-builder config references bundleId', () => {
     const cfg = 'ui/electron/electron-builder.config.json';
-    if (!exists(cfg)) return;
+    if (!exists(cfg)) {
+      return;
+    }
     expect(readFile(cfg)).toContain(bundleId);
   });
 
   it('fastlane Appfile references bundleId', () => {
     const af = 'ui/ios/App/fastlane/Appfile';
-    if (!exists(af)) return;
+    if (!exists(af)) {
+      return;
+    }
     expect(readFile(af)).toContain(bundleId);
   });
 
-  it('MAS entitlements app-group matches appGroup', () => {
+  it('mAS entitlements app-group matches appGroup', () => {
     // entitlements.mas.plist declares the App Group shared with a
     // sideloaded iOS app under Catalyst; apply-brand keeps it in lock-step.
     const p = 'ui/electron/build/entitlements.mas.plist';
-    if (!exists(p)) return;
+    if (!exists(p)) {
+      return;
+    }
     expect(readFile(p)).toContain(appGroup);
   });
 });
 
-describe('Brand TS exports', () => {
+describe('brand TS exports', () => {
   it('ui/src/lib/client/brand.ts exists + exports BRAND', () => {
     const ts = 'ui/src/lib/client/brand.ts';
     expect(exists(ts)).toBe(true);
@@ -152,7 +178,7 @@ describe('Brand TS exports', () => {
   });
 });
 
-describe('Capacitor — replaces obsolete verify-capacitor.mjs checks', () => {
+describe('capacitor — replaces obsolete verify-capacitor.mjs checks', () => {
   // The legacy verifier had 3 stale needles pointing at the pre-split
   // deep-links.ts. After deep-links.ts → {deep-links.ts +
   // deep-links-parser.ts}, those needles moved. Below: the same intent
@@ -160,19 +186,25 @@ describe('Capacitor — replaces obsolete verify-capacitor.mjs checks', () => {
 
   it('deep-link parser imports BRAND from generated brand.ts', () => {
     const parser = 'ui/src/lib/client/deep-links-parser.ts';
-    if (!exists(parser)) return;
+    if (!exists(parser)) {
+      return;
+    }
     expect(readFile(parser)).toMatch(/from\s+['"]\.\/brand['"]/);
   });
 
   it('theme store uses BRAND prefix in storage key', () => {
     const ts = 'ui/src/lib/theme.svelte.ts';
-    if (!exists(ts)) return;
+    if (!exists(ts)) {
+      return;
+    }
     expect(readFile(ts)).toMatch(/BRAND_STORAGE_KEYS|BRAND\.name/);
   });
 
   it('deep-link parser handles every documented route branch', () => {
     const parser = 'ui/src/lib/client/deep-links-parser.ts';
-    if (!exists(parser)) return;
+    if (!exists(parser)) {
+      return;
+    }
     const src = readFile(parser);
     for (const route of ['job', 'inbox', 'pipeline', 'queue', 'applied']) {
       expect(src, `parser missing branch for "${route}"`).toContain(route);
@@ -233,7 +265,7 @@ describe('apply-brand drift gate — protects against accidental destructive reb
     const p = path.join(root, 'branding', 'brand.json');
     const b = JSON.parse(fs.readFileSync(p, 'utf8'));
     patcher(b);
-    fs.writeFileSync(p, JSON.stringify(b, null, 2) + '\n');
+    fs.writeFileSync(p, `${JSON.stringify(b, null, 2)}\n`);
   }
 
   it('non-destructive change (tagline edit) runs cleanly', async () => {
@@ -281,7 +313,7 @@ describe('apply-brand drift gate — protects against accidental destructive reb
     });
   }, 120_000);
 
-  it('DESTRUCTIVE_FIELDS list covers every App-Store-locked identifier', () => {
+  it('dESTRUCTIVE_FIELDS list covers every App-Store-locked identifier', () => {
     const src = readFile('scripts/native/apply-brand.mjs');
     // The 7 identifiers that cannot be reverted at the App Store level.
     for (const field of [
@@ -413,13 +445,20 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
         '.claude',
       ]);
       const fullDir = path.join(REPO_ROOT, dir);
-      if (!fs.existsSync(fullDir)) return acc;
+      if (!fs.existsSync(fullDir)) {
+        return acc;
+      }
       for (const e of fs.readdirSync(fullDir)) {
-        if (SKIP_DIRS.has(e)) continue;
+        if (SKIP_DIRS.has(e)) {
+          continue;
+        }
         const full = path.join(dir, e);
         const stat = fs.statSync(path.join(REPO_ROOT, full));
-        if (stat.isDirectory()) walk(full, acc);
-        else if (e.endsWith('.md')) acc.push(full);
+        if (stat.isDirectory()) {
+          walk(full, acc);
+        } else if (e.endsWith('.md')) {
+          acc.push(full);
+        }
       }
       return acc;
     }

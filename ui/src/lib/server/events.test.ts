@@ -218,8 +218,8 @@ describe('installBusListener (HMR-safe)', () => {
 
   it('replaces an existing listener with the same name (idempotent)', () => {
     const calls: string[] = [];
-    const handlerOld = (e: { title: string }) => calls.push('old:' + e.title);
-    const handlerNew = (e: { title: string }) => calls.push('new:' + e.title);
+    const handlerOld = (e: { title: string }) => calls.push(`old:${e.title}`);
+    const handlerNew = (e: { title: string }) => calls.push(`new:${e.title}`);
     installBusListener('replaceable', handlerOld);
     installBusListener('replaceable', handlerNew);
     logEvent('s', 'fired');
@@ -229,8 +229,8 @@ describe('installBusListener (HMR-safe)', () => {
 
   it('different names co-exist', () => {
     const calls: string[] = [];
-    installBusListener('a', (e) => calls.push('a:' + (e as { title: string }).title));
-    installBusListener('b', (e) => calls.push('b:' + (e as { title: string }).title));
+    installBusListener('a', (e) => calls.push(`a:${(e as { title: string }).title}`));
+    installBusListener('b', (e) => calls.push(`b:${(e as { title: string }).title}`));
     logEvent('s', 'fired');
     expect(calls).toContain('a:fired');
     expect(calls).toContain('b:fired');

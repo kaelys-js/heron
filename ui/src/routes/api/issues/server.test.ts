@@ -11,7 +11,9 @@ vi.mock('$lib/server/issues', () => ({
   listAllIssues: () => [...openIssues, ...resolvedIssues],
   resolveIssue: (id: string) => {
     const idx = openIssues.findIndex((i) => i.id === id);
-    if (idx === -1) return null;
+    if (idx === -1) {
+      return null;
+    }
     const [issue] = openIssues.splice(idx, 1);
     resolvedIssues.push(issue);
     return issue;
@@ -41,7 +43,7 @@ afterEach(() => {
 
 async function get(qs = '') {
   const r = (await (GET as unknown as (e: unknown) => Promise<Response>)({
-    url: new URL('http://localhost/api/issues' + qs),
+    url: new URL(`http://localhost/api/issues${qs}`),
   } as unknown)) as Response;
   return { status: r.status, body: await r.json() };
 }
@@ -65,7 +67,7 @@ async function del() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/issues', () => {
+describe('gET /api/issues', () => {
   it('returns open issues by default', async () => {
     openIssues.push({ id: 'i1', summary: 'open one', source: 'liveness' });
     resolvedIssues.push({ id: 'i2', summary: 'done', source: 'liveness' });
@@ -82,7 +84,7 @@ describe('GET /api/issues', () => {
   });
 });
 
-describe('POST /api/issues', () => {
+describe('pOST /api/issues', () => {
   it('400 when id is missing', async () => {
     const r = await post({});
     expect(r.status).toBe(400);
@@ -104,7 +106,7 @@ describe('POST /api/issues', () => {
   });
 });
 
-describe('DELETE /api/issues', () => {
+describe('dELETE /api/issues', () => {
   it('returns the count of resolved issues removed', async () => {
     resolvedIssues.push({ id: 'a', summary: 's', source: 's' });
     resolvedIssues.push({ id: 'b', summary: 's', source: 's' });

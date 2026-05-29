@@ -43,7 +43,9 @@ describe('backup system — code surface', () => {
   });
 
   it('backup.ts exports createBackup or similar', () => {
-    if (!exists('ui/src/lib/server/backup.ts')) return;
+    if (!exists('ui/src/lib/server/backup.ts')) {
+      return;
+    }
     const ts = readFile('ui/src/lib/server/backup.ts');
     // At least one of these export shapes exists
     const hasExport =
@@ -53,7 +55,9 @@ describe('backup system — code surface', () => {
   });
 
   it('backup.ts exports a restore function', () => {
-    if (!exists('ui/src/lib/server/backup.ts')) return;
+    if (!exists('ui/src/lib/server/backup.ts')) {
+      return;
+    }
     const ts = readFile('ui/src/lib/server/backup.ts');
     const hasRestore =
       /export\s+(async\s+)?function\s+restore/.test(ts) || /export\s+const\s+restore/.test(ts);

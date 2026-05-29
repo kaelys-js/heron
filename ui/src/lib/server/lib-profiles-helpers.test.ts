@@ -116,7 +116,7 @@ describe('lib-profiles.mjs::resolveUserArg — path-traversal guard', () => {
 });
 
 describe('lib-profiles.mjs::profilePath — userId routing', () => {
-  it('SYSTEM_USER_ID -> legacy data/profiles/{slug}/ tree', async () => {
+  it('sYSTEM_USER_ID -> legacy data/profiles/{slug}/ tree', async () => {
     const lib = await import(libPath);
     const got = lib.profilePath('default', 'applications', lib.SYSTEM_USER_ID);
     expect(got).toContain('/data/profiles/default/applications.md');

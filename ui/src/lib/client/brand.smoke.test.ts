@@ -14,7 +14,7 @@ import {
   deepLink,
 } from './brand';
 
-describe('BRAND constants', () => {
+describe('bRAND constants', () => {
   it('exports BRAND with required core fields', () => {
     expect(BRAND.name).toBeTruthy();
     expect(BRAND.displayName).toBeTruthy();
@@ -26,11 +26,11 @@ describe('BRAND constants', () => {
     expect(typeof BRAND_EVENTS).toBe('object');
   });
 
-  it('BRAND_STORAGE_PREFIX equals BRAND.name', () => {
+  it('bRAND_STORAGE_PREFIX equals BRAND.name', () => {
     expect(BRAND_STORAGE_PREFIX).toBe(BRAND.name);
   });
 
-  it('BRAND_STORAGE_KEYS is a non-empty object', () => {
+  it('bRAND_STORAGE_KEYS is a non-empty object', () => {
     expect(typeof BRAND_STORAGE_KEYS).toBe('object');
     expect(Object.keys(BRAND_STORAGE_KEYS).length).toBeGreaterThan(0);
   });
@@ -39,7 +39,7 @@ describe('BRAND constants', () => {
 describe('jobDeepLink', () => {
   it('builds a deep link for a job id under the brand URL scheme', () => {
     const link = jobDeepLink('abc123');
-    expect(link).toContain(BRAND.urlScheme + '://');
+    expect(link).toContain(`${BRAND.urlScheme}://`);
     expect(link).toContain('abc123');
   });
 
@@ -50,15 +50,15 @@ describe('jobDeepLink', () => {
   it('returns the same link shape across different ids', () => {
     const a = jobDeepLink('a');
     const b = jobDeepLink('bb');
-    expect(a.startsWith(BRAND.urlScheme + '://')).toBe(true);
-    expect(b.startsWith(BRAND.urlScheme + '://')).toBe(true);
+    expect(a.startsWith(`${BRAND.urlScheme}://`)).toBe(true);
+    expect(b.startsWith(`${BRAND.urlScheme}://`)).toBe(true);
   });
 });
 
 describe('deepLink', () => {
   it('builds a deep link for an arbitrary route', () => {
     const link = deepLink('/inbox');
-    expect(link).toContain(BRAND.urlScheme + '://');
+    expect(link).toContain(`${BRAND.urlScheme}://`);
     expect(link).toContain('inbox');
   });
 

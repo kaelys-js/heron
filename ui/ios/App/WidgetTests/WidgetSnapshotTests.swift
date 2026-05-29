@@ -102,6 +102,13 @@ final class WidgetSnapshotTests: XCTestCase {
         let hc = UIHostingController(rootView: framed)
         _ = hc.view
         XCTAssertNotNil(hc.view)
+        // Force SwiftUI to evaluate body{} so the widget view code is
+        // exercised for coverage even when the image-diff below is gated
+        // off (no committed baseline yet). Accessing UIHostingController.view
+        // does NOT trigger a layout/render pass, so body{} never runs and the
+        // view lines read as 0% covered. ImageRenderer.uiImage forces a real
+        // render -- same approach RootViewTests uses on watchOS.
+        _ = ImageRenderer(content: framed).uiImage
 
         let recordMode = ProcessInfo.processInfo.environment["RECORD_MODE"] == "1"
         let testFile = URL(fileURLWithPath: "\(file)")

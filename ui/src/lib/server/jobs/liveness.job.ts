@@ -33,13 +33,17 @@ function parseStdout(stdout: string, urls: string[]): Outcome[] {
     const line = raw.trim();
     const m = line.match(LINE_RE);
     if (m) {
-      if (pending) out.push(pending);
+      if (pending) {
+        out.push(pending);
+      }
       pending = { url: m[3].trim(), verdict: m[2] as LivenessVerdict };
     } else if (pending && line.startsWith('reason:')) {
       pending.reason = line.replace(/^reason:\s*/, '');
     }
   }
-  if (pending) out.push(pending);
+  if (pending) {
+    out.push(pending);
+  }
   // Fall back to defaults for any URL the script didn't enumerate
   for (const url of urls) {
     if (!out.find((o) => o.url === url)) {
@@ -59,8 +63,10 @@ function applicationsDate(line: string): Date | null {
   const cells = line.split('|').map((c) => c.trim());
   // Layout: '', '#', 'date', 'company', 'role', ... -- date is at cells[2].
   const m = cells[2]?.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (!m) return null;
-  const d = new Date(m[1] + '-' + m[2] + '-' + m[3]);
+  if (!m) {
+    return null;
+  }
+  const d = new Date(`${m[1]}-${m[2]}-${m[3]}`);
   return isNaN(d.getTime()) ? null : d;
 }
 
@@ -81,15 +87,17 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
     const text = fs.readFileSync(activePath('pipeline'), 'utf8');
     for (const line of text.split('\n')) {
       const m = line.match(/https?:\/\/\S+/);
-      if (m) urls.add(m[0].replace(/[)\].,>]+$/, ''));
+      if (m) {
+        urls.add(m[0].replace(/[)\].,>]+$/, ''));
+      }
     }
   } catch (e) {
-    const code = (e as NodeJS.ErrnoException).code;
+    const { code } = e as NodeJS.ErrnoException;
     if (code !== 'ENOENT') {
       logEvent('liveness', 'Could not read pipeline.md', {
         level: 'warn',
         category: 'system',
-        message: code + ': ' + (e instanceof Error ? e.message : String(e)),
+        message: `${code}: ${e instanceof Error ? e.message : String(e)}`,
       });
     }
   }
@@ -98,7 +106,9 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
     const text = fs.readFileSync(activePath('applications'), 'utf8');
     for (const line of text.split('\n')) {
       const m = line.match(/https?:\/\/\S+/);
-      if (!m) continue;
+      if (!m) {
+        continue;
+      }
       const url = m[0].replace(/[)\].,>]+$/, '');
       if (scope === 'all') {
         urls.add(url);
@@ -113,12 +123,12 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
       }
     }
   } catch (e) {
-    const code = (e as NodeJS.ErrnoException).code;
+    const { code } = e as NodeJS.ErrnoException;
     if (code !== 'ENOENT') {
       logEvent('liveness', 'Could not read applications.md', {
         level: 'warn',
         category: 'system',
-        message: code + ': ' + (e instanceof Error ? e.message : String(e)),
+        message: `${code}: ${e instanceof Error ? e.message : String(e)}`,
       });
     }
   }
@@ -147,7 +157,7 @@ function runLivenessSubprocess(urls: string[]): Promise<Outcome[]> {
       logEvent('liveness', 'check-liveness.mjs failed to spawn', {
         level: 'error',
         category: 'system',
-        message: err.message + ' — Playwright must be installed in the venv',
+        message: `${err.message} — Playwright must be installed in the venv`,
       });
       resolve(urls.map((url) => ({ url, verdict: 'uncertain' as const, reason: 'spawn failed' })));
     });
@@ -188,7 +198,7 @@ async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {
   logEvent('liveness', 'Liveness sweep started', {
     level: 'info',
     category: 'system',
-    message: 'checking ' + urls.length + ' URL(s) via Playwright',
+    message: `checking ${urls.length} URL(s) via Playwright`,
   });
   const outcomes = await runLivenessSubprocess(urls);
   let expired = 0;
@@ -204,7 +214,7 @@ async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {
         logEvent('liveness', 'Could not mark URL closed', {
           level: 'warn',
           category: 'application',
-          message: o.url + ' — ' + (err instanceof Error ? err.message : String(err)),
+          message: `${o.url} — ${err instanceof Error ? err.message : String(err)}`,
         });
       }
     } else if (o.verdict === 'uncertain') {
@@ -212,27 +222,23 @@ async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {
       reportIssue({
         severity: 'warn',
         source: 'liveness',
-        summary: 'Liveness uncertain · ' + o.url,
-        detail: 'Could not classify this posting reliably.\n\nreason: ' + (o.reason ?? '(none)'),
+        summary: `Liveness uncertain · ${o.url}`,
+        detail: `Could not classify this posting reliably.\n\nreason: ${o.reason ?? '(none)'}`,
         fix: { label: 'Open job', href: o.url },
-        dedupeKey: 'liveness:uncertain:' + o.url,
+        dedupeKey: `liveness:uncertain:${o.url}`,
       });
     }
   }
   logEvent('liveness', 'Liveness sweep finished', {
     level: 'success',
     category: 'system',
-    message:
-      outcomes.length +
-      ' checked · ' +
-      expired +
-      ' expired → Closed · ' +
-      uncertain +
-      ' uncertain (Inbox)',
+    message: `${outcomes.length} checked · ${expired} expired → Closed · ${
+      uncertain
+    } uncertain (Inbox)`,
   });
   return {
     ok: true,
-    message: outcomes.length + ' checked · ' + expired + ' expired',
+    message: `${outcomes.length} checked · ${expired} expired`,
     meta: { checked: outcomes.length, expired, uncertain },
   };
 }

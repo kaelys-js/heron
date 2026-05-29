@@ -15,20 +15,22 @@ const __BonjourCtor = vi.fn();
 // leaked state into later tests).
 let __mockShape: 'both' | 'default-only' | 'neither' = 'both';
 
-vi.mock('bonjour-service', () => {
-  return {
+vi.mock('bonjour-service', () => ({
+  get Bonjour() {
+    if (__mockShape === 'default-only' || __mockShape === 'neither') {
+      return undefined;
+    }
+    return __BonjourCtor;
+  },
+  default: {
     get Bonjour() {
-      if (__mockShape === 'default-only' || __mockShape === 'neither') return undefined;
+      if (__mockShape === 'neither') {
+        return undefined;
+      }
       return __BonjourCtor;
     },
-    default: {
-      get Bonjour() {
-        if (__mockShape === 'neither') return undefined;
-        return __BonjourCtor;
-      },
-    },
-  };
-});
+  },
+}));
 
 vi.mock('electron', () => ({
   app: { getVersion: () => '1.2.3' },

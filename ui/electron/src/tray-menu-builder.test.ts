@@ -5,13 +5,8 @@
  * array shape).
  */
 import { describe, it, expect, vi } from 'vitest';
-import {
-  buildTrayMenuTemplate,
-  computeTrayTitle,
-  computeDockBadge,
-  type MenuBuilderHandlers,
-  type MenuBuilderContext,
-} from './tray-menu-builder';
+import { buildTrayMenuTemplate, computeTrayTitle, computeDockBadge } from './tray-menu-builder';
+import type { MenuBuilderHandlers, MenuBuilderContext } from './tray-menu-builder';
 
 function makeHandlers(): MenuBuilderHandlers & { spies: Record<string, ReturnType<typeof vi.fn>> } {
   const spies = {
@@ -114,7 +109,7 @@ describe('buildTrayMenuTemplate -- section quick-jumps', () => {
     expect(labels).toContain('Stats');
   });
 
-  it('Pipeline + Inbox have accelerators, Queue + Stats do not', () => {
+  it('pipeline + Inbox have accelerators, Queue + Stats do not', () => {
     const items = buildTrayMenuTemplate(makeContext(), makeHandlers());
     const findByLabel = (label: string) => items.find((i) => i.label === label);
     expect(findByLabel('Pipeline')?.accelerator).toBe('CmdOrCtrl+P');
@@ -225,7 +220,7 @@ describe('buildTrayMenuTemplate -- platform branching', () => {
     expect(items.find((i) => i.label === 'Menu Bar Only (hide Dock icon)')).toBeUndefined();
   });
 
-  it('Menu Bar Only reflects current menuBarOnly state', () => {
+  it('menu Bar Only reflects current menuBarOnly state', () => {
     const items = buildTrayMenuTemplate(
       makeContext({ platform: 'darwin', menuBarOnly: true }),
       makeHandlers(),
@@ -234,7 +229,7 @@ describe('buildTrayMenuTemplate -- platform branching', () => {
     expect(menuBarOnly?.checked).toBe(true);
   });
 
-  it('Menu Bar Only click triggers onToggleMenuBarOnly', () => {
+  it('menu Bar Only click triggers onToggleMenuBarOnly', () => {
     const h = makeHandlers();
     const items = buildTrayMenuTemplate(makeContext({ platform: 'darwin' }), h);
     const menuBarOnly = items.find((i) => i.label === 'Menu Bar Only (hide Dock icon)')!;
@@ -277,7 +272,7 @@ describe('buildTrayMenuTemplate -- window controls + footer', () => {
     expect(quit?.accelerator).toBe('CmdOrCtrl+Q');
   });
 
-  it('Quit click triggers onQuit', () => {
+  it('quit click triggers onQuit', () => {
     const h = makeHandlers();
     const items = buildTrayMenuTemplate(makeContext(), h);
     const quit = items.find((i) => /^Quit /.test(String(i.label)))!;

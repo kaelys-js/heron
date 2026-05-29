@@ -22,7 +22,7 @@ export const POST = wrap(
   async ({ params, locals }: { params: { id: string }; locals: App.Locals }) => {
     requireOwner(locals);
     const userId = requireUserId(locals);
-    const id = params.id;
+    const { id } = params;
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
@@ -37,14 +37,14 @@ export const POST = wrap(
         }
       } catch (err) {
         // Surface the error but continue -- state file reset is the primary effect.
-        logEvent('sources', 'Could not remove ' + stateDir, {
+        logEvent('sources', `Could not remove ${stateDir}`, {
           level: 'warn',
           category: 'system',
           message: err instanceof Error ? err.message : String(err),
         });
       }
       resetSource(id);
-      return { ok: true, message: portal + ' disconnected · session removed' };
+      return { ok: true, message: `${portal} disconnected · session removed` };
     }
 
     if (id === 'gmail-imap') {
@@ -63,9 +63,9 @@ export const POST = wrap(
       // We don't wipe the key (other features may still use it). Just reset
       // the source-state record so the /sources card reverts to "Not connected".
       resetSource(id);
-      return { ok: true, message: id + ' source state reset · API key preserved on /settings' };
+      return { ok: true, message: `${id} source state reset · API key preserved on /settings` };
     }
 
-    badRequest('Unknown source id: ' + id);
+    badRequest(`Unknown source id: ${id}`);
   },
 );

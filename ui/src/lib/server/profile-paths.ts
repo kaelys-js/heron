@@ -102,33 +102,35 @@ const USERS_ROOT = path.join(DATA_ROOT, 'users');
  * works during the transition.
  */
 function userProfilesRoot(userId: string): string {
-  if (userId === SYSTEM_USER_ID) return PROFILES_ROOT;
+  if (userId === SYSTEM_USER_ID) {
+    return PROFILES_ROOT;
+  }
   return path.join(USERS_ROOT, userId, 'profiles');
 }
 
 function validateProfileId(profileId: unknown): asserts profileId is string {
   if (!profileId || typeof profileId !== 'string') {
-    throw new Error('profilePath: profileId is required (got ' + JSON.stringify(profileId) + ')');
+    throw new Error(`profilePath: profileId is required (got ${JSON.stringify(profileId)})`);
   }
   if (
     (profileId as string).includes('/') ||
     (profileId as string).includes('\\') ||
     (profileId as string).includes('..')
   ) {
-    throw new Error('profilePath: invalid profileId (path-traversal attempt): ' + profileId);
+    throw new Error(`profilePath: invalid profileId (path-traversal attempt): ${profileId}`);
   }
 }
 
 function validateUserId(userId: unknown): asserts userId is string {
   if (!userId || typeof userId !== 'string') {
-    throw new Error('profilePath: userId is required (got ' + JSON.stringify(userId) + ')');
+    throw new Error(`profilePath: userId is required (got ${JSON.stringify(userId)})`);
   }
   if (
     (userId as string).includes('/') ||
     (userId as string).includes('\\') ||
     (userId as string).includes('..')
   ) {
-    throw new Error('profilePath: invalid userId (path-traversal attempt): ' + userId);
+    throw new Error(`profilePath: invalid userId (path-traversal attempt): ${userId}`);
   }
 }
 
@@ -285,12 +287,12 @@ export function playwrightUserDataDir(userId: string, portal: string): string {
   // Allow letters / digits / hyphen / underscore in portal slug; reject
   // path-traversal attempts.
   if (!/^[a-zA-Z0-9_-]+$/.test(portal)) {
-    throw new Error('playwrightUserDataDir: invalid portal: ' + portal);
+    throw new Error(`playwrightUserDataDir: invalid portal: ${portal}`);
   }
   if (userId === SYSTEM_USER_ID) {
-    return path.join(PROFILES_ROOT, '_shared', '.playwright-' + portal);
+    return path.join(PROFILES_ROOT, '_shared', `.playwright-${portal}`);
   }
-  return path.join(USERS_ROOT, userId, '.playwright-' + portal);
+  return path.join(USERS_ROOT, userId, `.playwright-${portal}`);
 }
 
 /** Make sure the profile directory + its standard subdirs exist for the
@@ -325,6 +327,7 @@ export function ensureProfileDirsForUser(userId: string, profileId: string): voi
  * call site is explicit about which profile it targets.
  */
 import { getActiveProfileId } from './profiles';
+
 export function activePath(kind: ProfileFileKind): string {
   return profilePath(getActiveProfileId(), kind);
 }

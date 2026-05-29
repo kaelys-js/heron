@@ -85,7 +85,9 @@ function topWords(text: string, n = 100): Map<string, number> {
     'years',
   ]);
   for (const w of cleaned) {
-    if (w.length < 3 || STOP.has(w)) continue;
+    if (w.length < 3 || STOP.has(w)) {
+      continue;
+    }
     counts.set(w, (counts.get(w) ?? 0) + 1);
   }
   return new Map([...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, n));
@@ -110,10 +112,14 @@ function readTailoredPdfMarkdown(profileId: string, pdfFile: string): string {
   try {
     const p = path.join(ROOT, pdfFile);
     const mdPath = p.replace(/\.pdf$/, '.md');
-    if (fs.existsSync(mdPath)) return fs.readFileSync(mdPath, 'utf8');
+    if (fs.existsSync(mdPath)) {
+      return fs.readFileSync(mdPath, 'utf8');
+    }
     // Fallback: the cover-letter sibling often has the same JD keywords.
     const coverPath = p.replace(/\.pdf$/, '-cover.md');
-    if (fs.existsSync(coverPath)) return fs.readFileSync(coverPath, 'utf8');
+    if (fs.existsSync(coverPath)) {
+      return fs.readFileSync(coverPath, 'utf8');
+    }
   } catch {
     // Sibling .md read failure -- fall through to empty, caller treats it
     // as a "no source markdown available" signal and skips that PDF.
@@ -138,7 +144,9 @@ export function preservationStats(profileId: string): {
   } catch {
     return out;
   }
-  if (!fs.existsSync(outDir)) return out;
+  if (!fs.existsSync(outDir)) {
+    return out;
+  }
   let entries: string[];
   try {
     entries = fs.readdirSync(outDir);
@@ -146,12 +154,19 @@ export function preservationStats(profileId: string): {
     return out;
   }
   for (const f of entries) {
-    if (!f.endsWith('.pdf')) continue;
-    if (f.startsWith('cv-general')) continue;
+    if (!f.endsWith('.pdf')) {
+      continue;
+    }
+    if (f.startsWith('cv-general')) {
+      continue;
+    }
     out.total++;
     const mdPath = path.join(outDir, f.replace(/\.pdf$/, '.md'));
-    if (fs.existsSync(mdPath)) withMd++;
-    else withoutMd++;
+    if (fs.existsSync(mdPath)) {
+      withMd++;
+    } else {
+      withoutMd++;
+    }
   }
   out.withMd = withMd;
   out.withoutMd = withoutMd;
@@ -159,11 +174,21 @@ export function preservationStats(profileId: string): {
 }
 
 function bucketScore(score: number | undefined): string {
-  if (score == null) return 'unscored';
-  if (score >= 4.5) return '4.5+';
-  if (score >= 4.0) return '4.0-4.4';
-  if (score >= 3.5) return '3.5-3.9';
-  if (score >= 3.0) return '3.0-3.4';
+  if (score == null) {
+    return 'unscored';
+  }
+  if (score >= 4.5) {
+    return '4.5+';
+  }
+  if (score >= 4.0) {
+    return '4.0-4.4';
+  }
+  if (score >= 3.5) {
+    return '3.5-3.9';
+  }
+  if (score >= 3.0) {
+    return '3.0-3.4';
+  }
   return '< 3.0';
 }
 
@@ -200,9 +225,13 @@ export function analyzeCvVariants(profileId: string): CvVariantReport {
   const scoreBuckets: Record<string, { positive: number; negative: number }> = {};
 
   for (const job of allJobs) {
-    if (!job.pdfFile) continue;
+    if (!job.pdfFile) {
+      continue;
+    }
     const tailored = readTailoredPdfMarkdown(profileId, job.pdfFile);
-    if (!tailored) continue;
+    if (!tailored) {
+      continue;
+    }
     totalAnalyzed++;
 
     const tailoredWords = topWords(tailored, 200);
@@ -210,7 +239,9 @@ export function analyzeCvVariants(profileId: string): CvVariantReport {
     const injected: string[] = [];
     for (const [w, cnt] of tailoredWords.entries()) {
       const baseCnt = generalWords.get(w) ?? 0;
-      if (cnt - baseCnt >= 2) injected.push(w);
+      if (cnt - baseCnt >= 2) {
+        injected.push(w);
+      }
     }
 
     const outcome: 'positive' | 'negative' | 'pending' = POSITIVE_STATUSES.has(job.status)
@@ -224,19 +255,31 @@ export function analyzeCvVariants(profileId: string): CvVariantReport {
     } else if (outcome === 'negative') {
       negativeCount++;
       lenSumNegative += tailored.length;
-    } else pendingCount++;
+    } else {
+      pendingCount++;
+    }
 
     for (const k of injected) {
-      if (!keywordTallies.has(k)) keywordTallies.set(k, { keyword: k, positive: 0, negative: 0 });
+      if (!keywordTallies.has(k)) {
+        keywordTallies.set(k, { keyword: k, positive: 0, negative: 0 });
+      }
       const t = keywordTallies.get(k)!;
-      if (outcome === 'positive') t.positive++;
-      else if (outcome === 'negative') t.negative++;
+      if (outcome === 'positive') {
+        t.positive++;
+      } else if (outcome === 'negative') {
+        t.negative++;
+      }
     }
 
     const b = bucketScore(job.score ?? job.geminiScore);
-    if (!scoreBuckets[b]) scoreBuckets[b] = { positive: 0, negative: 0 };
-    if (outcome === 'positive') scoreBuckets[b].positive++;
-    else if (outcome === 'negative') scoreBuckets[b].negative++;
+    if (!scoreBuckets[b]) {
+      scoreBuckets[b] = { positive: 0, negative: 0 };
+    }
+    if (outcome === 'positive') {
+      scoreBuckets[b].positive++;
+    } else if (outcome === 'negative') {
+      scoreBuckets[b].negative++;
+    }
   }
 
   // Winning keywords = positive > negative + minimum threshold.

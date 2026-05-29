@@ -22,9 +22,9 @@ async function runBackup(): Promise<JobResult> {
   const sizeMb = ((r.size ?? 0) / 1024 / 1024).toFixed(1);
   return {
     ok: true,
-    message:
-      `Backup ${r.id} · ${r.fileCount} files · ${sizeMb} MB` +
-      (r.pruned ? ` · pruned ${r.pruned}` : ''),
+    message: `Backup ${r.id} · ${r.fileCount} files · ${sizeMb} MB${
+      r.pruned ? ` · pruned ${r.pruned}` : ''
+    }`,
     meta: r as unknown as Record<string, unknown>,
   };
 }

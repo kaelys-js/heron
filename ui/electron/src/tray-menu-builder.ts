@@ -144,8 +144,12 @@ export function buildTrayMenuTemplate(
  * counter that mirrors `stats.queued`.
  */
 export function computeTrayTitle(stats: Stats | null, platform: NodeJS.Platform): string {
-  if (platform !== 'darwin') return '';
-  if (stats && stats.queued > 0) return String(stats.queued);
+  if (platform !== 'darwin') {
+    return '';
+  }
+  if (stats && stats.queued > 0) {
+    return String(stats.queued);
+  }
   return '';
 }
 
@@ -154,7 +158,9 @@ export function computeTrayTitle(stats: Stats | null, platform: NodeJS.Platform)
  * as a "you have N interviews coming up" indicator.
  */
 export function computeDockBadge(stats: Stats | null, platform: NodeJS.Platform): string {
-  if (platform !== 'darwin') return '';
+  if (platform !== 'darwin') {
+    return '';
+  }
   const count = stats?.upcomingInterviews ?? 0;
   return count > 0 ? String(count) : '';
 }

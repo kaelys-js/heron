@@ -48,7 +48,7 @@ async function get() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('GET /api/backup/list', () => {
+describe('gET /api/backup/list', () => {
   it('owner gets backups + config', async () => {
     backups = [
       { id: 'b1', createdAt: 1000 },

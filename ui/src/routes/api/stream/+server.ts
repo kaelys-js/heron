@@ -18,10 +18,14 @@ export const GET = async ({ request, locals }: { request: Request; locals: App.L
       const enc = new TextEncoder();
       let closed = false;
       const send = (ev: ActivityEvent) => {
-        if (closed) return;
-        if (!matches(ev)) return;
+        if (closed) {
+          return;
+        }
+        if (!matches(ev)) {
+          return;
+        }
         try {
-          controller.enqueue(enc.encode('data: ' + JSON.stringify(ev) + '\n\n'));
+          controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`));
         } catch (e: unknown) {
           closed = true;
           logEvent('stream', 'controller.enqueue failed', {
@@ -44,7 +48,9 @@ export const GET = async ({ request, locals }: { request: Request; locals: App.L
       // without going through the toast path.
       if (process.env.HERON_SCREENSHOT_MODE !== '1') {
         try {
-          for (const ev of bus.recentForUser(userId)) send(ev);
+          for (const ev of bus.recentForUser(userId)) {
+            send(ev);
+          }
         } catch (e: unknown) {
           logEvent('stream', 'failed to send recent events', {
             level: 'warn',

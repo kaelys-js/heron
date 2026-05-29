@@ -44,7 +44,7 @@ import fs from 'node:fs';
 function hostMatches(url: string, allowed: string[]): boolean {
   try {
     const host = new URL(url).hostname.toLowerCase();
-    return allowed.some((d) => host === d || host.endsWith('.' + d));
+    return allowed.some((d) => host === d || host.endsWith(`.${d}`));
   } catch {
     return false;
   }
@@ -76,7 +76,9 @@ const SOURCE_PATTERNS: Array<{ name: string; domains: string[] }> = [
 ];
 
 function sourceOf(url: string): string {
-  for (const p of SOURCE_PATTERNS) if (hostMatches(url, p.domains)) return p.name;
+  for (const p of SOURCE_PATTERNS) {
+    if (hostMatches(url, p.domains)) return p.name;
+  }
   try {
     const h = new URL(url).hostname.replace(/^www\./, '');
     return (
@@ -100,11 +102,17 @@ function parseApplicationDates(profileId: string): string[] {
   for (const src of sources) {
     const txt = readSafe(src);
     for (const line of txt.split('\n')) {
-      if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) continue;
+      if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) {
+        continue;
+      }
       const cells = line.split('|').map((c) => c.trim());
-      if (cells.length < 6) continue;
+      if (cells.length < 6) {
+        continue;
+      }
       const date = cells[2];
-      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) dates.push(date);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        dates.push(date);
+      }
     }
   }
   return dates;
@@ -112,7 +120,9 @@ function parseApplicationDates(profileId: string): string[] {
 
 function velocityBuckets(dates: string[]): { day: string; count: number }[] {
   const map = new Map<string, number>();
-  for (const d of dates) map.set(d, (map.get(d) ?? 0) + 1);
+  for (const d of dates) {
+    map.set(d, (map.get(d) ?? 0) + 1);
+  }
   const out: { day: string; count: number }[] = [];
   for (let i = 13; i >= 0; i--) {
     const d = new Date();
@@ -135,7 +145,9 @@ export async function load({ url }: { url: URL }) {
   const funnel = STATUS_ORDER.map((s) => ({ status: s, count: grouped[s].length }));
   // Counts by status
   const counts: Record<string, number> = { total: jobs.length };
-  for (const s of STATUS_ORDER) counts[s.toLowerCase()] = grouped[s].length;
+  for (const s of STATUS_ORDER) {
+    counts[s.toLowerCase()] = grouped[s].length;
+  }
 
   const reports = countAcross(profileId, 'reports-dir', '.md');
   const pdfs = countAcross(profileId, 'output-dir', '.pdf');
@@ -165,7 +177,9 @@ export async function load({ url }: { url: URL }) {
     for (const b of buckets) {
       if (s >= b.range[0] && s < b.range[1]) {
         b.total++;
-        if (isApplied) b.applied++;
+        if (isApplied) {
+          b.applied++;
+        }
         break;
       }
     }
@@ -199,7 +213,9 @@ export async function load({ url }: { url: URL }) {
       sourceMap.set(src, entry);
     }
     entry.count++;
-    if (appliedStatuses.includes(j.status)) entry.applied++;
+    if (appliedStatuses.includes(j.status)) {
+      entry.applied++;
+    }
   }
   const topSources = [...sourceMap.entries()]
     .sort((a, b) => b[1].count - a[1].count)
@@ -217,8 +233,11 @@ export async function load({ url }: { url: URL }) {
   const VALID_BG = new Set(['LOW', 'MEDIUM', 'HIGH', 'BLOCKED']);
   for (const j of jobs) {
     const raw = j.bgRisk ? String(j.bgRisk).toUpperCase() : null;
-    if (raw && VALID_BG.has(raw)) bgCounts[raw as NonNullable<BgRisk>]++;
-    else bgUnknown++;
+    if (raw && VALID_BG.has(raw)) {
+      bgCounts[raw as NonNullable<BgRisk>]++;
+    } else {
+      bgUnknown++;
+    }
   }
 
   // Velocity (applications.md dates)
@@ -250,7 +269,9 @@ export async function load({ url }: { url: URL }) {
     for (const p of pipelinePaths) {
       try {
         const stat = fs.statSync(p);
-        if (stat.mtimeMs > mostRecent) mostRecent = stat.mtimeMs;
+        if (stat.mtimeMs > mostRecent) {
+          mostRecent = stat.mtimeMs;
+        }
       } catch {}
     }
     if (mostRecent > 0) {

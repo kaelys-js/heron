@@ -1,23 +1,25 @@
 import { loadAllJobs, groupByStatus } from '$lib/server/parsers';
 import { parseFilterFromUrl } from '$lib/server/projects';
 import { getActiveProfileId } from '$lib/server/profiles';
-import { listAllStageState, type JobStageState } from '$lib/server/stage-state';
-import {
-  STATUS_ORDER,
-  DEFAULT_FILTER,
-  type TabFilter,
-  type Status,
-  type FilterState,
-} from '$lib/types';
+import { listAllStageState } from '$lib/server/stage-state';
+import type { JobStageState } from '$lib/server/stage-state';
+import { STATUS_ORDER, DEFAULT_FILTER } from '$lib/types';
+import type { TabFilter, Status, FilterState } from '$lib/types';
 
 const PRESETS = new Set<TabFilter>(['all', 'ready', 'applied']);
 
 function parseTab(raw: string | null): TabFilter {
-  if (!raw) return 'all';
-  if (PRESETS.has(raw as TabFilter)) return raw as TabFilter;
+  if (!raw) {
+    return 'all';
+  }
+  if (PRESETS.has(raw as TabFilter)) {
+    return raw as TabFilter;
+  }
   if (raw.startsWith('s:')) {
     const s = raw.slice(2) as Status;
-    if (STATUS_ORDER.includes(s)) return ('s:' + s) as TabFilter;
+    if (STATUS_ORDER.includes(s)) {
+      return ('s:' + s) as TabFilter;
+    }
   }
   return 'all';
 }

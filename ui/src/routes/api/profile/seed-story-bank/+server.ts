@@ -16,7 +16,9 @@ import path from 'node:path';
 
 function resolveProfileId(url: URL): string {
   const q = url.searchParams.get('profile');
-  if (q && getProfile(q)) return q;
+  if (q && getProfile(q)) {
+    return q;
+  }
   return getActiveProfileId();
 }
 
@@ -35,8 +37,11 @@ function spawnSeed(profileId: string): Promise<{ stdout: string; stderr: string 
     });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
-      if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
-      else resolve({ stdout, stderr });
+      if (code !== 0) {
+        reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -65,11 +70,9 @@ export const POST = wrap('seed-story-bank', async ({ url }: { url: URL }) => {
     logEvent('seed-story-bank', 'Story bank seeded', {
       level: 'success',
       category: 'application',
-      message:
-        (seeded != null ? seeded + ' stories' : 'seeded') +
-        ' · file ' +
-        (afterSize - beforeSize) +
-        ' bytes larger',
+      message: `${seeded != null ? seeded + ' stories' : 'seeded'} · file ${
+        afterSize - beforeSize
+      } bytes larger`,
     });
 
     return {
@@ -128,11 +131,17 @@ export const GET = wrap('seed-story-bank', async () => {
       continue;
     }
     if (inComment) {
-      if (line.endsWith('-->')) inComment = false;
+      if (line.endsWith('-->')) {
+        inComment = false;
+      }
       continue;
     }
-    if (line.startsWith('<!--') && line.endsWith('-->')) continue;
-    if (line.startsWith('### ')) storyCount++;
+    if (line.startsWith('<!--') && line.endsWith('-->')) {
+      continue;
+    }
+    if (line.startsWith('### ')) {
+      storyCount++;
+    }
   }
   return {
     exists: true,

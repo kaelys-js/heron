@@ -61,7 +61,9 @@ function pickNextInterview(profileId: string, jobs: Job[]): WidgetInterview | nu
   const upcoming = schedule
     .filter((s) => s.scheduledAt >= now)
     .sort((a, b) => a.scheduledAt - b.scheduledAt);
-  if (upcoming.length === 0) return null;
+  if (upcoming.length === 0) {
+    return null;
+  }
   const next = upcoming[0];
   // ScheduleEntry stores `interviewers` as objects {name, role?, linkedinUrl?}
   // but the widget contract expects bare strings (the SwiftUI view just
@@ -108,7 +110,9 @@ function pickTopApply(jobs: Job[]): {
     const sb = b.score ?? b.geminiScore ?? 0;
     return sb - sa;
   });
-  if (candidates.length === 0) return { topApply: null, runnerUps: [] };
+  if (candidates.length === 0) {
+    return { topApply: null, runnerUps: [] };
+  }
   return {
     topApply: jobToWidgetTopApply(candidates[0]),
     runnerUps: candidates.slice(1, 3).map(jobToWidgetTopApply),
@@ -147,8 +151,10 @@ export const GET = wrap('widgets-snapshot', async () => {
   let queued = 0;
   let appliedToday = 0;
   for (const job of jobs) {
-    if (job.status === 'Queued' || job.status === 'Applying') queued++;
-    const lastEvent = (job as Job & { lastEvent?: number }).lastEvent;
+    if (job.status === 'Queued' || job.status === 'Applying') {
+      queued++;
+    }
+    const { lastEvent } = job as Job & { lastEvent?: number };
     if (job.status === 'Applied' && lastEvent && lastEvent >= dayStart) {
       appliedToday++;
     }
@@ -158,7 +164,9 @@ export const GET = wrap('widgets-snapshot', async () => {
   try {
     const schedule = listSchedule(profileId);
     for (const entry of schedule) {
-      if (entry.scheduledAt >= now && entry.scheduledAt <= weekFromNow) upcomingInterviews++;
+      if (entry.scheduledAt >= now && entry.scheduledAt <= weekFromNow) {
+        upcomingInterviews++;
+      }
     }
   } catch {
     // Schedule store missing on a fresh install -- already counted as 0.

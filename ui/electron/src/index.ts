@@ -32,7 +32,8 @@ import { buildAppMenu } from './app-menu';
 import { DesktopTray } from './tray';
 import { startMdnsAdvertise } from './mdns';
 import { BRAND } from './brand';
-import { startEmbeddedServer, stopEmbeddedServer, type ServerHandle } from './server-process';
+import { startEmbeddedServer, stopEmbeddedServer } from './server-process';
+import type { ServerHandle } from './server-process';
 import { resolveDeepLink } from './deep-links';
 import { buildUnhandledErrorHandler, buildUnhandledRejectionHandler } from './error-routing';
 import { startNetPoller } from './net-polling';
@@ -96,7 +97,9 @@ if (capacitorFileConfig.electron?.deepLinkingEnabled) {
     app.on('second-instance', () => {
       const w = state.mainWindow;
       if (w && !w.isDestroyed()) {
-        if (w.isMinimized()) w.restore();
+        if (w.isMinimized()) {
+          w.restore();
+        }
         w.show();
         w.focus();
       }
@@ -198,7 +201,7 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
     buildAppMenu({
       onPreferences: () =>
         state.mainWindow?.webContents.loadURL(
-          (state.server?.url ?? 'http://localhost:5173') + '/settings',
+          `${state.server?.url ?? 'http://localhost:5173'}/settings`,
         ),
       onAbout: () => {
         dialog.showMessageBox({
@@ -221,11 +224,15 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
       state.mainWindow?.focus();
     },
     onOpenPath: (subPath: string) => {
-      if (!state.mainWindow) return;
+      if (!state.mainWindow) {
+        return;
+      }
       state.mainWindow.show();
       state.mainWindow.focus();
       const url = resolveDeepLink(subPath, state.server?.url ?? 'http://localhost:5173');
-      if (url) void state.mainWindow.loadURL(url);
+      if (url) {
+        void state.mainWindow.loadURL(url);
+      }
     },
     onSetDockVisible: () => {
       /* state currently tracked in tray.ts; no cross-module wiring needed yet */

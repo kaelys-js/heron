@@ -248,7 +248,9 @@ function readVersion(handle: typeof authSqliteHandle): number {
  * already lives on the filesystem under data/users/{userId}/profiles/{slug}/.
  */
 export function ensureSchema(): void {
-  if (migrated) return;
+  if (migrated) {
+    return;
+  }
   authSqliteHandle.exec(AUTH_DDL);
   appSqliteHandle.exec(APP_DDL);
 

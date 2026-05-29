@@ -21,7 +21,7 @@ afterEach(() => {
   delete process.env.HERON_USER_ID;
 });
 
-describe('SYSTEM_USER_ID', () => {
+describe('sYSTEM_USER_ID', () => {
   it('is the canonical "__system__" string', () => {
     expect(SYSTEM_USER_ID).toBe('__system__');
   });

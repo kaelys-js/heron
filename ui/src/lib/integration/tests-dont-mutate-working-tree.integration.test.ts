@@ -35,10 +35,10 @@ afterAll(() => {
   if (added.length) {
     // Throw so the test run fails. afterAll throws bubble up to vitest.
     throw new Error(
-      `tests-dont-mutate-working-tree: ${added.length} new working-tree entr${added.length === 1 ? 'y' : 'ies'} appeared during the test run:\n` +
-        added.map((e) => `  ${e}`).join('\n') +
-        '\n\nA test mutated real source. Move that test to a tmpdir via ' +
-        '`withScaffoldedTmpRepo` from src/test-helpers/fs-fixtures.ts.',
+      `tests-dont-mutate-working-tree: ${added.length} new working-tree entr${added.length === 1 ? 'y' : 'ies'} appeared during the test run:\n${added
+        .map((e) => `  ${e}`)
+        .join('\n')}\n\nA test mutated real source. Move that test to a tmpdir via ` +
+        `\`withScaffoldedTmpRepo\` from src/test-helpers/fs-fixtures.ts.`,
     );
   }
 });

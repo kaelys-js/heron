@@ -86,7 +86,7 @@ describe('modesDirFor', () => {
   it('accepts each of the valid lang codes (de/fr/ja/pt/ru/es)', () => {
     for (const lang of ['de', 'fr', 'ja', 'pt', 'ru', 'es']) {
       __profile = { language: { modes_dir: lang } };
-      expect(modes.modesDirFor()).toBe('modes/' + lang);
+      expect(modes.modesDirFor()).toBe(`modes/${lang}`);
     }
   });
 });

@@ -68,6 +68,18 @@ jobs:
           experimental: true
           cache: true
 
+      # Cache the pnpm store (mise-action's cache only covers tool binaries).
+      # Same key as the setup-toolchain composite -> shared across workflows.
+      # zizmor: ignore[cache-poisoning] -- restoring node_modules deps keyed by
+      # the committed lockfile hash, consistent with every other workflow.
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+        with:
+          path: ~/.local/share/pnpm/store/v3
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
       - name: Install dependencies (pnpm, frozen lockfile)
         run: pnpm install --frozen-lockfile
 

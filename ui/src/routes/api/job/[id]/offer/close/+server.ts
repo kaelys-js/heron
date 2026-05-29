@@ -25,20 +25,25 @@ export const POST = wrap(
   'offer-close',
   async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
     const resolved = resolveJobAndProfile(params.id, url);
-    if (!resolved) badRequest('Job not found: ' + params.id);
+    if (!resolved) {
+      badRequest('Job not found: ' + params.id);
+    }
     const { job, profileId } = resolved!;
     const body = (await request.json().catch(() => null)) as {
       outcome?: 'accepted' | 'declined' | 'rescinded';
       note?: string;
     } | null;
-    if (!body || !body.outcome || !STATUS_FOR_OUTCOME[body.outcome])
+    if (!body || !body.outcome || !STATUS_FOR_OUTCOME[body.outcome]) {
       badRequest('outcome must be accepted/declined/rescinded');
+    }
     const saved = closeOffer(job.id, body!.outcome!, profileId);
-    if (!saved) badRequest('No offer exists yet');
+    if (!saved) {
+      badRequest('No offer exists yet');
+    }
     const newStatus = STATUS_FOR_OUTCOME[body!.outcome!];
     recordTransition(job.id, newStatus, { profileId, note: body!.note });
     touchJob(job.id, profileId);
-    logEvent('offer-close', 'Offer ' + body!.outcome + ' · ' + job.company, {
+    logEvent('offer-close', `Offer ${body!.outcome} · ${job.company}`, {
       level: body!.outcome === 'accepted' ? 'success' : 'info',
       category: 'application',
       message: body!.note ?? '',

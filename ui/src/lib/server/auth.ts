@@ -25,7 +25,9 @@ ensureSchema();
 /** Ensure a stable secret exists; persist to .env on first boot. */
 function getOrCreateSecret(): string {
   let secret = process.env.BETTER_AUTH_SECRET;
-  if (secret && secret.length >= 32) return secret;
+  if (secret && secret.length >= 32) {
+    return secret;
+  }
   secret = crypto.randomBytes(32).toString('hex'); // 64 hex chars
   process.env.BETTER_AUTH_SECRET = secret;
   try {
@@ -56,12 +58,14 @@ function persistSecretToEnv(secret: string): void {
   try {
     existing = fs.readFileSync(ENV_FILE, 'utf8');
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw e;
+    }
   }
   if (/^BETTER_AUTH_SECRET=/m.test(existing)) {
     existing = existing.replace(/^BETTER_AUTH_SECRET=.*$/m, `BETTER_AUTH_SECRET=${secret}`);
   } else {
-    existing = existing.replace(/\s*$/, '') + `\nBETTER_AUTH_SECRET=${secret}\n`;
+    existing = `${existing.replace(/\s*$/, '')}\nBETTER_AUTH_SECRET=${secret}\n`;
   }
   fs.writeFileSync(ENV_FILE, existing);
 }
@@ -156,7 +160,7 @@ export const auth = betterAuth({
               userId: user.id,
             });
           }
-          logEvent('auth', 'User created' + (promotedToOwner ? ' (owner)' : ''), {
+          logEvent('auth', `User created${promotedToOwner ? ' (owner)' : ''}`, {
             level: 'info',
             category: 'user',
             userId: user.id,
@@ -175,7 +179,7 @@ export const auth = betterAuth({
             level: 'info',
             category: 'user',
             userId: session.userId,
-            message: session.ipAddress ? 'ip=' + session.ipAddress : undefined,
+            message: session.ipAddress ? `ip=${session.ipAddress}` : undefined,
           });
         },
       },

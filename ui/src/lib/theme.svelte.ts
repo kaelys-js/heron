@@ -28,7 +28,9 @@ class ThemeStore {
   private inited = false;
 
   init() {
-    if (!browser || this.inited) return;
+    if (!browser || this.inited) {
+      return;
+    }
     this.inited = true;
     // Read persisted mode (the inline app.html script already applied the
     // class; we just read the same value into reactive state here).
@@ -40,7 +42,9 @@ class ThemeStore {
     this.mql = window.matchMedia('(prefers-color-scheme: dark)');
     this.mqlHandler = () => {
       // Only react to OS changes when the user has chosen 'system'
-      if (this.mode === 'system') this.apply(this.mql!.matches ? 'dark' : 'light');
+      if (this.mode === 'system') {
+        this.apply(this.mql!.matches ? 'dark' : 'light');
+      }
     };
     this.mql.addEventListener('change', this.mqlHandler);
     this.apply(this.computeResolved());
@@ -72,15 +76,21 @@ class ThemeStore {
   }
 
   private computeResolved(): ResolvedTheme {
-    if (this.mode === 'light') return 'light';
-    if (this.mode === 'dark') return 'dark';
+    if (this.mode === 'light') {
+      return 'light';
+    }
+    if (this.mode === 'dark') {
+      return 'dark';
+    }
     // 'system' mode honours `prefers-color-scheme`. Returning 'dark' on
     // both branches was a latent bug that pinned every 'system' user to
     // dark mode after hydration (the inline app.html bootstrap got the
     // light/dark split right, then this overrode it). The SSR-only fallback
     // when `browser=false` stays 'dark' so the server-rendered HTML still
     // matches the dark-first default that app.html primes the class on.
-    if (!browser) return 'dark';
+    if (!browser) {
+      return 'dark';
+    }
     return this.mql?.matches ? 'dark' : 'light';
   }
 
@@ -90,12 +100,17 @@ class ThemeStore {
     // Avoids running the view-transition for nothing.
     const wasSame = this.resolved === next;
     this.resolved = next;
-    if (!browser) return;
+    if (!browser) {
+      return;
+    }
 
     const swap = () => {
       const root = document.documentElement;
-      if (next === 'dark') root.classList.add('dark');
-      else root.classList.remove('dark');
+      if (next === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
       root.style.colorScheme = next;
     };
 

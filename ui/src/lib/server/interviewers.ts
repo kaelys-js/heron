@@ -53,7 +53,9 @@ function statePath(profileId?: string): string {
 function readAll(profileId?: string): Record<string, Interviewer[]> {
   const p = statePath(profileId);
   try {
-    if (!fs.existsSync(p)) return {};
+    if (!fs.existsSync(p)) {
+      return {};
+    }
     const parsed = JSON.parse(fs.readFileSync(p, 'utf8'));
     return parsed && typeof parsed === 'object' ? (parsed as Record<string, Interviewer[]>) : {};
   } catch {
@@ -105,8 +107,11 @@ export function upsertInterviewer(
     slug,
     updatedAt: Date.now(),
   };
-  if (idx >= 0) list[idx] = { ...list[idx], ...next };
-  else list.push(next);
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...next };
+  } else {
+    list.push(next);
+  }
   all[jobId] = list;
   writeAll(all, profileId);
   return next;
@@ -116,9 +121,14 @@ export function removeInterviewer(jobId: string, slug: string, profileId?: strin
   const all = readAll(profileId);
   const list = all[jobId] ?? [];
   const next = list.filter((i) => i.slug !== slug);
-  if (next.length === list.length) return false;
-  if (next.length === 0) delete all[jobId];
-  else all[jobId] = next;
+  if (next.length === list.length) {
+    return false;
+  }
+  if (next.length === 0) {
+    delete all[jobId];
+  } else {
+    all[jobId] = next;
+  }
   writeAll(all, profileId);
   return true;
 }
@@ -135,7 +145,9 @@ export function findThankYousOwed(
   const out: { jobId: string; interviewer: Interviewer }[] = [];
   for (const [jobId, list] of Object.entries(all)) {
     for (const i of list) {
-      if (!i.scheduledAt) continue;
+      if (!i.scheduledAt) {
+        continue;
+      }
       const elapsed = now - i.scheduledAt;
       if (elapsed > 0 && elapsed < windowMs && !i.thankYouPath) {
         out.push({ jobId, interviewer: i });
@@ -157,8 +169,12 @@ export function findUpcomingInterviews(
   const out: { jobId: string; interviewer: Interviewer; daysAway: number }[] = [];
   for (const [jobId, list] of Object.entries(all)) {
     for (const i of list) {
-      if (!i.scheduledAt) continue;
-      if (i.scheduledAt < now || i.scheduledAt > horizon) continue;
+      if (!i.scheduledAt) {
+        continue;
+      }
+      if (i.scheduledAt < now || i.scheduledAt > horizon) {
+        continue;
+      }
       out.push({
         jobId,
         interviewer: i,

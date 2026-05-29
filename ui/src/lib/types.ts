@@ -343,21 +343,37 @@ export const TAB_PRESETS: { value: TabFilter; label: string; statuses: Status[] 
 ];
 
 export function tabStatuses(t: TabFilter): Status[] {
-  if (t === 'all') return STATUS_ORDER;
-  if (t === 'ready') return ['Ready'];
-  if (t === 'applied') return ['Applied', 'Screened', 'Interview', 'Offer'];
+  if (t === 'all') {
+    return STATUS_ORDER;
+  }
+  if (t === 'ready') {
+    return ['Ready'];
+  }
+  if (t === 'applied') {
+    return ['Applied', 'Screened', 'Interview', 'Offer'];
+  }
   if (typeof t === 'string' && t.startsWith('s:')) {
     const s = t.slice(2) as Status;
-    if (STATUS_ORDER.includes(s)) return [s];
+    if (STATUS_ORDER.includes(s)) {
+      return [s];
+    }
   }
   return STATUS_ORDER;
 }
 
 export function tabLabel(t: TabFilter): string {
-  if (t === 'all') return 'All';
-  if (t === 'ready') return 'Ready';
-  if (t === 'applied') return 'In flight';
-  if (typeof t === 'string' && t.startsWith('s:')) return t.slice(2);
+  if (t === 'all') {
+    return 'All';
+  }
+  if (t === 'ready') {
+    return 'Ready';
+  }
+  if (t === 'applied') {
+    return 'In flight';
+  }
+  if (typeof t === 'string' && t.startsWith('s:')) {
+    return t.slice(2);
+  }
   return 'All';
 }
 

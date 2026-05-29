@@ -48,7 +48,7 @@ describe('docTitle — always ends with APP_NAME', () => {
   });
 });
 
-describe('Re-exports — non-empty strings', () => {
+describe('re-exports — non-empty strings', () => {
   it.each([
     ['APP_NAME', APP_NAME],
     ['APP_TAGLINE', APP_TAGLINE],

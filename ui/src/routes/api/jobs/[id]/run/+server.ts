@@ -18,14 +18,14 @@ export const POST = wrap(
   'jobs-run',
   async ({ params, request }: { params: { id: string }; request: Request }) => {
     const def = get(params.id);
-    if (!def) badRequest('Unknown job: ' + params.id);
+    if (!def) {
+      badRequest('Unknown job: ' + params.id);
+    }
     if (!def!.allowManual) {
-      badRequest(
-        'Job ' + params.id + ' is not manually triggerable (trigger=' + def!.trigger.type + ')',
-      );
+      badRequest(`Job ${params.id} is not manually triggerable (trigger=${def!.trigger.type})`);
     }
     if (isRunning(params.id)) {
-      badRequest('Job ' + params.id + ' is already running');
+      badRequest(`Job ${params.id} is already running`);
     }
     const body = (await request.json().catch(() => ({}))) as {
       args?: Record<string, unknown>;

@@ -49,7 +49,7 @@ async function post() {
   return { status: r.status, body: await r.json() };
 }
 
-describe('POST /api/onboarding/reset', () => {
+describe('pOST /api/onboarding/reset', () => {
   it('owner can reset', async () => {
     const r = await post();
     expect(r.status).toBe(200);
