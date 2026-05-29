@@ -86,6 +86,11 @@ jobs:
             lighthouse-playwright-${{ runner.os }}-
 
       - name: Build dashboard
+        # Served via `vite preview` over plain HTTP -- drop the
+        # upgrade-insecure-requests CSP directive so subresources aren't
+        # rewritten to https:// (see svelte.config.ts HTTP_PREVIEW).
+        env:
+          HERON_HTTP_PREVIEW: "1"
         run: pnpm --filter ui build
 
       # Seed `u_e2e` (the userId hardcoded into /api/auth/e2e-login) into

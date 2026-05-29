@@ -21,6 +21,18 @@ const CAPACITOR_BUILD = process.env.CAPACITOR === '1';
 // renders the SSR'd HTML but never hydrates -- the login screen never
 // appears. Production node builds keep strict CSP.
 const DEV_MODE = process.env.NODE_ENV !== 'production';
+// E2E / Lighthouse / Lost Pixel build a production bundle but serve it via
+// `vite preview` over PLAIN HTTP on 127.0.0.1. The `upgrade-insecure-requests`
+// CSP directive makes a conforming engine rewrite every http:// subresource
+// to https://; with no TLS listener on the preview port the modulepreload /
+// CSS / JS requests fail the handshake ("A TLS error caused the secure
+// connection to fail"), the SvelteKit app never hydrates, onMount never runs,
+// and every webkit + mobile-safari spec fails silently. Chromium exempts
+// loopback from the upgrade so it only bites WebKit. Setting
+// HERON_HTTP_PREVIEW=1 for the preview build drops ONLY this directive; the
+// rest of the strict CSP stays under test, and production (served over HTTPS)
+// keeps the directive as defence-in-depth.
+const HTTP_PREVIEW = process.env.HERON_HTTP_PREVIEW === '1';
 
 const config: Config = {
   // No `preprocess` block -- Svelte 5 has built-in TypeScript support and
@@ -142,7 +154,9 @@ const config: Config = {
               'form-action': ["'self'"],
               'base-uri': ["'self'"],
               'object-src': ["'none'"],
-              'upgrade-insecure-requests': true,
+              // Omitted for the HTTP preview build (see HTTP_PREVIEW above);
+              // kept as defence-in-depth for the HTTPS production build.
+              ...(HTTP_PREVIEW ? {} : { 'upgrade-insecure-requests': true }),
             },
           },
 

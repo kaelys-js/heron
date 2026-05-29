@@ -29,9 +29,15 @@ export interface A11yOptions {
 }
 
 const DEFAULT_DISABLE = [
-  // color-contrast: brand dark-mode palette intentionally uses subtle
-  // pairings on chrome/decoration that fail the WCAG AA bar but are
-  // not interactive content. Re-enable after a design audit.
+  // TODO(a11y light-theme contrast): the cream LIGHT theme was built
+  // dark-first and reuses dark-theme foreground colours (text-{c}-200/300,
+  // *-400/90, and /60-/80 opacity on muted-foreground) on light surfaces,
+  // so ~84 source files fail WCAG AA on light (axe ratios as low as 1.07;
+  // Lighthouse confirms color-contrast still fails /inbox /queue /autopilot
+  // even after the obvious cases were addressed). Re-enabling this rule
+  // needs a dedicated, app-wide light-theme contrast pass (add dark:
+  // variants / darker light-theme tokens) -- tracked as its own task. Until
+  // then keep it disabled so checkA11y still gates every OTHER axe rule.
   'color-contrast',
 ];
 

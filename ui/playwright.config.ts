@@ -107,6 +107,11 @@ export default defineConfig({
     env: {
       HERON_DATA_DIR: HERON_E2E_DATA_DIR,
       ANTHROPIC_API_KEY: 'sk-ant-e2e-placeholder-never-fires',
+      // The preview is served over plain HTTP on 127.0.0.1; drop the
+      // upgrade-insecure-requests CSP directive so WebKit doesn't rewrite
+      // every subresource to https:// and fail the handshake (which silently
+      // broke hydration on webkit + mobile-safari). See svelte.config.ts.
+      HERON_HTTP_PREVIEW: '1',
     },
   },
 });

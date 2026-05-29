@@ -23,8 +23,8 @@
  *   - AppWidget        -> 35%  (measured 38.1%)
  *   - AppLiveActivity  -> 55%  (measured 61.1%)
  *   - AppShareExtension-> 20%  (measured 21.5%)
- * AppUITests runs for E2E but isn't coverage-gated (subset of App.app);
- * WatchTests stays out pending TASK-8.
+ *   - WatchApp         -> 28%  (measured 32.7% on the watchOS 26 CI sim)
+ * AppUITests runs for E2E but isn't coverage-gated (subset of App.app).
  *
  * Usage:
  *   node scripts/native/check-ios-coverage.mjs

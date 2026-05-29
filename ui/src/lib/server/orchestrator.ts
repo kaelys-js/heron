@@ -575,13 +575,12 @@ export type EvaluateResult = { ok: boolean; code: number | null };
 /**
  * Spawn the Claude CLI to run the evaluate mode for a single URL.
  *
- * Multi-profile note: the evaluate slash-command reads cv.md / profile.yml /
- * portals.yml via the AGENTS.md instructions, which still point at the
- * repo-root flat-layout paths. Until those instructions are updated (out of
- * scope for now), we maintain a per-profile symlink set at the repo root
- * before spawning so the active profile's files are at the expected paths.
- * The symlinks are atomic-swap on each call so a concurrent evaluate for a
- * different profile is guaranteed to see consistent state.
+ * Multi-profile note: the evaluate mode prompt references the active
+ * profile's files via __TOKEN__ placeholders (__CV__, __REPORTS__, …).
+ * spawnAgentWithMode → realizeModePromptForUser resolves each token to the
+ * active user+profile's absolute on-disk path before the prompt reaches the
+ * CLI, so the agent always reads the correct profile's data with no
+ * repo-root symlinks or shell-cwd magic. See mode-substitution.ts.
  */
 export function runEvaluate(
   url: string,

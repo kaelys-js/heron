@@ -15,22 +15,7 @@ test.describe('Settings', () => {
     await checkA11y(authenticatedPage);
   });
 
-  // [user-approved-deferral] TASK-4 in TODO-INSTRUCTIONS.md.
-  // The bits-ui DropdownMenu (desktop) + Sheet (mobile) trigger
-  // doesn't open the menu on webkit/mobile-safari/mobile-chrome after
-  // a click -- the menuitem with text Light/Dark never appears, so
-  // toggleTheme times out. Desktop chromium + firefox open the menu
-  // normally + the test passes. Likely a bits-ui portal-mount timing
-  // issue specific to those engines' click-handler attachment.
-  test('theme toggle persists across reload', async ({
-    authenticatedPage,
-    browserName,
-    isMobile,
-  }) => {
-    test.skip(
-      browserName === 'webkit' || browserName === 'mobile-safari' || isMobile,
-      'webkit/mobile-safari/mobile: bits-ui menu doesnt open on click -- see TODO-INSTRUCTIONS.md TASK-4',
-    );
+  test('theme toggle persists across reload', async ({ authenticatedPage }) => {
     const settings = new SettingsPage(authenticatedPage);
     await settings.gotoProfile();
     // The theme toggle MUST be present on /profile -- it's the canonical

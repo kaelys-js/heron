@@ -28,18 +28,6 @@ interface VitalsCount {
 }
 
 test.describe('web-vitals telemetry', () => {
-  // [user-approved-deferral] TASK-3 in TODO-INSTRUCTIONS.md.
-  // On webkit/mobile-safari the server-side /api/vitals counter shows
-  // before==after even with the 10s grace window -- the web-vitals
-  // chunk's PerformanceObserver-based callbacks don't fire under
-  // Playwright's WebKit (different perf-entry semantics). The 3
-  // other engines (chromium / firefox / mobile-chrome) still exercise
-  // the wire, so a regression visible there fails CI.
-  test.skip(
-    ({ browserName }) => browserName === 'webkit' || browserName === 'mobile-safari',
-    'webkit/mobile-safari: web-vitals chunk callbacks dont fire -- see TODO-INSTRUCTIONS.md TASK-3',
-  );
-
   test('POSTs at least one /api/vitals event on first paint', async ({
     authenticatedPage,
     browserName,

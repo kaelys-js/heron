@@ -1456,6 +1456,11 @@ jobs:
         run: pnpm --filter ui exec playwright install --with-deps chromium
 
       - name: Build UI
+        # Served via `vite preview` over plain HTTP -- drop the
+        # upgrade-insecure-requests CSP directive so subresources aren't
+        # rewritten to https:// (see svelte.config.ts HTTP_PREVIEW).
+        env:
+          HERON_HTTP_PREVIEW: "1"
         run: pnpm --filter ui run build
 
       - name: Seed u_e2e (Lost Pixel auth bypass)
