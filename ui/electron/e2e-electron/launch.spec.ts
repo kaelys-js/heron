@@ -1,38 +1,81 @@
 /**
  * launch.spec -- the Electron main process boots, the BrowserWindow
- * opens, and the WebView attempts to load the embedded server (or
- * falls back gracefully to a remote backend).
+ * opens AND BECOMES VISIBLE, and the WebView loads the dev server.
  *
  * These tests exercise the imperative bootstrap in src/index.ts that
  * unit tests intentionally skip. The extracted pure-logic modules
- * (server-process, deep-links, error-routing, net-polling, tray)
- * have their own Vitest unit suites; this file verifies they wire
- * together when Electron actually launches.
+ * (server-process, deep-links, error-routing, net-polling, tray,
+ * background-color, window-bounds) have their own Vitest unit suites;
+ * this file verifies they wire together when Electron actually launches.
+ *
+ * Why the visibility assertion matters: the window is created with
+ * `show: false` and only revealed once setup.ts wires its reveal path
+ * (ready-to-show / dom-ready / fallback timer). A regression where
+ * init() threw (setBackgroundColor(undefined)) left that path unwired,
+ * so the window stayed permanently hidden -- yet `app.firstWindow()`
+ * still resolved (the window OBJECT exists). Asserting isVisible()===true
+ * is the only assertion that actually fails on that bug.
+ *
+ * A tiny local HTTP server stands in for the vite dev server (pointed at
+ * via ELECTRON_DEV_SERVER_URL) so the real load -> dom-ready -> reveal
+ * path runs in milliseconds instead of waiting on the fallback timer.
  *
  * Run prerequisites:
  *   pnpm --filter heron-electron run build      # tsgo -> build/src/index.js
- *   (and a SvelteKit static build for the WebView, but not strictly
- *    needed for the cold-launch assertions below -- those exercise
- *    the main process, not the renderer)
  */
-import { _electron, type ElectronApplication, expect, test } from '@playwright/test';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import path from 'node:path';
+import { _electron, type ElectronApplication, expect, test } from '@playwright/test';
+import { BRAND } from '../src/brand';
 
 let app: ElectronApplication | undefined;
+let devServer: Server | undefined;
+let devServerUrl = '';
+
+test.beforeAll(async () => {
+  // Minimal stand-in for the vite dev server: any 200 text/html response is
+  // enough to drive the WebView to dom-ready (and thus trigger the reveal).
+  devServer = createServer((_req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end('<!doctype html><html><body><main>Heron e2e launch fixture</main></body></html>');
+  });
+  await new Promise<void>((resolve) => devServer!.listen(0, '127.0.0.1', resolve));
+  const { port } = devServer!.address() as AddressInfo;
+  devServerUrl = `http://127.0.0.1:${port}`;
+});
+
+test.afterAll(async () => {
+  await new Promise<void>((resolve) => {
+    if (!devServer) {
+      resolve();
+      return;
+    }
+    devServer.close(() => resolve());
+  });
+  devServer = undefined;
+});
 
 test.beforeEach(async () => {
-  // Resolve the built main entry relative to this spec file.
-  // Layout: ui/electron/build/src/index.js (tsgo emit)
-  //         ui/electron/e2e-electron/launch.spec.ts
-  const mainEntry = path.resolve(__dirname, '..', 'build', 'src', 'index.js');
+  // Launch the app DIRECTORY (ui/electron), not build/src/index.js directly.
+  // Electron derives app.getAppPath() from the entry: a directory makes it
+  // resolve package.json `main` (-> appPath = ui/electron, exactly how `electron .`
+  // and the packaged app run). Passing the raw index.js sets appPath to
+  // build/src, so getCapacitorElectronConfig() / electron-serve / preload all
+  // resolve against the wrong root and the main window is never created. (That
+  // mis-launch is why this suite was historically flaky and gated off CI.)
+  const appDir = path.resolve(__dirname, '..');
   app = await _electron.launch({
-    args: [mainEntry, '--no-sandbox'],
+    args: [appDir, '--no-sandbox'],
     timeout: 30_000,
     env: {
       ...process.env,
       // Skip the auto-update check on the e2e launcher path; we test
       // updater wiring in a separate spec.
       NODE_ENV: 'test',
+      // Point the WebView at the local fixture instead of vite :5173 so the
+      // load -> dom-ready -> reveal path runs immediately.
+      ELECTRON_DEV_SERVER_URL: devServerUrl,
     },
   });
 });
@@ -54,19 +97,87 @@ test('a BrowserWindow is created', async () => {
   expect(window).toBeDefined();
 });
 
-test('main process exposes the get-server-url IPC handler', async () => {
-  // Invoke the ipcMain handler from the main process via app.evaluate.
-  // This proves the handler was registered during bootstrap.
-  const url = await app!.evaluate(async ({ ipcMain }) => {
-    // ipcMain doesn't expose a "is X registered" API; we test by
-    // attempting to fire a handler. The web-side preload would invoke
-    // ipcRenderer.invoke('<brand>:get-server-url'). From the main
-    // process side, we can detect the handler exists by looking at
-    // the listener count for the wrapped channel.
-    const channels = ipcMain.eventNames();
-    return channels.find((c) => String(c).endsWith(':get-server-url')) ?? null;
+test('the main window becomes VISIBLE (reveal path runs end-to-end)', async () => {
+  // The regression guard. With the setBackgroundColor(undefined) bug, init()
+  // threw before the reveal listeners were wired, so the window never showed
+  // even though the BrowserWindow object existed. Poll isVisible() rather than
+  // assert once -- the reveal happens on dom-ready, a tick after launch.
+  await expect
+    .poll(
+      async () =>
+        app!.evaluate(({ BrowserWindow }) => {
+          const w = BrowserWindow.getAllWindows()[0];
+          return w ? w.isVisible() : false;
+        }),
+      { timeout: 15_000, message: 'main window never became visible' },
+    )
+    .toBe(true);
+});
+
+test('the WebView loads the configured dev-server URL', async () => {
+  // Proves init() ran far enough to load content (not just create a hidden,
+  // empty window) -- the loaded URL must match the fixture origin.
+  await expect
+    .poll(
+      async () =>
+        app!.evaluate(({ BrowserWindow }) => {
+          const w = BrowserWindow.getAllWindows()[0];
+          return w ? w.webContents.getURL() : '';
+        }),
+      { timeout: 15_000, message: 'WebView never loaded the dev-server URL' },
+    )
+    .toContain('127.0.0.1');
+});
+
+test('recovers after a renderer-process crash (iOS BootFailureView parity)', async () => {
+  // Force the renderer to die. wireCrashRecovery should paint the branded
+  // recovery screen and auto-reload the app — instead of leaving a blank
+  // window. Proof of recovery: the window comes back un-crashed and reloads
+  // the dev fixture (127.0.0.1) within the auto-reload window.
+  await app!.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.forcefullyCrashRenderer();
   });
-  expect(url).not.toBeNull();
+
+  await expect
+    .poll(
+      async () =>
+        app!.evaluate(({ BrowserWindow }) => {
+          const w = BrowserWindow.getAllWindows()[0];
+          if (!w) {
+            return 'no-window';
+          }
+          return JSON.stringify({
+            crashed: w.webContents.isCrashed(),
+            url: w.webContents.getURL(),
+          });
+        }),
+      { timeout: 20_000, message: 'window did not recover after renderer crash' },
+    )
+    .toContain('127.0.0.1');
+
+  const crashed = await app!.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()[0]?.webContents.isCrashed(),
+  );
+  expect(crashed).toBe(false);
+});
+
+test('main process registers the get-server-url IPC handler', async () => {
+  // Proves bootstrap registered the invoke handler. ipcMain.handle() stores
+  // handlers in a private map that ipcMain.eventNames() does NOT list, so we
+  // detect an existing handler the only reliable way: re-registering the same
+  // channel throws ("Attempted to register a second handler"). If no handler
+  // existed we'd add then immediately remove a dummy (leaving state untouched).
+  const channel = `${BRAND.name}:get-server-url`;
+  const alreadyRegistered = await app!.evaluate(({ ipcMain }, ch) => {
+    try {
+      ipcMain.handle(ch, () => undefined);
+      ipcMain.removeHandler(ch); // we just added it -> clean it back up
+      return false;
+    } catch {
+      return true; // a handler was already registered during bootstrap
+    }
+  }, channel);
+  expect(alreadyRegistered).toBe(true);
 });
 
 test('window-all-closed handler is wired', async () => {

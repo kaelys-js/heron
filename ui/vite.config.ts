@@ -94,6 +94,19 @@ export default defineConfig({
     hmr: {
       port: 5173,
     },
+    // Warm up the first-paint modules at dev-server startup so the FIRST
+    // request (e.g. the desktop shell loading / after vite "ready") doesn't
+    // pay the full cold SSR+client transform cost on the critical path. The
+    // root layout + the unauthenticated entry pages are what every cold launch
+    // hits first, so pre-transforming them shaves seconds off splash -> app.
+    warmup: {
+      clientFiles: [
+        './src/routes/+layout.svelte',
+        './src/routes/+page.svelte',
+        './src/routes/login/+page.svelte',
+      ],
+      ssrFiles: ['./src/routes/+layout.server.ts', './src/hooks.server.ts'],
+    },
   },
   preview: {
     host: true,

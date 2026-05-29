@@ -113,7 +113,7 @@ All assets live in [`branding/assets/`](./assets/) in the repo.
 | Wordmark -- light (warm white) | `branding/assets/wordmark-light.svg` | Dark surfaces only |
 | Wordmark -- Dawn (gold) | `branding/assets/wordmark-dawn.svg` | Accent contexts; never on warm-paper backgrounds (low contrast) |
 | Wordmark -- currentColor (inherits) | `branding/assets/wordmark.svg` | Inline use where the parent sets `color` |
-| Mascot -- placeholder silhouette | `branding/assets/mark-placeholder.svg` | Hand-built approximation; real mascot ships once illustrator output lands |
+| Mascot -- master | `branding/assets/mascot.png` | Cleaned transparent cartoon Heron; every icon / splash / Swift asset derives from it (`pnpm mascot`) |
 | Social card render source (1200×630) | `branding/assets/social-card.html` | Open in Chrome → screenshot at 1200×630 for the OG image |
 | Brand colors (9 base + 22 derived) | `branding/COLORS.md` | Hex values + WCAG ratios |
 

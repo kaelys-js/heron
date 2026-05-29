@@ -41,6 +41,17 @@ describe('buildCsp', () => {
     expect(csp).toContain('http://localhost:*'); // module scripts
     expect(csp).toContain('ws://localhost:*'); // HMR socket
   });
+
+  it('dev CSP also allows loopback 127.0.0.1 (local dev tooling, no console spam)', () => {
+    const csp = buildCsp(scheme, true);
+    expect(csp).toContain('http://127.0.0.1:*');
+    expect(csp).toContain('ws://127.0.0.1:*');
+  });
+
+  it('prod CSP does NOT allow loopback (stays locked to the app scheme)', () => {
+    const csp = buildCsp(scheme, false);
+    expect(csp).not.toContain('127.0.0.1');
+  });
   it('dev CSP allows a non-localhost dev-server override (http + ws origin)', () => {
     const csp = buildCsp(scheme, true, 'http://1.2.3.4:5173');
     expect(csp).toContain('http://1.2.3.4:5173');

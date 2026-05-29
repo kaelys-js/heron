@@ -290,31 +290,33 @@ export const BRAND = {
     ]
   },
   mascot: {
-    "$comment": "Mascot identity -- fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
-    "subject": "Great Blue Heron",
-    "pose": "side profile, standing in shallow water, neck S-curve, head turned 25-30° right",
+    "$comment": "Mascot identity -- the friendly cartoon Heron that IS the brand mark (it replaced the stopgap Lucide 'bird' glyph). Source: branding/mascot.png (raw) -> branding/assets/mascot.png (cleaned transparent master, via `pnpm mascot`). EVERYTHING derives from the master: logo.svg embed, all platform icons, the splash, and the Swift image asset. Fed into the MASCOT.md template.",
+    "image": "branding/assets/mascot.png",
+    "rawSource": "branding/mascot.png",
+    "subject": "Great Blue Heron -- friendly cartoon character",
+    "pose": "3/4 head-and-shoulders, beak to the right, large warm eyes, small crest tuft",
     "styleReferences": [
-      "Audubon",
-      "Charley Harper",
-      "Field Notes",
-      "Hasegawa Tōhaku sumi-e"
+      "Duolingo Duo",
+      "flat vector app mascot",
+      "rounded thick-outline cartoon",
+      "friendly modern app mark"
     ],
     "tiers": {
       "mark": {
         "use": "≤64px contexts -- favicon, app icon, inline UI",
-        "treatment": "silhouette"
+        "treatment": "mascot head on the gradient squircle"
       },
       "illustration": {
-        "use": "≥200px contexts -- landing pages, marketing, press",
-        "treatment": "editorial illustration with subtle detail"
+        "use": "≥200px contexts -- splash, landing pages, marketing, press",
+        "treatment": "full cartoon mascot, animated where the surface allows"
       }
     },
     "antiStyles": [
-      "cartoon",
       "photo-realistic",
       "3D-rendered",
-      "anthropomorphized",
-      "mascot-with-arms"
+      "aggressive or scary",
+      "over-detailed or cluttered",
+      "off-brand colors"
     ]
   },
   repo: {

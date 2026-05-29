@@ -9,11 +9,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const __buildFromTemplate = vi.fn();
 const __openExternal = vi.fn();
 const __appGetVersion = vi.fn(() => '1.2.3');
-const __getFocusedWindow = vi.fn();
 
 vi.mock('electron', () => ({
   Menu: { buildFromTemplate: __buildFromTemplate },
-  BrowserWindow: { getFocusedWindow: __getFocusedWindow },
   shell: { openExternal: __openExternal },
   app: { getVersion: __appGetVersion },
 }));
@@ -35,7 +33,6 @@ function setPlatform(p: NodeJS.Platform): void {
 beforeEach(() => {
   __buildFromTemplate.mockReset();
   __openExternal.mockReset();
-  __getFocusedWindow.mockReset();
   __buildFromTemplate.mockReturnValue({ __mockMenu: true });
 });
 
@@ -225,97 +222,15 @@ describe('buildAppMenu -- common menus', () => {
   });
 });
 
-describe('buildAppMenu -- File menu click handlers', () => {
-  it('import URL navigates focused window to /pipeline (replacing last segment)', async () => {
-    const mockWebContents = {
-      getURL: vi.fn(() => 'http://localhost:5173/inbox'),
-      loadURL: vi.fn(() => Promise.resolve()),
-    };
-    __getFocusedWindow.mockReturnValue({ webContents: mockWebContents });
+describe('buildAppMenu -- File menu', () => {
+  it('File menu has no in-app nav items (Import URL / Open Pipeline removed)', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
     const template = __buildFromTemplate.mock.calls[0][0];
     const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const importUrl = fileMenu.submenu.find((s: { label?: string }) => s.label === 'Import URL…');
-    importUrl.click();
-    expect(mockWebContents.loadURL).toHaveBeenCalled();
-    const target = (mockWebContents.loadURL as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(target).toContain('/pipeline');
-  });
-
-  it('import URL is a no-op when no window is focused', async () => {
-    __getFocusedWindow.mockReturnValue(null);
-    const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const importUrl = fileMenu.submenu.find((s: { label?: string }) => s.label === 'Import URL…');
-    expect(() => importUrl.click()).not.toThrow();
-  });
-
-  it('open Pipeline navigates focused window using origin', async () => {
-    const mockWebContents = {
-      getURL: vi.fn(() => 'http://localhost:5173/inbox/123'),
-      loadURL: vi.fn(() => Promise.resolve()),
-    };
-    __getFocusedWindow.mockReturnValue({ webContents: mockWebContents });
-    const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const openPipeline = fileMenu.submenu.find(
-      (s: { label?: string }) => s.label === 'Open Pipeline',
-    );
-    openPipeline.click();
-    expect(mockWebContents.loadURL).toHaveBeenCalledWith('http://localhost:5173/pipeline');
-  });
-
-  it('open Pipeline is a no-op when no window is focused', async () => {
-    __getFocusedWindow.mockReturnValue(null);
-    const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const openPipeline = fileMenu.submenu.find(
-      (s: { label?: string }) => s.label === 'Open Pipeline',
-    );
-    expect(() => openPipeline.click()).not.toThrow();
-  });
-
-  it('import URL swallows loadURL rejection (catch handler covered)', async () => {
-    const mockWebContents = {
-      getURL: vi.fn(() => 'http://localhost:5173/inbox'),
-      // Reject to exercise the `.catch(() => {})` arrow.
-      loadURL: vi.fn(() => Promise.reject(new Error('load failed'))),
-    };
-    __getFocusedWindow.mockReturnValue({ webContents: mockWebContents });
-    const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const importUrl = fileMenu.submenu.find((s: { label?: string }) => s.label === 'Import URL…');
-    importUrl.click();
-    // Let the rejection propagate through the .catch().
-    await new Promise((r) => setTimeout(r, 0));
-    expect(mockWebContents.loadURL).toHaveBeenCalled();
-  });
-
-  it('open Pipeline swallows loadURL rejection (catch handler covered)', async () => {
-    const mockWebContents = {
-      getURL: vi.fn(() => 'http://localhost:5173/inbox/123'),
-      loadURL: vi.fn(() => Promise.reject(new Error('load failed'))),
-    };
-    __getFocusedWindow.mockReturnValue({ webContents: mockWebContents });
-    const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const openPipeline = fileMenu.submenu.find(
-      (s: { label?: string }) => s.label === 'Open Pipeline',
-    );
-    openPipeline.click();
-    await new Promise((r) => setTimeout(r, 0));
-    expect(mockWebContents.loadURL).toHaveBeenCalled();
+    const labels = fileMenu.submenu.map((s: { label?: string }) => s.label).filter(Boolean);
+    expect(labels).not.toContain('Import URL…');
+    expect(labels).not.toContain('Open Pipeline');
   });
 });
 

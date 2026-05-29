@@ -1,8 +1,5 @@
 import { redirect } from '@sveltejs/kit';
 import { isGithubEnabled } from '$lib/server/auth';
-import { authDb } from '$lib/server/db';
-import { users } from '$lib/server/db/auth-schema';
-import { sql } from 'drizzle-orm';
 
 /**
  * Login page loader.
@@ -10,10 +7,13 @@ import { sql } from 'drizzle-orm';
  *   • If the session cookie already maps to a valid user (locals.user
  *     populated by the hooks middleware), bounce them to the redirectTo
  *     query param or '/'.
- *   • If there are zero users in the system, redirect to /signup --
- *     the very first user becomes the owner.
- *   • Otherwise expose `githubEnabled` so the page can conditionally
- *     render the "Sign in with GitHub" button.
+ *   • Otherwise render /login -- the universal entry, matching iOS (whose
+ *     static build has no server load and always lands here). The first
+ *     owner creates their account from the page's "Set up with invite code"
+ *     button (-> /signup); we deliberately DON'T auto-bounce zero-user
+ *     installs to /signup, so web/electron and iOS show the same screen.
+ *   • Expose `githubEnabled` so the page can conditionally render the
+ *     "Sign in with GitHub" button.
  *
  * Open-redirect mitigation: the `redirectTo` query param is passed through
  * `safeRedirectTo()` which strips anything that isn't a same-origin path
@@ -50,10 +50,6 @@ export async function load({ locals, url }: { locals: App.Locals; url: URL }) {
   const redirectTo = safeRedirectTo(url.searchParams.get('redirectTo'));
   if (locals.user) {
     throw redirect(302, redirectTo);
-  }
-  const [{ n }] = authDb.select({ n: sql<number>`count(*)` }).from(users).all();
-  if (n === 0) {
-    throw redirect(302, '/signup?first=1');
   }
   return {
     githubEnabled: isGithubEnabled(),

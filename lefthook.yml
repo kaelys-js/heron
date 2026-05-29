@@ -156,6 +156,14 @@ pre-commit:
       glob: ".github/scripts/sticky/assemble-summary.{mjs,test.mjs}"
       run: pnpm pr:summary:test
 
+    "15-splash":
+      # Single-source splash: unit-test the spec + assert every generated
+      # surface still matches it. Fires only when the spec, its generators, the
+      # verifier, or a generated surface is staged. (99-verify also runs the
+      # drift check repo-wide; this gives fast targeted feedback + the unit test.)
+      glob: "{scripts/native/splash-spec.mjs,scripts/native/splash-spec.test.mjs,scripts/system/verify-splash-sync.mjs,scripts/native/apply-brand.mjs,scripts/native/icons/generate-icons.mjs,ui/src/app.html,ui/electron/src/splash.ts,ui/src/routes/login/+page.svelte,ui/src/routes/signup/+page.svelte,ui/ios/App/App/Base.lproj/LaunchScreen.storyboard}"
+      run: pnpm splash-spec:test && pnpm verify:splash-sync
+
     # ── Full verify pipeline (typecheck + build + tests + every linter +
     #    every gate), turbo-cached. Runs LAST so the writers above have
     #    already formatted + re-staged. SAME command pre-push + CI run. ──

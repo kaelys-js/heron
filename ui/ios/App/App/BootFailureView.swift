@@ -32,14 +32,17 @@ final class BootFailureView: UIView {
     required init?(coder _: NSCoder) { fatalError("init(coder:) is not used") }
 
     private func build(message: String) {
-        // Brand glyph — SF Symbol "feather" (Brand.Symbols.glyphSymbol),
-        // tinted with the brand accent. A symbol (not the full logo) keeps
-        // this dependency-free of any asset that might also be missing.
+        // Brand mark: the cartoon mascot (BrandUI.mascotUIImage, embedded base64
+        // so it survives even when asset bundles don't), in its own colors
+        // (.alwaysOriginal). Falls back to the accent-tinted SF-symbol glyph if
+        // the embed is ever missing.
+        let mascot = BrandUI.mascotUIImage?.withRenderingMode(.alwaysOriginal)
         let glyph = UIImageView(
-            image: UIImage(systemName: "feather")
+            image: mascot
+                ?? UIImage(systemName: BrandUI.glyphSymbol)
                 ?? UIImage(systemName: "exclamationmark.triangle")
         )
-        glyph.tintColor = brandAccent
+        if mascot == nil { glyph.tintColor = brandAccent }
         glyph.contentMode = .scaleAspectFit
         glyph.translatesAutoresizingMaskIntoConstraints = false
         glyph.heightAnchor.constraint(equalToConstant: 44).isActive = true

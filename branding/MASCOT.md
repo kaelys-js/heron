@@ -42,12 +42,12 @@ Disney character.
 <!-- AUTO-GENERATED:mascot-summary-table -->
 | Property | Value |
 |---|---|
-| Subject | Great Blue Heron |
-| Pose | side profile, standing in shallow water, neck S-curve, head turned 25-30° right |
-| Style refs | Audubon, Charley Harper, Field Notes, Hasegawa Tōhaku sumi-e |
-| Anti-styles | cartoon, photo-realistic, 3D-rendered, anthropomorphized, mascot-with-arms |
-| Mark tier | ≤64px contexts -- favicon, app icon, inline UI -- silhouette |
-| Illustration tier | ≥200px contexts -- landing pages, marketing, press -- editorial illustration with subtle detail |
+| Subject | Great Blue Heron -- friendly cartoon character |
+| Pose | 3/4 head-and-shoulders, beak to the right, large warm eyes, small crest tuft |
+| Style refs | Duolingo Duo, flat vector app mascot, rounded thick-outline cartoon, friendly modern app mark |
+| Anti-styles | photo-realistic, 3D-rendered, aggressive or scary, over-detailed or cluttered, off-brand colors |
+| Mark tier | ≤64px contexts -- favicon, app icon, inline UI -- mascot head on the gradient squircle |
+| Illustration tier | ≥200px contexts -- splash, landing pages, marketing, press -- full cartoon mascot, animated where the surface allows |
 <!-- /AUTO-GENERATED:mascot-summary-table -->
 
 ### Anatomical detail (human-authored)
@@ -218,19 +218,21 @@ Same content as the Claude Design prompt. Brief should also include:
 4. The five reference images cited above (illustrator pulls on their own)
 5. Deliverable: 5 SVG files -- 3 mark variants + 2 illustration variants -- matching the viewBox + viewport specs above
 
-## Placeholder
+## Realized mascot
 
-`assets/mark-placeholder.svg` ships in this commit as a hand-drawn rough
-silhouette. It exists so the repo has *something* at the expected file
-path during development, not because it's the final mascot. Two reasons
-to replace it before press:
+The mascot is no longer a placeholder. The friendly cartoon Heron lives at
+`branding/mascot.png` (raw) and `branding/assets/mascot.png` (cleaned,
+transparent master, produced by `pnpm mascot`). Every brand surface derives
+from that master: the `logo.svg` embed, all platform icons (mascot on the
+gradient squircle), the animated splash (bare mascot), and the native Swift
+image asset.
 
-1. The proportions are approximate (hand-built SVG paths, not
-   illustrator output)
-2. It lacks the editorial-illustration refinement specified above
-
-Replace it with the Claude Design / human illustrator output as soon as
-those land. The placeholder is marked clearly in its file comment.
+**Deviation from the brief above.** The realized mark is RASTER and
+single-colorway -- not the three vector colorways / 16×16-crisp silhouette this
+brief originally specified, and the chosen style is a friendly CARTOON, which
+supersedes the editorial Audubon/Charley-Harper direction (and the old
+`antiStyles: cartoon` rule). It still reads as a recognizable bird head down to
+favicon size; the slate/light/dawn colorways now apply only to the wordmark.
 
 ## Implementation notes (Task 9 wiring)
 

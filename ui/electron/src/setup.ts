@@ -13,6 +13,25 @@ import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
 import { resolveDevServerUrl, buildCsp, isInternalNavigation } from './dev-server';
 import { clampWindowBounds } from './window-bounds';
+import { resolveBackgroundColor } from './background-color';
+import { buildSplashHtml } from './splash';
+
+/** Probe a dev-server URL: resolves true on ANY HTTP response (incl. a
+ *  redirect or 4xx), false on connection-refused or a >800ms hang. Used to
+ *  wait for vite to bind before navigating, so a failed load never replaces
+ *  the splash with Chromium's error page. */
+async function devServerReachable(url: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 800);
+  try {
+    await fetch(url, { signal: controller.signal, redirect: 'manual' });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
@@ -89,9 +108,13 @@ export class ElectronCapacitorApp {
     });
   }
 
-  // Helper function to load in the app. In dev, load the running vite dev
-  // server (live content + HMR); in prod, electron-serve the bundled app.
+  // Helper function to load in the app. We ALWAYS paint the branded splash
+  // first (instant, before vite/the bundle is ready) so there's no long blank
+  // wait -- the Electron analogue of the iOS launch screen. Then, in dev we
+  // load the running vite dev server (live content + HMR); in prod we
+  // electron-serve the bundled app, both OVER the splash.
   private async loadMainWindow(thisRef: any) {
+    await thisRef.showSplash();
     if (thisRef.devServerUrl) {
       await thisRef.loadDevServerWithRetry(thisRef.MainWindow, thisRef.devServerUrl);
     } else {
@@ -99,36 +122,56 @@ export class ElectronCapacitorApp {
     }
   }
 
-  // Dev: load the vite dev server, retrying until it's up. Electron can start
-  // before vite has bound :5173; without retry the first load hits a closed
-  // port and the window shows a blank page that never recovers (dom-ready
-  // never fires → window stays hidden).
-  //
-  // We use loadURL ITSELF as the readiness probe: it rejects with a network
-  // error (ERR_CONNECTION_REFUSED) while vite isn't listening, and resolves
-  // once vite answers (even on a redirect/4xx). An earlier version pre-probed
-  // with fetch(HEAD), but SvelteKit's dev server doesn't answer HEAD cleanly
-  // so that fetch hung indefinitely and loadURL was never reached.
+  // Paint the branded splash immediately. Loading it (a data: URL) fires
+  // dom-ready within milliseconds, which reveals the window -- so the user
+  // sees a branded loading screen at once instead of waiting for the dev
+  // server / bundle to paint.
+  private async showSplash(): Promise<void> {
+    if (!this.MainWindow || this.MainWindow.isDestroyed()) {
+      return;
+    }
+    const html = buildSplashHtml();
+    await this.MainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`).catch(
+      () => {},
+    );
+  }
+
+  // Dev: wait for the vite dev server, THEN load it over the splash. We PROBE
+  // for readiness (a GET that resolves on any response, aborted after 800ms)
+  // instead of using loadURL as the probe -- a failed loadURL would replace the
+  // splash with Chromium's error page, so we only navigate once vite answers.
   private async loadDevServerWithRetry(win: BrowserWindow, url: string): Promise<void> {
     const deadlineMs = Date.now() + 30_000;
     while (Date.now() < deadlineMs) {
-      try {
-        await win.loadURL(url);
-        return;
-      } catch {
-        /* vite not listening yet -- retry */
+      if (await devServerReachable(url)) {
+        try {
+          await win.loadURL(url);
+          return;
+        } catch {
+          /* transient -- fall through and retry */
+        }
       }
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 400));
     }
     console.error(`[electron] dev server ${url} did not become available within 30s`);
-    // Don't strand a hidden window: reveal it so the user sees something
-    // (even an error page) rather than an invisible process in the Dock.
+    // The splash is already revealed; leave it up rather than stranding a
+    // hidden window. revealMainWindow is idempotent.
     this.revealMainWindow();
   }
 
   // Expose the mainWindow ref for use outside of the class.
   getMainWindow(): BrowserWindow {
     return this.MainWindow;
+  }
+
+  /** Re-load the app into the existing main window. Re-runs the same
+   *  dev-server-with-retry / electron-serve path used at startup -- used by
+   *  crash recovery to bring a dead renderer back to the live app (calling
+   *  webContents.reload() would instead reload the recovery data: URL). */
+  async reload(): Promise<void> {
+    if (this.MainWindow && !this.MainWindow.isDestroyed()) {
+      await this.loadMainWindow(this);
+    }
   }
 
   getCustomURLScheme(): string {
@@ -167,6 +210,19 @@ export class ElectronCapacitorApp {
       y: safe.y,
       width: safe.width,
       height: safe.height,
+      // Constrain resizing: a floor so the layout never collapses, and a
+      // generous ceiling so the window can't be dragged to an absurd size on
+      // huge / multi-monitor setups. Fullscreen is unaffected (separate mode).
+      minWidth: 760,
+      minHeight: 560,
+      maxWidth: 2880,
+      maxHeight: 1800,
+      // Paint the brand-dark background before the WebView's first frame so
+      // there's no white flash. Set via the constructor (the idiomatic spot):
+      // a post-construct setBackgroundColor(undefined) throws "conversion
+      // failure from undefined", and that throw used to abort init() before
+      // the window was revealed -> permanently hidden window.
+      backgroundColor: resolveBackgroundColor(this.CapacitorFileConfig),
       webPreferences: {
         // The renderer is the SvelteKit web app -- it must NOT have direct
         // Node access. Everything it needs (Capacitor plugin IPC + our
@@ -190,9 +246,18 @@ export class ElectronCapacitorApp {
     });
     this.mainWindowState.manage(this.MainWindow);
 
-    if (this.CapacitorFileConfig.backgroundColor) {
-      this.MainWindow.setBackgroundColor(this.CapacitorFileConfig.electron.backgroundColor);
-    }
+    // Arm the window-reveal path IMMEDIATELY after construction -- before any
+    // other setup that could throw. The window is created with `show: false`;
+    // it's revealed on the renderer's first frame (ready-to-show) or DOM-ready,
+    // whichever fires first (revealMainWindow is idempotent). If NEITHER ever
+    // fires (dev server never answers, a hard load failure) OR a later line in
+    // init() throws, the fallback timer still reveals the window so we never
+    // strand an invisible process in the Dock. (A regression where init() threw
+    // on setBackgroundColor left these unwired and the window hidden forever --
+    // wiring them first makes the reveal independent of the rest of setup.)
+    this.MainWindow.once('ready-to-show', () => this.revealMainWindow());
+    this.MainWindow.webContents.on('dom-ready', () => this.revealMainWindow());
+    this.windowRevealTimer = setTimeout(() => this.revealMainWindow(), 20_000);
 
     // If we close the main window with the splashscreen enabled we need to destory the ref.
     this.MainWindow.on('closed', () => {
@@ -265,20 +330,9 @@ export class ElectronCapacitorApp {
       }
     });
 
-    // Link electron plugins into the system.
+    // Link electron plugins into the system. (Window reveal is already wired
+    // above, so even if this throws the window still appears.)
     setupCapacitorElectronPlugins();
-
-    // Reveal the window the moment the renderer paints its first frame
-    // (ready-to-show) AND when the DOM is ready -- whichever fires first;
-    // revealMainWindow() is idempotent. The window is created with
-    // `show: false`, so if NEITHER ever fires (dev server never answers,
-    // a hard load failure) the window would stay invisible forever -- a
-    // hidden process in the Dock. The fallback timer below guarantees we
-    // show it regardless, and loadDevServerWithRetry reveals on its
-    // deadline too.
-    this.MainWindow.once('ready-to-show', () => this.revealMainWindow());
-    this.MainWindow.webContents.on('dom-ready', () => this.revealMainWindow());
-    this.windowRevealTimer = setTimeout(() => this.revealMainWindow(), 20_000);
   }
 
   /** Show + focus the main window exactly once, hiding the splash. Called

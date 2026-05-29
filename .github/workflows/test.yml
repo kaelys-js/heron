@@ -658,6 +658,25 @@ jobs:
             ui/test-results/
           retention-days: 14
 
+      # ── Electron E2E (main-process launch + renderer-crash recovery) ──
+      # Drives the real desktop shell via @playwright/test's `_electron`:
+      # the window opens AND becomes visible, the renderer recovers from a
+      # forced crash, and the IPC + lifecycle handlers are wired. This was
+      # previously documented as a CI job but never actually added, so the
+      # launch path shipped untested. Electron needs a display on Linux, so
+      # it runs under xvfb (installed by the Playwright --with-deps step above).
+      - name: Electron E2E (launch + crash recovery)
+        if: needs.changes.outputs.ts == 'true'
+        run: xvfb-run -a pnpm --filter heron-electron test:e2e
+
+      - name: Upload Electron E2E report on failure
+        if: needs.changes.outputs.ts == 'true' && (failure() && hashFiles('ui/electron/test-results/**') != '')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: electron-e2e-report-${{ github.run_id }}
+          path: ui/electron/test-results/
+          retention-days: 14
+
 
       # Upload coverage as a workflow artifact so the `coverage-comment.yml`
       # sticky-comment workflow (triggered by workflow_run after this run

@@ -4,7 +4,7 @@
  * The macOS menu adds an `appMenu` slot up front (with About + Preferences +
  * Quit) because Apple's HIG mandates that pattern. Win/Linux skip it.
  */
-import { BrowserWindow, Menu, MenuItemConstructorOptions, shell, app } from 'electron';
+import { Menu, MenuItemConstructorOptions, shell, app } from 'electron';
 import { BRAND } from './brand';
 
 export type AppMenuHandlers = {
@@ -40,41 +40,10 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
   template.push({
     label: '&File',
     submenu: [
-      // Deliberately no "New Window" -- the Capacitor electron template
-      // wraps a single BrowserWindow + a single WebView instance with
-      // shared per-user state. Spawning a second window would either
-      // duplicate the SvelteKit hydration (breaks AsyncLocalStorage on
-      // the server side) or share the WebView (breaks the user's
-      // expectation of independent windows). Multi-window is a real
-      // refactor (fork Capacitor electron template) that we won't ship
-      // half-implemented as a no-op menu item.
-      {
-        label: 'Import URL…',
-        accelerator: 'CmdOrCtrl+I',
-        click: () => {
-          // Navigate the WebView to /pipeline so the user lands on the
-          // add-URL form. Window-loadURL dispatched from main process.
-          const w = BrowserWindow.getFocusedWindow();
-          if (w) {
-            const url = w.webContents.getURL();
-            const target = `${url.replace(/\/[^/]*$/, '')}/pipeline`;
-            w.webContents.loadURL(target).catch(() => {});
-          }
-        },
-      },
-      {
-        label: 'Open Pipeline',
-        accelerator: 'CmdOrCtrl+O',
-        click: () => {
-          const w = BrowserWindow.getFocusedWindow();
-          if (w) {
-            const url = w.webContents.getURL();
-            const target = `${new URL(url).origin}/pipeline`;
-            w.webContents.loadURL(target).catch(() => {});
-          }
-        },
-      },
-      { type: 'separator' },
+      // In-app navigation (Import URL / Open Pipeline) lives in the app's own
+      // UI, not the native File menu -- the menu keeps only the standard
+      // window close / quit. (No "New Window": the shell is a single
+      // BrowserWindow + WebView with shared per-user state.)
       isMac ? { role: 'close' } : { role: 'quit' },
     ],
   });

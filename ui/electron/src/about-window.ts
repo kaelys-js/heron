@@ -1,0 +1,372 @@
+/** The desktop "About <brand>" window.
+ *
+ *  A small, frameless, brand-themed BrowserWindow opened from the app menu's
+ *  About item (replacing the bare dialog.showMessageBox). The HTML builder is
+ *  pure (no electron import) so it's unit-testable; openAboutWindow owns the
+ *  BrowserWindow lifecycle, single-instance behaviour, and the IPC bridge used
+ *  by the page's buttons (open external links, copy version info, close).
+ *
+ *  Security: the About renderer is static, trusted, locally-generated HTML. It
+ *  runs with nodeIntegration:false, contextIsolation:true and sandbox:true; the
+ *  only capabilities it gets are the three namespaced channels exposed by
+ *  about-preload.ts. External links never navigate the window -- they're handed
+ *  to shell.openExternal (https only) in the main process. */
+import { BrowserWindow, ipcMain, shell, clipboard } from 'electron';
+import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
+
+export type AboutColors = {
+  accent: string;
+  primary: string;
+  darkBg: string;
+  darkSurface: string;
+  textOnDark: string;
+};
+
+export type AboutLink = { label: string; url: string };
+
+export type AboutInfo = {
+  displayName: string;
+  tagline: string;
+  description: string;
+  /** App version (app.getVersion()). */
+  version: string;
+  /** Runtime versions for the bug-report-friendly detail block. */
+  versions: { electron: string; chromium: string; node: string };
+  copyright: string;
+  /** Buttons rendered in the link row (Website / GitHub / Report a bug / License). */
+  links: AboutLink[];
+  colors: AboutColors;
+  /** data: URI for the logo, or undefined to render the wordmark only. */
+  logoDataUri?: string;
+  /** Backend URL shown subtly in the footer (helps debugging in dev). */
+  backendUrl?: string;
+  /** Global the preload exposes; the page wires its buttons to it. */
+  bridge?: string;
+};
+
+const DEFAULT_BRIDGE = '__aboutBridge__';
+
+/** Escape a string for safe interpolation into HTML text or a double-quoted
+ *  attribute. Brand values are trusted, but escaping keeps the builder honest
+ *  (and testable) and means a future user-supplied field can't break out. */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Render the full self-contained About document (loaded as a data: URL). */
+export function buildAboutHtml(info: AboutInfo): string {
+  const c = info.colors;
+  const bridge = info.bridge ?? DEFAULT_BRIDGE;
+  const copyText = [
+    `${info.displayName} ${info.version}`,
+    `Electron ${info.versions.electron}`,
+    `Chromium ${info.versions.chromium}`,
+    `Node ${info.versions.node}`,
+    info.backendUrl ? `Backend ${info.backendUrl}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const logo = info.logoDataUri
+    ? `<img class="logo" src="${esc(info.logoDataUri)}" alt="${esc(info.displayName)} logo" draggable="false" />`
+    : `<div class="logo logo--text" aria-hidden="true">${esc(info.displayName.slice(0, 1))}</div>`;
+
+  const linkButtons = info.links
+    .map(
+      (l) =>
+        `<button class="link" type="button" data-href="${esc(l.url)}">${esc(l.label)}</button>`,
+    )
+    .join('');
+
+  const backendLine = info.backendUrl
+    ? `<div class="backend">Backend · ${esc(info.backendUrl)}</div>`
+    : '';
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>About ${esc(info.displayName)}</title>
+<style>
+  :root {
+    --accent: ${esc(c.accent)};
+    --primary: ${esc(c.primary)};
+    --bg: ${esc(c.darkBg)};
+    --surface: ${esc(c.darkSurface)};
+    --text: ${esc(c.textOnDark)};
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--primary) 26%, transparent), transparent 60%),
+      linear-gradient(180deg, var(--surface), var(--bg));
+    -webkit-user-select: none;
+    user-select: none;
+    overflow: hidden;
+  }
+  .drag { position: absolute; top: 0; left: 0; right: 0; height: 44px; -webkit-app-region: drag; }
+  .close {
+    position: absolute; top: 12px; right: 14px; width: 26px; height: 26px;
+    border: none; border-radius: 50%; cursor: pointer;
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--text); font-size: 15px; line-height: 26px;
+    -webkit-app-region: no-drag; transition: background .15s ease;
+  }
+  .close:hover { background: color-mix(in srgb, var(--text) 18%, transparent); }
+  main {
+    height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 40px 34px 26px; gap: 4px;
+    animation: rise .35s ease both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .logo {
+    width: 78px; height: 78px; border-radius: 19px; margin-bottom: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  }
+  .logo--text {
+    display: grid; place-items: center; font-size: 38px; font-weight: 700;
+    color: var(--bg); background: linear-gradient(145deg, var(--accent), var(--primary));
+  }
+  h1 { font-size: 24px; font-weight: 650; letter-spacing: -.01em; }
+  .tagline { color: var(--accent); font-size: 13.5px; font-style: italic; margin-top: 2px; }
+  .version {
+    display: inline-block; margin-top: 12px; padding: 4px 11px; border-radius: 999px;
+    font: 600 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  }
+  .desc {
+    margin-top: 16px; max-width: 360px; font-size: 12.5px; line-height: 1.55;
+    color: color-mix(in srgb, var(--text) 72%, transparent);
+  }
+  .runtimes {
+    margin-top: 16px; display: flex; gap: 18px; font-size: 11px;
+    color: color-mix(in srgb, var(--text) 56%, transparent);
+  }
+  .runtimes b { display: block; font-size: 12px; font-weight: 600; color: color-mix(in srgb, var(--text) 84%, transparent); margin-top: 2px; }
+  .links { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .link {
+    -webkit-app-region: no-drag; cursor: pointer;
+    padding: 7px 14px; border-radius: 9px; font-size: 12.5px; font-weight: 550;
+    color: var(--text);
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+    transition: background .15s ease, border-color .15s ease, transform .1s ease;
+  }
+  .link:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .link:active { transform: translateY(1px); }
+  .footer { margin-top: auto; padding-top: 22px; display: flex; flex-direction: column; gap: 7px; align-items: center; }
+  .copy {
+    -webkit-app-region: no-drag; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 550; line-height: 1;
+    color: color-mix(in srgb, var(--text) 66%, transparent);
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+    transition: color .18s ease, background .18s ease, border-color .18s ease,
+      transform .2s cubic-bezier(.16,1,.3,1);
+  }
+  .copy:hover { color: var(--text); background: color-mix(in srgb, var(--text) 11%, transparent); }
+  .copy:active { transform: scale(.97); }
+  .copy.copied {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+    transform: scale(1.05);
+  }
+  .copy svg { width: 13px; height: 13px; }
+  .copy .ic-check { display: none; }
+  .copy.copied .ic-copy { display: none; }
+  .copy.copied .ic-check { display: inline; animation: pop .25s cubic-bezier(.16,1,.3,1); }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .copyright { font-size: 10.5px; line-height: 1.5; max-width: 360px; color: color-mix(in srgb, var(--text) 44%, transparent); }
+  .backend { font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: color-mix(in srgb, var(--text) 36%, transparent); }
+</style>
+</head>
+<body>
+  <div class="drag"></div>
+  <button class="close" id="closeBtn" type="button" aria-label="Close">&times;</button>
+  <main>
+    ${logo}
+    <h1>${esc(info.displayName)}</h1>
+    <div class="tagline">${esc(info.tagline)}</div>
+    <span class="version">${esc(info.version)}</span>
+    <p class="desc">${esc(info.description)}</p>
+    <div class="runtimes">
+      <span>Electron<b>${esc(info.versions.electron)}</b></span>
+      <span>Chromium<b>${esc(info.versions.chromium)}</b></span>
+      <span>Node<b>${esc(info.versions.node)}</b></span>
+    </div>
+    <div class="links">${linkButtons}</div>
+    <div class="footer">
+      <button class="copy" id="copyBtn" type="button" data-copy="${esc(copyText)}">
+        <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span id="copyLabel">Copy version info</span>
+      </button>
+      ${backendLine}
+      <div class="copyright">${esc(info.copyright)}</div>
+    </div>
+  </main>
+<script>
+(function () {
+  var b = window[${JSON.stringify(bridge)}] || {};
+  document.querySelectorAll('[data-href]').forEach(function (el) {
+    el.addEventListener('click', function () { if (b.openExternal) b.openExternal(el.getAttribute('data-href')); });
+  });
+  var copyBtn = document.getElementById('copyBtn');
+  var copyLabel = document.getElementById('copyLabel');
+  var copyTimer = null;
+  if (copyBtn) copyBtn.addEventListener('click', function () {
+    if (b.copy) b.copy(copyBtn.getAttribute('data-copy'));
+    copyBtn.classList.add('copied');
+    if (copyLabel) copyLabel.textContent = 'Copied';
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(function () {
+      copyBtn.classList.remove('copied');
+      if (copyLabel) copyLabel.textContent = 'Copy version info';
+    }, 1500);
+  });
+  var closeBtn = document.getElementById('closeBtn');
+  if (closeBtn) closeBtn.addEventListener('click', function () { if (b.close) b.close(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'w')) {
+      if (b.close) b.close();
+    }
+  });
+})();
+</script>
+</body>
+</html>`;
+}
+
+export type OpenAboutOptions = {
+  info: AboutInfo;
+  /** Brand name -> IPC channel namespace (matches about-preload.ts). */
+  brandName: string;
+  /** Absolute path to the built about-preload.js. */
+  preloadPath: string;
+  /** Parent window (the About window centers over it and stays on top of it). */
+  parent?: BrowserWindow;
+};
+
+let aboutWindow: BrowserWindow | null = null;
+let ipcWired = false;
+
+/** Open (or focus, if already open) the About window. */
+export function openAboutWindow(opts: OpenAboutOptions): BrowserWindow {
+  if (aboutWindow && !aboutWindow.isDestroyed()) {
+    aboutWindow.show();
+    aboutWindow.focus();
+    return aboutWindow;
+  }
+
+  wireAboutIpc(opts.brandName);
+
+  const win = new BrowserWindow({
+    width: 460,
+    height: 624,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    frame: false,
+    show: false,
+    title: `About ${opts.info.displayName}`,
+    backgroundColor: opts.info.colors.darkBg,
+    parent: opts.parent,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      // sandbox MUST be false: about-preload.js does `require('./brand')` to
+      // namespace its IPC channels, and a sandboxed preload can only require
+      // 'electron' -- so under sandbox:true the preload throws on load, the
+      // contextBridge never runs, and window.__aboutBridge__ is undefined,
+      // which silently breaks the close button, ESC, the links and copy.
+      // The renderer is still locked down by contextIsolation + nodeIntegration:false.
+      sandbox: false,
+      preload: opts.preloadPath,
+    },
+  });
+  aboutWindow = win;
+
+  // The page is trusted/static, but defence-in-depth: never let it navigate or
+  // spawn windows. All external links go through the bridge -> shell.
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (e) => e.preventDefault());
+
+  // Close on Esc / Cmd-W / Ctrl-W from the MAIN process, independent of the
+  // renderer bridge -- so the window always closes even if the page script
+  // didn't wire up (the bridge button is the in-page path).
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') {
+      return;
+    }
+    const isClose =
+      input.key === 'Escape' || ((input.meta || input.control) && input.key.toLowerCase() === 'w');
+    if (isClose) {
+      event.preventDefault();
+      if (!win.isDestroyed()) {
+        win.close();
+      }
+    }
+  });
+
+  win.once('ready-to-show', () => {
+    win.show();
+    win.focus();
+  });
+  win.on('closed', () => {
+    if (aboutWindow === win) {
+      aboutWindow = null;
+    }
+  });
+
+  const html = buildAboutHtml(opts.info);
+  void win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  return win;
+}
+
+/** Register the About IPC channels once. Idempotent across repeated opens. */
+function wireAboutIpc(brandName: string): void {
+  if (ipcWired) {
+    return;
+  }
+  ipcWired = true;
+  ipcMain.on(`${brandName}:about:open-external`, (_e, url: unknown) => {
+    if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+      void shell.openExternal(url);
+    }
+  });
+  ipcMain.on(`${brandName}:about:copy`, (_e, text: unknown) => {
+    if (typeof text === 'string') {
+      clipboard.writeText(text);
+    }
+  });
+  ipcMain.on(`${brandName}:about:close`, (e) => {
+    BrowserWindow.fromWebContents(e.sender)?.close();
+  });
+}
+
+/** Read the app icon as a data: URI for the About logo, or undefined if absent. */
+export function readLogoDataUri(appPath: string): string | undefined {
+  try {
+    const png = readFileSync(join(appPath, 'build', 'icon.png'));
+    return `data:image/png;base64,${png.toString('base64')}`;
+  } catch {
+    return undefined;
+  }
+}

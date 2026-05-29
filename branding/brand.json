@@ -283,32 +283,40 @@
   },
 
   "nativeGlyph": {
-    "$comment": "SF Symbol name used on iOS / watchOS / iPadOS native surfaces where SVG paths from logo.svg can't be embedded directly (Widget AuthGate, Watch root view, Live Activity badges). Chosen to look as close to logo.svg's <symbol id='brand-glyph'> as the SF Symbols catalogue allows. Currently: lucide bird (web) <-> SF Symbol 'feather' (native). `iosFallback` is used when the primary symbol isn't available on the device's iOS / watchOS version (SF Symbols is version-tiered).",
+    "$comment": "Native iOS / watchOS / iPadOS surfaces (Widget AuthGate, Watch root view, Live Activity badges, BootFailureView) render the brand mascot as an IMAGE asset -- a cartoon mascot can't be expressed as an SF Symbol. `image` is the Assets.xcassets imageset name apply-brand emits (from branding/assets/mascot.png) into every Swift target. The SF-symbol `ios`/`iosFallback` remain as a last-resort fallback if that image asset is ever missing on an older OS.",
+    "image": "HeronMascot",
     "ios": "feather",
     "iosFallback": "paperplane.fill"
   },
 
   "mascot": {
-    "$comment": "Mascot identity -- fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
-    "subject": "Great Blue Heron",
-    "pose": "side profile, standing in shallow water, neck S-curve, head turned 25-30° right",
-    "styleReferences": ["Audubon", "Charley Harper", "Field Notes", "Hasegawa Tōhaku sumi-e"],
+    "$comment": "Mascot identity -- the friendly cartoon Heron that IS the brand mark (it replaced the stopgap Lucide 'bird' glyph). Source: branding/mascot.png (raw) -> branding/assets/mascot.png (cleaned transparent master, via `pnpm mascot`). EVERYTHING derives from the master: logo.svg embed, all platform icons, the splash, and the Swift image asset. Fed into the MASCOT.md template.",
+    "image": "branding/assets/mascot.png",
+    "rawSource": "branding/mascot.png",
+    "subject": "Great Blue Heron -- friendly cartoon character",
+    "pose": "3/4 head-and-shoulders, beak to the right, large warm eyes, small crest tuft",
+    "styleReferences": [
+      "Duolingo Duo",
+      "flat vector app mascot",
+      "rounded thick-outline cartoon",
+      "friendly modern app mark"
+    ],
     "tiers": {
       "mark": {
         "use": "≤64px contexts -- favicon, app icon, inline UI",
-        "treatment": "silhouette"
+        "treatment": "mascot head on the gradient squircle"
       },
       "illustration": {
-        "use": "≥200px contexts -- landing pages, marketing, press",
-        "treatment": "editorial illustration with subtle detail"
+        "use": "≥200px contexts -- splash, landing pages, marketing, press",
+        "treatment": "full cartoon mascot, animated where the surface allows"
       }
     },
     "antiStyles": [
-      "cartoon",
       "photo-realistic",
       "3D-rendered",
-      "anthropomorphized",
-      "mascot-with-arms"
+      "aggressive or scary",
+      "over-detailed or cluttered",
+      "off-brand colors"
     ]
   },
 

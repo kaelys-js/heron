@@ -29,6 +29,8 @@ import path from 'node:path';
 
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
 import { buildAppMenu } from './app-menu';
+import { openAboutWindow, readLogoDataUri } from './about-window';
+import { wireCrashRecovery } from './crash-recovery';
 import { DesktopTray } from './tray';
 import { startMdnsAdvertise } from './mdns';
 import { BRAND } from './brand';
@@ -125,15 +127,17 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 (async () => {
   await app.whenReady();
 
-  // macOS Dock identity (dev AND packaged). The BrowserWindow `icon`
-  // option does not affect the macOS Dock -- only app.dock.setIcon does.
-  // build/icon.png is the apply-brand output (regenerated from
-  // branding/brand.json), so the Dock icon stays brand-derived in dev.
+  // macOS Dock identity (dev AND packaged). The BrowserWindow `icon` option
+  // does NOT affect the Dock -- only app.dock.setIcon does. Prefer the
+  // multi-resolution .icns (full-size, correctly padded macOS tile) over the
+  // small 512 .png, which the Dock rendered undersized/inset in dev. Both are
+  // apply-brand outputs (regenerated from branding/brand.json).
   if (process.platform === 'darwin' && app.dock) {
     try {
-      app.dock.setIcon(
-        nativeImage.createFromPath(path.join(app.getAppPath(), 'build', 'icon.png')),
-      );
+      const icnsPath = path.join(app.getAppPath(), 'build', 'icon.icns');
+      const pngPath = path.join(app.getAppPath(), 'build', 'icon.png');
+      const dockIcon = nativeImage.createFromPath(icnsPath);
+      app.dock.setIcon(dockIcon.isEmpty() ? nativeImage.createFromPath(pngPath) : dockIcon);
     } catch {
       /* non-fatal -- Dock keeps the default icon */
     }
@@ -189,6 +193,41 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   await myCapacitorApp.init();
   state.mainWindow = myCapacitorApp.getMainWindow();
 
+  // Global crash recovery (iOS BootFailureView parity): if the renderer
+  // process dies, show a branded recovery screen + auto-reload (with a
+  // crash-loop guard) instead of leaving a blank window.
+  if (state.mainWindow) {
+    wireCrashRecovery(state.mainWindow, {
+      displayName: BRAND.displayName,
+      colors: BRAND.colors,
+      logoDataUri: readLogoDataUri(app.getAppPath()),
+      reload: () => {
+        void myCapacitorApp.reload();
+      },
+    });
+
+    // Always postfix the window title with the brand ("<page> -- Heron"), so the
+    // OS title bar / window switcher shows the app name regardless of what the
+    // page set. We own the title (preventDefault) instead of mirroring the
+    // raw document.title.
+    const win = state.mainWindow;
+    const applyTitle = (raw: string): void => {
+      const t = (raw ?? '').trim();
+      const next =
+        t && t !== BRAND.displayName && !t.includes(BRAND.displayName)
+          ? `${t} — ${BRAND.displayName}`
+          : t || BRAND.displayName;
+      if (!win.isDestroyed()) {
+        win.setTitle(next);
+      }
+    };
+    win.webContents.on('page-title-updated', (e, title) => {
+      e.preventDefault();
+      applyTitle(title);
+    });
+    applyTitle(win.getTitle());
+  }
+
   // Inject embedded URL into the WebView via window.__HERON__
   if (state.server && state.mainWindow) {
     state.mainWindow.webContents
@@ -204,11 +243,31 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
           `${state.server?.url ?? 'http://localhost:5173'}/settings`,
         ),
       onAbout: () => {
-        dialog.showMessageBox({
-          type: 'info',
-          title: `About ${BRAND.displayName}`,
-          message: BRAND.displayName,
-          detail: `Version: ${app.getVersion()}\nBundle: ${BRAND.bundleId}\nBackend: ${state.server?.url ?? 'remote'}`,
+        openAboutWindow({
+          brandName: BRAND.name,
+          preloadPath: path.join(app.getAppPath(), 'build', 'src', 'about-preload.js'),
+          parent: state.mainWindow,
+          info: {
+            displayName: BRAND.displayName,
+            tagline: BRAND.tagline,
+            description: BRAND.description,
+            version: app.getVersion(),
+            versions: {
+              electron: process.versions.electron ?? '',
+              chromium: process.versions.chrome ?? '',
+              node: process.versions.node ?? '',
+            },
+            copyright: BRAND.copyright,
+            links: [
+              { label: 'Website', url: BRAND.homepageUrl },
+              { label: 'GitHub', url: BRAND.repoUrl },
+              { label: 'Report a bug', url: `${BRAND.issuesUrl}/new` },
+              { label: 'License', url: `${BRAND.repoUrl}/blob/main/LICENSE` },
+            ],
+            colors: BRAND.colors,
+            logoDataUri: readLogoDataUri(app.getAppPath()),
+            backendUrl: state.server?.url,
+          },
         });
       },
       onOpenDocs: () => shell.openExternal(BRAND.repoUrl),
@@ -261,12 +320,12 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 })();
 
 app.on('window-all-closed', () => {
-  // Mac: keep app running in menu bar via Tray (don't quit).
-  // Win/Linux: quit on window close.
-  if (process.platform !== 'darwin') {
-    cleanup();
-    app.quit();
-  }
+  // Close == quit on EVERY platform (including macOS). The user expects
+  // closing the window to quit the app, not leave it running invisibly in the
+  // tray, and it lets `pnpm dev:desktop` tear down cleanly when the window is
+  // closed (not just on Dock-quit).
+  cleanup();
+  app.quit();
 });
 
 app.on('activate', async () => {

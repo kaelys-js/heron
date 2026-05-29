@@ -25,6 +25,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { loadBrandSource, MASCOT_SPLASH_FRACTION } from '../splash-spec.mjs';
 
 // Safe PATH allowlist for resolving auxiliary build tools (iconutil,
 // png2icns, magick, convert). The original `execSync('which X')` pattern
@@ -207,7 +208,14 @@ async function main() {
     icns: ICNS_SIZES,
     // Bump when render LOGIC changes (not just the matrix), so the cache
     // busts. v2: iOS + watch app icons flattened opaque (no alpha channel).
-    renderRev: 2,
+    // v3: single-glow bloom (was two stacked radials) + macOS .icns inset to
+    // Apple's 824/1024 icon grid (Dock-size parity with stock apps).
+    // v4: splash bloom now sourced from splash-spec.mjs (buildBloomSvg) -- the
+    // crop-safe centered halo + vignette, shared with the web boot screen.
+    // v5: brand mark is the cartoon MASCOT -- icons composite the mascot-on-squircle
+    // (via favicon.svg) and the Splash.imageset is the BARE mascot on the halo.
+    // v6: splash = solid mascot-sampled bg + centered mascot + soft drop shadow.
+    renderRev: 6,
   });
   const key = createHash('sha256').update(svgBuffer).update(matrixKey).digest('hex').slice(0, 16);
   const prev = await readCacheKey();
@@ -307,84 +315,40 @@ async function main() {
   const splashDir = path.join(ROOT, 'ui/ios/App/App/Assets.xcassets/Splash.imageset');
   await fs.mkdir(splashDir, { recursive: true });
   const splashSize = 2732;
-  // Logo proportion = 0.11 of the 2732 canvas. With LaunchScreen.storyboard's
-  // scaleAspectFill content mode this gives a ~105pt rendered icon on iPhone
-  // 17 Pro Max (956pt screen × 0.11 = 105pt -- modern-iOS-app sized, in the
-  // Notion / Things / Spotify range of 100-130pt). The boot-fallback in
-  // app.html mirrors this with `max(11vh, 11vw)`, so the iOS native splash
-  // and the SvelteKit boot-fallback render the icon at the SAME pixel size
-  // / position. Bumping or shrinking this value REQUIRES updating the 11vh
-  // in app.html too. */
-  const logoSize = Math.round(splashSize * 0.11); // ~300px logo on the 2732 canvas
-  const brandPath = path.join(ROOT, 'branding/brand.json');
-  let splashBg = '#0e1014';
-  try {
-    const brand = JSON.parse(await fs.readFile(brandPath, 'utf8'));
-    splashBg = brand.splash?.backgroundColor ?? brand.colors?.background ?? splashBg;
-  } catch {
-    /* brand.json missing -- keep default */
-  }
+  // Mascot proportion = MASCOT_SPLASH_FRACTION of the 2732 canvas, the SAME
+  // fraction the web boot's MARK_CLAMP targets, so the iOS native splash and the
+  // SvelteKit boot-fallback render the mascot at a matching size/position under
+  // scaleAspectFill. Single source in splash-spec.mjs.
+  const mascotSize = Math.round(splashSize * MASCOT_SPLASH_FRACTION);
+  // Solid background = the mascot-sampled splash colour (single source:
+  // branding/assets/mascot-b64.json::splashBg, via brand-mascot.mjs).
+  const { mascot } = loadBrandSource(ROOT);
+  const splashBg = mascot.splashBg ?? '#3d505f';
 
-  // Build the entire splash as a SINGLE composite SVG, then rasterise.
-  // Doing it inline (rather than compositing PNG layers via sharp) means
-  // the icon's glow is computed by an SVG filter that operates on the
-  // icon's ALPHA channel -- i.e. the silhouette only. This is critical
-  // for visual quality: blurring the colored icon (the glyph strokes
-  // + the slate/reed/dawn squircle gradient) creates an ugly ghost-bleed
-  // visible behind the crisp icon. Blurring just the alpha gives a
-  // clean soft-edged halo of the squircle's outline, tinted with the
-  // brand accent via `feFlood`. Matches the CSS `filter: drop-shadow(0 0 56px ...)`
-  // on the boot-fallback so the cross-fade between the iOS native
-  // splash and the SvelteKit boot-fallback matches glyph + glow at the swap.
-  //
-  // Pieces:
-  //   1. Two stacked radial gradients for the brand bloom (center +
-  //      top accent). Match exactly the `background: radial-gradient(...)`
-  //      stacks in app.html.
-  //   2. `iconGlow` filter: feGaussianBlur on SourceAlpha → feFlood
-  //      purple → feComposite to mask → feMerge halo behind original.
-  //   3. The brand SVG inlined (read favicon.svg, extract inner content,
-  //      embed scaled to `logoSize` and centered). favicon.svg already
-  //      contains its own `<defs id="bg">` gradient for the squircle --
-  //      the id is a different namespace than our wrapper's gradient ids
-  //      so they don't collide.
-  const logoSvgText = await fs.readFile(SVG, 'utf8');
-  const logoInner = logoSvgText.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>[\s\S]*$/, '');
-
+  // Build the still splash frame: solid bg + the centered mascot with a soft
+  // drop shadow (mirrors the web boot's .splash-mark shadow so the native ->
+  // web handoff matches). No animated loader in the static PNG. Full-res cleaned
+  // master embedded for crispness (build-time, payload irrelevant).
+  const mascotMaster = path.join(ROOT, 'branding/assets/mascot.png');
+  const mascotB64 = (await fs.readFile(mascotMaster)).toString('base64');
+  const mascotOffset = Math.round((splashSize - mascotSize) / 2);
   const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${splashSize}" height="${splashSize}" viewBox="0 0 ${splashSize} ${splashSize}">
     <defs>
-      <radialGradient id="centerBloom" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-        <stop offset="0%" stop-color="#7a8c6d" stop-opacity="0.30" />
-        <stop offset="32%" stop-color="#4a5b6d" stop-opacity="0.16" />
-        <stop offset="56%" stop-color="#c89b4a" stop-opacity="0.07" />
-        <stop offset="78%" stop-color="${splashBg}" stop-opacity="0" />
-      </radialGradient>
-      <radialGradient id="topBloom" cx="50%" cy="0%" r="60%" fx="50%" fy="0%">
-        <stop offset="0%" stop-color="#c89b4a" stop-opacity="0.12" />
-        <stop offset="60%" stop-color="${splashBg}" stop-opacity="0" />
-      </radialGradient>
-      <filter id="iconGlow" x="-30%" y="-30%" width="160%" height="160%">
-        <!-- Tight, subtle alpha-glow: blur the icon silhouette only
-             (no colour bleed from the squircle gradient), flood it with
-             brand purple at low opacity, and merge BEHIND the crisp icon.
-             stdDeviation tuned to match the CSS drop-shadow 0 0 32px
-             on the boot-fallback in app.html — both produce a soft
-             20-25pt aura around the icon outline on iPhone 17 Pro Max. -->
-        <feGaussianBlur in="SourceAlpha" stdDeviation="${Math.round(logoSize * 0.1)}" result="blur"/>
-        <feFlood flood-color="#7a8c6d" flood-opacity="0.45" result="purple"/>
-        <feComposite in="purple" in2="blur" operator="in" result="halo"/>
+      <filter id="mascotShadow" x="-40%" y="-40%" width="180%" height="180%">
+        <!-- Soft dark drop shadow under the mascot (blur the silhouette, flood
+             black, offset down, merge behind), matching the web .splash-mark. -->
+        <feGaussianBlur in="SourceAlpha" stdDeviation="${Math.round(mascotSize * 0.05)}" result="blur"/>
+        <feOffset in="blur" dx="0" dy="${Math.round(mascotSize * 0.06)}" result="off"/>
+        <feFlood flood-color="#000000" flood-opacity="0.42" result="col"/>
+        <feComposite in="col" in2="off" operator="in" result="shadow"/>
         <feMerge>
-          <feMergeNode in="halo"/>
+          <feMergeNode in="shadow"/>
           <feMergeNode in="SourceGraphic"/>
         </feMerge>
       </filter>
     </defs>
-    <rect width="100%" height="100%" fill="${splashBg}"/>
-    <rect width="100%" height="100%" fill="url(#centerBloom)"/>
-    <rect width="100%" height="100%" fill="url(#topBloom)"/>
-    <g transform="translate(${(splashSize - logoSize) / 2}, ${(splashSize - logoSize) / 2}) scale(${logoSize / 1024})" filter="url(#iconGlow)">
-      ${logoInner}
-    </g>
+    <rect width="${splashSize}" height="${splashSize}" fill="${splashBg}" />
+    <image x="${mascotOffset}" y="${mascotOffset}" width="${mascotSize}" height="${mascotSize}" filter="url(#mascotShadow)" href="data:image/png;base64,${mascotB64}" />
   </svg>`;
 
   const splashBuffer = await sharp(Buffer.from(fullSvg))
@@ -423,6 +387,24 @@ async function main() {
   await renderAtSize(sharp, svgBuffer, 256, path.join(electronBuild, 'icon-256.png'));
   await renderAtSize(sharp, svgBuffer, 1024, path.join(electronBuild, 'icon-1024.png'));
 
+  // macOS dock tile -- Apple's icon grid insets the rounded-rect "card"
+  // to 824/1024 of the canvas (≈100px transparent margin per side, plus
+  // room for the system drop shadow). Every stock macOS app follows this,
+  // so a full-bleed squircle renders visibly LARGER than its neighbours in
+  // the Dock. We wrap the full favicon (squircle + glyph as one unit, so
+  // its corner radius scales with it -- 232/1024 ≈ 186/824, matching
+  // Apple's ~185px card radius) at 0.8047 scale, centered on a transparent
+  // canvas. macOS-only: iOS auto-masks (wants full-bleed), Windows/Linux
+  // tiles aren't Apple-grid, so those keep `svgBuffer` untouched.
+  // logoInner = favicon.svg's inner content (the gradient squircle + the mascot
+  // <image>) so the inset tile carries the same icon-form mark as the others.
+  const faviconSvgText = await fs.readFile(SVG, 'utf8');
+  const logoInner = faviconSvgText
+    .replace(/^[\s\S]*?<svg[^>]*>/, '')
+    .replace(/<\/svg>[\s\S]*$/, '');
+  const macIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><g transform="translate(100, 100) scale(0.8046875)">${logoInner}</g></svg>`;
+  const macIconBuffer = Buffer.from(macIconSvg);
+
   // .icns (macOS) -- prefer iconutil (macOS-native, best output) and fall
   // back to png2icns (libicns, available on Linux CI via icnsutils).
   // Both produce the same wire format; iconutil's output is just a hair
@@ -447,7 +429,7 @@ async function main() {
       { size: 1024, name: 'icon_512x512@2x.png' },
     ];
     for (const { size, name } of icnsMatrix) {
-      await renderAtSize(sharp, svgBuffer, size, path.join(iconset, name));
+      await renderAtSize(sharp, macIconBuffer, size, path.join(iconset, name));
     }
     execFileSync(iconutilBin, ['-c', 'icns', iconset, '-o', icnsPath], { stdio: 'inherit' });
     await fs.rm(iconset, { recursive: true });
@@ -461,7 +443,7 @@ async function main() {
     const tmpFiles = [];
     for (const s of sizes) {
       const p = path.join(tmpDir, `icon_${s}.png`);
-      await renderAtSize(sharp, svgBuffer, s, p);
+      await renderAtSize(sharp, macIconBuffer, s, p);
       tmpFiles.push(p);
     }
     execFileSync(png2icnsBin, [icnsPath, ...tmpFiles], { stdio: 'inherit' });

@@ -33,6 +33,14 @@ import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { legalUpdatedDate } from './legal-date.mjs';
+import {
+  loadBrandSource,
+  buildSplashVisual,
+  buildSplashHtml,
+  bloomCssInline,
+} from './splash-spec.mjs';
+import { readMascotB64 } from './brand-mascot.mjs';
 
 // ROOT is the repo root by default -- the script lives at
 // scripts/native/apply-brand.mjs so two `..` jumps land at /<repo>.
@@ -988,7 +996,10 @@ function applyLegalPages(brand) {
   const license = brand.license ?? 'MIT';
   const copyright = brand.copyright ?? '';
   const home = (brand.homepageUrl ?? '').replace(/\/$/, '');
-  const updated = new Date().toISOString().slice(0, 10);
+  // Deterministic: the brand source's last-commit date, NOT today's date.
+  // new Date() here restamped the footer on every apply-brand run (incl. the
+  // vite-startup run), churning these static files daily. See legal-date.mjs.
+  const updated = legalUpdatedDate();
   const esc = (s) =>
     String(s ?? '').replace(
       /[&<>"]/g,
@@ -1982,130 +1993,101 @@ function applyAppHtml(brand) {
  * silently rendering the OLD glyph. apply-brand now keeps the inline
  * copies aligned with the master.
  */
-function applyBrandMark(brand) {
-  // 1. Parse logo.svg to extract:
-  //    - 3 gradient stops (from the AUTO-GENERATED:brand-gradient block)
-  //    - glyph paths (from <symbol id="brand-glyph"><g>...</g></symbol>)
-  //    The squircle dims (1024x1024 rx=232) + highlight overlay +
-  //    glyph <g> styling are stable contract; we hardcode them in the
-  //    template below.
-  if (!existsSync(BRAND_LOGO)) {
-    log.warn(`branding/logo.svg missing -- skipping brand-mark reconciliation`);
-    return;
-  }
-  const logoSvg = readFileSync(BRAND_LOGO, 'utf8');
-
-  // Also reconcile logo.svg's OWN AUTO-GENERATED:brand-gradient block
-  // so the source-of-truth stops stay in sync with brand.json. The
-  // consumers below get their stops from `stops` (built from brand.json)
-  // directly, so this self-update is mainly for the source file's own
-  // values to drift-match brand.json on every apply-brand run.
+function applyMascot(brand) {
+  // logo.svg no longer carries a vector glyph -- the mark IS the raster mascot.
+  // Still reconcile the squircle's gradient stops from brand.json (the mascot
+  // sits on that gradient in the icon form).
   reconcileLogoSvgGradient(brand);
 
-  const symbolRe = /<symbol id="brand-glyph"[^>]*>\s*<g[^>]*>([\s\S]*?)<\/g>\s*<\/symbol>/m;
-  const symbolMatch = symbolRe.exec(logoSvg);
-  if (!symbolMatch) {
-    log.warn(
-      `logo.svg missing <symbol id="brand-glyph"><g>...</g> -- skipping brand-mark reconciliation`,
+  let embeds;
+  try {
+    embeds = readMascotB64(ROOT);
+  } catch {
+    log.warn(`branding/assets/mascot-b64.json missing -- run \`pnpm mascot\`; skipping mascot`);
+    return;
+  }
+
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // Replace the content between an AUTO-GENERATED marker pair with `innerLines`,
+  // preserving the start-marker's indentation. `startRe` matches the start marker
+  // (which may carry attributes). Returns true on change.
+  const fill = (path, startRe, endMarker, innerLines) => {
+    if (!existsSync(path)) return false;
+    const before = readFileSync(path, 'utf8');
+    const sm = startRe.exec(before);
+    if (!sm) {
+      log.warn(`${path.replace(ROOT + '/', '')} -- missing ${endMarker}; skipped`);
+      return false;
+    }
+    const indent = before.match(new RegExp(`^([ \\t]*)${esc(sm[0])}`, 'm'))?.[1] ?? '';
+    const block = [
+      `${indent}${sm[0]}`,
+      ...innerLines.map((l) => (l === '' ? '' : `${indent}${l}`)),
+      `${indent}${endMarker}`,
+    ].join('\n');
+    const after = before.replace(
+      new RegExp(`${esc(indent)}${esc(sm[0])}[\\s\\S]*?${esc(endMarker)}`, 'm'),
+      block,
     );
-    return;
-  }
-  // Normalize: flatten whitespace, then extract individual <path .../>
-  // elements. This way logo.svg can format paths across multiple lines
-  // (it does) and we still emit one path per line in each consumer.
-  const glyphInner = symbolMatch[1].replace(/\s+/g, ' ').trim();
-  const glyphPathRe = /<path\s+[^/]*\/>/g;
-  const glyphPaths = glyphInner.match(glyphPathRe) ?? [];
-  if (glyphPaths.length === 0) {
-    log.warn(`logo.svg <symbol id="brand-glyph"> has no <path> children -- skipping`);
-    return;
-  }
-
-  // 2. Stops driven by brand.json.
-  const stops = [
-    { offset: '0%', color: brand.colors.primary },
-    { offset: '55%', color: brand.colors.accentSecondary },
-    { offset: '100%', color: brand.colors.accent },
-  ];
-
-  // 3. Reconcile each consumer.
-  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const startMarkerRe = /<!-- AUTO-GENERATED:brand-mark gradient-id="([^"]+)" -->/;
-  const endMarker = '<!-- /AUTO-GENERATED:brand-mark -->';
-
-  const targets = [
-    join(UI, 'src', 'error.html'),
-    join(UI, 'src', 'app.html'),
-    join(UI, 'src', 'lib', 'components', 'BackendUnreachableOverlay.svelte'),
-    join(UI, 'src', 'routes', 'signup', '+page.svelte'),
-    join(UI, 'src', 'routes', 'login', '+page.svelte'),
-  ];
+    if (after === before) return false;
+    writeFileSync(path, after);
+    return true;
+  };
 
   let touched = 0;
-  let missing = 0;
-  for (const path of targets) {
-    if (!existsSync(path)) continue;
-    const before = readFileSync(path, 'utf8');
-    const startMatch = startMarkerRe.exec(before);
-    if (!startMatch) {
-      log.warn(
-        `${path.replace(ROOT + '/', '')} missing AUTO-GENERATED:brand-mark markers; skipped`,
-      );
-      missing++;
-      continue;
-    }
-    const gradientId = startMatch[1];
 
-    // Match the leading indent of the start-marker line so the block we
-    // emit preserves the consumer's surrounding indentation. Falls back
-    // to a sensible default if the marker is at column 0.
-    const lineRe = new RegExp(`^([ \\t]*)${escape(startMatch[0])}`, 'm');
-    const indentMatch = before.match(lineRe);
-    const indent = indentMatch ? indentMatch[1] : '          ';
+  // 1. logo.svg -- ICON form: mascot inset on the gradient squircle (PNG so
+  //    sharp/resvg can rasterise favicon.svg, which is copied from logo.svg).
+  if (
+    fill(
+      join(ROOT, 'branding', 'logo.svg'),
+      /<!-- AUTO-GENERATED:mascot -->/,
+      '<!-- /AUTO-GENERATED:mascot -->',
+      [`<image x="172" y="172" width="680" height="680" href="${embeds.iconPng}" />`],
+    )
+  ) {
+    touched++;
+  }
 
-    // Build the reconciled block. Sibling-level indent for marker pair
-    // and all the block content between them.
-    const lines = [
-      `${indent}${startMatch[0]}`,
-      `${indent}<defs>`,
-      `${indent}  <linearGradient id="${gradientId}" x1="0" y1="0" x2="1" y2="1">`,
-      ...stops.map((s) => `${indent}    <stop offset="${s.offset}" stop-color="${s.color}" />`),
-      `${indent}  </linearGradient>`,
-      `${indent}</defs>`,
-      `${indent}<rect width="1024" height="1024" rx="232" fill="url(#${gradientId})" />`,
-      `${indent}<rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />`,
-      `${indent}<g`,
-      `${indent}  transform="translate(192,192) scale(26.667)"`,
-      `${indent}  fill="none"`,
-      `${indent}  stroke="#ffffff"`,
-      `${indent}  stroke-width="1.8"`,
-      `${indent}  stroke-linecap="round"`,
-      `${indent}  stroke-linejoin="round"`,
-      `${indent}>`,
-      ...glyphPaths.map((p) => `${indent}  ${p}`),
-      `${indent}</g>`,
-      `${indent}${endMarker}`,
-    ];
-    const nextBlock = lines.join('\n');
-
-    // Replace from start-marker line to end-marker line inclusive.
-    const replaceRe = new RegExp(
-      `${escape(indent)}${escape(startMatch[0])}[\\s\\S]*?${escape(endMarker)}`,
-      'm',
-    );
-    const after = before.replace(replaceRe, nextBlock);
-    if (after !== before) {
-      writeFileSync(path, after);
+  // 2. Inline consumers -- BARE mascot (no squircle), filling their svg viewBox.
+  //    The old gradient-id attribute on the marker is now vestigial (matched but
+  //    unused). app.html boot-fallback is intentionally absent -- its mascot is
+  //    owned by the AUTO-GENERATED:splash block (applySplash).
+  const bare = [
+    `<image width="1024" height="1024" preserveAspectRatio="xMidYMid meet" href="${embeds.markWebp}" />`,
+  ];
+  for (const p of [
+    join(UI, 'src', 'error.html'),
+    join(UI, 'src', 'routes', 'login', '+page.svelte'),
+    join(UI, 'src', 'routes', 'signup', '+page.svelte'),
+    join(UI, 'src', 'lib', 'components', 'BackendBootGuard.svelte'),
+    join(UI, 'src', 'lib', 'components', 'BackendUnreachableOverlay.svelte'),
+  ]) {
+    if (
+      fill(p, /<!-- AUTO-GENERATED:brand-mark[^>]*-->/, '<!-- /AUTO-GENERATED:brand-mark -->', bare)
+    ) {
       touched++;
     }
   }
-  if (touched > 0) {
-    log.ok(
-      `brand mark (${touched} file${touched === 1 ? '' : 's'} updated from branding/logo.svg's <symbol id="brand-glyph"> + brand.json colors)`,
-    );
-  } else if (missing === 0) {
-    log.skip(`brand mark -- already current across ${targets.length} consumers`);
+
+  // 3. social-card.html -- OG card mascot (browser-rendered; WebP fine).
+  if (
+    fill(
+      join(ROOT, 'branding', 'assets', 'social-card.html'),
+      /<!-- AUTO-GENERATED:mascot -->/,
+      '<!-- /AUTO-GENERATED:mascot -->',
+      [`<img class="mascot" alt="Heron mascot" src="${embeds.heroWebp}" />`],
+    )
+  ) {
+    touched++;
   }
+
+  touched > 0
+    ? log.ok(
+        `mascot injected (${touched} surface${touched === 1 ? '' : 's'} from the cleaned master)`,
+      )
+    : log.skip(`mascot -- already current`);
 }
 
 /**
@@ -2503,6 +2485,8 @@ function applyElectronBrandTs(brand) {
     `export const BRAND = {`,
     `  name: ${JSON.stringify(brand.name)},`,
     `  displayName: ${JSON.stringify(brand.displayName)},`,
+    `  tagline: ${JSON.stringify(brand.tagline)},`,
+    `  description: ${JSON.stringify(brand.description)},`,
     `  bundleId: ${JSON.stringify(brand.identifiers.bundleId)},`,
     `  urlScheme: ${JSON.stringify(brand.identifiers.urlScheme)},`,
     `  serviceType: ${JSON.stringify(brand.identifiers.serviceType)},`,
@@ -2511,6 +2495,14 @@ function applyElectronBrandTs(brand) {
     `  issuesUrl: ${JSON.stringify(brand.repo.issues)},`,
     `  homepageUrl: ${JSON.stringify(brand.homepageUrl)},`,
     `  copyright: ${JSON.stringify(brand.copyright)},`,
+    `  // Subset of the palette the desktop About window paints with.`,
+    `  colors: {`,
+    `    accent: ${JSON.stringify(brand.colors.accent)},`,
+    `    primary: ${JSON.stringify(brand.colors.primary)},`,
+    `    darkBg: ${JSON.stringify(brand.colors.darkBg)},`,
+    `    darkSurface: ${JSON.stringify(brand.colors.darkSurface)},`,
+    `    textOnDark: ${JSON.stringify(brand.colors.textOnDark)},`,
+    `  },`,
     `} as const;`,
     ``,
   ].join('\n');
@@ -2589,6 +2581,16 @@ function applySwiftConstants(brand) {
   const openJobActivity =
     brand.identifiers.userActivityTypes.find((t) => t.endsWith('.openJob')) ??
     `${brand.identifiers.bundleId}.openJob`;
+  // The brand mascot as raw base64 PNG, embedded directly in Brand.swift so EVERY
+  // target (app + extensions, which have no shared asset catalog) can render it
+  // with zero Assets.xcassets / .pbxproj wiring. From branding/assets/mascot.png
+  // via brand-mascot.mjs (iconPng embed). Empty string if the master isn't built.
+  let mascotBase64 = '';
+  try {
+    mascotBase64 = readMascotB64(ROOT).iconPng.replace(/^data:image\/png;base64,/, '');
+  } catch {
+    /* mascot not built yet -- BrandUI.brandMark falls back to the SF symbol */
+  }
   const body = [
     `// AUTO-GENERATED by scripts/native/apply-brand.mjs -- do not edit.`,
     `// Edit branding/brand.json and run \`pnpm brand:apply\`.`,
@@ -2659,6 +2661,9 @@ function applySwiftConstants(brand) {
     `// SwiftUI is available.`,
     `#if canImport(SwiftUI)`,
     `import SwiftUI`,
+    `#if canImport(UIKit)`,
+    `import UIKit`,
+    `#endif`,
     ``,
     `enum BrandUI {`,
     `    /// Primary brand color (Heron Slate). From brand.json::colors.primary.`,
@@ -2686,6 +2691,23 @@ function applySwiftConstants(brand) {
     `    /// Fallback for OS versions that lack the primary symbol (rare; SF`,
     `    /// Symbols catalogue is iOS-version-tiered). From brand.json::nativeGlyph.iosFallback.`,
     `    static let glyphSymbolFallback = "${brand.nativeGlyph?.iosFallback ?? 'paperplane.fill'}"`,
+    ``,
+    `    /// The brand MASCOT as a base64 PNG, embedded so every target renders the`,
+    `    /// real mark (no shared asset catalog needed). From branding/assets/mascot.png.`,
+    `    static let mascotPNGBase64 = "${mascotBase64}"`,
+    `#if canImport(UIKit)`,
+    `    /// Decoded mascot, or nil if the embed is missing/corrupt.`,
+    `    static let mascotUIImage: UIImage? = Data(base64Encoded: mascotPNGBase64).flatMap(UIImage.init(data:))`,
+    `    /// The brand mark as a SwiftUI Image: the mascot (original colors, never`,
+    `    /// template-tinted), falling back to the SF-symbol glyph if decoding fails.`,
+    `    static var brandMark: Image {`,
+    `        if let img = mascotUIImage { return Image(uiImage: img).renderingMode(.original) }`,
+    `        return Image(systemName: glyphSymbol)`,
+    `    }`,
+    `#else`,
+    `    /// No UIKit in this target -- fall back to the SF-symbol glyph.`,
+    `    static var brandMark: Image { Image(systemName: glyphSymbol) }`,
+    `#endif`,
     `}`,
     `#endif`,
     ``,
@@ -2749,6 +2771,9 @@ function computeApplyHash() {
     join(ROOT, 'branding', 'logo.svg'),
     fileURLToPath(import.meta.url), // this script
     join(ROOT, 'scripts', 'native', 'icons', 'generate-icons.mjs'),
+    join(ROOT, 'scripts', 'native', 'splash-spec.mjs'), // single-source splash look
+    join(ROOT, 'scripts', 'native', 'brand-mascot.mjs'), // mascot embed encoder
+    join(ROOT, 'branding', 'assets', 'mascot-b64.json'), // mascot embeds (injected)
   ];
   const h = createHash('sha256');
   for (const p of inputs) {
@@ -2953,6 +2978,124 @@ function applyAndroidFastlane(brand) {
   any ? log.ok(`android fastlane`) : log.skip(`android fastlane -- already current`);
 }
 
+/**
+ * Regenerate the cinematic splash from splash-spec.mjs into every surface that
+ * paints it. Single source: edit scripts/native/splash-spec.mjs, then
+ * `pnpm brand:apply` (+ `pnpm icons` for the rasterized iOS launch PNG).
+ *
+ *   - ui/src/app.html #boot-fallback                (AUTO-GENERATED:splash)
+ *   - ui/electron/src/splash.ts                     (whole generated file)
+ *   - ui/src/routes/{login,signup}/+page.svelte     (AUTO-GENERATED:splash-bloom)
+ *   - ui/ios/.../Base.lproj/LaunchScreen.storyboard (bg colour == darkBg)
+ *
+ * The iOS native launch PNG (Splash.imageset) is rendered separately by
+ * scripts/native/icons/generate-icons.mjs, which imports the SAME spec, so the
+ * native splash -> WebView boot handoff can never drift.
+ */
+function applySplash(brand) {
+  const { colors, mascot } = loadBrandSource(ROOT);
+  const mascotDataUri = mascot.heroWebp;
+  const splashBg = mascot.splashBg;
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // Indent-preserving AUTO-GENERATED:<name> block replacer (mirrors the
+  // marker contract applyBrandMark uses). Returns true if the file changed.
+  const replaceBlock = (path, name, innerLines) => {
+    if (!existsSync(path)) {
+      log.warn(`${path.replace(ROOT + '/', '')} -- missing; splash block skipped`);
+      return false;
+    }
+    const before = readFileSync(path, 'utf8');
+    const startMarker = `<!-- AUTO-GENERATED:${name} -->`;
+    const endMarker = `<!-- /AUTO-GENERATED:${name} -->`;
+    const indentMatch = before.match(new RegExp(`^([ \\t]*)${esc(startMarker)}`, 'm'));
+    if (!indentMatch) {
+      log.warn(
+        `${path.replace(ROOT + '/', '')} -- missing AUTO-GENERATED:${name} markers; skipped`,
+      );
+      return false;
+    }
+    const indent = indentMatch[1];
+    const block = [
+      `${indent}${startMarker}`,
+      ...innerLines.map((l) => (l === '' ? '' : `${indent}${l}`)),
+      `${indent}${endMarker}`,
+    ].join('\n');
+    const after = before.replace(
+      new RegExp(`${esc(indent)}${esc(startMarker)}[\\s\\S]*?${esc(endMarker)}`, 'm'),
+      block,
+    );
+    if (after === before) return false;
+    writeFileSync(path, after);
+    return true;
+  };
+
+  let touched = 0;
+
+  // 1. app.html boot-fallback -- the full animated cinematic visual. Keeps the
+  //    IDs the boot driver + error-state CSS depend on.
+  const visual = buildSplashVisual({
+    colors,
+    splashBg,
+    mascotDataUri,
+    animated: true,
+    markId: 'boot-fallback-mark',
+    arcId: 'boot-fallback-dots',
+  });
+  if (replaceBlock(join(UI, 'src', 'app.html'), 'splash', visual.split('\n'))) touched++;
+
+  // 2. login + signup -- the dawn-sky bloom backdrop only (single-line value
+  //    so prettier never reflows it out of sync with the spec).
+  const bloomDiv = [
+    `<div`,
+    `  aria-hidden="true"`,
+    `  class="pointer-events-none absolute inset-0 overflow-hidden"`,
+    `  style="background: ${bloomCssInline(colors)};"`,
+    `></div>`,
+  ];
+  for (const f of ['login', 'signup']) {
+    if (replaceBlock(join(UI, 'src', 'routes', f, '+page.svelte'), 'splash-bloom', bloomDiv)) {
+      touched++;
+    }
+  }
+
+  // 3. Electron splash.ts -- whole generated file (the spec is the source).
+  const html = buildSplashHtml({ colors, splashBg, mascotDataUri, animated: true });
+  const splashTs =
+    [
+      `// AUTO-GENERATED by scripts/native/apply-brand.mjs from scripts/native/splash-spec.mjs.`,
+      `// Do not edit -- edit splash-spec.mjs and run \`pnpm brand:apply\`.`,
+      ``,
+      `/** Full splash document (loaded as a data: URL before the app paints). */`,
+      `export function buildSplashHtml(): string {`,
+      `  return ${JSON.stringify(html)};`,
+      `}`,
+    ].join('\n') + '\n';
+  if (writeIfChanged(join(UI, 'electron', 'src', 'splash.ts'), splashTs)) touched++;
+
+  // 4. LaunchScreen.storyboard bg == the mascot-sampled splashBg, matching the
+  //    Splash.imageset PNG so the static launch frame and the rasterised splash
+  //    are one continuous colour.
+  const sb = join(UI, 'ios', 'App', 'App', 'Base.lproj', 'LaunchScreen.storyboard');
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(splashBg);
+  if (existsSync(sb) && m) {
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255);
+    const before = readFileSync(sb, 'utf8');
+    const after = before.replace(
+      /(<color key="backgroundColor" red=")[^"]*(" green=")[^"]*(" blue=")[^"]*(")/,
+      `$1${r}$2${g}$3${b}$4`,
+    );
+    if (after !== before) {
+      writeFileSync(sb, after);
+      touched++;
+    }
+  }
+
+  if (touched > 0)
+    log.ok(`splash (${touched} surface${touched === 1 ? '' : 's'} from splash-spec.mjs)`);
+  else log.skip(`splash -- already current`);
+}
+
 function apply() {
   const brand = loadBrand();
   // Drift check runs BEFORE shouldSkip -- a destructive rebrand should
@@ -2998,8 +3141,11 @@ function apply() {
   applyAndroidBuildGradle(brand);
   applyAndroidKotlinBrand(brand);
 
-  log.step('Brand mark (logo.svg <symbol> + brand.json colors -> 5 inline consumers)');
-  applyBrandMark(brand);
+  log.step('Mascot mark (cleaned master -> logo.svg icon form + 5 bare consumers + social card)');
+  applyMascot(brand);
+
+  log.step('Splash (splash-spec.mjs -> app.html + electron + login/signup + storyboard)');
+  applySplash(brand);
 
   log.step('Web manifest + favicon + app.html + error.html');
   applyFavicon(brand);

@@ -1,9 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import type { Cookies } from '@sveltejs/kit';
-import { dev } from '$app/environment';
+import { dev, building } from '$app/environment';
 import { devGalleryUnlocked } from '$lib/server/dev-gate';
 import { loadAllJobs } from '$lib/server/parsers';
 import { isFreshInstall } from '$lib/server/onboarding';
+import { resolveLandingRedirect } from '$lib/server/landing';
 import { readProfiles } from '$lib/server/profiles';
 import { readProfile } from '$lib/server/profile';
 
@@ -37,21 +38,22 @@ export async function load({
   cookies: Cookies;
 }) {
   const devUnlocked = devGalleryUnlocked(dev, cookies);
-  if (
-    isFreshInstall() &&
-    !url.pathname.startsWith('/onboarding') &&
-    !url.pathname.startsWith('/api') &&
-    !url.pathname.startsWith('/help') &&
-    // View gallery is exempt so it opens directly -- under the live dev server
-    // or when the owner has opted into developer tools in a built app.
-    !(devUnlocked && url.pathname.startsWith('/dev')) &&
-    // Multi-user auth pages bypass the onboarding redirect. A user who
-    // already has an account on a fresh install (e.g. partner being
-    // invited) needs to reach /login or /signup directly.
-    !url.pathname.startsWith('/login') &&
-    !url.pathname.startsWith('/signup')
-  ) {
-    throw redirect(302, '/onboarding');
+  // Landing decision (auth BEFORE onboarding): unauthenticated traffic goes to
+  // /login (which routes the first owner onward to /signup); only an
+  // authenticated user with an incomplete profile is sent to the /onboarding
+  // wizard. `building` is excluded so adapter-static's fallback generation
+  // (no session) doesn't 302 and abort the static build -- same guard as the
+  // hooks auth gate. See lib/server/landing.ts for the full precedence + the
+  // regression this fixes (fresh+unauthenticated used to hit /onboarding/account).
+  const landingTarget = resolveLandingRedirect({
+    pathname: url.pathname,
+    search: url.search,
+    hasUser: !!locals.user,
+    isFresh: isFreshInstall(),
+    devUnlocked,
+  });
+  if (landingTarget && !building) {
+    throw redirect(302, landingTarget);
   }
 
   // Unauthenticated traffic skips the per-user data fetches. The pages
@@ -60,6 +62,7 @@ export async function load({
   // can reach this branch without a session are the public auth pages.
   if (!locals.user) {
     return {
+      authed: false,
       profilesState: { activeId: 'default', profiles: [] as never[] },
       activeProfile: undefined,
       profileAutomations: {} as Record<
@@ -116,6 +119,7 @@ export async function load({
   }
 
   return {
+    authed: true,
     profilesState,
     activeProfile,
     profileAutomations,

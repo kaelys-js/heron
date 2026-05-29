@@ -23,6 +23,7 @@
  */
 import { step, run, runParallel, which, info, warn, UI, ROOT } from './_lib.mjs';
 import { existsSync, rmSync, mkdirSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { homedir, platform as nodePlatform } from 'node:os';
 
@@ -125,7 +126,62 @@ if (existsSync(electronModule) && existsSync(installJs) && !electronBinaryHealth
   info('electron binary now in place — continuing');
 }
 
+// Step 3.6 -- brand the dev Dock name (macOS only).
+//
+// In a packaged build electron-builder writes CFBundleName=Heron, so the Dock
+// shows the brand. But `pnpm dev:desktop` runs the raw `Electron.app` whose
+// Info.plist says CFBundleName=Electron -- so the Dock tooltip / right-click
+// menu / force-quit list all say "Electron", even though app.setName() already
+// fixes the in-app menu bar. The ONLY thing macOS reads for the Dock identity
+// is the running bundle's Info.plist, so we patch it here (idempotent) and
+// re-apply the ad-hoc signature (editing Info.plist invalidates the seal; the
+// binary has no hardened runtime so a plain `codesign --sign -` re-seals it
+// instantly and macOS launches it cleanly).
+function brandDevDockName() {
+  if (nodePlatform() !== 'darwin') return;
+  const appBundle = join(electronModule, 'dist', 'Electron.app');
+  const plist = join(appBundle, 'Contents', 'Info.plist');
+  if (!existsSync(plist)) return;
+  let displayName = 'Heron';
+  try {
+    const brand = JSON.parse(readFileSync(join(ROOT, 'branding', 'brand.json'), 'utf8'));
+    displayName = brand.displayName || brand.name || displayName;
+  } catch {
+    /* brand.json missing -- keep default */
+  }
+  try {
+    const current = execFileSync('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleName', plist], {
+      encoding: 'utf8',
+    }).trim();
+    if (current === displayName) return; // already branded -- nothing to do
+  } catch {
+    /* key missing -- fall through and add it */
+  }
+  const setKey = (key) => {
+    try {
+      execFileSync('/usr/libexec/PlistBuddy', ['-c', `Set :${key} ${displayName}`, plist]);
+    } catch {
+      execFileSync('/usr/libexec/PlistBuddy', ['-c', `Add :${key} string ${displayName}`, plist]);
+    }
+  };
+  try {
+    setKey('CFBundleName');
+    setKey('CFBundleDisplayName');
+    execFileSync('codesign', ['--force', '--sign', '-', appBundle], { stdio: 'ignore' });
+    info(`Dev Dock name set to "${displayName}"`);
+  } catch (e) {
+    warn('could not brand dev Dock name: ' + (e instanceof Error ? e.message : String(e)));
+  }
+}
+brandDevDockName();
+
 step(4, 'Launching SvelteKit dev server + Electron in parallel');
+// Silence Electron's "Insecure Content-Security-Policy (unsafe-eval)" renderer
+// warning -- in dev the CSP deliberately allows unsafe-eval because vite's HMR
+// needs it. Production builds never set this and ship a CSP without unsafe-eval,
+// so the real warning still fires where it matters. Dev-only, scoped to this
+// spawned process tree.
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 console.log('  ' + '─'.repeat(60));
 console.log('  Press Ctrl+C to stop both.');
 console.log('  ' + '─'.repeat(60) + '\n');
@@ -133,7 +189,16 @@ console.log('  ' + '─'.repeat(60) + '\n');
 try {
   await runParallel([
     { cmd: 'pnpm', args: ['dev'], cwd: UI, label: 'vite dev' },
-    { cmd: 'npm', args: ['run', 'electron:start-live'], cwd: electronDir, label: 'electron live' },
+    // Electron is the leader: quitting its window (Dock → Quit) ends the dev
+    // session, so runParallel tears down vite too instead of leaving :5173
+    // bound. The live-runner exits 0 when Electron quits (not on HMR restart).
+    {
+      cmd: 'npm',
+      args: ['run', 'electron:start-live'],
+      cwd: electronDir,
+      label: 'electron live',
+      leader: true,
+    },
   ]);
 } catch (e) {
   console.error(e.message);

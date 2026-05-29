@@ -79,6 +79,8 @@ if (typeof process !== 'undefined') {
  *   /api/health        -- liveness probe used by backend-discovery
  *   /api/discover      -- Bonjour/mDNS pairing check
  *   /api/onboarding/*  -- first-run setup endpoints
+ *   /api/vitals        -- web-vitals beacons; fire pre-auth on cold loads
+ *                         (login/signup), write no per-user data
  *   /favicon, /robots, /manifest.webmanifest, /apple-touch-icon -- bare assets
  *   /_app/*            -- SvelteKit's hashed bundle assets (served by adapter-node)
  *   /assets/*, /static/*, /branding/* -- static folders
@@ -91,6 +93,10 @@ const PUBLIC_PREFIXES = [
   '/api/health',
   '/api/discover',
   '/api/onboarding/',
+  // web-vitals beacons fire before auth hydration (on the login/signup pages
+  // themselves), and the handler writes no per-user state. Without this the
+  // guard 401s every beacon -> console-error noise on every cold load.
+  '/api/vitals',
   '/favicon',
   '/robots.txt',
   '/manifest.webmanifest',
@@ -424,7 +430,9 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
         'screen-wake-lock=()',
         'serial=()',
         'usb=()',
-        'web-share=(self)',
+        // 'web-share' deliberately omitted: it's redundant with the spec
+        // default (self) AND the Electron/Chromium WebView logs "Unrecognized
+        // feature: 'web-share'" for it, spamming the desktop console.
       ].join(', '),
     );
   }

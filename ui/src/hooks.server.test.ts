@@ -226,6 +226,11 @@ describe('hooks -- guard (auth)', () => {
     expect(r.status).toBe(200);
   });
 
+  it('/api/vitals is public (web-vitals beacons fire pre-auth, no 401 spam)', async () => {
+    const r = await run(evt('http://localhost:5173/api/vitals'));
+    expect(r.status).not.toBe(401);
+  });
+
   it('/api/auth/* is public (Better Auth handles its own routes)', async () => {
     const r = await run(evt('http://localhost:5173/api/auth/sign-in'));
     expect(r.status).toBe(200);
@@ -295,6 +300,12 @@ describe('hooks -- security headers', () => {
     const pp = r.headers.get('Permissions-Policy') ?? '';
     expect(pp).toContain('microphone=(self)');
     expect(pp).toContain('geolocation=()');
+  });
+
+  it('permissions-Policy omits web-share (Electron-unrecognized -> console spam)', async () => {
+    const r = await run(evt('http://localhost:5173/login'));
+    const pp = r.headers.get('Permissions-Policy') ?? '';
+    expect(pp).not.toContain('web-share');
   });
 
   it('hSTS is set on HTTPS responses', async () => {
