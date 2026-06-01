@@ -73,19 +73,19 @@
     {:else}
       <div
         role="alert"
-        class="relative flex flex-col gap-3 p-5 rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/5 via-card to-card overflow-hidden"
+        class="relative flex flex-col gap-3 p-5 rounded-xl border border-destructive/30 bg-gradient-to-br from-destructive/5 via-card to-card overflow-hidden"
       >
         <!-- Subtle red glow stripe at the top — signals "something failed"
              without screaming. -->
         <div
-          class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
+          class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-destructive/60 to-transparent"
         ></div>
 
         <div class="flex items-start gap-3">
           <div
-            class="size-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0"
+            class="size-10 rounded-lg bg-destructive/10 border border-destructive/30 flex items-center justify-center flex-shrink-0"
           >
-            <AlertTriangle class="size-5 text-red-400" />
+            <AlertTriangle class="size-5 text-destructive" />
           </div>
           <div class="flex-1 min-w-0">
             <h3 class="text-base font-semibold text-foreground">{title}</h3>
@@ -117,7 +117,7 @@
               >
               Stack trace
               <span
-                class="ml-1 font-mono text-[10px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded"
+                class="ml-1 font-mono text-[10px] text-destructive/80 bg-destructive/10 px-1.5 py-0.5 rounded"
                 >{errorType(error)}</span
               >
             </summary>

@@ -27,9 +27,9 @@
       </div>
       <div class="w-14 text-[11px] text-right shrink-0">
         {#if drop != null && drop > 0}
-          <span class="text-red-400">−{drop}%</span>
+          <span class="text-destructive">−{drop}%</span>
         {:else if drop != null && drop < 0}
-          <span class="text-emerald-400">+{Math.abs(drop)}%</span>
+          <span class="text-success">+{Math.abs(drop)}%</span>
         {:else if drop != null}
           <span class="text-muted-foreground">0%</span>
         {/if}

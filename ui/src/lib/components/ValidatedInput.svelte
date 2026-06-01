@@ -106,8 +106,8 @@
     class={cn(
       'h-9 text-sm pr-8 transition-colors',
       showError &&
-        'border-red-500/50 ring-1 ring-red-500/30 focus-visible:ring-red-500/40 focus-visible:border-red-500/60',
-      showOk && 'border-emerald-500/30',
+        'border-destructive/50 ring-1 ring-destructive/30 focus-visible:ring-destructive/40 focus-visible:border-destructive/60',
+      showOk && 'border-success/30',
     )}
   />
 
@@ -119,7 +119,7 @@
           {#snippet child({ props })}
             <span
               {...props}
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 inline-flex items-center justify-center text-red-400 cursor-help"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 inline-flex items-center justify-center text-destructive cursor-help"
             >
               <AlertCircle class="size-3.5" />
             </span>
@@ -135,7 +135,7 @@
     </Tooltip.Provider>
   {:else if showOk}
     <span
-      class="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 inline-flex items-center justify-center text-emerald-400 pointer-events-none"
+      class="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 inline-flex items-center justify-center text-success pointer-events-none"
       aria-hidden="true"
     >
       <Check class="size-3.5" />
@@ -143,7 +143,7 @@
   {/if}
 
   {#if showError && inlineError}
-    <p class="text-[11px] text-red-300/90 leading-tight mt-1 flex items-center gap-1">
+    <p class="text-[11px] text-destructive/90 leading-tight mt-1 flex items-center gap-1">
       <AlertCircle class="size-2.5 flex-shrink-0" />
       {errorMessage}
     </p>

@@ -54,10 +54,7 @@
   <div
     class="relative flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border/40 bg-card/70 p-6 text-center shadow-2xl backdrop-blur-xl"
   >
-    <div
-      class="size-16"
-      style="filter: drop-shadow(0 6px 24px rgba(122, 140, 109, 0.35)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));"
-    >
+    <div class="brand-hero-glow size-16">
       <svg viewBox="0 0 1024 1024" aria-hidden="true" class="block size-full">
         <!-- AUTO-GENERATED:brand-mark gradient-id="conn-grad" -->
         <image

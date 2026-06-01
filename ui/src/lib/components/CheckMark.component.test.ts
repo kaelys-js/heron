@@ -51,8 +51,8 @@ describe('checkMark', () => {
     expect(span.className).toContain('my-custom-class');
   });
 
-  it('check icon has emerald color', () => {
+  it('check icon uses the success token colour (AA in both modes)', () => {
     const { container } = render(CheckMark);
-    expect(container.innerHTML).toContain('text-emerald-400');
+    expect(container.innerHTML).toContain('text-success');
   });
 });

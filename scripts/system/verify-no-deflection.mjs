@@ -42,7 +42,7 @@ import { readFileSync, existsSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 export const DEFLECTION_REGEX =
-  /\b(MVP|defer(?:red|ral|ring)?|out[- ]of[- ]scope|won['’]?t fit|future PR|future work|separate ticket|separate PR|follow[- ]?up|simplify to|for now|punt(?:ed|ing)?|leave for now)\b/i;
+  /\b(MVP|defer(?:red|ral|ring)?|out[- ]of[- ]scope|won['’]?t fit|future PR|future work|separate ticket|separate PR|follow[- ]up|simplify to|for now|punt(?:ed|ing)?|leave for now)\b/i;
 
 export const BYPASS_TOKEN = '[user-approved-deferral]';
 

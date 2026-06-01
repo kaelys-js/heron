@@ -87,10 +87,10 @@
 
   function scoreColor(score?: number): string {
     if (score == null) return 'bg-muted text-muted-foreground';
-    if (score === 100) return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40';
-    if (score >= 90) return 'bg-blue-500/15 text-blue-400 border-blue-500/40';
-    if (score >= 75) return 'bg-amber-500/15 text-amber-400 border-amber-500/40';
-    return 'bg-rose-500/15 text-rose-400 border-rose-500/40';
+    if (score === 100) return 'bg-success/15 text-success border-success/40';
+    if (score >= 90) return 'bg-info/15 text-info border-info/40';
+    if (score >= 75) return 'bg-warning/15 text-warning border-warning/40';
+    return 'bg-destructive/15 text-destructive border-destructive/40';
   }
 </script>
 
@@ -98,7 +98,7 @@
   <div class="flex items-start justify-between gap-3 mb-3">
     <div>
       <h3 class="text-base font-semibold flex items-center gap-2">
-        <CheckCircle2 class="size-4 text-emerald-400" /> CV Quality
+        <CheckCircle2 class="size-4 text-success" /> CV Quality
       </h3>
       <p class="text-xs text-muted-foreground mt-0.5">
         Strict ATS lint + AI-detection scan on your base CV. Every submitted resume runs through
@@ -126,11 +126,11 @@
       <Loader2 class="size-3.5 animate-spin" /> Running checks…
     </div>
   {:else if status === 'error'}
-    <div class="text-sm text-rose-400 flex items-center gap-2">
+    <div class="text-sm text-destructive flex items-center gap-2">
       <XCircle class="size-3.5" /> Quality check failed — see activity log.
     </div>
   {:else if result && !result.hasCv}
-    <div class="text-sm text-amber-400 flex items-center gap-2">
+    <div class="text-sm text-warning flex items-center gap-2">
       <AlertTriangle class="size-3.5" /> No cv.md yet — paste your CV via the CV manager.
     </div>
   {:else if result}
@@ -161,7 +161,7 @@
           <p class="text-muted-foreground font-medium mt-1">Quality fails:</p>
           {#each result.qualityFailedChecks as c}
             <div class="flex gap-2 items-start">
-              <XCircle class="size-3 text-rose-400 mt-0.5 shrink-0" />
+              <XCircle class="size-3 text-destructive mt-0.5 shrink-0" />
               <div>
                 <span class="font-medium">{c.name}</span>
                 {#if c.evidence}<span class="text-muted-foreground"> — {c.evidence}</span>{/if}
@@ -173,7 +173,7 @@
           <p class="text-muted-foreground font-medium mt-2">ATS fails:</p>
           {#each result.atsFailedChecks as c}
             <div class="flex gap-2 items-start">
-              <XCircle class="size-3 text-rose-400 mt-0.5 shrink-0" />
+              <XCircle class="size-3 text-destructive mt-0.5 shrink-0" />
               <div>
                 <span class="font-medium">{c.name}</span>
                 {#if c.evidence}<span class="text-muted-foreground"> — {c.evidence}</span>{/if}
@@ -188,14 +188,14 @@
         <Button
           variant="outline"
           size="sm"
-          class="h-7 text-xs gap-1.5 border-blue-500/40 hover:bg-blue-500/10"
+          class="h-7 text-xs gap-1.5 border-info/40 hover:bg-info/10"
           onclick={previewFix}
           disabled={previewing}
         >
           {#if previewing}
             <Loader2 class="size-3 animate-spin" /> Generating fix…
           {:else}
-            <Wand2 class="size-3 text-blue-400" /> Auto-fix with AI (preview)
+            <Wand2 class="size-3 text-info" /> Auto-fix with AI (preview)
           {/if}
         </Button>
         <p class="text-[11px] text-muted-foreground mt-1.5">
@@ -203,8 +203,8 @@
           original is backed up to <code class="font-mono">cv.md.bak</code> before any change.
         </p>
       {:else}
-        <div class="border border-blue-500/30 rounded-lg p-3 bg-blue-500/5 text-xs">
-          <p class="font-medium text-blue-400 mb-2">Preview ready</p>
+        <div class="border border-info/30 rounded-lg p-3 bg-info/5 text-xs">
+          <p class="font-medium text-info mb-2">Preview ready</p>
           <details class="mb-2">
             <summary class="cursor-pointer text-muted-foreground hover:text-foreground">
               Show diff (before / after)
@@ -248,7 +248,7 @@
         </div>
       {/if}
     {:else}
-      <div class="text-xs text-emerald-400 flex items-center gap-2">
+      <div class="text-xs text-success flex items-center gap-2">
         <CheckCircle2 class="size-3.5" /> Every check passes — your CV is ready for any ATS.
       </div>
     {/if}

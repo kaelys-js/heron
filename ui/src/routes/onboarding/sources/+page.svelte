@@ -47,10 +47,9 @@
   let connectedCount = $derived([linkedin, indeed, gmail].filter((s) => s?.state.connected).length);
 
   function statusTint(state: SourceState): string {
-    if (state.connected && state.consecutiveFailures === 0)
-      return 'border-emerald-500/40 bg-emerald-500/5';
-    if (state.connected) return 'border-amber-500/40 bg-amber-500/5';
-    if (state.consecutiveFailures > 0) return 'border-red-500/40 bg-red-500/5';
+    if (state.connected && state.consecutiveFailures === 0) return 'border-success/40 bg-success/5';
+    if (state.connected) return 'border-warning/40 bg-warning/5';
+    if (state.consecutiveFailures > 0) return 'border-destructive/40 bg-destructive/5';
     return 'border-border/40 bg-card';
   }
 
@@ -59,11 +58,11 @@
       const ago = state.lastSuccessfulPullAt
         ? formatRelativeTime(state.lastSuccessfulPullAt) + ' ago'
         : '';
-      return { dot: 'bg-emerald-500', text: 'Connected' + (ago ? ' · last pull ' + ago : '') };
+      return { dot: 'bg-success', text: 'Connected' + (ago ? ' · last pull ' + ago : '') };
     }
     if (state.connected) {
       return {
-        dot: 'bg-amber-500',
+        dot: 'bg-warning',
         text:
           'Connected · ' +
           state.consecutiveFailures +
@@ -73,11 +72,11 @@
     }
     if (state.consecutiveFailures > 0) {
       return {
-        dot: 'bg-red-500',
+        dot: 'bg-destructive',
         text: 'Disconnected — ' + (state.lastError ?? 'failed ' + state.consecutiveFailures + 'x'),
       };
     }
-    return { dot: 'bg-zinc-500', text: 'Not connected' };
+    return { dot: 'bg-muted-foreground', text: 'Not connected' };
   }
 
   async function connectSource(row: Row) {
@@ -145,7 +144,7 @@
 <div class="space-y-6">
   <header class="space-y-2">
     <h1 class="text-2xl font-semibold tracking-tight flex items-center gap-2">
-      <Plug class="size-5 text-fuchsia-400" />
+      <Plug class="size-5 text-fuchsia-600 dark:text-fuchsia-400" />
       Sources
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">
@@ -168,13 +167,13 @@
         <div
           class="size-9 rounded-md bg-blue-500/10 ring-1 ring-blue-500/30 flex items-center justify-center flex-shrink-0"
         >
-          <Briefcase class="size-4 text-blue-400" />
+          <Briefcase class="size-4 text-blue-600 dark:text-blue-400" />
         </div>
         <div class="flex-1 min-w-0 space-y-1">
           <div class="flex items-center gap-2 flex-wrap">
             <h3 class="text-sm font-semibold">LinkedIn</h3>
             <span
-              class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+              class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-success/40 bg-success/10 text-success"
               >recommended</span
             >
           </div>
@@ -193,7 +192,7 @@
             <Button
               variant="ghost"
               size="sm"
-              class="h-7 text-xs gap-1 text-red-400 hover:text-red-300"
+              class="h-7 text-xs gap-1 text-destructive hover:text-destructive/80"
               onclick={() => disconnectSource(row)}
               disabled={b !== null && b !== undefined}
             >
@@ -218,10 +217,10 @@
       </div>
       {#if row.state.lastError && !row.state.connected}
         <div
-          class="rounded-md border border-red-500/30 bg-red-500/5 px-2.5 py-1.5 mt-3 flex items-start gap-2"
+          class="rounded-md border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 mt-3 flex items-start gap-2"
         >
-          <AlertCircle class="size-3 text-red-400 mt-0.5 flex-shrink-0" />
-          <p class="text-[11px] text-red-200/90 leading-relaxed font-mono break-all">
+          <AlertCircle class="size-3 text-destructive mt-0.5 flex-shrink-0" />
+          <p class="text-[11px] text-destructive/90 leading-relaxed font-mono break-all">
             {row.state.lastError}
           </p>
         </div>
@@ -239,13 +238,13 @@
         <div
           class="size-9 rounded-md bg-indigo-500/10 ring-1 ring-indigo-500/30 flex items-center justify-center flex-shrink-0"
         >
-          <Globe class="size-4 text-indigo-400" />
+          <Globe class="size-4 text-indigo-600 dark:text-indigo-400" />
         </div>
         <div class="flex-1 min-w-0 space-y-1">
           <div class="flex items-center gap-2 flex-wrap">
             <h3 class="text-sm font-semibold">Indeed</h3>
             <span
-              class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+              class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-success/40 bg-success/10 text-success"
               >recommended</span
             >
           </div>
@@ -263,7 +262,7 @@
             <Button
               variant="ghost"
               size="sm"
-              class="h-7 text-xs gap-1 text-red-400 hover:text-red-300"
+              class="h-7 text-xs gap-1 text-destructive hover:text-destructive/80"
               onclick={() => disconnectSource(row)}
               disabled={b !== null && b !== undefined}
             >
@@ -288,10 +287,10 @@
       </div>
       {#if row.state.lastError && !row.state.connected}
         <div
-          class="rounded-md border border-red-500/30 bg-red-500/5 px-2.5 py-1.5 mt-3 flex items-start gap-2"
+          class="rounded-md border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 mt-3 flex items-start gap-2"
         >
-          <AlertCircle class="size-3 text-red-400 mt-0.5 flex-shrink-0" />
-          <p class="text-[11px] text-red-200/90 leading-relaxed font-mono break-all">
+          <AlertCircle class="size-3 text-destructive mt-0.5 flex-shrink-0" />
+          <p class="text-[11px] text-destructive/90 leading-relaxed font-mono break-all">
             {row.state.lastError}
           </p>
         </div>
@@ -311,13 +310,13 @@
         <div
           class="size-9 rounded-md bg-rose-500/10 ring-1 ring-rose-500/30 flex items-center justify-center flex-shrink-0"
         >
-          <Mail class="size-4 text-rose-400" />
+          <Mail class="size-4 text-rose-600 dark:text-rose-400" />
         </div>
         <div class="flex-1 min-w-0 space-y-1">
           <div class="flex items-center gap-2 flex-wrap">
             <h3 class="text-sm font-semibold">Gmail (job alerts)</h3>
             <span
-              class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-zinc-500/40 bg-zinc-500/10 text-muted-foreground"
+              class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-border bg-muted text-muted-foreground"
               >optional</span
             >
           </div>
@@ -336,7 +335,7 @@
             <Button
               variant="ghost"
               size="sm"
-              class="h-7 text-xs gap-1 text-red-400 hover:text-red-300"
+              class="h-7 text-xs gap-1 text-destructive hover:text-destructive/80"
               onclick={() => disconnectSource(row)}
               disabled={b !== null && b !== undefined}
             >
@@ -455,7 +454,7 @@
   {#if alwaysOn.length > 0}
     <div class="rounded-md border border-border/40 bg-muted/20 px-4 py-3 space-y-2">
       <div class="flex items-center gap-1.5">
-        <CheckCircle2 class="size-3.5 text-emerald-400" />
+        <CheckCircle2 class="size-3.5 text-success" />
         <h3 class="text-xs font-semibold">Always-on (no setup)</h3>
       </div>
       <p class="text-[11px] text-muted-foreground leading-relaxed">

@@ -34,6 +34,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { legalUpdatedDate } from './legal-date.mjs';
+import { replaceBrandTokenBlocks } from './app-css-block.mjs';
 import {
   loadBrandSource,
   buildSplashVisual,
@@ -1749,24 +1750,14 @@ function applyAppCss(brand) {
   }
   const body = readFileSync(path, 'utf8');
   const block = buildAppCssBlock(brand);
-  const markerStart =
-    '/* AUTO-GENERATED:brand-tokens -- Do not edit. Edit branding/brand.json + run `pnpm brand:apply`. */';
-  const markerEnd = '/* /AUTO-GENERATED:brand-tokens */';
-  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(escape(markerStart) + '[\\s\\S]*?' + escape(markerEnd), 'm');
-  let next;
-  if (re.test(body)) {
-    next = body.replace(re, `${markerStart}\n${block}\n${markerEnd}`);
-  } else {
-    const anchor = '@custom-variant dark (&:is(.dark *));';
-    const idx = body.indexOf(anchor);
-    if (idx < 0) {
-      log.warn(`app.css — anchor "${anchor}" missing; cannot insert AUTO-GENERATED block`);
-      return;
-    }
-    const lineEnd = body.indexOf('\n', idx) + 1;
-    next =
-      body.slice(0, lineEnd) + `\n${markerStart}\n${block}\n${markerEnd}\n` + body.slice(lineEnd);
+  // Strips EVERY existing brand-token block (any dash variant, any count) and
+  // writes ONE fresh block after the anchor -- see app-css-block.mjs. Replaces
+  // the old single-`--`-marker regex that let a stale em-dash-marked block
+  // survive regeneration and override brand.json by cascade order.
+  const next = replaceBrandTokenBlocks(body, block);
+  if (next === null) {
+    log.warn(`app.css -- anchor missing; cannot insert AUTO-GENERATED block`);
+    return;
   }
   const changed = writeIfChanged(path, next);
   changed ? log.ok(`ui/src/app.css`) : log.skip(`ui/src/app.css -- already current`);
@@ -1835,9 +1826,18 @@ function appCssThemeInline(brand) {
     '  --color-muted-foreground: var(--muted-foreground);',
     '  --color-accent: var(--accent);',
     '  --color-accent-foreground: var(--accent-foreground);',
+    '  --color-accent-strong: var(--accent-strong);',
     '  --color-accent-secondary: var(--accent-secondary);',
+    '  --color-accent-secondary-foreground: var(--accent-secondary-foreground);',
+    '  --color-accent-secondary-strong: var(--accent-secondary-strong);',
     '  --color-destructive: var(--destructive);',
     '  --color-destructive-foreground: var(--destructive-foreground);',
+    '  --color-success: var(--success);',
+    '  --color-success-foreground: var(--success-foreground);',
+    '  --color-warning: var(--warning);',
+    '  --color-warning-foreground: var(--warning-foreground);',
+    '  --color-info: var(--info);',
+    '  --color-info-foreground: var(--info-foreground);',
     '  --color-border: var(--border);',
     '  --color-input: var(--input);',
     '  --color-ring: var(--ring);',

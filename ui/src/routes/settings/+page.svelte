@@ -382,8 +382,8 @@
                 class={cn(
                   'rounded-md border px-3 py-2',
                   health.pipeline.stale
-                    ? 'border-amber-500/30 bg-amber-500/5'
-                    : 'border-emerald-500/30 bg-emerald-500/5',
+                    ? 'border-warning/30 bg-warning/10'
+                    : 'border-success/30 bg-success/10',
                 )}
               >
                 <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
@@ -409,8 +409,8 @@
                 class={cn(
                   'rounded-md border px-3 py-2',
                   health.anthropic.keyConfigured
-                    ? 'border-emerald-500/30 bg-emerald-500/5'
-                    : 'border-amber-500/30 bg-amber-500/5',
+                    ? 'border-success/30 bg-success/10'
+                    : 'border-warning/30 bg-warning/10',
                 )}
               >
                 <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
@@ -425,8 +425,8 @@
                 class={cn(
                   'rounded-md border px-3 py-2',
                   health.gemini.keyConfigured
-                    ? 'border-emerald-500/30 bg-emerald-500/5'
-                    : 'border-zinc-500/30 bg-zinc-500/5',
+                    ? 'border-success/30 bg-success/10'
+                    : 'border-border bg-muted',
                 )}
               >
                 <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
@@ -490,14 +490,14 @@
                   {#if isConnected(f.key)}
                     <Badge
                       variant="outline"
-                      class="text-[11px] h-5 px-1.5 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                      class="text-[11px] h-5 px-1.5 border-success/30 bg-success/10 text-success"
                     >
                       <CheckCircle2 class="size-2.5 mr-0.5" /> connected
                     </Badge>
                   {:else if dirty}
                     <Badge
                       variant="outline"
-                      class="text-[11px] h-5 px-1.5 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                      class="text-[11px] h-5 px-1.5 border-warning/30 bg-warning/10 text-warning"
                     >
                       unsaved
                     </Badge>
@@ -545,7 +545,7 @@
               {#if validation}
                 <p
                   class={'text-xs flex items-center gap-1 ' +
-                    (validation.ok ? 'text-emerald-400' : 'text-red-400')}
+                    (validation.ok ? 'text-success' : 'text-destructive')}
                 >
                   {#if validation.ok}
                     <CheckCircle2 class="size-3" />
@@ -581,7 +581,7 @@
                   {#if probeResult}
                     <span
                       class={'text-xs flex items-center gap-1 ' +
-                        (probeResult.ok ? 'text-emerald-400' : 'text-red-400')}
+                        (probeResult.ok ? 'text-success' : 'text-destructive')}
                     >
                       {#if probeResult.ok}
                         <CheckCircle2 class="size-3" />
@@ -600,7 +600,7 @@
         <Card.Footer class="justify-between border-t pt-4">
           <p class="text-xs text-muted-foreground">
             {#if dirtyCount > 0}
-              <span class="text-amber-400"
+              <span class="text-warning"
                 >{dirtyCount} unsaved {dirtyCount === 1 ? 'change' : 'changes'}</span
               > · take effect immediately on save
             {:else}
@@ -681,7 +681,7 @@
       <Card.Root>
         <Card.Header>
           <div class="flex items-center gap-2">
-            <Sparkles class="size-4 text-fuchsia-400" />
+            <Sparkles class="size-4 text-fuchsia-700 dark:text-fuchsia-400" />
             <Card.Title class="text-base">Re-run onboarding</Card.Title>
           </div>
           <Card.Description>
@@ -725,7 +725,7 @@
             <a
               href={bookmarkletHref}
               draggable="true"
-              class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200 hover:bg-fuchsia-500/20 transition-colors"
+              class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-200 hover:bg-fuchsia-500/20 transition-colors"
               onclick={(e: MouseEvent) => e.preventDefault()}
             >
               📎 Heron fill

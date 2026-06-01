@@ -10,6 +10,8 @@ import type { ActivityEvent } from '$lib/types';
 import { browser } from '$app/environment';
 import { toast } from 'svelte-sonner';
 import { BRAND_EVENTS } from '$lib/client/brand';
+import { eventKind } from '$lib/report-routing';
+import { report } from '$lib/client/error-reporter';
 
 function dispatchOpenNotifications(): void {
   if (typeof window !== 'undefined') {
@@ -18,9 +20,15 @@ function dispatchOpenNotifications(): void {
 }
 
 /**
- * Surface an arbitrary thrown value as a console log + activity-feed entry + toast.
- * Single source of truth so window listeners, SvelteKit handleError,
- * and <svelte:boundary onerror> all funnel through the same path.
+ * Report an arbitrary thrown value from the client. Thin wrapper over the
+ * canonical reporter in `$lib/client/error-reporter` so SvelteKit
+ * handleError and the <svelte:boundary onerror> boundaries funnel through
+ * the one technical path -- console + POST /api/telemetry, and (because
+ * technical is QUIET per $lib/report-routing) NO toast and NO bell entry.
+ *
+ * Signature + export preserved so existing call sites keep compiling. The
+ * `extra.message` override is forwarded as the report context's `userAction`
+ * so the server diagnostics row still carries the caller-shaped detail.
  *
  * Mirror of `reportServerError` in `$lib/server/events`.
  */
@@ -30,53 +38,12 @@ export function reportClientError(
   err: unknown,
   extra: { message?: string } = {},
 ): void {
-  const isError = err instanceof Error;
-  const errMsg =
-    extra.message ??
-    (isError
-      ? err.message
-      : typeof err === 'string'
-        ? err
-        : (() => {
-            try {
-              return JSON.stringify(err);
-            } catch {
-              return String(err);
-            }
-          })());
-  const stack = isError && err.stack ? err.stack.slice(0, 2000) : undefined;
-
-  // Always log to console first, even if toast/notifications throw downstream.
-  // eslint-disable-next-line no-console
-  console.error(`[${source}]`, title, '—', errMsg);
-  // eslint-disable-next-line no-console
-  if (stack) {
-    console.error(stack);
-  }
-
-  const ev: ActivityEvent = {
-    id: `client-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    ts: Date.now(),
+  void report({
+    err,
     level: 'error',
-    category: 'system',
-    source,
-    title,
-    message: errMsg,
-    stack,
-  };
-  try {
-    notifications.add(ev);
-  } catch {}
-  try {
-    toast.error(title, {
-      description: errMsg,
-      duration: 10_000,
-      action: {
-        label: 'Details',
-        onClick: () => dispatchOpenNotifications(),
-      },
-    });
-  } catch {}
+    kind: 'technical',
+    context: { source, userAction: extra.message ?? title },
+  });
 }
 
 class NotificationStore {
@@ -168,7 +135,11 @@ class NotificationStore {
     }
     this.events = [ev, ...this.events].slice(0, 200);
     this.unreadIds = new Set([...this.unreadIds, ev.id]);
-    if (opts.autoToast && !this.autoToastSet.has(ev.id)) {
+    // Only PRODUCT events surface to the user (toast + OS notify). Technical
+    // diagnostics are still STORED in events[] (so a diagnostics view can
+    // read them) but stay quiet per $lib/report-routing -- a render crash
+    // must not toast or wake the user like a failed apply.
+    if (opts.autoToast && !this.autoToastSet.has(ev.id) && eventKind(ev) === 'product') {
       this.autoToastSet.add(ev.id);
       this.fireToast(ev);
       // Dispatch `heron:notify` for PushNotificationsToggle. It

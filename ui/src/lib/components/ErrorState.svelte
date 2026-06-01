@@ -62,7 +62,7 @@
   );
 
   let WRAPPER_CLASS = $derived.by(() => {
-    if (variant === 'card') return 'rounded-lg border border-red-500/30 bg-red-500/5';
+    if (variant === 'card') return 'rounded-lg border border-destructive/30 bg-destructive/5';
     if (variant === 'inline') return '';
     return '';
   });
@@ -73,17 +73,17 @@
 <div class={cn('flex flex-col items-center text-center', SIZE_PADDING, WRAPPER_CLASS, className)}>
   <div
     class={cn(
-      'rounded-xl bg-red-500/10 ring-1 ring-red-500/30 flex items-center justify-center text-red-300 flex-shrink-0',
+      'rounded-xl bg-destructive/10 ring-1 ring-destructive/30 flex items-center justify-center text-destructive flex-shrink-0',
       ICON_BG_SIZE,
     )}
   >
     <Icon class={ICON_SIZE} />
   </div>
 
-  <h3 class={cn('mt-1 text-red-200', TITLE_CLASS)}>{title}</h3>
+  <h3 class={cn('mt-1 text-destructive', TITLE_CLASS)}>{title}</h3>
 
   {#if derivedDesc}
-    <p class={cn('text-red-200/70 leading-relaxed max-w-md', DESC_CLASS)}>{derivedDesc}</p>
+    <p class={cn('text-destructive/70 leading-relaxed max-w-md', DESC_CLASS)}>{derivedDesc}</p>
   {/if}
 
   {#if onretry || actions}

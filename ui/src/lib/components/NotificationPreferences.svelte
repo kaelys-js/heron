@@ -132,10 +132,16 @@
 
 <div class="space-y-3">
   <div class="flex items-center gap-3">
-    <Clock class="size-4 {prefs.enabled ? 'text-indigo-400' : 'text-muted-foreground'}" />
+    <Clock
+      class="size-4 {prefs.enabled
+        ? 'text-indigo-700 dark:text-indigo-400'
+        : 'text-muted-foreground'}"
+    />
     <span class="text-sm flex-1">
       Quiet hours:
-      <strong class={prefs.enabled ? 'text-indigo-300' : 'text-muted-foreground'}>
+      <strong
+        class={prefs.enabled ? 'text-indigo-700 dark:text-indigo-300' : 'text-muted-foreground'}
+      >
         {prefs.enabled ? 'on' : 'off'}
       </strong>
     </span>
@@ -173,7 +179,7 @@
         </div>
       </div>
       {#if nowInQuiet}
-        <p class="text-[11px] text-indigo-300/80 flex items-center gap-1">
+        <p class="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 flex items-center gap-1">
           <Bell class="size-3" />
           You're inside the quiet window right now — only critical errors will ping.
         </p>

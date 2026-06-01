@@ -61,9 +61,9 @@
   }
 
   function difficultyTint(d: 1 | 2 | 3): string {
-    if (d === 1) return 'border-emerald-500/40 bg-emerald-500/5 text-emerald-200';
-    if (d === 2) return 'border-amber-500/40 bg-amber-500/5 text-amber-200';
-    return 'border-red-500/40 bg-red-500/5 text-red-200';
+    if (d === 1) return 'border-success/40 bg-success/5 text-success';
+    if (d === 2) return 'border-warning/40 bg-warning/5 text-warning';
+    return 'border-destructive/40 bg-destructive/5 text-destructive';
   }
   function difficultyLabel(d: 1 | 2 | 3): string {
     if (d === 1) return 'easy';
@@ -93,7 +93,7 @@
           <div
             class="size-10 rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/40 flex items-center justify-center"
           >
-            <DollarSign class="size-5 text-emerald-400" />
+            <DollarSign class="size-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <h1 class="text-2xl font-semibold tracking-tight">Negotiation playbook</h1>
         </div>
@@ -111,27 +111,27 @@
       </div>
 
       <!-- #4: "Don't accept verbally" -->
-      <Card.Root class="border-amber-500/40 bg-amber-500/5">
+      <Card.Root class="border-warning/40 bg-warning/5">
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <ShieldAlert class="size-4 text-amber-300" />
+            <ShieldAlert class="size-4 text-warning" />
             {data.playbook.dontAcceptVerbally.title}
           </Card.Title>
         </Card.Header>
         <Card.Content class="space-y-3">
-          <ol class="list-decimal pl-5 space-y-1.5 text-xs text-amber-100/90 leading-relaxed">
+          <ol class="list-decimal pl-5 space-y-1.5 text-xs text-warning/90 leading-relaxed">
             {#each data.playbook.dontAcceptVerbally.steps as step}
               <li>{step}</li>
             {/each}
           </ol>
-          <div class="pt-2 border-t border-amber-500/20">
+          <div class="pt-2 border-t border-warning/20">
             <h3
-              class="text-[11px] uppercase tracking-wider text-amber-300/80 flex items-center gap-1 mb-1"
+              class="text-[11px] uppercase tracking-wider text-warning/80 flex items-center gap-1 mb-1"
             >
               <AlertTriangle class="size-3" />
               Red flags that should make you WALK
             </h3>
-            <ul class="list-disc pl-5 space-y-0.5 text-[11px] text-amber-100/80">
+            <ul class="list-disc pl-5 space-y-0.5 text-[11px] text-warning/80">
               {#each data.playbook.dontAcceptVerbally.redFlags as flag}
                 <li>{flag}</li>
               {/each}
@@ -144,7 +144,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <MessageSquare class="size-4 text-emerald-400" />
+            <MessageSquare class="size-4 text-emerald-600 dark:text-emerald-400" />
             If they say X, you say Y
           </Card.Title>
           <Card.Description class="text-xs">
@@ -162,7 +162,7 @@
                 class={cn(
                   'px-2 py-1 rounded text-[11px] font-mono border transition',
                   activeBranch === key
-                    ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-100'
+                    ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100'
                     : 'border-border/40 bg-card text-muted-foreground hover:border-border',
                 )}>{key}</button
               >
@@ -176,29 +176,29 @@
                 <div
                   class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1"
                 >
-                  <ArrowRight class="size-3 text-red-300" />
+                  <ArrowRight class="size-3 text-red-700 dark:text-red-300" />
                   They say
                 </div>
                 <p
-                  class="text-xs italic text-red-200/90 leading-relaxed pl-4 border-l-2 border-red-500/30"
+                  class="text-xs italic text-red-700 dark:text-red-200/90 leading-relaxed pl-4 border-l-2 border-red-500/30"
                 >
                   "{branch.trigger}"
                 </p>
                 <div
                   class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 pt-1"
                 >
-                  <ArrowRight class="size-3 text-emerald-300" />
+                  <ArrowRight class="size-3 text-emerald-700 dark:text-emerald-300" />
                   You say
                 </div>
                 <p
-                  class="text-xs text-emerald-100/95 leading-relaxed pl-4 border-l-2 border-emerald-500/30"
+                  class="text-xs text-emerald-800 dark:text-emerald-100/95 leading-relaxed pl-4 border-l-2 border-emerald-500/30"
                 >
                   {branch.response}
                 </p>
                 <div
                   class="text-[11px] uppercase tracking-wider text-muted-foreground pt-1 flex items-center gap-1"
                 >
-                  <Sparkles class="size-2.5 text-amber-300" />
+                  <Sparkles class="size-2.5 text-accent-strong" />
                   Why
                 </div>
                 <p class="text-[11px] text-muted-foreground leading-relaxed pl-4">
@@ -224,7 +224,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <CheckSquare class="size-4 text-emerald-400" />
+            <CheckSquare class="size-4 text-emerald-600 dark:text-emerald-400" />
             Non-comp asks · the levers most candidates forget
           </Card.Title>
           <Card.Description class="text-xs">
@@ -263,7 +263,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <TrendingUp class="size-4 text-emerald-400" />
+            <TrendingUp class="size-4 text-emerald-600 dark:text-emerald-400" />
             Tier comp bands · is the offer below band?
           </Card.Title>
           <Card.Description class="text-xs">

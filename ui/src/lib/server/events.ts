@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import type { ActivityEvent, EventLevel, EventCategory } from '$lib/types';
+import type { ActivityEvent, EventLevel, EventCategory, ReportKind } from '$lib/types';
 import { ROOT, DATA_ROOT } from './files';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 
@@ -332,6 +332,11 @@ export function logEvent(
   opts: {
     level?: EventLevel;
     category?: EventCategory;
+    /** Report kind override. When omitted, $lib/report-routing's eventKind()
+     *  derives it from `category` (application/task/user -> product, else
+     *  technical). Pass explicitly when the category alone would mis-route
+     *  (e.g. a product issue emitted on the system category). */
+    kind?: ReportKind;
     message?: string;
     link?: string;
     stack?: string;
@@ -354,6 +359,7 @@ export function logEvent(
     ts: Date.now(),
     level: opts.level ?? 'info',
     category: opts.category ?? 'system',
+    kind: opts.kind,
     source,
     title,
     message: opts.message,
@@ -411,6 +417,11 @@ export function reportServerError(
   return logEvent(source, title, {
     level: 'error',
     category: opts.category ?? 'system',
+    // Server errors are TECHNICAL diagnostics -- they belong in the activity
+    // feed but must NOT open an Issue or surface loudly. The kind tag is what
+    // the bell-gating ($lib/report-routing eventKind) reads to keep them quiet
+    // even when the caller picked a product-ish category.
+    kind: 'technical',
     message,
     link: opts.link,
     stack,

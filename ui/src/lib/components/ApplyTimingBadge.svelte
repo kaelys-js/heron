@@ -37,10 +37,13 @@
 
   let tint = $derived.by(() => {
     const b = timing?.band;
-    if (b === 'fresh') return 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200';
-    if (b === 'good') return 'border-amber-400/40 bg-amber-400/10 text-amber-200';
-    if (b === 'fading') return 'border-orange-500/40 bg-orange-500/10 text-orange-200';
-    return 'border-red-500/40 bg-red-500/10 text-red-200';
+    if (b === 'fresh')
+      return 'border-emerald-500/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-200';
+    if (b === 'good')
+      return 'border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-200';
+    if (b === 'fading')
+      return 'border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-200';
+    return 'border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-200';
   });
 
   onMount(async () => {

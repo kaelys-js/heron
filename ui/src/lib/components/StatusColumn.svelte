@@ -185,7 +185,7 @@
     <div class="space-y-3">
       <div class="space-y-1.5">
         <label for="add-url" class="text-xs font-medium"
-          >URL <span class="text-red-400">*</span></label
+          >URL <span class="text-destructive">*</span></label
         >
         <Input
           id="add-url"

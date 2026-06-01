@@ -160,16 +160,16 @@
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Content class="sm:max-w-xl p-0 gap-0 overflow-hidden border-red-500/30">
+  <Dialog.Content class="sm:max-w-xl p-0 gap-0 overflow-hidden border-destructive/30">
     <Dialog.Header class="px-5 pt-5 pb-3 border-b">
       <div class="flex items-start gap-3">
         <div
-          class="size-10 rounded-lg bg-red-500/15 ring-1 ring-red-500/40 flex items-center justify-center flex-shrink-0"
+          class="size-10 rounded-lg bg-destructive/15 ring-1 ring-destructive/40 flex items-center justify-center flex-shrink-0"
         >
-          <ShieldAlert class="size-5 text-red-300" />
+          <ShieldAlert class="size-5 text-destructive" />
         </div>
         <div class="flex-1 min-w-0">
-          <Dialog.Title class="text-base text-red-200">Reset to scratch</Dialog.Title>
+          <Dialog.Title class="text-base text-destructive">Reset to scratch</Dialog.Title>
           <Dialog.Description class="text-xs mt-0.5 leading-relaxed">
             Pick how much to wipe. Both options are destructive and irreversible (apart from <code
               class="font-mono">.bak</code
@@ -203,10 +203,10 @@
               class={cn(
                 'size-8 rounded-md flex items-center justify-center flex-shrink-0',
                 s.tone === 'red'
-                  ? 'bg-red-500/15 text-red-300'
+                  ? 'bg-red-500/15 text-red-700 dark:text-red-300'
                   : s.tone === 'orange'
-                    ? 'bg-orange-500/15 text-orange-300'
-                    : 'bg-amber-500/15 text-amber-300',
+                    ? 'bg-orange-500/15 text-orange-700 dark:text-orange-300'
+                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
               )}
             >
               <Icon class="size-4" />
@@ -217,10 +217,10 @@
                   'text-sm font-semibold',
                   active
                     ? s.tone === 'red'
-                      ? 'text-red-200'
+                      ? 'text-red-700 dark:text-red-200'
                       : s.tone === 'orange'
-                        ? 'text-orange-200'
-                        : 'text-amber-200'
+                        ? 'text-orange-700 dark:text-orange-200'
+                        : 'text-amber-700 dark:text-amber-200'
                     : 'text-foreground',
                 )}
               >
@@ -241,11 +241,13 @@
       {#if scope === 'profile'}
         <div class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
           <div class="flex items-baseline gap-2">
-            <FileWarning class="size-3.5 text-amber-300" />
-            <span class="text-sm font-medium text-amber-200">Profile only — what happens</span>
+            <FileWarning class="size-3.5 text-amber-700 dark:text-amber-300" />
+            <span class="text-sm font-medium text-amber-700 dark:text-amber-200"
+              >Profile only — what happens</span
+            >
           </div>
           <ul
-            class="text-[11px] text-amber-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1"
+            class="text-[11px] text-amber-700/85 dark:text-amber-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1"
           >
             <li>
               <code class="font-mono">config/profile.yml</code> → restored from the example template
@@ -258,10 +260,10 @@
             </li>
           </ul>
           <div
-            class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2"
+            class="rounded border border-success/30 bg-success/5 p-2 mt-2 flex items-start gap-2"
           >
-            <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
-            <p class="text-[11px] text-emerald-200/85 leading-relaxed">
+            <Check class="size-3 text-success mt-0.5 flex-shrink-0" />
+            <p class="text-[11px] text-success/85 leading-relaxed">
               Kept: applications.md, pipeline.md, projects, reports/, output/, activity feed, .env /
               API keys, sources.
             </p>
@@ -270,15 +272,17 @@
       {:else if scope === 'jobs'}
         <div class="rounded-md border border-orange-500/35 bg-orange-500/10 p-3 space-y-2">
           <div class="flex items-baseline gap-2">
-            <Briefcase class="size-3.5 text-orange-300" />
-            <span class="text-sm font-medium text-orange-200">Jobs data only — what happens</span>
+            <Briefcase class="size-3.5 text-orange-700 dark:text-orange-300" />
+            <span class="text-sm font-medium text-orange-700 dark:text-orange-200"
+              >Jobs data only — what happens</span
+            >
           </div>
-          <p class="text-[11px] text-orange-200/85 leading-relaxed">
+          <p class="text-[11px] text-orange-700/85 dark:text-orange-200/85 leading-relaxed">
             Wipes the entire job-search tracker so you can start a new hunt with a clean slate —
             without losing your CV, profile, targeting filters, or connected sources.
           </p>
           <ul
-            class="text-[11px] text-orange-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1"
+            class="text-[11px] text-orange-700/85 dark:text-orange-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1"
           >
             <li>
               <code class="font-mono">data/applications.md</code> → header-only · every applied job lost
@@ -306,10 +310,10 @@
             </li>
           </ul>
           <div
-            class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2"
+            class="rounded border border-success/30 bg-success/5 p-2 mt-2 flex items-start gap-2"
           >
-            <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
-            <p class="text-[11px] text-emerald-200/85 leading-relaxed">
+            <Check class="size-3 text-success mt-0.5 flex-shrink-0" />
+            <p class="text-[11px] text-success/85 leading-relaxed">
               Kept: <code class="font-mono">profile.yml</code>,
               <code class="font-mono">cv.md</code>,
               <code class="font-mono">modes/_profile.md</code>,
@@ -325,14 +329,16 @@
       {:else}
         <div class="rounded-md border border-red-500/40 bg-red-500/10 p-3 space-y-2">
           <div class="flex items-baseline gap-2">
-            <Flame class="size-3.5 text-red-300" />
-            <span class="text-sm font-medium text-red-200">Everything -- what happens</span>
+            <Flame class="size-3.5 text-red-700 dark:text-red-300" />
+            <span class="text-sm font-medium text-red-700 dark:text-red-200"
+              >Everything -- what happens</span
+            >
           </div>
-          <p class="text-[11px] text-red-200/85 leading-relaxed">
+          <p class="text-[11px] text-red-700/85 dark:text-red-200/85 leading-relaxed">
             Strict superset of "Profile only" + "Jobs data only", PLUS longer-lived configs:
           </p>
           <ul
-            class="text-[11px] text-red-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1"
+            class="text-[11px] text-red-700/85 dark:text-red-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1"
           >
             <li>Everything in <strong>Profile only</strong> (profile.yml, cv.md, _profile.md)</li>
             <li>
@@ -365,10 +371,10 @@
             </li>
           </ul>
           <div
-            class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2"
+            class="rounded border border-success/30 bg-success/5 p-2 mt-2 flex items-start gap-2"
           >
-            <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
-            <p class="text-[11px] text-emerald-200/85 leading-relaxed">
+            <Check class="size-3 text-success mt-0.5 flex-shrink-0" />
+            <p class="text-[11px] text-success/85 leading-relaxed">
               Kept: <code class="font-mono">.env</code> (API keys), Python
               <code class="font-mono">.venv</code>, source code, connected Playwright sessions,
               <code class="font-mono">data/sources.json</code>,
@@ -383,7 +389,7 @@
 
       <!-- Backups -->
       <div class="rounded-md border border-border/40 bg-muted/30 p-3 flex items-start gap-2">
-        <Info class="size-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+        <Info class="size-3.5 text-info mt-0.5 flex-shrink-0" />
         <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
           Every modified file gets backed up to <code class="font-mono">&lt;path&gt;.bak</code>
           first. If you change your mind, restore by hand.
@@ -413,9 +419,9 @@
       <!-- Type-to-confirm input -->
       <div class="pt-2 space-y-1.5">
         <Label class="text-xs flex items-center gap-1.5">
-          <AlertTriangle class="size-3 text-red-300" />
-          Type <span class="font-mono text-red-300 font-semibold">{REQUIRED_PHRASE}</span> to enable the
-          reset button
+          <AlertTriangle class="size-3 text-destructive" />
+          Type <span class="font-mono text-destructive font-semibold">{REQUIRED_PHRASE}</span> to enable
+          the reset button
         </Label>
         <Input
           bind:value={typed}

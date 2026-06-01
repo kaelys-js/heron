@@ -135,9 +135,10 @@
     return 'bg-zinc-500/30';
   }
   function impactBadge(impact: Recommendation['impact']): string {
-    if (impact === 'high') return 'bg-red-500/15 text-red-300 border-red-500/40';
-    if (impact === 'medium') return 'bg-amber-500/15 text-amber-300 border-amber-500/40';
-    return 'bg-zinc-500/15 text-zinc-300 border-zinc-500/40';
+    if (impact === 'high') return 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/40';
+    if (impact === 'medium')
+      return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40';
+    return 'bg-zinc-500/15 text-muted-foreground border-border';
   }
 </script>
 
@@ -155,7 +156,7 @@
       <div class="flex items-start justify-between gap-4">
         <div class="space-y-1.5 max-w-3xl">
           <h1 class="text-xl font-semibold tracking-tight flex items-center gap-2">
-            <Lightbulb class="size-5 text-amber-400" />
+            <Lightbulb class="size-5 text-accent-strong" />
             Patterns &amp; recommendations
           </h1>
           <p class="text-sm text-muted-foreground leading-relaxed">
@@ -217,34 +218,48 @@
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div class="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2.5">
                   <div
-                    class="text-[11px] uppercase tracking-wider text-emerald-300/80 flex items-center gap-1"
+                    class="text-[11px] uppercase tracking-wider text-emerald-700/90 dark:text-emerald-300/80 flex items-center gap-1"
                   >
                     <CheckCircle2 class="size-3" /> Positive
                   </div>
-                  <div class="text-lg font-semibold tabular-nums text-emerald-200 mt-0.5">
+                  <div
+                    class="text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-200 mt-0.5"
+                  >
                     {fmtCount(outcomes.positive)}
                   </div>
                   <div class="text-[11px] text-muted-foreground">Screened · Interview · Offer</div>
                 </div>
                 <div class="rounded-md border border-red-500/30 bg-red-500/5 px-3 py-2.5">
-                  <div class="text-[11px] uppercase tracking-wider text-red-300/80">Negative</div>
-                  <div class="text-lg font-semibold tabular-nums text-red-200 mt-0.5">
+                  <div
+                    class="text-[11px] uppercase tracking-wider text-red-700/90 dark:text-red-300/80"
+                  >
+                    Negative
+                  </div>
+                  <div
+                    class="text-lg font-semibold tabular-nums text-red-700 dark:text-red-200 mt-0.5"
+                  >
                     {fmtCount(outcomes.negative)}
                   </div>
                   <div class="text-[11px] text-muted-foreground">Rejected after review</div>
                 </div>
                 <div class="rounded-md border border-zinc-500/30 bg-zinc-500/5 px-3 py-2.5">
-                  <div class="text-[11px] uppercase tracking-wider text-zinc-300/80">
+                  <div class="text-[11px] uppercase tracking-wider text-muted-foreground">
                     Self-filtered
                   </div>
-                  <div class="text-lg font-semibold tabular-nums text-zinc-200 mt-0.5">
+                  <div class="text-lg font-semibold tabular-nums text-foreground mt-0.5">
                     {fmtCount(outcomes.self_filtered)}
                   </div>
                   <div class="text-[11px] text-muted-foreground">Marked SKIP — never applied</div>
                 </div>
                 <div class="rounded-md border border-blue-500/30 bg-blue-500/5 px-3 py-2.5">
-                  <div class="text-[11px] uppercase tracking-wider text-blue-300/80">Pending</div>
-                  <div class="text-lg font-semibold tabular-nums text-blue-200 mt-0.5">
+                  <div
+                    class="text-[11px] uppercase tracking-wider text-blue-700/90 dark:text-blue-300/80"
+                  >
+                    Pending
+                  </div>
+                  <div
+                    class="text-lg font-semibold tabular-nums text-blue-700 dark:text-blue-200 mt-0.5"
+                  >
                     {fmtCount(outcomes.pending)}
                   </div>
                   <div class="text-[11px] text-muted-foreground">Applied — no answer yet</div>
@@ -259,7 +274,7 @@
           <Card.Root class="border-amber-500/40 bg-amber-500/5">
             <Card.Header class="pb-3">
               <Card.Title class="text-sm flex items-center gap-2">
-                <Sparkles class="size-4 text-amber-400" />
+                <Sparkles class="size-4 text-accent-strong" />
                 Recommendations
               </Card.Title>
               <Card.Description class="text-xs">
@@ -341,9 +356,9 @@
               {#each Object.entries(p.scoreComparison ?? {}) as [group, stats]}
                 {@const tint =
                   group === 'positive'
-                    ? 'text-emerald-300'
+                    ? 'text-emerald-700 dark:text-emerald-300'
                     : group === 'negative'
-                      ? 'text-red-300'
+                      ? 'text-red-700 dark:text-red-300'
                       : 'text-muted-foreground'}
                 <div class="flex items-center gap-3 text-xs">
                   <div class="w-24 shrink-0 capitalize {tint}">{group.replace('_', ' ')}</div>
@@ -363,7 +378,9 @@
                 <div
                   class="pt-2 mt-2 border-t border-border/40 text-[11px] text-muted-foreground leading-relaxed"
                 >
-                  <span class="text-amber-300 font-medium">Suggested score floor:</span>
+                  <span class="text-amber-700 dark:text-amber-300 font-medium"
+                    >Suggested score floor:</span
+                  >
                   {fmtScore(p.scoreThreshold.recommended)}/5
                   {#if p.scoreThreshold.positiveRange && p.scoreThreshold.positiveRange !== 'N/A'}
                     · positive range {p.scoreThreshold.positiveRange}
@@ -511,7 +528,7 @@
             <Card.Root>
               <Card.Header class="pb-2">
                 <Card.Title class="text-sm flex items-center gap-2">
-                  <AlertTriangle class="size-3.5 text-red-400" />
+                  <AlertTriangle class="size-3.5 text-red-700 dark:text-red-400" />
                   Top blockers
                 </Card.Title>
                 <Card.Description class="text-xs">
@@ -536,7 +553,7 @@
             <Card.Root>
               <Card.Header class="pb-2">
                 <Card.Title class="text-sm flex items-center gap-2">
-                  <TrendingDown class="size-3.5 text-amber-400" />
+                  <TrendingDown class="size-3.5 text-amber-700 dark:text-amber-400" />
                   Tech-stack gaps
                 </Card.Title>
                 <Card.Description class="text-xs">

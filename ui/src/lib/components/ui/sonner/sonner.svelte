@@ -61,7 +61,7 @@
       info:
         '!bg-popover !text-popover-foreground !border-border ' +
         '!border-l-2 !border-l-primary ' +
-        '[&_[data-icon]]:!text-blue-300',
+        '[&_[data-icon]]:!text-info',
     },
   }}
   style="--normal-bg: var(--color-popover); --normal-text: var(--color-popover-foreground); --normal-border: var(--color-border);"

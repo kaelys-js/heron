@@ -170,6 +170,15 @@ pre-commit:
       glob: "{scripts/native/icons/generate-icons.mjs,scripts/native/icons/generate-icons.test.mjs}"
       run: pnpm icons:test
 
+    "17-brand-css":
+      # Brand token system: unit-test the single-block emitter + assert the
+      # brand.json palette clears WCAG AA in both modes. Fires when brand.json,
+      # the app.css block emitter, the generator, or the contrast guard is
+      # staged. (99-verify also runs verify:contrast repo-wide; this is fast
+      # targeted feedback + the emitter unit test.)
+      glob: "{branding/brand.json,scripts/native/app-css-block.mjs,scripts/native/app-css-block.test.mjs,scripts/native/apply-brand.mjs,scripts/system/verify-contrast.mjs}"
+      run: pnpm app-css-block:test && pnpm verify:contrast
+
     # ── Full verify pipeline (typecheck + build + tests + every linter +
     #    every gate), turbo-cached. Runs LAST so the writers above have
     #    already formatted + re-staged. SAME command pre-push + CI run. ──

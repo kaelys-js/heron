@@ -45,14 +45,14 @@ export type ApplicationStatus =
   | 'skip';
 
 export const APPLICATION_STATUS_TINTS: Record<ApplicationStatus, string> = {
-  evaluated: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
-  applied: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
-  responded: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-  interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
-  offer: 'bg-green-500/15 text-green-300 border-green-500/40',
-  rejected: 'bg-red-500/10 text-red-300 border-red-500/30',
-  discarded: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30',
-  skip: 'bg-zinc-500/5 text-zinc-500 border-zinc-500/20',
+  evaluated: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+  applied: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30',
+  responded: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
+  interview: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30',
+  offer: 'bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/40',
+  rejected: 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30',
+  discarded: 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border-zinc-500/30',
+  skip: 'bg-zinc-500/5 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
 };
 
 export type BgRisk = 'LOW' | 'MEDIUM' | 'HIGH' | 'BLOCKED' | undefined;
@@ -102,69 +102,111 @@ export const SOURCE_LABELS: Record<string, { label: string; tint: string }> = {
   // ATS direct (scan.mjs)
   'greenhouse-api': {
     label: 'Greenhouse',
-    tint: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+    tint: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
   },
-  'ashby-api': { label: 'Ashby', tint: 'bg-violet-500/10 text-violet-300 border-violet-500/30' },
-  'lever-api': { label: 'Lever', tint: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' },
+  'ashby-api': {
+    label: 'Ashby',
+    tint: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30',
+  },
+  'lever-api': {
+    label: 'Lever',
+    tint: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+  },
   'workday-api': {
     label: 'Workday',
-    tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
+    tint: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30',
   },
   'smartrecruiters-api': {
     label: 'SmartRecruiters',
-    tint: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
+    tint: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
   },
-  'workable-api': { label: 'Workable', tint: 'bg-teal-500/10 text-teal-300 border-teal-500/30' },
+  'workable-api': {
+    label: 'Workable',
+    tint: 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/30',
+  },
   'personio-api': {
     label: 'Personio',
-    tint: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30',
+    tint: 'bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-500/30',
   },
-  'recruitee-api': { label: 'Recruitee', tint: 'bg-pink-500/10 text-pink-300 border-pink-500/30' },
+  'recruitee-api': {
+    label: 'Recruitee',
+    tint: 'bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-500/30',
+  },
   'teamtailor-api': {
     label: 'Teamtailor',
-    tint: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30',
+    tint: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30',
   },
   // Authenticated Playwright scrapers (your logged-in personalised feed)
   'linkedin-authenticated': {
     label: 'LinkedIn (auth)',
-    tint: 'bg-sky-500/15 text-sky-200 border-sky-500/50',
+    tint: 'bg-sky-500/15 text-sky-700 dark:text-sky-200 border-sky-500/50',
   },
   'indeed-authenticated': {
     label: 'Indeed (auth)',
-    tint: 'bg-blue-700/15 text-blue-200 border-blue-700/50',
+    tint: 'bg-blue-700/15 text-blue-700 dark:text-blue-200 border-blue-700/50',
   },
   // Broad scan (scan-broad.py -- JobSpy + free aggregators)
-  linkedin: { label: 'LinkedIn', tint: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
-  indeed: { label: 'Indeed', tint: 'bg-blue-700/10 text-blue-300 border-blue-700/30' },
+  linkedin: {
+    label: 'LinkedIn',
+    tint: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30',
+  },
+  indeed: {
+    label: 'Indeed',
+    tint: 'bg-blue-700/10 text-blue-700 dark:text-blue-300 border-blue-700/30',
+  },
   glassdoor: {
     label: 'Glassdoor',
-    tint: 'bg-emerald-700/10 text-emerald-300 border-emerald-700/30',
+    tint: 'bg-emerald-700/10 text-emerald-700 dark:text-emerald-300 border-emerald-700/30',
   },
-  ziprecruiter: { label: 'ZipRecruiter', tint: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30' },
-  google: { label: 'Google Jobs', tint: 'bg-blue-500/10 text-blue-300 border-blue-500/30' },
-  themuse: { label: 'The Muse', tint: 'bg-rose-500/10 text-rose-300 border-rose-500/30' },
-  adzuna: { label: 'Adzuna', tint: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
-  remoteok: { label: 'RemoteOK', tint: 'bg-purple-500/10 text-purple-300 border-purple-500/30' },
+  ziprecruiter: {
+    label: 'ZipRecruiter',
+    tint: 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border-zinc-500/30',
+  },
+  google: {
+    label: 'Google Jobs',
+    tint: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
+  },
+  themuse: {
+    label: 'The Muse',
+    tint: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
+  },
+  adzuna: {
+    label: 'Adzuna',
+    tint: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
+  },
+  remoteok: {
+    label: 'RemoteOK',
+    tint: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30',
+  },
   wwr: {
     label: 'WeWorkRemotely',
-    tint: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30',
+    tint: 'bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-500/30',
   },
-  hn: { label: 'HN Hiring', tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30' },
-  yc: { label: 'YC startups', tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30' },
+  hn: {
+    label: 'HN Hiring',
+    tint: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30',
+  },
+  yc: {
+    label: 'YC startups',
+    tint: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30',
+  },
   // Curated boards
-  aijobs: { label: 'AI Jobs', tint: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
+  aijobs: {
+    label: 'AI Jobs',
+    tint: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
+  },
   // Email ingestion
   'linkedin-alert-email': {
     label: 'LinkedIn alert',
-    tint: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
+    tint: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30',
   },
   'indeed-alert-email': {
     label: 'Indeed alert',
-    tint: 'bg-blue-700/10 text-blue-300 border-blue-700/30',
+    tint: 'bg-blue-700/10 text-blue-700 dark:text-blue-300 border-blue-700/30',
   },
   'email-digest': {
     label: 'Email digest',
-    tint: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30',
+    tint: 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border-zinc-500/30',
   },
 };
 
@@ -197,43 +239,44 @@ export const STATUS_ORDER: Status[] = [
 ];
 
 export const STATUS_TINTS: Record<Status, string> = {
-  New: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30',
-  Scoring: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
-  Scored: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
-  Ready: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
-  Queued: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30',
+  New: 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border-zinc-500/30',
+  Scoring: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
+  Scored: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+  Ready: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  Queued: 'bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-500/30',
   // Applying = active blue with pulse anim -- script is running right now.
-  Applying: 'bg-blue-500/15 text-blue-200 border-blue-500/50 animate-pulse',
-  Applied: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
-  Screened: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+  Applying: 'bg-blue-500/15 text-blue-700 dark:text-blue-200 border-blue-500/50 animate-pulse',
+  Applied: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30',
+  Screened: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
   // Interview stages share a warm hue family -- distinguishable but
   // visually clustered so you can tell "interview pipeline" at a glance.
-  PhoneScreen: 'bg-amber-500/10 text-amber-200 border-amber-500/40',
-  Technical: 'bg-orange-500/10 text-orange-200 border-orange-500/40',
-  TakeHome: 'bg-yellow-500/10 text-yellow-200 border-yellow-500/40',
-  Onsite: 'bg-orange-600/15 text-orange-200 border-orange-600/50',
-  Final: 'bg-red-400/15 text-red-200 border-red-400/50',
-  Interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
-  Offer: 'bg-green-500/15 text-green-300 border-green-500/40',
+  PhoneScreen: 'bg-amber-500/10 text-amber-700 dark:text-amber-200 border-amber-500/40',
+  Technical: 'bg-orange-500/10 text-orange-700 dark:text-orange-200 border-orange-500/40',
+  TakeHome: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-200 border-yellow-500/40',
+  Onsite: 'bg-orange-600/15 text-orange-700 dark:text-orange-200 border-orange-600/50',
+  Final: 'bg-red-400/15 text-red-700 dark:text-red-200 border-red-400/50',
+  Interview: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30',
+  Offer: 'bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/40',
   // Post-offer flow stages -- green spectrum trending to neutral as the
   // candidate moves from offer to outcome.
-  Negotiating: 'bg-lime-500/15 text-lime-200 border-lime-500/50',
-  Accepted: 'bg-emerald-500/25 text-emerald-100 border-emerald-500/60',
-  Declined: 'bg-zinc-600/15 text-zinc-300 border-zinc-600/40',
+  Negotiating: 'bg-lime-500/15 text-lime-800 dark:text-lime-200 border-lime-500/50',
+  Accepted: 'bg-emerald-500/25 text-emerald-800 dark:text-emerald-100 border-emerald-500/60',
+  Declined: 'bg-zinc-600/15 text-zinc-700 dark:text-zinc-300 border-zinc-600/40',
   // Ghosted = grey-with-stroke; visually distinct from Rejected (which
   // is bad-news-confirmed) vs Ghosted (no-news-treat-as-dead).
-  Ghosted: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/40 border-dashed',
-  Rejected: 'bg-red-500/10 text-red-300 border-red-500/30',
-  Closed: 'bg-zinc-500/5 text-zinc-500 border-zinc-500/20',
+  Ghosted: 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-500/40 border-dashed',
+  Rejected: 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30',
+  Closed: 'bg-zinc-500/5 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
   // ManualApplyNeeded = amber with dashed border -- action required.
-  ManualApplyNeeded: 'bg-amber-500/15 text-amber-200 border-amber-500/50 border-dashed',
+  ManualApplyNeeded:
+    'bg-amber-500/15 text-amber-700 dark:text-amber-200 border-amber-500/50 border-dashed',
 };
 
 export const BG_TINTS: Record<NonNullable<BgRisk>, string> = {
-  LOW: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
-  MEDIUM: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-  HIGH: 'bg-red-500/10 text-red-300 border-red-500/30',
-  BLOCKED: 'bg-red-500/30 text-red-200 border-red-500/60',
+  LOW: 'bg-success/10 text-success border-success/30',
+  MEDIUM: 'bg-warning/10 text-warning border-warning/30',
+  HIGH: 'bg-destructive/10 text-destructive border-destructive/30',
+  BLOCKED: 'bg-destructive/25 text-destructive border-destructive/60',
 };
 
 export const STATUS_EMPTY_COPY: Record<Status, string> = {
@@ -264,6 +307,14 @@ export const STATUS_EMPTY_COPY: Record<Status, string> = {
 export type EventLevel = 'info' | 'warn' | 'error' | 'success';
 export type EventCategory = 'task' | 'api' | 'application' | 'system' | 'user';
 
+/**
+ * Report kind -- the orthogonal "what audience is this for" axis to
+ * EventLevel. `product` = job-search domain events the user acts on;
+ * `technical` = software/infra diagnostics that stay quiet. The routing
+ * matrix in $lib/report-routing maps (kind, level) -> where it surfaces.
+ */
+export type ReportKind = 'product' | 'technical';
+
 export type ActivityEvent = {
   id: string;
   ts: number;
@@ -285,6 +336,11 @@ export type ActivityEvent = {
   profileId?: string;
   /** Stack trace (only set for level === 'error'). Truncated to ~2KB. */
   stack?: string;
+  /** Report kind -- product (domain, loud) vs technical (diagnostic, quiet).
+   *  OPTIONAL for back-compat: the many existing logEvent call sites omit it,
+   *  so $lib/report-routing's eventKind() derives it from `category` when
+   *  absent. An explicit kind always wins. */
+  kind?: ReportKind;
 };
 
 /**

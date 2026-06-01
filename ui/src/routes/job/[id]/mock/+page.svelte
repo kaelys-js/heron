@@ -424,7 +424,7 @@
           <div
             class="size-10 rounded-lg bg-orange-500/10 ring-1 ring-orange-500/40 flex items-center justify-center"
           >
-            <Mic class="size-5 text-orange-400" />
+            <Mic class="size-5 text-orange-600 dark:text-orange-400" />
           </div>
           <h1 class="text-2xl font-semibold tracking-tight">Mock interview drill</h1>
         </div>
@@ -439,10 +439,10 @@
       <!-- Browser support -->
       {#if !recognitionSupported || !synthesisSupported}
         <div
-          class="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2 flex items-start gap-2"
+          class="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 flex items-start gap-2"
         >
-          <AlertCircle class="size-4 text-amber-400 mt-0.5 flex-shrink-0" />
-          <div class="text-xs text-amber-200/90 leading-relaxed">
+          <AlertCircle class="size-4 text-warning mt-0.5 flex-shrink-0" />
+          <div class="text-xs text-warning/90 leading-relaxed">
             {#if !recognitionSupported}
               <p>
                 <strong>Speech recognition not supported.</strong> Chrome / Edge / Brave have it; Firefox
@@ -472,7 +472,7 @@
                 class={cn(
                   'rounded-md border px-2.5 py-2 text-left transition',
                   stage === opt.id
-                    ? 'border-orange-500/60 bg-orange-500/10 text-orange-100'
+                    ? 'border-orange-500/60 bg-orange-500/10 text-orange-800 dark:text-orange-100'
                     : 'border-border/40 bg-card hover:border-border',
                   sessionActive && stage !== opt.id && 'opacity-40 cursor-not-allowed',
                 )}
@@ -535,9 +535,11 @@
         <Card.Root>
           <Card.Header class="pb-2">
             <Card.Title class="text-sm flex items-center gap-2">
-              <MessageSquare class="size-4 text-orange-400" />
+              <MessageSquare class="size-4 text-orange-600 dark:text-orange-400" />
               Question {history.length + 1}
-              {#if speaking}<span class="text-[11px] text-orange-300 animate-pulse">speaking…</span
+              {#if speaking}<span
+                  class="text-[11px] text-orange-700 dark:text-orange-300 animate-pulse"
+                  >speaking…</span
                 >{/if}
             </Card.Title>
           </Card.Header>
@@ -560,11 +562,11 @@
               {#if recognitionSupported}
                 {#if listening}
                   <Button onclick={stopListening} variant="outline" size="sm" class="gap-1.5">
-                    <MicOff class="size-3.5 text-red-300" /> Stop listening
+                    <MicOff class="size-3.5 text-destructive" /> Stop listening
                   </Button>
                 {:else}
                   <Button onclick={startListening} variant="outline" size="sm" class="gap-1.5">
-                    <Mic class="size-3.5 text-emerald-300" /> Speak
+                    <Mic class="size-3.5 text-success" /> Speak
                   </Button>
                 {/if}
               {/if}
@@ -592,10 +594,10 @@
                       class={cn(
                         'font-mono px-1.5 py-0.5 rounded border text-[11px]',
                         lastScore >= 4
-                          ? 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10'
+                          ? 'border-success/40 text-success bg-success/10'
                           : lastScore >= 3
-                            ? 'border-amber-500/40 text-amber-300 bg-amber-500/10'
-                            : 'border-red-500/40 text-red-300 bg-red-500/10',
+                            ? 'border-warning/40 text-warning bg-warning/10'
+                            : 'border-destructive/40 text-destructive bg-destructive/10',
                       )}
                     >
                       {lastScore}/5
@@ -642,10 +644,10 @@
                         class={cn(
                           'font-mono px-1 py-0.5 rounded border',
                           t.score >= 4
-                            ? 'border-emerald-500/40 text-emerald-300'
+                            ? 'border-success/40 text-success'
                             : t.score >= 3
-                              ? 'border-amber-500/40 text-amber-300'
-                              : 'border-red-500/40 text-red-300',
+                              ? 'border-warning/40 text-warning'
+                              : 'border-destructive/40 text-destructive',
                         )}
                       >
                         {t.score}/5
@@ -664,10 +666,10 @@
 
       <!-- Session summary on end -->
       {#if endedSummary}
-        <Card.Root class="border-emerald-500/40 bg-emerald-500/5">
+        <Card.Root class="border-success/40 bg-success/5">
           <Card.Header class="pb-2">
             <Card.Title class="text-base flex items-center gap-2">
-              <CheckCircle2 class="size-4 text-emerald-300" />
+              <CheckCircle2 class="size-4 text-success" />
               Session summary
             </Card.Title>
           </Card.Header>

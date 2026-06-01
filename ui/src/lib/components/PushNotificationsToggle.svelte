@@ -152,14 +152,12 @@
 <div class="space-y-3">
   <div class="flex items-center gap-3">
     {#if permission === 'granted'}
-      <BellRing class="size-4 text-emerald-400" />
-      <span class="text-sm"
-        >OS notifications: <strong class="text-emerald-300">enabled</strong></span
-      >
+      <BellRing class="size-4 text-success" />
+      <span class="text-sm">OS notifications: <strong class="text-success">enabled</strong></span>
     {:else if permission === 'denied'}
-      <BellOff class="size-4 text-red-400" />
+      <BellOff class="size-4 text-destructive" />
       <span class="text-sm"
-        >OS notifications: <strong class="text-red-300">blocked</strong> by browser</span
+        >OS notifications: <strong class="text-destructive">blocked</strong> by browser</span
       >
     {:else if permission === 'unsupported'}
       <BellOff class="size-4 text-muted-foreground" />
@@ -185,7 +183,7 @@
     <div class="space-y-1.5">
       <Label class="text-xs text-muted-foreground">Notify me for:</Label>
       <div class="grid grid-cols-2 gap-1.5">
-        {#each [{ level: 'error' as const, label: 'Errors', tint: 'text-red-300' }, { level: 'warn' as const, label: 'Warnings (ManualApplyNeeded, etc)', tint: 'text-amber-300' }, { level: 'success' as const, label: 'Successes (Applied, Offer received)', tint: 'text-emerald-300' }, { level: 'info' as const, label: 'Info (low priority)', tint: 'text-blue-300' }] as opt}
+        {#each [{ level: 'error' as const, label: 'Errors', tint: 'text-destructive' }, { level: 'warn' as const, label: 'Warnings (ManualApplyNeeded, etc)', tint: 'text-warning' }, { level: 'success' as const, label: 'Successes (Applied, Offer received)', tint: 'text-success' }, { level: 'info' as const, label: 'Info (low priority)', tint: 'text-info' }] as opt}
           <label class="flex items-center gap-2 text-xs cursor-pointer">
             <input
               type="checkbox"

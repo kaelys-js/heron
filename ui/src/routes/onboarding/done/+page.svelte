@@ -105,7 +105,7 @@
     <div
       class="inline-flex size-12 rounded-full bg-amber-500/10 ring-1 ring-amber-500/30 items-center justify-center mx-auto"
     >
-      <Trophy class="size-6 text-amber-400" />
+      <Trophy class="size-6 text-accent-strong" />
     </div>
     <h1 class="text-2xl font-semibold tracking-tight">You're set up.</h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl mx-auto">
@@ -116,8 +116,8 @@
   </header>
 
   <!-- Summary card -->
-  <div class="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 space-y-3">
-    <h2 class="text-xs font-semibold uppercase tracking-wider text-emerald-300">Setup summary</h2>
+  <div class="rounded-md border border-success/30 bg-success/5 px-4 py-3 space-y-3">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-success">Setup summary</h2>
     <div class="grid grid-cols-2 gap-3">
       <div class="space-y-0.5">
         <div class="text-2xl font-semibold tracking-tight">{data.summary.connectedCount}</div>
@@ -133,10 +133,10 @@
       </div>
     </div>
     {#if data.summary.connectedLabels.length > 0}
-      <div class="flex flex-wrap gap-1 pt-1 border-t border-emerald-500/20">
+      <div class="flex flex-wrap gap-1 pt-1 border-t border-success/20">
         {#each data.summary.connectedLabels as label (label)}
           <span
-            class="text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
+            class="text-[11px] px-1.5 py-0.5 rounded bg-success/10 border border-success/30 text-success"
             >{label}</span
           >
         {/each}
@@ -151,28 +151,28 @@
     </h2>
     <ul class="space-y-1.5">
       <li class="flex items-start gap-3 px-3 py-2 rounded-md border border-border/40 bg-card">
-        <Inbox class="size-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+        <Inbox class="size-3.5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
         <div class="text-[11px] leading-relaxed">
           <strong class="text-foreground">Inbox</strong> — everything new lands here. Scoring, tailored
           CV PDFs, cover letters, all one click away.
         </div>
       </li>
       <li class="flex items-start gap-3 px-3 py-2 rounded-md border border-border/40 bg-card">
-        <Plug class="size-3.5 text-fuchsia-400 mt-0.5 flex-shrink-0" />
+        <Plug class="size-3.5 text-fuchsia-600 dark:text-fuchsia-400 mt-0.5 flex-shrink-0" />
         <div class="text-[11px] leading-relaxed">
           <strong class="text-foreground">Sources</strong> — re-authenticate LinkedIn / Indeed if their
           session expires (LinkedIn typically every ~30 days), check pull counts.
         </div>
       </li>
       <li class="flex items-start gap-3 px-3 py-2 rounded-md border border-border/40 bg-card">
-        <FileText class="size-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
+        <FileText class="size-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
         <div class="text-[11px] leading-relaxed">
           <strong class="text-foreground">Profile</strong> — extracted superpowers + proof points live
           there. Edit them any time; the deeper Claude evaluation reads them on every job.
         </div>
       </li>
       <li class="flex items-start gap-3 px-3 py-2 rounded-md border border-border/40 bg-card">
-        <Settings class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+        <Settings class="size-3.5 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" />
         <div class="text-[11px] leading-relaxed">
           <strong class="text-foreground">Settings</strong> — change keys, adjust the daily scan time,
           re-run onboarding from scratch.
@@ -182,8 +182,8 @@
   </div>
 
   {#if markError}
-    <div class="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2">
-      <p class="text-[11px] text-amber-200/90 leading-relaxed">
+    <div class="rounded-md border border-warning/40 bg-warning/5 px-3 py-2">
+      <p class="text-[11px] text-warning/90 leading-relaxed">
         Couldn't mark onboarding complete: <code class="font-mono">{markError}</code>. You can still
         use the dashboard — the wizard will simply show on next visit until this is resolved.
       </p>
@@ -191,16 +191,16 @@
   {/if}
 
   {#if autoActionsLog.length > 0}
-    <div class="rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 space-y-1">
-      <p class="text-[11px] uppercase tracking-wider text-emerald-300/80">
+    <div class="rounded-md border border-success/40 bg-success/5 px-3 py-2 space-y-1">
+      <p class="text-[11px] uppercase tracking-wider text-success/80">
         Set up for you automatically
       </p>
-      <ul class="text-[11px] text-emerald-100/90 leading-relaxed list-disc pl-4 space-y-0.5">
+      <ul class="text-[11px] text-success/90 leading-relaxed list-disc pl-4 space-y-0.5">
         {#each autoActionsLog as line}
           <li>{line}</li>
         {/each}
       </ul>
-      <p class="text-[11px] text-emerald-200/70 pt-1 border-t border-emerald-500/20">
+      <p class="text-[11px] text-success/70 pt-1 border-t border-success/20">
         You can change any of this on /profile, /settings, or /autopilot.
       </p>
     </div>

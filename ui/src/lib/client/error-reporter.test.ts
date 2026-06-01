@@ -1,17 +1,23 @@
 /**
- * lib/client/error-reporter -- unified error funnel for web/Electron/iOS.
+ * lib/client/error-reporter -- unified client report funnel.
  *
- * Tests:
- *   • reportError accepts Error, string, plain-value coercion
- *   • Toast fires for level=error only
- *   • Benign view-transition rejections are dropped
- *   • Backend POST attempt + queue-on-fail
- *   • Rate-limit suppresses duplicate OS notifications within 30s
- *   • reportWarning / reportInfo route through reportError with right level
- *   • setReporterBackend triggers flushQueue
+ * WHY these assertions matter: client reports are TECHNICAL, and the routing
+ * matrix ($lib/report-routing) keeps technical QUIET. So the contract under
+ * test is:
+ *   • A technical report NEVER toasts and NEVER fires an OS notification --
+ *     a render crash must not nag the user like a failed apply.
+ *   • It DOES POST to /api/telemetry (the diagnostics sink), NOT /api/issues.
+ *   • One window 'error' fires the pipeline EXACTLY once (the duplicate
+ *     hooks.client.ts listeners were removed -- installErrorReporter is the
+ *     single registration site).
+ *   • Input coercion (Error / string / arbitrary value) + requestId
+ *     correlation + reportWarning/reportInfo wrappers + setReporterBackend
+ *     flush still behave.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Toast must never be called by the reporter now -- if it is, these spies
+// catch the regression.
 const toastCalls = { error: [] as any[], warning: [] as any[], success: [] as any[] };
 vi.mock('svelte-sonner', () => ({
   toast: {
@@ -21,6 +27,7 @@ vi.mock('svelte-sonner', () => ({
   },
 }));
 
+// OS-notify must never be called either -- spy so we can assert zero calls.
 const notifyCalls: any[] = [];
 vi.mock('./notifications', () => ({
   notify: vi.fn(async (payload: any) => {
@@ -28,45 +35,95 @@ vi.mock('./notifications', () => ({
   }),
 }));
 
-const { reportError, reportWarning, reportInfo, setReporterBackend, _testHelpers } = await import(
-  './error-reporter'
-);
+const {
+  report,
+  reportError,
+  reportWarning,
+  reportInfo,
+  setReporterBackend,
+  installErrorReporter,
+  _testHelpers,
+} = await import('./error-reporter');
 
-describe('reportError — input coercion', () => {
+/** Read the body of the last fetch the reporter made. */
+function lastFetchBody(fetchSpy: ReturnType<typeof vi.fn>): any {
+  const call = fetchSpy.mock.calls.at(-1);
+  return call ? JSON.parse((call[1] as RequestInit).body as string) : undefined;
+}
+
+describe('report — input coercion', () => {
   beforeEach(() => {
     toastCalls.error.length = 0;
-    toastCalls.warning.length = 0;
     notifyCalls.length = 0;
     setReporterBackend(null);
+    const { QUEUE_KEY } = _testHelpers();
+    localStorage.removeItem(QUEUE_KEY);
   });
 
-  it('accepts Error instance', async () => {
+  function lastQueued(): { message: string } | undefined {
+    const { QUEUE_KEY } = _testHelpers();
+    const queued = JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]');
+    return queued.at(-1);
+  }
+
+  it('accepts an Error instance (queues its message)', async () => {
     await reportError(new Error('boom'));
-    expect(toastCalls.error.length).toBe(1);
-    expect(toastCalls.error[0].msg).toBe('boom');
+    expect(lastQueued()?.message).toBe('boom');
   });
 
-  it('coerces string to Error', async () => {
+  it('coerces a string to an Error', async () => {
     await reportError('plain string');
-    expect(toastCalls.error[0].msg).toBe('plain string');
+    expect(lastQueued()?.message).toBe('plain string');
   });
 
-  it('coerces arbitrary value to Error', async () => {
+  it('coerces an arbitrary value to an Error', async () => {
     await reportError({ code: 'E_X' });
-    expect(toastCalls.error[0].msg).toContain('E_X');
-  });
-
-  it('truncates very long messages to 200 chars', async () => {
-    await reportError(new Error('a'.repeat(500)));
-    expect(toastCalls.error[0].msg.length).toBeLessThanOrEqual(200);
+    expect(lastQueued()?.message).toContain('E_X');
   });
 });
 
-describe('reportError — requestId correlation', () => {
+describe('report — technical reports stay quiet (the core contract)', () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
   beforeEach(() => {
     toastCalls.error.length = 0;
-    // Null backend → sendToBackend fails → queueLocally, so we can read the
-    // captured context off the localStorage retry queue.
+    toastCalls.warning.length = 0;
+    toastCalls.success.length = 0;
+    notifyCalls.length = 0;
+    fetchSpy = vi.fn(async () => new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    setReporterBackend('http://localhost:5173');
+  });
+
+  it('does NOT toast and does NOT fire an OS notification', async () => {
+    await report({ err: new Error('quiet'), level: 'error', kind: 'technical' });
+    expect(toastCalls.error.length).toBe(0);
+    expect(toastCalls.warning.length).toBe(0);
+    expect(toastCalls.success.length).toBe(0);
+    expect(notifyCalls.length).toBe(0);
+  });
+
+  it('DOES POST to /api/telemetry with the { type: "error" } body', async () => {
+    await report({
+      err: new Error('telemetry-payload'),
+      level: 'warn',
+      kind: 'technical',
+      context: { source: 'unit', route: '/inbox' },
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const url = String(fetchSpy.mock.calls[0][0]);
+    expect(url).toMatch(/\/api\/telemetry$/);
+    expect(url).not.toMatch(/\/api\/issues/);
+    const body = lastFetchBody(fetchSpy);
+    expect(body.type).toBe('error');
+    expect(body.level).toBe('warn');
+    expect(body.source).toBe('unit');
+    expect(body.summary).toBe('telemetry-payload');
+    expect(body.route).toBe('/inbox');
+  });
+});
+
+describe('report — requestId correlation', () => {
+  beforeEach(() => {
     setReporterBackend(null);
     const { QUEUE_KEY } = _testHelpers();
     localStorage.removeItem(QUEUE_KEY);
@@ -83,7 +140,7 @@ describe('reportError — requestId correlation', () => {
     // WHY: the failing request's own X-Request-Id (carried on ApiError from
     // api.ts) pins the EXACT request; the page <meta> id is only the document's
     // request. When a fetch error is reported, the precise id must win so the
-    // logged issue correlates to the request that actually failed.
+    // logged diagnostic correlates to the request that actually failed.
     document.head.innerHTML = '<meta name="x-request-id" content="page-meta-id" />';
     const apiErr = Object.assign(new Error('fetch failed'), { requestId: 'api-req-id' });
     await reportError(apiErr);
@@ -104,74 +161,58 @@ describe('reportError — requestId correlation', () => {
   });
 });
 
-describe('reportError — level routing', () => {
-  beforeEach(() => {
-    toastCalls.error.length = 0;
-    toastCalls.warning.length = 0;
-    notifyCalls.length = 0;
-  });
-
-  it('error level fires toast.error', async () => {
-    await reportError(new Error('boom'), {}, 'error');
-    expect(toastCalls.error.length).toBe(1);
-  });
-
-  it('warn level does NOT fire toast', async () => {
-    await reportError(new Error('warn'), {}, 'warn');
-    expect(toastCalls.error.length).toBe(0);
-  });
-
-  it('info level does NOT fire toast', async () => {
-    await reportError(new Error('info'), {}, 'info');
-    expect(toastCalls.error.length).toBe(0);
-  });
-});
-
-describe('reportError — OS notifications', () => {
-  beforeEach(() => {
-    notifyCalls.length = 0;
-    // Reset rate-limit map by importing module fresh... too complex.
-    // Use unique error messages per test to avoid the 30s rate limit.
-  });
-
-  it('fires OS notification for error level', async () => {
-    await reportError(new Error(`unique-1-${Date.now()}`));
-    expect(notifyCalls.length).toBe(1);
-    expect(notifyCalls[0].level).toBe('error');
-  });
-
-  it('does NOT fire OS notification for warn level', async () => {
-    notifyCalls.length = 0;
-    await reportError(new Error(`unique-warn-${Date.now()}`), {}, 'warn');
-    expect(notifyCalls.length).toBe(0);
-  });
-
-  it('rate-limits duplicate error notifications within 30s', async () => {
-    notifyCalls.length = 0;
-    const msg = `dup-${Date.now()}`;
-    await reportError(new Error(msg));
-    await reportError(new Error(msg));
-    await reportError(new Error(msg));
-    // First fires, next two should be rate-limited.
-    expect(notifyCalls.length).toBe(1);
-  });
-});
-
 describe('reportWarning + reportInfo', () => {
   beforeEach(() => {
     toastCalls.error.length = 0;
-    toastCalls.warning.length = 0;
     notifyCalls.length = 0;
+    setReporterBackend(null);
+    const { QUEUE_KEY } = _testHelpers();
+    localStorage.removeItem(QUEUE_KEY);
   });
 
-  it('reportWarning routes through with level=warn', async () => {
+  function lastQueued(): { level: string; message: string } | undefined {
+    const { QUEUE_KEY } = _testHelpers();
+    const queued = JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]');
+    return queued.at(-1);
+  }
+
+  it('reportWarning routes through report() at level=warn (and stays quiet)', async () => {
     await reportWarning(new Error('w'));
+    expect(lastQueued()?.level).toBe('warn');
     expect(toastCalls.error.length).toBe(0);
   });
 
   it('reportInfo wraps a string into an Error and routes as info', async () => {
     await reportInfo('hello');
+    const q = lastQueued();
+    expect(q?.level).toBe('info');
+    expect(q?.message).toBe('hello');
     expect(toastCalls.error.length).toBe(0);
+  });
+});
+
+describe('installErrorReporter — single window listener (no double-fire)', () => {
+  it('dispatching one window error triggers exactly one telemetry POST', async () => {
+    // Isolate from any queued reports left by earlier tests -- a non-empty
+    // queue would flush on setReporterBackend and inflate the POST count.
+    setReporterBackend(null);
+    const { QUEUE_KEY } = _testHelpers();
+    localStorage.removeItem(QUEUE_KEY);
+    const fetchSpy = vi.fn(async (_url?: any, _init?: any) => new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    // installErrorReporter is the ONE registration site; hooks.client.ts no
+    // longer adds its own window listeners, so a single 'error' must report
+    // once -- not twice.
+    installErrorReporter('http://localhost:5173');
+    window.dispatchEvent(
+      new ErrorEvent('error', { error: new Error('single-fire'), message: 'single-fire' }),
+    );
+    // Let the async report() POST settle.
+    await new Promise<void>((r) => setTimeout(r, 0));
+    const telemetryPosts = fetchSpy.mock.calls.filter((c) =>
+      String(c[0]).endsWith('/api/telemetry'),
+    );
+    expect(telemetryPosts.length).toBe(1);
   });
 });
 

@@ -121,7 +121,7 @@
             transition:fade={{ duration: 150 }}
             onclick={openChat}
             aria-label="Open agent chat"
-            class="group fixed z-50 size-12 rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:scale-110 active:scale-95 bg-gradient-to-br from-foreground to-foreground/80 text-background shadow-[0_4px_24px_-4px_rgba(255,255,255,0.15),0_0_0_1px_rgba(255,255,255,0.06)] hover:shadow-[0_8px_32px_-4px_rgba(255,255,255,0.25),0_0_0_1px_rgba(255,255,255,0.12)] before:absolute before:inset-0 before:rounded-full before:bg-foreground/20 before:opacity-0 before:scale-100 before:transition-all hover:before:opacity-0 hover:before:scale-150 before:animate-[ping_2.5s_cubic-bezier(0,0,0.2,1)_infinite]"
+            class="group fixed z-50 size-12 rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:scale-110 active:scale-95 bg-gradient-to-br from-foreground to-foreground/80 text-background shadow-[0_4px_24px_-4px_color-mix(in_srgb,var(--foreground)_15%,transparent),0_0_0_1px_color-mix(in_srgb,var(--foreground)_6%,transparent)] hover:shadow-[0_8px_32px_-4px_color-mix(in_srgb,var(--foreground)_25%,transparent),0_0_0_1px_color-mix(in_srgb,var(--foreground)_12%,transparent)] before:absolute before:inset-0 before:rounded-full before:bg-foreground/20 before:opacity-0 before:scale-100 before:transition-all hover:before:opacity-0 hover:before:scale-150 before:animate-[ping_2.5s_cubic-bezier(0,0,0.2,1)_infinite]"
             style="bottom: calc(1.25rem + env(safe-area-inset-bottom)); right: calc(1.25rem + env(safe-area-inset-right));"
           >
             <Sparkles

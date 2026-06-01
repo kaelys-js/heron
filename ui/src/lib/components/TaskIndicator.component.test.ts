@@ -72,9 +72,9 @@ describe('taskIndicator', () => {
     expect(container.textContent).toContain('PDF tailoring');
   });
 
-  it('has emerald color tones (running = good)', () => {
+  it('uses the success token colour (running = good)', () => {
     notifications.runningTasks = ['scan'];
     const { container } = render(TaskIndicator);
-    expect(container.innerHTML).toContain('emerald');
+    expect(container.innerHTML).toContain('success');
   });
 });

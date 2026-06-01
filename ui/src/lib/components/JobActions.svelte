@@ -620,9 +620,9 @@
                 size="sm"
                 class={cn(
                   'h-9 gap-1.5',
-                  isQueued && 'border-fuchsia-500/40 text-fuchsia-200',
-                  isApplying && 'border-blue-500/40 text-blue-200',
-                  needsManual && 'border-amber-500/40 text-amber-200',
+                  isQueued && 'border-fuchsia-500/40 text-fuchsia-700 dark:text-fuchsia-200',
+                  isApplying && 'border-blue-500/40 text-blue-700 dark:text-blue-200',
+                  needsManual && 'border-amber-500/40 text-amber-700 dark:text-amber-200',
                 )}
                 disabled={queueApplyBusy || isQueued || isApplying}
               >
@@ -651,9 +651,9 @@
                 size="icon"
                 class={cn(
                   size === 'card' ? 'size-7' : 'size-7',
-                  isQueued && 'text-fuchsia-300',
-                  isApplying && 'text-blue-300',
-                  needsManual && 'text-amber-300',
+                  isQueued && 'text-fuchsia-700 dark:text-fuchsia-300',
+                  isApplying && 'text-blue-700 dark:text-blue-300',
+                  needsManual && 'text-amber-700 dark:text-amber-300',
                 )}
                 disabled={queueApplyBusy || isQueued || isApplying}
                 aria-label="Queue apply"
@@ -709,7 +709,7 @@
               <Loader2 class="size-3.5 animate-spin" />
               <span>Applying…</span>
             {:else if isApplied}
-              <ClipboardCheck class="size-3.5 text-emerald-400" />
+              <ClipboardCheck class="size-3.5 text-success" />
               <span>Apply again</span>
               <ChevronDown class="size-3 opacity-60" />
             {:else}
@@ -723,7 +723,7 @@
             {...props}
             variant="ghost"
             size="icon"
-            class={cn(size === 'card' ? 'size-7' : 'size-7', isApplied && 'text-emerald-400')}
+            class={cn(size === 'card' ? 'size-7' : 'size-7', isApplied && 'text-success')}
             disabled={!!applyBusy}
             aria-label="Apply"
           >
@@ -766,9 +766,9 @@
              path uses the General CV PDF (cv-general.pdf) which is generated
              straight from cv.md with no per-job rewriting. -->
           <div
-            class="px-2 py-1.5 text-[11px] text-muted-foreground/80 leading-tight border-l-2 border-blue-500/40 ml-2 mr-2 my-1 bg-blue-500/5 rounded-sm"
+            class="px-2 py-1.5 text-[11px] text-muted-foreground/80 leading-tight border-l-2 border-info/40 ml-2 mr-2 my-1 bg-info/5 rounded-sm"
           >
-            <div class="font-medium text-blue-200/90 mb-0.5">
+            <div class="font-medium text-info/90 mb-0.5">
               Uploads your General CV (not the per-job tailored one)
             </div>
             <p class="text-muted-foreground/80">
@@ -787,7 +787,7 @@
           </div>
         {:else}
           <div
-            class="px-2 py-1.5 text-[11px] text-muted-foreground/70 leading-tight border-l-2 border-amber-500/40 ml-2 mr-2 my-1 bg-amber-500/5 rounded-sm py-1.5 px-2"
+            class="px-2 py-1.5 text-[11px] text-muted-foreground/70 leading-tight border-l-2 border-warning/40 ml-2 mr-2 my-1 bg-warning/5 rounded-sm py-1.5 px-2"
           >
             Not a LinkedIn URL — Easy Apply automation isn't available. Use Open &amp; Mark Applied
             to walk through the posting yourself.
@@ -1018,7 +1018,7 @@
         <div
           class="size-9 rounded-lg bg-amber-500/10 ring-1 ring-amber-500/40 flex items-center justify-center flex-shrink-0"
         >
-          <Bell class="size-4 text-amber-300" />
+          <Bell class="size-4 text-accent-strong" />
         </div>
         <div class="flex-1 min-w-0">
           <Sheet.Title class="text-base">Follow-up draft</Sheet.Title>
@@ -1088,7 +1088,7 @@
         <div
           class="size-9 rounded-lg bg-fuchsia-500/10 ring-1 ring-fuchsia-500/40 flex items-center justify-center flex-shrink-0"
         >
-          <ClipboardCheck class="size-4 text-fuchsia-300" />
+          <ClipboardCheck class="size-4 text-fuchsia-700 dark:text-fuchsia-300" />
         </div>
         <div class="flex-1 min-w-0">
           <Sheet.Title class="text-base">Form answers</Sheet.Title>

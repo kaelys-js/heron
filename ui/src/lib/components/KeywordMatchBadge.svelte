@@ -29,9 +29,9 @@
 
   let scoreTint = $derived.by(() => {
     const s = result?.score ?? 0;
-    if (s >= 80) return 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10';
-    if (s >= 60) return 'text-amber-300 border-amber-500/40 bg-amber-500/10';
-    return 'text-red-300 border-red-500/40 bg-red-500/10';
+    if (s >= 80) return 'text-success border-success/40 bg-success/10';
+    if (s >= 60) return 'text-warning border-warning/40 bg-warning/10';
+    return 'text-destructive border-destructive/40 bg-destructive/10';
   });
 
   let bandLabel = $derived.by(() => {
@@ -80,7 +80,7 @@
     <Popover.Content class="w-96 p-0">
       <div class="px-3 py-2 border-b border-border/40 space-y-0.5">
         <div class="text-xs font-medium flex items-center gap-1.5">
-          <Target class="size-3 text-fuchsia-400" />
+          <Target class="size-3 text-fuchsia-700 dark:text-fuchsia-400" />
           JD ⇄ CV keyword overlap
         </div>
         <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
@@ -94,13 +94,13 @@
             <div
               class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1"
             >
-              <AlertTriangle class="size-3 text-amber-400" />
+              <AlertTriangle class="size-3 text-warning" />
               Missing ({result.missing.length})
             </div>
             <div class="flex flex-wrap gap-1">
               {#each result.missing.slice(0, 50) as term}
                 <span
-                  class="text-[11px] px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/5 text-amber-200"
+                  class="text-[11px] px-1.5 py-0.5 rounded border border-warning/30 bg-warning/5 text-warning"
                   >{term}</span
                 >
               {/each}
@@ -121,13 +121,13 @@
             <div
               class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1"
             >
-              <CheckCircle2 class="size-3 text-emerald-400" />
+              <CheckCircle2 class="size-3 text-success" />
               Matched ({result.matched.length})
             </div>
             <div class="flex flex-wrap gap-1">
               {#each result.matched.slice(0, 40) as term}
                 <span
-                  class="text-[11px] px-1.5 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/5 text-emerald-200"
+                  class="text-[11px] px-1.5 py-0.5 rounded border border-success/30 bg-success/5 text-success"
                   >{term}</span
                 >
               {/each}

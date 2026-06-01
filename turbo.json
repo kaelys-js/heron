@@ -410,6 +410,11 @@
       "inputs": ["ui/static/fonts/**", "scripts/system/verify-fonts.mjs"]
     },
 
+    "//#verify:contrast": {
+      "outputs": [],
+      "inputs": ["branding/brand.json", "scripts/system/verify-contrast.mjs"]
+    },
+
     "//#validate:workflows": {
       "outputs": [],
       "inputs": [".github/workflows/*.{yml,yaml}", "scripts/system/verify-workflow-quality.mjs"]

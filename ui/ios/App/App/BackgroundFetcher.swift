@@ -19,8 +19,8 @@ import UserNotifications
  *   ┌─────────────────────────┬──────────────────────────────────────┐
  *   │ App state               │ Notifications behaviour              │
  *   ├─────────────────────────┼──────────────────────────────────────┤
- *   │ Foregrounded (active)   │ SSE bridge fires `notify()`          │
- *   │                         │ instantly on every warn/error event  │
+ *   │ Foregrounded (active)   │ Bell SSE (/api/stream) fires an OS    │
+ *   │                         │ notify on product warn/error events   │
  *   │ Backgrounded            │ This BackgroundFetcher polls         │
  *   │ (recently used,         │ /api/issues at Apple-controlled       │
  *   │ system retains process) │ cadence — typically 15-30min          │

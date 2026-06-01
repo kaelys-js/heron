@@ -101,9 +101,18 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-foreground: var(--accent-secondary-foreground);
+  --color-accent-secondary-strong: var(--accent-secondary-strong);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -146,239 +155,24 @@
   --secondary: #efeae0;
   --secondary-foreground: #1a1f26;
   --muted: #efeae0;
-  --muted-foreground: #6b7585;
-  --accent: #c89b4a;
-  --accent-foreground: #1a1f26;
-  --accent-secondary: #7a8c6d;
-  --accent-secondary-foreground: #1a1f26;
-  --destructive: #a85459;
-  --destructive-foreground: #fffefa;
-  --border: #e0d8c8;
-  --input: #e0d8c8;
-  --ring: #c89b4a;
-  --sidebar: #efeae0;
-  --sidebar-foreground: #1a1f26;
-  --sidebar-primary: #4a5b6d;
-  --sidebar-primary-foreground: #fffefa;
-  --sidebar-accent: #e8e0cc;
-  --sidebar-accent-foreground: #1a1f26;
-  --sidebar-border: #e0d8c8;
-  --sidebar-ring: #c89b4a;
-  --chart-1: #c89b4a;
-  --chart-2: #7a8c6d;
-  --chart-3: #4a5b6d;
-  --chart-4: #a8823a;
-  --chart-5: #5c6f50;
-}
-
-.dark {
-  --background: #0e1014;
-  --foreground: #e8eaed;
-  --card: #14181f;
-  --card-foreground: #e8eaed;
-  --popover: #1a1f29;
-  --popover-foreground: #e8eaed;
-  --primary: #c89b4a;
-  --primary-foreground: #14181f;
-  --secondary: #1a1f29;
-  --secondary-foreground: #e8eaed;
-  --muted: #1a1f29;
-  --muted-foreground: #a8b0bb;
-  --accent: #c89b4a;
-  --accent-foreground: #14181f;
-  --accent-secondary: #7a8c6d;
-  --accent-secondary-foreground: #0e1014;
-  --destructive: #b3666b;
-  --destructive-foreground: #f4e8e9;
-  --border: #232a35;
-  --input: #232a35;
-  --ring: #c89b4a;
-  --sidebar: #0e1014;
-  --sidebar-foreground: #a8b0bb;
-  --sidebar-primary: #c89b4a;
-  --sidebar-primary-foreground: #14181f;
-  --sidebar-accent: #1a1f29;
-  --sidebar-accent-foreground: #e8eaed;
-  --sidebar-border: #1a1f29;
-  --sidebar-ring: #c89b4a;
-  --chart-1: #d4a866;
-  --chart-2: #8a9b7d;
-  --chart-3: #6b7c8d;
-  --chart-4: #b88f4a;
-  --chart-5: #7a8c6d;
-}
-/* /AUTO-GENERATED:brand-tokens */
-
-/* AUTO-GENERATED:brand-tokens — Do not edit. Edit branding/brand.json + run `pnpm brand:apply`. */
-/* Self-hosted fonts — woff2 under ui/static/fonts/. font-display: swap so
- * system fallback paints first, the woff2 swap in seamlessly. */
-
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/fraunces-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/fraunces-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/inter-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/inter-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-400-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-500-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
-}
-
-@theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent-secondary: var(--accent-secondary);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-
-  /* Font stacks — Tailwind's font-sans / font-serif / font-mono resolve to these. */
-  --font-sans:
-    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
-  --font-serif:
-    'Fraunces', 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia,
-    serif;
-  --font-mono:
-    'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas,
-    'Liberation Mono', monospace;
-}
-
-:root {
-  --radius: 0.625rem;
-  --background: #f7f5f0;
-  --foreground: #1a1f26;
-  --card: #fffefa;
-  --card-foreground: #1a1f26;
-  --popover: #fffefa;
-  --popover-foreground: #1a1f26;
-  --primary: #4a5b6d;
-  --primary-foreground: #fffefa;
-  --secondary: #efeae0;
-  --secondary-foreground: #1a1f26;
-  --muted: #efeae0;
-  /* Darkened from #6b7585 to clear WCAG-AA against `--sidebar` /
-     `--muted` cream (#efeae0). The old slate read at ~3.88:1; this
-     hits ~5.0:1, so every full-opacity `text-muted-foreground`
-     usage passes axe `color-contrast`. Sub-100% opacity callers
-     (kbd chips, CollapsibleGroup headers) drop the slash in light
-     mode and keep a `dark:` variant so the blended colour still
-     clears AA on the cream surface. */
   --muted-foreground: #525c6c;
   --accent: #c89b4a;
   --accent-foreground: #1a1f26;
+  --accent-strong: #856319;
   --accent-secondary: #7a8c6d;
   --accent-secondary-foreground: #1a1f26;
+  --accent-secondary-strong: #4d5b40;
   --destructive: #a85459;
   --destructive-foreground: #fffefa;
+  --success: #2f7140;
+  --success-foreground: #fffefa;
+  --warning: #8a5300;
+  --warning-foreground: #fffefa;
+  --info: #1f6fb2;
+  --info-foreground: #fffefa;
   --border: #e0d8c8;
-  --input: #e0d8c8;
-  --ring: #c89b4a;
+  --input: #94835a;
+  --ring: #856319;
   --sidebar: #efeae0;
   --sidebar-foreground: #1a1f26;
   --sidebar-primary: #4a5b6d;
@@ -409,12 +203,20 @@
   --muted-foreground: #a8b0bb;
   --accent: #c89b4a;
   --accent-foreground: #14181f;
+  --accent-strong: #c89b4a;
   --accent-secondary: #7a8c6d;
   --accent-secondary-foreground: #0e1014;
-  --destructive: #b3666b;
-  --destructive-foreground: #f4e8e9;
+  --accent-secondary-strong: #9aab8c;
+  --destructive: #e0686f;
+  --destructive-foreground: #14181f;
+  --success: #5fcf80;
+  --success-foreground: #0e1014;
+  --warning: #e6b53f;
+  --warning-foreground: #0e1014;
+  --info: #5aa9e6;
+  --info-foreground: #0e1014;
   --border: #232a35;
-  --input: #232a35;
+  --input: #5d6775;
   --ring: #c89b4a;
   --sidebar: #0e1014;
   --sidebar-foreground: #a8b0bb;
@@ -795,7 +597,10 @@ html.theme-swap::view-transition-new(root) {
    `focus-visible:` on its primitives; this is the safety net for any
    hand-rolled focusable element. */
 *:focus-visible {
-  outline: 2px solid hsl(var(--ring, 220 90% 60%));
+  /* --ring is a hex token (brand.json), so use it directly. The old
+     `hsl(var(--ring))` wrapped a hex in hsl() -- invalid, so this
+     safety-net outline silently rendered with an invalid colour. */
+  outline: 2px solid var(--ring, #c89b4a);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -1015,6 +820,15 @@ body {
 }
 .mb-safe {
   margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* Reed-green hero halo for the brand-mark on the auth / loading / error /
+   connectivity surfaces. Previously duplicated verbatim as an inline filter in
+   five runtime files; centralized here so the glow tracks the reed-green accent
+   token (legible over either surface) instead of a hardcoded rgba. */
+.brand-hero-glow {
+  filter: drop-shadow(0 6px 24px color-mix(in srgb, var(--accent-secondary) 35%, transparent))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
 /* iOS Safari's elastic over-scroll moves the whole document and pushes

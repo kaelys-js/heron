@@ -59,11 +59,7 @@
 
   <div class="relative z-10 flex w-full max-w-sm flex-col items-center text-center">
     <!-- Brand mark hero — same composition as /login + boot-fallback. -->
-    <div
-      class="mb-6 flex size-16 items-center justify-center"
-      style="filter: drop-shadow(0 6px 24px rgba(122, 140, 109, 0.35)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));"
-      aria-hidden="true"
-    >
+    <div class="brand-hero-glow mb-6 flex size-16 items-center justify-center" aria-hidden="true">
       <svg width="64" height="64" viewBox="0 0 1024 1024">
         <!-- AUTO-GENERATED:brand-mark gradient-id="errscreen-bg" -->
         <image

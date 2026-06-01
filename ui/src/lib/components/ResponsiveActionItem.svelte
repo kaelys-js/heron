@@ -86,7 +86,7 @@
       'hover:bg-muted/60 active:bg-muted/80 active:scale-[0.98]',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
       'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
-      danger && 'text-red-400 hover:bg-red-500/10 active:bg-red-500/15',
+      danger && 'text-destructive hover:bg-destructive/10 active:bg-destructive/15',
       className,
     )}
   >
@@ -96,7 +96,7 @@
       <span
         class={cn(
           'flex size-9 items-center justify-center rounded-lg flex-shrink-0',
-          danger ? 'bg-red-500/10 text-red-400' : 'bg-muted text-foreground',
+          danger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground',
         )}
       >
         <Icon class="size-4" />
@@ -135,7 +135,7 @@
     {closeOnSelect}
     class={cn(
       'gap-2.5 cursor-pointer',
-      danger && 'text-red-400 focus:bg-red-500/10 focus:text-red-300',
+      danger && 'text-destructive focus:bg-destructive/10 focus:text-destructive',
       className,
     )}
     {onSelect}

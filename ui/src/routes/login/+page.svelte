@@ -207,8 +207,8 @@
     <!-- Brand mark hero — mirrors branding/logo.svg + boot-fallback so
          the sign-in screen feels like the same app, not a generic gate. -->
     <div
-      class="mb-7 flex size-16 items-center justify-center"
-      style="filter: drop-shadow(0 6px 24px rgba(122, 140, 109, 0.35)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)); view-transition-name: auth-hero;"
+      class="brand-hero-glow mb-7 flex size-16 items-center justify-center"
+      style="view-transition-name: auth-hero;"
       aria-hidden="true"
     >
       <svg width="64" height="64" viewBox="0 0 1024 1024">

@@ -41,10 +41,9 @@
   });
 
   function statusTint(state: SourceState): string {
-    if (state.connected && state.consecutiveFailures === 0)
-      return 'border-emerald-500/40 bg-emerald-500/5';
-    if (state.connected) return 'border-amber-500/40 bg-amber-500/5';
-    if (state.consecutiveFailures > 0) return 'border-red-500/40 bg-red-500/5';
+    if (state.connected && state.consecutiveFailures === 0) return 'border-success/40 bg-success/5';
+    if (state.connected) return 'border-warning/40 bg-warning/5';
+    if (state.consecutiveFailures > 0) return 'border-destructive/40 bg-destructive/5';
     return 'border-border/40 bg-card';
   }
 
@@ -53,11 +52,11 @@
       const ago = state.lastSuccessfulPullAt
         ? formatRelativeTime(state.lastSuccessfulPullAt) + ' ago'
         : '';
-      return { dot: 'bg-emerald-500', text: 'Connected' + (ago ? ' · last pull ' + ago : '') };
+      return { dot: 'bg-success', text: 'Connected' + (ago ? ' · last pull ' + ago : '') };
     }
     if (state.connected) {
       return {
-        dot: 'bg-amber-500',
+        dot: 'bg-warning',
         text:
           'Connected · ' +
           state.consecutiveFailures +
@@ -67,11 +66,11 @@
     }
     if (state.consecutiveFailures > 0) {
       return {
-        dot: 'bg-red-500',
+        dot: 'bg-destructive',
         text: 'Disconnected — ' + (state.lastError ?? 'failed ' + state.consecutiveFailures + 'x'),
       };
     }
-    return { dot: 'bg-zinc-500', text: 'Not connected' };
+    return { dot: 'bg-muted-foreground', text: 'Not connected' };
   }
 
   function authIcon(kind: KnownSource['authKind']) {
@@ -160,7 +159,7 @@
       <!-- Hero -->
       <div class="space-y-1.5 max-w-3xl">
         <h1 class="text-xl font-semibold tracking-tight flex items-center gap-2">
-          <Plug class="size-5 text-fuchsia-400" />
+          <Plug class="size-5 text-fuchsia-600 dark:text-fuchsia-400" />
           Job sources
         </h1>
         <p class="text-sm text-muted-foreground leading-relaxed">
@@ -189,7 +188,7 @@
                   <h3 class="text-sm font-semibold truncate">{row.label}</h3>
                   {#if row.required}
                     <span
-                      class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300"
+                      class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-warning/40 bg-warning/10 text-warning"
                       >required</span
                     >
                   {/if}
@@ -210,7 +209,7 @@
 
               <div class="flex items-center gap-1.5 flex-shrink-0">
                 {#if row.authKind === 'always-on'}
-                  <span class="text-[11px] text-emerald-400 inline-flex items-center gap-1">
+                  <span class="text-[11px] text-success inline-flex items-center gap-1">
                     <CheckCircle2 class="size-3" /> Active
                   </span>
                 {:else if row.authKind === 'env-key'}
@@ -248,7 +247,7 @@
                   <Button
                     variant="ghost"
                     size="sm"
-                    class="h-7 text-xs gap-1 text-red-400 hover:text-red-300"
+                    class="h-7 text-xs gap-1 text-destructive hover:text-destructive/80"
                     onclick={() => disconnectSource(row)}
                     disabled={b !== null && b !== undefined}
                   >
@@ -345,10 +344,10 @@
             {#if row.state.lastError && !row.state.connected}
               <Card.Content class="px-4 pb-3 pt-0">
                 <div
-                  class="rounded-md border border-red-500/30 bg-red-500/5 px-2.5 py-1.5 flex items-start gap-2"
+                  class="rounded-md border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 flex items-start gap-2"
                 >
-                  <AlertCircle class="size-3 text-red-400 mt-0.5 flex-shrink-0" />
-                  <p class="text-[11px] text-red-200/90 leading-relaxed font-mono break-all">
+                  <AlertCircle class="size-3 text-destructive mt-0.5 flex-shrink-0" />
+                  <p class="text-[11px] text-destructive/90 leading-relaxed font-mono break-all">
                     {row.state.lastError}
                   </p>
                 </div>

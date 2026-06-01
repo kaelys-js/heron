@@ -48,10 +48,10 @@
     displayScore == null
       ? 'bg-muted text-muted-foreground border-border'
       : displayScore >= 4.0
-        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+        ? 'bg-success/15 text-success border-success/40'
         : displayScore >= 3.0
-          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-          : 'bg-red-500/10 text-red-300 border-red-500/30',
+          ? 'bg-warning/15 text-warning border-warning/40'
+          : 'bg-destructive/10 text-destructive border-destructive/30',
   );
   let scoreVerdict = $derived.by(() => {
     if (displayScore == null) return 'Not yet scored';
@@ -80,19 +80,19 @@
     remote: {
       label: 'Remote',
       icon: Wifi,
-      tint: 'text-emerald-300 border-emerald-500/40',
+      tint: 'text-emerald-700 dark:text-emerald-300 border-emerald-500/40',
       tip: 'Fully remote',
     },
     hybrid: {
       label: 'Hybrid',
       icon: Building,
-      tint: 'text-amber-300 border-amber-500/40',
+      tint: 'text-amber-700 dark:text-amber-300 border-amber-500/40',
       tip: 'Hybrid',
     },
     onsite: {
       label: 'On-site',
       icon: Building,
-      tint: 'text-red-300 border-red-500/40',
+      tint: 'text-red-700 dark:text-red-300 border-red-500/40',
       tip: 'On-site',
     },
     unknown: { label: '', icon: Globe, tint: '', tip: '' },
@@ -229,7 +229,7 @@
                 class={cn(
                   'inline-flex items-center gap-0.5 text-[11px] px-1 py-0.5 rounded border font-medium cursor-help',
                   job.salary
-                    ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300/90'
+                    ? 'bg-success/5 border-success/20 text-success/90'
                     : 'bg-muted/40 border-border/40 text-muted-foreground/50',
                 )}
               >
@@ -318,7 +318,7 @@
                 {#snippet child({ props })}
                   <span
                     {...props}
-                    class="inline-flex items-center text-emerald-400/70 hover:text-emerald-300 transition-colors"
+                    class="inline-flex items-center text-success/70 hover:text-success transition-colors"
                   >
                     <FileBadge2 class="size-3" />
                   </span>

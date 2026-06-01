@@ -174,6 +174,14 @@ ok('hyphenation: "follow up" and "follow-up" both match', () => {
   assert.equal(scanBody('We can follow-up next week.').length, 1);
 });
 
+ok('separator required: bare "followup" feature identifier does NOT match', () => {
+  // followup-cadence / followup-draft are legit feature module names, not the
+  // "follow-up" deflection word. The pattern requires a hyphen or space so the
+  // guard catches deflection prose without flagging $lib/server/followup-cadence.
+  assert.equal(scanBody("vi.mock('$lib/server/followup-cadence', () => ({}))").length, 0);
+  assert.equal(scanBody('the followup mode drafts a message').length, 0);
+});
+
 ok('hyphenation: "out of scope" and "out-of-scope" both match', () => {
   assert.equal(scanBody('That is out of scope.').length, 1);
   assert.equal(scanBody('That is out-of-scope.').length, 1);

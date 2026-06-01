@@ -22,7 +22,7 @@
         {#snippet child({ props })}
           <div
             {...props}
-            class="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
+            class="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-md bg-success/10 border border-success/30 text-success"
           >
             <Loader2 class="size-3 animate-spin" />
             <span>{labels[0]}{count > 1 ? ' +' + (count - 1) : ''}</span>

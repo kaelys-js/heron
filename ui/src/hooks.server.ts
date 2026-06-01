@@ -81,6 +81,9 @@ if (typeof process !== 'undefined') {
  *   /api/onboarding/*  -- first-run setup endpoints
  *   /api/vitals        -- web-vitals beacons; fire pre-auth on cold loads
  *                         (login/signup), write no per-user data
+ *   /api/telemetry     -- client technical-diagnostics + vitals sink; public
+ *                         for the same reason as /api/vitals (fires pre-auth,
+ *                         writes only quiet technical events, never Issues)
  *   /favicon, /robots, /manifest.webmanifest, /apple-touch-icon -- bare assets
  *   /_app/*            -- SvelteKit's hashed bundle assets (served by adapter-node)
  *   /assets/*, /static/*, /branding/* -- static folders
@@ -97,6 +100,11 @@ const PUBLIC_PREFIXES = [
   // themselves), and the handler writes no per-user state. Without this the
   // guard 401s every beacon -> console-error noise on every cold load.
   '/api/vitals',
+  // client technical-diagnostics + vitals sink. Same rationale as /api/vitals:
+  // fires pre-auth on cold loads, writes only quiet technical activity events
+  // (never Issues), so a 401 here would just spam console-errors on the very
+  // errors we're trying to capture.
+  '/api/telemetry',
   '/favicon',
   '/robots.txt',
   '/manifest.webmanifest',

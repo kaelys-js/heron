@@ -30,7 +30,6 @@ const tick = () => new Promise<void>((r) => setTimeout(r, 0));
 beforeEach(async () => {
   __nativeErrors.length = 0;
   localStorage.clear();
-  reporter._testHelpers().recentTags.clear();
   reporter.setReporterBackend(null);
   await tick();
 });

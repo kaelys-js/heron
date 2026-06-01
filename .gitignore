@@ -271,6 +271,7 @@ venv/
 # ── Claude Code local state ─────────────────────────────────────────
 .claude/settings.local.json
 .claude/memory/
+.claude/workflows/
 career-dashboard
 .claude/scheduled_tasks.lock
 ui/electron/.svelte-kit/ambient.d.ts

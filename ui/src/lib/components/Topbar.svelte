@@ -232,19 +232,19 @@
       key: 'remote',
       label: 'Remote',
       icon: Wifi,
-      tint: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40',
+      tint: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/40',
     },
     {
       key: 'hybrid',
       label: 'Hybrid',
       icon: Building,
-      tint: 'bg-amber-500/10 text-amber-300 border-amber-500/40',
+      tint: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/40',
     },
     {
       key: 'onsite',
       label: 'On-site',
       icon: Building,
-      tint: 'bg-red-500/10 text-red-300 border-red-500/40',
+      tint: 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/40',
     },
     {
       key: 'unknown',
@@ -438,7 +438,7 @@
                 Filter
                 {#if activeFilterCount > 0}
                   <span
-                    class="text-[11px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40"
+                    class="text-[11px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-700 dark:text-orange-300 border border-orange-500/40"
                   >
                     {activeFilterCount}
                   </span>
@@ -484,12 +484,15 @@
                     <Star
                       class={cn(
                         'size-3',
-                        scoreActive ? 'text-amber-400' : 'text-muted-foreground/60',
+                        scoreActive
+                          ? 'text-amber-700 dark:text-amber-400'
+                          : 'text-muted-foreground/60',
                       )}
                     />
                     Minimum score
                     {#if scoreActive}
-                      <span class="text-[11px] text-amber-400/80 font-mono">≥{filter.minScore}</span
+                      <span class="text-[11px] text-amber-700/80 dark:text-amber-400/80 font-mono"
+                        >≥{filter.minScore}</span
                       >
                     {/if}
                   </Label>
@@ -538,7 +541,9 @@
                     <Wifi
                       class={cn(
                         'size-3',
-                        workModeActive ? 'text-emerald-400' : 'text-muted-foreground/60',
+                        workModeActive
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-muted-foreground/60',
                       )}
                     />
                     Work mode
@@ -582,7 +587,12 @@
                 <header class="flex items-center justify-between">
                   <Label class="text-xs flex items-center gap-1.5">
                     <ShieldCheck
-                      class={cn('size-3', bgActive ? 'text-amber-400' : 'text-muted-foreground/60')}
+                      class={cn(
+                        'size-3',
+                        bgActive
+                          ? 'text-amber-700 dark:text-amber-400'
+                          : 'text-muted-foreground/60',
+                      )}
                     />
                     Background-check risk
                   </Label>
@@ -630,7 +640,9 @@
                     <FileText
                       class={cn(
                         'size-3',
-                        extrasActive ? 'text-blue-400' : 'text-muted-foreground/60',
+                        extrasActive
+                          ? 'text-blue-700 dark:text-blue-400'
+                          : 'text-muted-foreground/60',
                       )}
                     />
                     Has artifacts
@@ -716,7 +728,9 @@
                     <Layers
                       class={cn(
                         'size-3',
-                        sourceActive ? 'text-fuchsia-400' : 'text-muted-foreground/60',
+                        sourceActive
+                          ? 'text-fuchsia-700 dark:text-fuchsia-400'
+                          : 'text-muted-foreground/60',
                       )}
                     />
                     Source
@@ -829,7 +843,7 @@
               Filter
               {#if activeFilterCount > 0}
                 <span
-                  class="text-[11px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40"
+                  class="text-[11px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-700 dark:text-orange-300 border border-orange-500/40"
                 >
                   {activeFilterCount}
                 </span>

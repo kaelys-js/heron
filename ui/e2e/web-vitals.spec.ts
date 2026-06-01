@@ -1,6 +1,6 @@
 /**
  * web-vitals E2E -- verify the layout's web-vitals registration fires
- * + POSTs to /api/vitals when a metric finalises.
+ * + POSTs to /api/telemetry when a metric finalises.
  *
  * Production code (+layout.svelte) uses `navigator.sendBeacon` for the
  * transport -- that's the spec-correct path for telemetry beacons +
@@ -9,13 +9,17 @@
  * Observation strategy: Playwright's WebKit + mobile-safari drivers
  * do NOT reliably notify route handlers (or `page.on('request')`)
  * about `navigator.sendBeacon` calls. Real Safari users POST to
- * /api/vitals successfully; the driver's introspection hook is the
+ * /api/telemetry successfully; the driver's introspection hook is the
  * unreliable layer. We compensate by observing the SERVER side:
- * /api/vitals exposes a test-only GET endpoint that returns the
+ * /api/telemetry exposes a test-only GET endpoint that returns the
  * cumulative beacon counter since process start. The test reads
  * `before` + `after` snapshots and asserts `after > before` -- a
  * server-truth check that catches a real regression on every engine
  * regardless of driver-level beacon introspection quirks.
+ *
+ * /api/vitals stays as a thin backward-compat alias (same counter,
+ * same logEvent path); the two /api/vitals POST cases below assert it
+ * still accepts the legacy `{ name, value, rating, url }` shape.
  */
 
 import { test, expect } from './fixtures/auth-fixtures';
@@ -24,18 +28,18 @@ interface VitalsCount {
   count: number;
   lastAt: number;
   lastName: string | null;
-  lastUrl: string | null;
+  lastRoute: string | null;
 }
 
 test.describe('web-vitals telemetry', () => {
-  test('POSTs at least one /api/vitals event on first paint', async ({
+  test('POSTs at least one /api/telemetry vitals event on first paint', async ({
     authenticatedPage,
     browserName,
   }) => {
     // STEP 1: snapshot the server-side counter BEFORE navigation.
     // Other concurrent tests may have inflated the running total --
     // we only care about the DELTA between before + after.
-    const beforeResp = await authenticatedPage.request.get('/api/vitals');
+    const beforeResp = await authenticatedPage.request.get('/api/telemetry');
     expect(beforeResp.status()).toBe(200);
     const before = (await beforeResp.json()) as VitalsCount;
 
@@ -63,7 +67,7 @@ test.describe('web-vitals telemetry', () => {
     await expect
       .poll(
         async () => {
-          const resp = await authenticatedPage.request.get('/api/vitals');
+          const resp = await authenticatedPage.request.get('/api/telemetry');
           if (resp.status() !== 200) return before.count;
           const after = (await resp.json()) as VitalsCount;
           return after.count;
@@ -71,7 +75,7 @@ test.describe('web-vitals telemetry', () => {
         {
           timeout: timeoutMs,
           intervals: [100, 200, 500, 1000],
-          message: `web-vitals must emit >=1 /api/vitals beacon on ${browserName} (before=${before.count})`,
+          message: `web-vitals must emit >=1 /api/telemetry beacon on ${browserName} (before=${before.count})`,
         },
       )
       .toBeGreaterThan(before.count);
@@ -110,6 +114,6 @@ test.describe('web-vitals telemetry', () => {
     ).json()) as VitalsCount;
     expect(after.count).toBeGreaterThan(before.count);
     expect(after.lastName).toBe('LCP');
-    expect(after.lastUrl).toBe('/test-fixture');
+    expect(after.lastRoute).toBe('/test-fixture');
   });
 });

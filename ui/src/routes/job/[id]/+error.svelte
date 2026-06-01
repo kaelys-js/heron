@@ -28,7 +28,7 @@
   {status}
   {title}
   {description}
-  accent={isNotFound ? 'text-muted-foreground' : 'text-red-400'}
+  accent={isNotFound ? 'text-muted-foreground' : 'text-destructive'}
   errorId={err?.errorId}
 >
   {#snippet actions()}

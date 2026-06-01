@@ -44,7 +44,7 @@
         : 'scale-100 opacity-100'}"
     />
     <Check
-      class="absolute size-3.5 text-emerald-500 transition-all duration-200 {copied
+      class="absolute size-3.5 text-success transition-all duration-200 {copied
         ? 'scale-100 opacity-100'
         : 'scale-0 opacity-0'}"
     />

@@ -1,11 +1,11 @@
 /**
  * lib/notifications -- central activity-feed store.
  *
- * Tests cover: add() dedup + cap at 200 + autoToast event dispatch,
- * markRead / markAllRead, clear, init/destroy lifecycle, reportClient-
- * Error funnel, fireToast level routing.
+ * Tests cover: add() dedup + cap at 200, autoToast event dispatch GATED on
+ * product kind (R6-bell -- technical stays quiet), markRead / markAllRead,
+ * clear, reportClientError now delegating to the canonical technical reporter.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BRAND_EVENTS } from '$lib/client/brand';
 
 const toastCalls = { error: [] as any[], warning: [] as any[], success: [] as any[] };
@@ -18,14 +18,25 @@ vi.mock('svelte-sonner', () => ({
 }));
 vi.mock('$app/environment', () => ({ browser: true }));
 
+// reportClientError is now a thin wrapper over error-reporter's report().
+// Mock report so we can assert delegation (and confirm reportClientError no
+// longer touches the toast/bell directly).
+const reportMock = vi.fn(async (_input: any): Promise<void> => {});
+vi.mock('$lib/client/error-reporter', () => ({
+  report: (input: any) => reportMock(input),
+}));
+
 const { notifications, reportClientError } = await import('./notifications.svelte');
 
+/** Default factory makes a PRODUCT-kind event (category 'application') so the
+ *  user-facing autoToast path is exercised; pass `category: 'system'` (or
+ *  kind: 'technical') to test the quiet path. */
 function makeEvent(over: Partial<any> = {}): any {
   return {
     id: `ev-${Math.random().toString(36).slice(2, 10)}`,
     ts: Date.now(),
     level: 'info',
-    category: 'system',
+    category: 'application',
     source: 'test',
     title: 'Hello',
     message: 'World',
@@ -113,6 +124,58 @@ describe('notifications.add', () => {
   });
 });
 
+describe('notifications.add — R6-bell kind gating', () => {
+  // WHY: technical diagnostics (uncaught error, render crash, 5xx) belong in
+  // the feed for a diagnostics view but must NEVER toast or fire an OS
+  // notification -- only PRODUCT events (a failed apply, a dead posting) earn
+  // that intrusion. The gate is eventKind(ev) === 'product'.
+  beforeEach(() => {
+    notifications.clear();
+    toastCalls.error.length = 0;
+    toastCalls.warning.length = 0;
+    toastCalls.success.length = 0;
+  });
+
+  it('a PRODUCT error event fires a toast + heron:notify', () => {
+    const fired: any[] = [];
+    const h = (e: Event) => fired.push((e as CustomEvent).detail);
+    window.addEventListener(BRAND_EVENTS.notify, h);
+    notifications.add(
+      makeEvent({ id: 'prod-err', level: 'error', category: 'application', title: 'Apply failed' }),
+      { autoToast: true },
+    );
+    expect(toastCalls.error.length).toBe(1);
+    expect(fired.length).toBe(1);
+    window.removeEventListener(BRAND_EVENTS.notify, h);
+  });
+
+  it('a TECHNICAL error event fires NEITHER toast NOR heron:notify', () => {
+    const fired: any[] = [];
+    const h = (e: Event) => fired.push((e as CustomEvent).detail);
+    window.addEventListener(BRAND_EVENTS.notify, h);
+    notifications.add(
+      makeEvent({ id: 'tech-err', level: 'error', category: 'system', title: 'Uncaught error' }),
+      { autoToast: true },
+    );
+    expect(toastCalls.error.length).toBe(0);
+    expect(fired.length).toBe(0);
+    window.removeEventListener(BRAND_EVENTS.notify, h);
+  });
+
+  it('still STORES a technical event in the feed (diagnostics view reads it)', () => {
+    notifications.add(makeEvent({ id: 'tech-stored', category: 'system' }), { autoToast: true });
+    expect(notifications.events.some((e) => e.id === 'tech-stored')).toBe(true);
+  });
+
+  it('an explicit kind override wins -- product kind on a system category toasts', () => {
+    notifications.add(
+      makeEvent({ id: 'kind-override', level: 'warn', category: 'system', kind: 'product' }),
+      { autoToast: true },
+    );
+    expect(toastCalls.warning.length).toBe(1);
+  });
+});
+
 describe('notifications.markRead', () => {
   beforeEach(() => notifications.clear());
 
@@ -178,46 +241,44 @@ describe('notifications.clear', () => {
   });
 });
 
-describe('reportClientError', () => {
+describe('reportClientError — thin technical wrapper', () => {
+  // WHY: reportClientError used to toast + add to the bell directly. Under the
+  // unified system it must delegate to error-reporter's report() as a
+  // TECHNICAL report -- which is QUIET. So it must NOT toast and must NOT add
+  // a bell row itself; it only forwards to report().
   beforeEach(() => {
     notifications.clear();
     toastCalls.error.length = 0;
+    reportMock.mockClear();
   });
 
-  it('logs to console + adds event + fires toast', () => {
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('delegates to report() with kind:technical, level:error', () => {
     reportClientError('test', 'Boom', new Error('oops'));
-    expect(errSpy).toHaveBeenCalled();
-    expect(notifications.events.length).toBe(1);
-    expect(toastCalls.error.length).toBe(1);
-    errSpy.mockRestore();
+    expect(reportMock).toHaveBeenCalledTimes(1);
+    const arg = reportMock.mock.calls[0][0];
+    expect(arg.kind).toBe('technical');
+    expect(arg.level).toBe('error');
+    expect(arg.context.source).toBe('test');
   });
 
-  it('coerces string err', () => {
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    reportClientError('test', 'StrErr', 'plain text');
-    expect(notifications.events[0].message).toBe('plain text');
-    errSpy.mockRestore();
+  it('does NOT toast and does NOT add a bell row (technical = quiet)', () => {
+    reportClientError('test', 'Boom', new Error('oops'));
+    expect(toastCalls.error.length).toBe(0);
+    expect(notifications.events.length).toBe(0);
   });
 
-  it('coerces object err via JSON', () => {
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('forwards the original thrown value to report() for coercion there', () => {
     reportClientError('test', 'ObjErr', { code: 42 });
-    expect(notifications.events[0].message).toContain('42');
-    errSpy.mockRestore();
+    expect(reportMock.mock.calls[0][0].err).toEqual({ code: 42 });
   });
 
-  it('respects extra.message override', () => {
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('forwards extra.message as the report context userAction', () => {
     reportClientError('test', 'X', new Error('real'), { message: 'override' });
-    expect(notifications.events[0].message).toBe('override');
-    errSpy.mockRestore();
+    expect(reportMock.mock.calls[0][0].context.userAction).toBe('override');
   });
 
-  it('captures stack from Error instances', () => {
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    reportClientError('test', 'S', new Error('with stack'));
-    expect(typeof notifications.events[0].stack).toBe('string');
-    errSpy.mockRestore();
+  it('falls back to the title for userAction when no extra.message', () => {
+    reportClientError('test', 'TitleAsAction', new Error('e'));
+    expect(reportMock.mock.calls[0][0].context.userAction).toBe('TitleAsAction');
   });
 });

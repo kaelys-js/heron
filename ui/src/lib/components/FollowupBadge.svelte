@@ -24,10 +24,10 @@
   } = $props();
 
   const TINT: Record<Urgency, string> = {
-    urgent: 'bg-red-500/15 text-red-300 border-red-500/40',
-    overdue: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
-    waiting: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
-    cold: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30',
+    urgent: 'bg-destructive/15 text-destructive border-destructive/40',
+    overdue: 'bg-warning/15 text-warning border-warning/40',
+    waiting: 'bg-info/10 text-info border-info/30',
+    cold: 'bg-muted text-muted-foreground border-border',
   };
 
   const ICON: Record<Urgency, any> = {

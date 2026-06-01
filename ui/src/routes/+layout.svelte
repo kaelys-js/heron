@@ -35,7 +35,7 @@
   import { apiCall } from '$lib/api';
   import { installDeepLinkHandler, handleDeepLink } from '$lib/client/deep-links';
   import { onNotificationTap } from '$lib/client/notifications';
-  import { installNotificationsBridge } from '$lib/client/sse-notifications-bridge';
+  import { installWidgetRefreshBridge } from '$lib/client/widget-refresh-bridge';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
   // Lifecycle breadcrumb → the on-device diagnostics overlay (app.html).
@@ -112,9 +112,10 @@
       // probe + navigator.onLine listeners + native hints (iOS/Electron) all
       // funnel through one boolean -- OfflineIndicator + api.ts subscribe.
       onlineStore.init(window.location.origin);
-      // web-vitals: CLS / INP / LCP / TTFB / FCP all funnel to /api/vitals
-      // for Issues-store ingestion. Dynamic-import keeps the 4KB
-      // web-vitals chunk out of the critical-path bundle. The
+      // web-vitals: CLS / INP / LCP / TTFB / FCP all funnel to /api/telemetry
+      // as quiet `kind: 'technical'` diagnostics (NOT Issues -- a poor LCP is a
+      // diagnostic, not an open problem the user must act on). Dynamic-import
+      // keeps the 4KB web-vitals chunk out of the critical-path bundle. The
       // `sendBeacon`-friendly fetch only fires when a metric finalises
       // (route change or page hide), not continuously, so the overhead
       // is bounded.
@@ -126,15 +127,15 @@
           // payload-size quota exceeded -- the spec allows the user agent
           // to refuse queueing).
           const body = JSON.stringify({
+            type: 'vitals',
             name: m.name,
             value: m.value,
             rating: m.rating,
             id: m.id,
-            url: window.location.pathname,
-            ts: Date.now(),
+            route: window.location.pathname,
           });
           const fetchFallback = (): void => {
-            void fetch('/api/vitals', {
+            void fetch('/api/telemetry', {
               method: 'POST',
               body,
               keepalive: true,
@@ -155,7 +156,7 @@
           ) {
             try {
               queued = navigator.sendBeacon(
-                '/api/vitals',
+                '/api/telemetry',
                 new Blob([body], { type: 'application/json' }),
               );
             } catch {
@@ -178,7 +179,7 @@
     // production probe ladder. We don't await -- first /api/* call will
     // wait on the same promise via api-base.ts's `resolving` deduplication.
     // Track the SSE bridge teardown so we can stop it on cleanup.
-    let stopNotificationsBridge: (() => void) | null = null;
+    let stopWidgetRefreshBridge: (() => void) | null = null;
 
     void import('$lib/client/api-base').then(({ getApiBase }) =>
       getApiBase()
@@ -197,16 +198,18 @@
           // Even an empty base on web is mirrored as '' which clears any
           // stale value from a prior native session.
           void setSharedBackendUrl(base || null);
-          // Install the SSE → notification + widget-stale bridge. The
-          // bridge listens to /api/notifications, fires OS notifications
-          // for warn/error/success events AND dispatches a widget-stale
-          // CustomEvent on every event with a widget-relevant source
-          // (apply-*, interview-*, scan-*, issue*). The bridge resolves
-          // its own backend URL via the shared sse-client wrapper, so
-          // we don't pass `base` in -- it'll re-resolve internally on
-          // every reconnect / net-status change.
+          // Install the widget-refresh bridge. It listens to /api/stream
+          // and dispatches a widget-stale CustomEvent for every PRODUCT
+          // event with a widget-relevant source (apply-*, interview-*,
+          // scan-*, issue*), so the iOS widget snapshot re-fetches on
+          // in-session state changes. OS notifications are NOT its job --
+          // the bell's own /api/stream subscription dispatches heron:notify
+          // and PushNotificationsToggle fires the OS Notification. The
+          // bridge resolves its own backend URL via the shared sse-client
+          // wrapper, so we don't pass `base` in -- it'll re-resolve
+          // internally on every reconnect / net-status change.
           //
-          // Gate on `authed === '1'`. /api/notifications is auth-protected;
+          // Gate on `authed === '1'`. /api/stream is auth-protected;
           // opening the SSE on an unauth page (/login, /signup, /help)
           // 401s the request, the sse-client retries with backoff, and
           // Lighthouse's `errors-in-console` audit records each 401 as a
@@ -218,7 +221,7 @@
             typeof localStorage !== 'undefined' &&
             localStorage.getItem(BRAND_STORAGE_KEYS.authed) === '1'
           ) {
-            stopNotificationsBridge = installNotificationsBridge();
+            stopWidgetRefreshBridge = installWidgetRefreshBridge();
           }
         })
         .catch((e) => {
@@ -352,7 +355,7 @@
     //   • Cold boot: fetch + push immediately after the auth probe wins.
     //   • While the app is foregrounded: SSE-driven (Task 9). The
     //     activity-feed bus already notifies on every relevant event;
-    //     sse-notifications-bridge listens and re-fetches.
+    //     widget-refresh-bridge listens and re-fetches.
     //   • App resumes from background: visibilitychange listener
     //     re-fetches so the user sees fresh data when they pull the app
     //     up. iOS itself coalesces widget refreshes to ~15min cycles, so
@@ -442,7 +445,7 @@
         window.removeEventListener(`${BRAND_EVENTS.notify}:widgets-stale`, onRefresh);
       }
       removeNotificationListener();
-      stopNotificationsBridge?.();
+      stopWidgetRefreshBridge?.();
     };
 
     // Client-side auth gate. In adapter-node builds hooks.server.ts
@@ -664,7 +667,7 @@
         <ErrorScreen
           title="This page crashed"
           description="A part of the app hit an unexpected error. The rest keeps running — this was logged."
-          accent="text-red-400"
+          accent="text-destructive"
         >
           {#snippet actions()}
             <Button onclick={reset} class="w-full gap-1.5">

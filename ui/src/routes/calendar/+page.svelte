@@ -16,10 +16,13 @@
   }
 
   function kindTint(kind: string): string {
-    if (kind === 'interview') return 'bg-orange-500/15 text-orange-200 border-orange-500/40';
-    if (kind === 'prep-block') return 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40';
-    if (kind === 'decision-deadline') return 'bg-amber-500/15 text-amber-200 border-amber-500/50';
-    return 'bg-zinc-500/15 text-zinc-300 border-zinc-500/40';
+    if (kind === 'interview')
+      return 'bg-orange-500/15 text-orange-700 dark:text-orange-200 border-orange-500/40';
+    if (kind === 'prep-block')
+      return 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-200 border-cyan-500/40';
+    if (kind === 'decision-deadline')
+      return 'bg-amber-500/15 text-amber-700 dark:text-amber-200 border-amber-500/50';
+    return 'bg-muted text-muted-foreground border-border';
   }
 
   // Group entries by day for the timeline
@@ -43,13 +46,13 @@
   <header class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-semibold">Calendar</h1>
-      <p class="text-sm text-zinc-400">
+      <p class="text-sm text-muted-foreground">
         Next {data.days} days · {data.entries.length} entries
       </p>
     </div>
     <a
       href="/api/calendar/sync"
-      class="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800"
+      class="rounded-md border border-border bg-card px-3 py-1.5 text-xs text-card-foreground hover:bg-muted"
       title="Download an .ics feed you can subscribe to from Apple Calendar / Google Calendar"
     >
       Subscribe (.ics)
@@ -57,23 +60,23 @@
   </header>
 
   {#if data.entries.length === 0}
-    <div class="rounded-lg border border-zinc-700 bg-zinc-900/50 p-8 text-center">
-      <p class="text-zinc-400">
+    <div class="rounded-lg border border-border bg-muted p-8 text-center">
+      <p class="text-muted-foreground">
         No upcoming interviews, prep blocks, or deadlines in the next {data.days} days.
       </p>
     </div>
   {:else}
     <div class="space-y-4">
       {#each byDay() as [day, events]}
-        <section class="rounded-lg border border-zinc-700 bg-zinc-900/30 p-4">
-          <h2 class="mb-3 text-sm font-medium text-zinc-300">
+        <section class="rounded-lg border border-border bg-card p-4">
+          <h2 class="mb-3 text-sm font-medium text-muted-foreground">
             {dayLabel(new Date(day).getTime())}
           </h2>
           <div class="space-y-2">
             {#each events as ev (ev.id)}
               <a
                 href={ev.href}
-                class="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-950/50 px-3 py-2 hover:border-zinc-600"
+                class="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 hover:border-input"
               >
                 <div class="flex items-center gap-3">
                   <span class="rounded border px-2 py-0.5 text-xs {kindTint(ev.kind)}"
@@ -82,14 +85,14 @@
                   <div>
                     <div class="text-sm">{ev.title}</div>
                     {#if ev.company}
-                      <div class="text-xs text-zinc-500">{ev.company}</div>
+                      <div class="text-xs text-muted-foreground">{ev.company}</div>
                     {/if}
                   </div>
                 </div>
-                <div class="text-xs text-zinc-400">
+                <div class="text-xs text-muted-foreground">
                   {timeLabel(ev.startAt)}
                   {#if ev.kind === 'prep-block' && ev.hasResources === false}
-                    <span class="ml-2 text-amber-300">⚠ no dossier</span>
+                    <span class="ml-2 text-warning">⚠ no dossier</span>
                   {/if}
                 </div>
               </a>

@@ -223,13 +223,13 @@
     <div class="flex w-full flex-col gap-2 text-left" transition:slide={{ duration: 200 }}>
       <label
         class="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 transition-colors {urlError
-          ? 'border-red-500/60'
+          ? 'border-destructive/60'
           : touched && urlValid && manualUrl.trim()
-            ? 'border-emerald-500/50'
+            ? 'border-success/50'
             : 'border-border/40 focus-within:border-border'}"
       >
         {#if touched && urlValid && manualUrl.trim()}
-          <Check class="size-4 shrink-0 text-emerald-400" />
+          <Check class="size-4 shrink-0 text-success" />
         {:else}
           <Server class="size-4 shrink-0 text-muted-foreground" />
         {/if}
@@ -257,7 +257,7 @@
       </label>
       {#if urlError}
         <p
-          class="flex items-center gap-1.5 text-xs text-red-300"
+          class="flex items-center gap-1.5 text-xs text-destructive"
           role="alert"
           transition:slide={{ duration: 150 }}
         >
@@ -311,7 +311,7 @@
       <div>· Tailscale</div>
       <div>· a saved remote address</div>
       {#if boot.kind === 'failed' && boot.error}
-        <div class="mt-2 text-red-300/90">{boot.error}</div>
+        <div class="mt-2 text-destructive/90">{boot.error}</div>
       {/if}
     </div>
   {/if}

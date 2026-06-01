@@ -85,7 +85,9 @@
   onclick={handleClick}
   class={cn(
     'gap-1.5 transition-all',
-    armed ? 'bg-red-500/15 text-red-300 hover:bg-red-500/25 border-red-500/50 animate-pulse' : '',
+    armed
+      ? 'bg-destructive/15 text-destructive hover:bg-destructive/25 border-destructive/50 animate-pulse'
+      : '',
     className,
   )}
 >

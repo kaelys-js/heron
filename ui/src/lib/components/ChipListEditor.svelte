@@ -74,11 +74,11 @@
             class={cn(
               'inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-md text-[11px] border group/chip transition-colors',
               armed
-                ? 'bg-red-500/10 border-red-500/40 ring-1 ring-red-500/30'
+                ? 'bg-destructive/10 border-destructive/40 ring-1 ring-destructive/30'
                 : 'bg-muted border-border/50',
             )}
           >
-            <span class={cn('font-medium', armed && 'text-red-200')}>{item}</span>
+            <span class={cn('font-medium', armed && 'text-destructive')}>{item}</span>
             <Tooltip.Root>
               <Tooltip.Trigger>
                 {#snippet child({ props })}
@@ -94,8 +94,8 @@
                     class={cn(
                       'size-4 flex items-center justify-center rounded transition-colors',
                       armed
-                        ? 'text-red-300 bg-red-500/20 hover:bg-red-500/30 animate-pulse'
-                        : 'text-muted-foreground/60 hover:text-red-300 hover:bg-red-500/10',
+                        ? 'text-destructive bg-destructive/20 hover:bg-destructive/30 animate-pulse'
+                        : 'text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10',
                     )}
                   >
                     <X class="size-3" />

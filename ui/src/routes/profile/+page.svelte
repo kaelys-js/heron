@@ -540,10 +540,10 @@
 
       {#if !data.profile.exists}
         <div
-          class="flex items-start gap-2 px-3 py-2.5 rounded-md border border-amber-500/40 bg-amber-500/10 text-xs"
+          class="flex items-start gap-2 px-3 py-2.5 rounded-md border border-warning/30 bg-warning/10 text-xs"
         >
-          <AlertCircle class="size-3.5 text-amber-300 mt-0.5 flex-shrink-0" />
-          <div class="text-amber-200/90 leading-relaxed">
+          <AlertCircle class="size-3.5 text-warning mt-0.5 flex-shrink-0" />
+          <div class="text-warning leading-relaxed">
             <strong>First run:</strong> the form below shows an example profile so you can see what
             populates. Replace anything example-like with your own answers and click
             <strong>Save profile</strong>
@@ -561,40 +561,42 @@
       -->
       {#if validationErrors.length > 0}
         <div
-          class="rounded-md border border-red-500/40 bg-red-500/[0.08] overflow-hidden"
+          class="rounded-md border border-destructive/30 bg-destructive/10 overflow-hidden"
           role="alert"
           aria-live="polite"
         >
           <div
-            class="flex items-start gap-2 px-3.5 py-2.5 border-b border-red-500/20 bg-red-500/[0.06]"
+            class="flex items-start gap-2 px-3.5 py-2.5 border-b border-destructive/20 bg-destructive/10"
           >
-            <AlertTriangle class="size-3.5 text-red-300 mt-0.5 flex-shrink-0" />
+            <AlertTriangle class="size-3.5 text-destructive mt-0.5 flex-shrink-0" />
             <div class="flex-1 min-w-0">
-              <div class="text-xs font-medium text-red-200">
+              <div class="text-xs font-medium text-destructive">
                 {validationErrors.length}
                 {validationErrors.length === 1 ? 'field needs' : 'fields need'} attention
               </div>
-              <p class="text-[11px] text-red-200/70 leading-relaxed mt-0.5">
+              <p class="text-[11px] text-destructive leading-relaxed mt-0.5">
                 Saving will fail (or strip data) for fields below. Click a row to jump to it.
               </p>
             </div>
           </div>
-          <ul class="divide-y divide-red-500/15">
+          <ul class="divide-y divide-destructive/20">
             {#each validationErrors as err (err.id)}
               <li>
                 <button
                   type="button"
                   onclick={() => jumpToError(err.id)}
-                  class="w-full flex items-center gap-2 px-3.5 py-2 text-left text-[11px] hover:bg-red-500/[0.06] transition-colors group/row"
+                  class="w-full flex items-center gap-2 px-3.5 py-2 text-left text-[11px] hover:bg-destructive/10 transition-colors group/row"
                 >
                   <span
-                    class="text-[11px] uppercase tracking-wider font-mono text-red-300/80 w-20 flex-shrink-0"
+                    class="text-[11px] uppercase tracking-wider font-mono text-destructive w-20 flex-shrink-0"
                     >{err.section}</span
                   >
-                  <span class="text-red-100 font-medium truncate flex-1 min-w-0">{err.label}</span>
-                  <span class="text-red-300/90 truncate max-w-[50%]">— {err.message}</span>
+                  <span class="text-destructive font-medium truncate flex-1 min-w-0"
+                    >{err.label}</span
+                  >
+                  <span class="text-destructive truncate max-w-[50%]">— {err.message}</span>
                   <ChevronRight
-                    class="size-3 text-red-300/50 group-hover/row:translate-x-0.5 group-hover/row:text-red-200 transition-all flex-shrink-0"
+                    class="size-3 text-destructive/50 group-hover/row:translate-x-0.5 group-hover/row:text-destructive transition-all flex-shrink-0"
                   />
                 </button>
               </li>
@@ -615,8 +617,10 @@
             <div class={cn('space-y-1.5', f.span === 2 && 'md:col-span-2')}>
               <Label class="text-xs flex items-center gap-1.5">
                 {f.label}
-                {#if f.required}<span class="text-red-400" aria-label="required" title="Required"
-                    >*</span
+                {#if f.required}<span
+                    class="text-destructive"
+                    aria-label="required"
+                    title="Required">*</span
                   >{/if}
               </Label>
               <ValidatedInput
@@ -995,7 +999,7 @@
         <div class="space-y-4">
           <div class="space-y-1.5">
             <Label class="text-xs flex items-center gap-2">
-              <span class="size-1.5 rounded-full bg-emerald-400"></span>
+              <span class="size-1.5 rounded-full bg-success"></span>
               Must have
             </Label>
             <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
@@ -1013,7 +1017,7 @@
           </div>
           <div class="space-y-1.5">
             <Label class="text-xs flex items-center gap-2">
-              <span class="size-1.5 rounded-full bg-blue-400"></span>
+              <span class="size-1.5 rounded-full bg-info"></span>
               Strong plus
             </Label>
             <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
@@ -1030,7 +1034,7 @@
           </div>
           <div class="space-y-1.5">
             <Label class="text-xs flex items-center gap-2">
-              <span class="size-1.5 rounded-full bg-red-400"></span>
+              <span class="size-1.5 rounded-full bg-destructive"></span>
               Hard no
             </Label>
             <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
@@ -1099,7 +1103,7 @@
         description="Stage jobs in one click and let the autopilot drain submit them across LinkedIn / Greenhouse / Ashby. Default: OFF. The autopilot stops at the score gate and the daily cap. Soft-failures (CAPTCHA, anti-bot, unknown form field) land in the Inbox with a finish-by-hand CTA."
         storageKey="autonomous-apply"
       >
-        {#snippet icon()}<Wand2 class="size-3.5 text-fuchsia-400" />{/snippet}
+        {#snippet icon()}<Wand2 class="size-3.5 text-fuchsia-700 dark:text-fuchsia-400" />{/snippet}
         <div class="space-y-4">
           <!-- Master toggle -->
           <div class="flex items-start gap-3 rounded-md border border-border/40 bg-card px-3 py-3">
@@ -1233,10 +1237,10 @@
 
           <!-- Warning banner -->
           <div
-            class="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 flex items-start gap-2"
+            class="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 flex items-start gap-2"
           >
-            <AlertTriangle class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-            <p class="text-[11px] text-amber-100/90 leading-relaxed">
+            <AlertTriangle class="size-3.5 text-warning mt-0.5 flex-shrink-0" />
+            <p class="text-[11px] text-warning leading-relaxed">
               Autonomous apply overrides the default "review before Submit" ethical rule via this
               per-profile opt-in. Use only on a profile where you trust the score gate to filter
               low-fit roles — every submission costs a recruiter's time. Read the
@@ -1336,14 +1340,14 @@
                 {#if data.profile.files.cv.exists}
                   <Badge
                     variant="outline"
-                    class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                    class="text-[11px] h-4 px-1 border-success/30 bg-success/10 text-success"
                   >
                     {(data.profile.files.cv.size / 1024).toFixed(1)} KB
                   </Badge>
                 {:else}
                   <Badge
                     variant="outline"
-                    class="text-[11px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    class="text-[11px] h-4 px-1 border-warning/30 bg-warning/10 text-warning"
                     >missing</Badge
                   >
                 {/if}
@@ -1438,7 +1442,7 @@
                           onclick={() => openCv('reprocess')}
                           disabled={!data.profile.files.cv.exists}
                         >
-                          <Wand2 class="size-3 text-amber-400" /> Reprocess
+                          <Wand2 class="size-3 text-accent-strong" /> Reprocess
                         </Button>
                       {/snippet}
                     </Tooltip.Trigger>
@@ -1460,7 +1464,7 @@
                           onclick={() => copyText(data.profile.files.cv.path, 'cv')}
                         >
                           {#if copiedKey === 'cv'}
-                            <Check class="size-3 text-emerald-400" /> Copied
+                            <Check class="size-3 text-success" /> Copied
                           {:else}
                             <Copy class="size-3" /> Copy path
                           {/if}
@@ -1478,14 +1482,14 @@
 
           <!-- ============ General CV PDF -- what LinkedIn Easy Apply uploads ============ -->
           <div class="flex items-start gap-3 p-3 rounded-md border border-border/40 bg-card/50">
-            <FileText class="size-4 text-blue-400/80 mt-0.5 flex-shrink-0" />
+            <FileText class="size-4 text-blue-700 dark:text-blue-400/80 mt-0.5 flex-shrink-0" />
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs font-medium">General CV PDF (cv-general.pdf)</span>
                 {#if generalCv.exists && !generalCv.outdated}
                   <Badge
                     variant="outline"
-                    class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                    class="text-[11px] h-4 px-1 border-success/30 bg-success/10 text-success"
                   >
                     {(generalCv.bytes ?? 0) > 0
                       ? ((generalCv.bytes ?? 0) / 1024).toFixed(1) + ' KB'
@@ -1499,23 +1503,23 @@
                 {:else if generalCv.exists && generalCv.outdated}
                   <Badge
                     variant="outline"
-                    class="text-[11px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    class="text-[11px] h-4 px-1 border-warning/30 bg-warning/10 text-warning"
                   >
                     outdated
                   </Badge>
-                  <span class="text-[11px] text-amber-300/80"
+                  <span class="text-[11px] text-warning"
                     >cv.md was edited after the PDF was generated</span
                   >
                 {:else if generalCv.missingSource}
                   <Badge
                     variant="outline"
-                    class="text-[11px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    class="text-[11px] h-4 px-1 border-warning/30 bg-warning/10 text-warning"
                     >cv.md missing</Badge
                   >
                 {:else}
                   <Badge
                     variant="outline"
-                    class="text-[11px] h-4 px-1 border-zinc-500/40 bg-zinc-500/10 text-muted-foreground"
+                    class="text-[11px] h-4 px-1 border-border bg-muted text-muted-foreground"
                     >not generated</Badge
                   >
                 {/if}
@@ -1553,11 +1557,11 @@
                           disabled={generatingGeneralCv || generalCv.missingSource}
                         >
                           {#if generatingGeneralCv}
-                            <Loader2 class="size-3 animate-spin text-blue-400" /> Generating…
+                            <Loader2 class="size-3 animate-spin text-blue-700 dark:text-blue-400" /> Generating…
                           {:else if generalCv.exists && !generalCv.outdated}
                             <Wand2 class="size-3" /> Regenerate
                           {:else}
-                            <Wand2 class="size-3 text-blue-400" /> Generate
+                            <Wand2 class="size-3 text-blue-700 dark:text-blue-400" /> Generate
                           {/if}
                         </Button>
                       {/snippet}
@@ -1606,7 +1610,7 @@
                             onclick={() => copyText(generalCv.path, 'general-cv')}
                           >
                             {#if copiedKey === 'general-cv'}
-                              <Check class="size-3 text-emerald-400" /> Copied
+                              <Check class="size-3 text-success" /> Copied
                             {:else}
                               <Copy class="size-3" /> Copy path
                             {/if}
@@ -1622,7 +1626,7 @@
               </Tooltip.Provider>
 
               {#if generalCv.missingSource}
-                <p class="text-[11px] text-amber-300/85 mt-2 leading-relaxed">
+                <p class="text-[11px] text-warning mt-2 leading-relaxed">
                   Add your CV first (use the row above) — the general PDF can't be generated without <code
                     class="font-mono">cv.md</code
                   >.
@@ -1648,14 +1652,14 @@
                 {#if data.profile.files.profileMd.exists}
                   <Badge
                     variant="outline"
-                    class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                    class="text-[11px] h-4 px-1 border-success/30 bg-success/10 text-success"
                   >
                     {(data.profile.files.profileMd.size / 1024).toFixed(1)} KB
                   </Badge>
                 {:else}
                   <Badge
                     variant="outline"
-                    class="text-[11px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    class="text-[11px] h-4 px-1 border-warning/30 bg-warning/10 text-warning"
                     >missing</Badge
                   >
                 {/if}
@@ -1678,7 +1682,7 @@
               onclick={() => copyText(data.profile.files.profileMd.path, 'profileMd')}
             >
               {#if copiedKey === 'profileMd'}
-                <Check class="size-3 text-emerald-400" /> Copied
+                <Check class="size-3 text-success" /> Copied
               {:else}
                 <Copy class="size-3" /> Copy path
               {/if}
@@ -1699,29 +1703,31 @@
         description="Irreversible actions hidden behind a type-to-confirm dialog. Three scopes: profile-only (keeps tracker), jobs-only (keeps profile + targeting + sources), or everything (clean slate). Modified files get .bak backups."
         storageKey="danger-zone"
         defaultOpen={false}
-        class="border-red-500/30 bg-red-500/[0.02]"
+        class="border-destructive/30 bg-destructive/10"
       >
-        {#snippet icon()}<ShieldAlert class="size-3.5 text-red-400/80" />{/snippet}
+        {#snippet icon()}<ShieldAlert class="size-3.5 text-destructive" />{/snippet}
         <div class="space-y-2">
-          <div class="flex items-start gap-3 p-3 rounded-md border border-red-500/30 bg-red-500/5">
-            <ShieldAlert class="size-4 text-red-300 mt-0.5 flex-shrink-0" />
+          <div
+            class="flex items-start gap-3 p-3 rounded-md border border-destructive/30 bg-destructive/10"
+          >
+            <ShieldAlert class="size-4 text-destructive mt-0.5 flex-shrink-0" />
             <div class="flex-1 min-w-0 space-y-1.5">
-              <div class="text-xs font-medium text-red-200">Reset to scratch</div>
-              <p class="text-[11px] text-red-200/80 leading-relaxed">
+              <div class="text-xs font-medium text-destructive">Reset to scratch</div>
+              <p class="text-[11px] text-destructive leading-relaxed">
                 Opens a dialog with three destructiveness levels:
               </p>
               <ul
-                class="text-[11px] text-red-200/80 leading-relaxed list-disc list-inside ml-1 space-y-0.5"
+                class="text-[11px] text-destructive leading-relaxed list-disc list-inside ml-1 space-y-0.5"
               >
                 <li>
-                  <strong class="text-red-200">Profile only</strong> — wipes
+                  <strong class="text-destructive">Profile only</strong> — wipes
                   <code class="font-mono">profile.yml</code>,
                   <code class="font-mono">cv.md</code>, and
                   <code class="font-mono">modes/_profile.md</code>. Tracker / reports / sources are
                   kept.
                 </li>
                 <li>
-                  <strong class="text-red-200">Jobs data only</strong> — wipes
+                  <strong class="text-destructive">Jobs data only</strong> — wipes
                   <code class="font-mono">applications.md</code>,
                   <code class="font-mono">pipeline.md</code>, scan history, scores, every report,
                   every tailored CV PDF, follow-ups, interview-prep company files, issues, and the
@@ -1730,18 +1736,18 @@
                   working.
                 </li>
                 <li>
-                  <strong class="text-red-200">Everything</strong> — strict superset of the above, plus
-                  saved filter profiles, autopilot schedule, and the story bank. Closest thing to a clean
-                  slate.
+                  <strong class="text-destructive">Everything</strong> — strict superset of the above,
+                  plus saved filter profiles, autopilot schedule, and the story bank. Closest thing to
+                  a clean slate.
                 </li>
               </ul>
-              <p class="text-[11px] text-red-200/70 leading-relaxed">
+              <p class="text-[11px] text-destructive leading-relaxed">
                 All modes back up modified files to <code class="font-mono">.bak</code> first.
                 <code class="font-mono">.env</code> / API keys / Python
                 <code class="font-mono">.venv</code>
                 / Playwright sessions / <code class="font-mono">portals.yml</code> are never touched
                 by Profile-only or Jobs-only resets. You'll have to type
-                <code class="font-mono text-red-200">RESET</code> in the dialog to enable the button.
+                <code class="font-mono text-destructive">RESET</code> in the dialog to enable the button.
               </p>
             </div>
             <div class="flex flex-col gap-1.5 flex-shrink-0">
@@ -1749,7 +1755,7 @@
                 type="button"
                 variant="outline"
                 size="sm"
-                class="h-7 text-xs gap-1.5 border-orange-500/40 text-orange-300 hover:bg-orange-500/15 hover:text-orange-200"
+                class="h-7 text-xs gap-1.5 border-warning/30 text-warning hover:bg-warning/15 hover:text-warning"
                 onclick={() => {
                   resetInitialScope = 'jobs';
                   resetOpen = true;
@@ -1761,7 +1767,7 @@
                 type="button"
                 variant="outline"
                 size="sm"
-                class="h-7 text-xs gap-1.5 border-red-500/40 text-red-300 hover:bg-red-500/15 hover:text-red-200"
+                class="h-7 text-xs gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive"
                 onclick={() => {
                   resetInitialScope = 'profile';
                   resetOpen = true;
@@ -1792,8 +1798,8 @@
   {#if dirty}
     <div class="sticky bottom-0 z-20 border-t bg-card/95 backdrop-blur-md">
       <div class="max-w-3xl mx-auto px-6 py-3 flex items-center gap-3">
-        <AlertCircle class="size-4 text-amber-300" />
-        <span class="text-xs text-amber-200 flex-1">Unsaved changes to your profile</span>
+        <AlertCircle class="size-4 text-warning" />
+        <span class="text-xs text-warning flex-1">Unsaved changes to your profile</span>
         <!-- Shared destructive-button component (ConfirmButton) — same
              red-armed double-click pattern as every other destructive
              action across the app. -->

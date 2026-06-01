@@ -29,12 +29,12 @@
     displayScore == null
       ? 'text-muted-foreground/50'
       : displayScore >= 4.5
-        ? 'text-emerald-300'
+        ? 'text-success'
         : displayScore >= 4
-          ? 'text-emerald-400/90'
+          ? 'text-success/90'
           : displayScore >= 3
-            ? 'text-amber-400/90'
-            : 'text-red-400/80',
+            ? 'text-warning/90'
+            : 'text-destructive/80',
   );
   let scoreVerdict = $derived.by(() => {
     if (displayScore == null) return 'Not yet scored';
@@ -87,17 +87,22 @@
   };
 
   const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
-    remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300', tip: 'Fully remote' },
+    remote: {
+      label: 'Remote',
+      icon: Wifi,
+      tint: 'text-emerald-700 dark:text-emerald-300',
+      tip: 'Fully remote',
+    },
     hybrid: {
       label: 'Hybrid',
       icon: Building,
-      tint: 'text-amber-300',
+      tint: 'text-amber-700 dark:text-amber-300',
       tip: 'Hybrid — some office presence required',
     },
     onsite: {
       label: 'On-site',
       icon: Building,
-      tint: 'text-red-300',
+      tint: 'text-red-700 dark:text-red-300',
       tip: 'On-site — must work from a specific location',
     },
     unknown: {
@@ -247,7 +252,7 @@
               {#snippet child({ props })}
                 <span
                   {...props}
-                  class="inline-flex items-center gap-0.5 text-[11px] text-emerald-400/85 cursor-help truncate"
+                  class="inline-flex items-center gap-0.5 text-[11px] text-success/85 cursor-help truncate"
                 >
                   <DollarSign class="size-2.5 flex-shrink-0" />
                   <span class="truncate">{job.salary}</span>
@@ -282,10 +287,7 @@
           <Tooltip.Root>
             <Tooltip.Trigger>
               {#snippet child({ props })}
-                <span
-                  {...props}
-                  class="text-emerald-400/70 hover:text-emerald-300 transition-colors"
-                >
+                <span {...props} class="text-success/70 hover:text-success transition-colors">
                   <FileBadge2 class="size-3" />
                 </span>
               {/snippet}

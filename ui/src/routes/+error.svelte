@@ -36,20 +36,20 @@
     400: {
       title: 'That request looked off',
       description: "The link or request didn't pass validation. Check it and try again.",
-      accent: 'text-amber-400',
+      accent: 'text-warning',
       recovery: 'home',
     },
     401: {
       title: 'Please sign in',
       description: 'You need to be signed in to see this.',
-      accent: 'text-amber-400',
+      accent: 'text-warning',
       recovery: 'signin',
     },
     403: {
       title: 'No access',
       description:
         "You don't have permission to view this. If that's unexpected, make sure you're signed in to the right account.",
-      accent: 'text-red-400',
+      accent: 'text-destructive',
       recovery: 'signin',
     },
     404: {
@@ -61,19 +61,19 @@
     500: {
       title: 'Something broke',
       description: "That's on us — the error's been logged. Give it another try in a moment.",
-      accent: 'text-red-400',
+      accent: 'text-destructive',
       recovery: 'retry',
     },
     502: {
       title: 'Bad gateway',
       description: "An upstream service didn't respond. Try again shortly.",
-      accent: 'text-red-400',
+      accent: 'text-destructive',
       recovery: 'retry',
     },
     503: {
       title: 'Temporarily unavailable',
       description: 'The server is briefly unavailable. Try again in a moment.',
-      accent: 'text-amber-400',
+      accent: 'text-warning',
       recovery: 'retry',
     },
   };
@@ -91,7 +91,7 @@
       title: 'Something went wrong',
       description:
         cleanMessage || "An unexpected error occurred. We've logged it — try again or head home.",
-      accent: 'text-red-400',
+      accent: 'text-destructive',
       recovery: 'retry',
     },
   );

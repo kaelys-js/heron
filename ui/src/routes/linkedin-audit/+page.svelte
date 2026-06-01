@@ -105,9 +105,9 @@
   }
 
   function sevTint(s: string): string {
-    if (s === 'error') return 'bg-red-500/15 text-red-200 border-red-500/40';
-    if (s === 'warn') return 'bg-amber-500/15 text-amber-200 border-amber-500/40';
-    return 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40';
+    if (s === 'error') return 'bg-destructive/15 text-destructive border-destructive/40';
+    if (s === 'warn') return 'bg-warning/15 text-warning border-warning/40';
+    return 'bg-info/15 text-info border-info/40';
   }
 </script>
 
@@ -119,7 +119,7 @@
   <header class="flex items-start justify-between">
     <div>
       <h1 class="text-2xl font-semibold">LinkedIn audit</h1>
-      <p class="text-sm text-zinc-400">
+      <p class="text-sm text-muted-foreground">
         Comprehensive review of your profile + account settings + activity.
         {#if data.report}
           Last run {new Date(data.report.auditedAt).toLocaleString()} · grade
@@ -146,30 +146,30 @@
   </header>
 
   {#if !data.report}
-    <div class="rounded-lg border border-zinc-700 bg-zinc-900/40 p-8 text-center">
-      <p class="text-zinc-300">No audit run yet.</p>
-      <p class="mt-2 text-xs text-zinc-500">
+    <div class="rounded-lg border border-border bg-card p-8 text-center">
+      <p class="text-muted-foreground">No audit run yet.</p>
+      <p class="mt-2 text-xs text-muted-foreground">
         First run requires a logged-in LinkedIn session. Click "Log in to LinkedIn" to open a
         browser, sign in once, then close it. Subsequent audits run headless.
       </p>
     </div>
   {:else if open.length === 0}
-    <div class="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-6 text-center">
-      <p class="text-emerald-200">All findings resolved. Profile + account look strong.</p>
+    <div class="rounded-lg border border-success/40 bg-success/10 p-6 text-center">
+      <p class="text-success">All findings resolved. Profile + account look strong.</p>
     </div>
   {:else}
     <!-- Summary row -->
     <div class="grid grid-cols-3 gap-3">
-      <div class="rounded-lg border border-red-500/40 bg-red-500/10 p-4">
-        <div class="text-xs uppercase text-red-300">Errors</div>
+      <div class="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+        <div class="text-xs uppercase text-destructive">Errors</div>
         <div class="font-mono text-3xl">{errors.length}</div>
       </div>
-      <div class="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
-        <div class="text-xs uppercase text-amber-300">Warnings</div>
+      <div class="rounded-lg border border-warning/40 bg-warning/10 p-4">
+        <div class="text-xs uppercase text-warning">Warnings</div>
         <div class="font-mono text-3xl">{warns.length}</div>
       </div>
-      <div class="rounded-lg border border-cyan-500/40 bg-cyan-500/10 p-4">
-        <div class="text-xs uppercase text-cyan-300">Info</div>
+      <div class="rounded-lg border border-info/40 bg-info/10 p-4">
+        <div class="text-xs uppercase text-info">Info</div>
         <div class="font-mono text-3xl">{infos.length}</div>
       </div>
     </div>
@@ -177,7 +177,7 @@
     <!-- Findings -->
     <div class="space-y-3">
       {#each open as f (f.kind)}
-        <div class="rounded-lg border border-zinc-700 bg-zinc-900/40 p-4">
+        <div class="rounded-lg border border-border bg-card p-4">
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1">
               <div class="flex items-center gap-2">
@@ -187,17 +187,17 @@
                 <Badge variant="outline" class="text-xs">{f.category}</Badge>
                 <span class="font-medium">{f.title}</span>
               </div>
-              <p class="mt-2 text-sm text-zinc-400">{f.detail}</p>
+              <p class="mt-2 text-sm text-muted-foreground">{f.detail}</p>
               {#if f.settingsPath}
-                <div class="mt-2 rounded border border-zinc-800 bg-zinc-950/50 p-2 text-xs">
-                  <span class="text-zinc-500">Settings path:</span>
-                  <span class="font-mono text-cyan-300">{f.settingsPath}</span>
+                <div class="mt-2 rounded border border-border bg-muted p-2 text-xs">
+                  <span class="text-muted-foreground">Settings path:</span>
+                  <span class="font-mono text-info">{f.settingsPath}</span>
                 </div>
               {/if}
               {#if f.paste}
-                <div class="mt-2 rounded border border-emerald-500/30 bg-emerald-500/5 p-3">
+                <div class="mt-2 rounded border border-success/30 bg-success/5 p-3">
                   <div class="mb-1 flex items-center justify-between">
-                    <span class="text-xs uppercase tracking-wide text-emerald-300"
+                    <span class="text-xs uppercase tracking-wide text-success"
                       >Paste this into LinkedIn</span
                     >
                     <Button
@@ -213,7 +213,7 @@
                     </Button>
                   </div>
                   <pre
-                    class="whitespace-pre-wrap break-words font-mono text-xs text-zinc-200">{f.paste}</pre>
+                    class="whitespace-pre-wrap break-words font-mono text-xs text-foreground">{f.paste}</pre>
                 </div>
               {/if}
             </div>

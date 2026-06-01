@@ -98,9 +98,9 @@
     <Sheet.Header class="px-5 pt-5 pb-3 border-b">
       <div class="flex items-start gap-3">
         <div
-          class="size-9 rounded-lg bg-red-500/10 ring-1 ring-red-500/40 flex items-center justify-center flex-shrink-0"
+          class="size-9 rounded-lg bg-destructive/10 ring-1 ring-destructive/40 flex items-center justify-center flex-shrink-0"
         >
-          <Skull class="size-4 text-red-300" />
+          <Skull class="size-4 text-destructive" />
         </div>
         <div class="flex-1 min-w-0">
           <Sheet.Title class="text-base">Capture this rejection</Sheet.Title>
@@ -115,7 +115,7 @@
     <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
       <div class="space-y-1.5">
         <Label class="text-xs flex items-center gap-1.5">
-          <CheckCircle2 class="size-3 text-emerald-400" />
+          <CheckCircle2 class="size-3 text-success" />
           What went well?
         </Label>
         <Textarea
@@ -130,7 +130,7 @@
 
       <div class="space-y-1.5">
         <Label class="text-xs flex items-center gap-1.5">
-          <AlertCircle class="size-3 text-amber-400" />
+          <AlertCircle class="size-3 text-warning" />
           What surprised you?
         </Label>
         <Textarea
@@ -145,7 +145,7 @@
 
       <div class="space-y-1.5">
         <Label class="text-xs flex items-center gap-1.5">
-          <ThumbsDown class="size-3 text-red-400" />
+          <ThumbsDown class="size-3 text-destructive" />
           What would you change?
         </Label>
         <Textarea
@@ -159,7 +159,7 @@
       </div>
 
       <div class="rounded-md border border-border/40 bg-muted/30 px-3 py-2 flex items-start gap-2">
-        <BookOpen class="size-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+        <BookOpen class="size-3.5 text-info mt-0.5 flex-shrink-0" />
         <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
           Saved to <code class="font-mono">interview-prep/story-bank.md</code>. Future runs of
           <code class="font-mono">evaluate</code>, <code class="font-mono">interview-prep</code>,

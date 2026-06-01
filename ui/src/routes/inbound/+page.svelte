@@ -39,23 +39,27 @@
   }
 
   function kindTint(kind: string): string {
-    if (kind === 'real-role') return 'bg-emerald-500/15 text-emerald-200 border-emerald-500/40';
-    if (kind === 'mass-blast') return 'bg-zinc-500/15 text-zinc-400 border-zinc-500/40';
-    if (kind === 'scam') return 'bg-red-500/15 text-red-200 border-red-500/40';
-    if (kind === 'referral-ask') return 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40';
-    if (kind === 'status-update') return 'bg-amber-500/15 text-amber-200 border-amber-500/40';
-    return 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30';
+    if (kind === 'real-role')
+      return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-200 border-emerald-500/40';
+    if (kind === 'mass-blast') return 'bg-zinc-500/15 text-muted-foreground border-border';
+    if (kind === 'scam') return 'bg-red-500/15 text-red-700 dark:text-red-200 border-red-500/40';
+    if (kind === 'referral-ask')
+      return 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-200 border-cyan-500/40';
+    if (kind === 'status-update')
+      return 'bg-amber-500/15 text-amber-700 dark:text-amber-200 border-amber-500/40';
+    return 'bg-zinc-500/10 text-muted-foreground border-border';
   }
 
   function stateTint(state?: string): string {
-    if (!state) return 'bg-zinc-500/10 text-zinc-400';
-    if (state === 'new') return 'bg-violet-500/15 text-violet-200';
-    if (state === 'drafted') return 'bg-cyan-500/15 text-cyan-200';
-    if (state === 'sent' || state === 'awaiting-reply') return 'bg-blue-500/15 text-blue-200';
-    if (state === 'engaged') return 'bg-emerald-500/20 text-emerald-200';
-    if (state === 'went-silent') return 'bg-amber-500/15 text-amber-200';
-    if (state === 'closed') return 'bg-zinc-500/5 text-zinc-500';
-    return 'bg-zinc-500/10 text-zinc-300';
+    if (!state) return 'bg-zinc-500/10 text-muted-foreground';
+    if (state === 'new') return 'bg-violet-500/15 text-violet-700 dark:text-violet-200';
+    if (state === 'drafted') return 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-200';
+    if (state === 'sent' || state === 'awaiting-reply')
+      return 'bg-blue-500/15 text-blue-700 dark:text-blue-200';
+    if (state === 'engaged') return 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-200';
+    if (state === 'went-silent') return 'bg-amber-500/15 text-amber-700 dark:text-amber-200';
+    if (state === 'closed') return 'bg-zinc-500/5 text-muted-foreground';
+    return 'bg-zinc-500/10 text-muted-foreground';
   }
 
   function ago(ms: number): string {
@@ -74,7 +78,7 @@
   <header class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-semibold">Inbound recruiter leads</h1>
-      <p class="text-sm text-zinc-400">{data.leads.length} total · email + LinkedIn DMs</p>
+      <p class="text-sm text-muted-foreground">{data.leads.length} total · email + LinkedIn DMs</p>
     </div>
     <Button onclick={pollLinkedIn} disabled={busy !== null}>
       <RefreshCw class="mr-2 size-4" />
@@ -84,10 +88,10 @@
 
   <div class="flex flex-wrap gap-2">
     <label class="text-xs">
-      <span class="text-zinc-400">Kind</span>
+      <span class="text-muted-foreground">Kind</span>
       <select
         bind:value={kindFilter}
-        class="ml-2 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+        class="ml-2 rounded border border-input bg-background px-2 py-1"
       >
         <option value="all">all</option>
         <option value="real-role">real-role</option>
@@ -99,10 +103,10 @@
       </select>
     </label>
     <label class="text-xs">
-      <span class="text-zinc-400">State</span>
+      <span class="text-muted-foreground">State</span>
       <select
         bind:value={stateFilter}
-        class="ml-2 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+        class="ml-2 rounded border border-input bg-background px-2 py-1"
       >
         <option value="all">all</option>
         <option value="new">new</option>
@@ -118,23 +122,23 @@
   </div>
 
   {#if filteredLeads.length === 0}
-    <div class="rounded-lg border border-zinc-700 bg-zinc-900/40 p-8 text-center">
-      <p class="text-zinc-400">No inbound leads match these filters.</p>
+    <div class="rounded-lg border border-border bg-card p-8 text-center">
+      <p class="text-muted-foreground">No inbound leads match these filters.</p>
     </div>
   {:else}
     <div class="space-y-2">
       {#each filteredLeads as l (l.id)}
         <a
           href={`/inbound/${l.id}`}
-          class="block rounded-lg border border-zinc-700 bg-zinc-900/40 p-4 hover:border-zinc-500"
+          class="block rounded-lg border border-border bg-card p-4 hover:border-input"
         >
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 {#if l.channel === 'linkedin-dm'}
-                  <Linkedin class="size-3.5 text-sky-400" />
+                  <Linkedin class="size-3.5 text-sky-700 dark:text-sky-400" />
                 {:else}
-                  <Mail class="size-3.5 text-zinc-400" />
+                  <Mail class="size-3.5 text-muted-foreground" />
                 {/if}
                 <span class="font-medium truncate">{l.senderName || '(unknown sender)'}</span>
                 <span class="rounded border px-1.5 py-0.5 text-[11px] {kindTint(l.kind)}"
@@ -145,12 +149,14 @@
                     >{l.thread.state}</span
                   >
                 {/if}
-                <span class="ml-auto text-xs text-zinc-500">{ago(l.arrivedAt)}</span>
+                <span class="ml-auto text-xs text-muted-foreground">{ago(l.arrivedAt)}</span>
               </div>
               {#if l.subject}
-                <div class="mt-1 text-sm text-zinc-200">{l.subject}</div>
+                <div class="mt-1 text-sm text-foreground">{l.subject}</div>
               {/if}
-              <div class="mt-1 line-clamp-2 text-xs text-zinc-400">{l.body.slice(0, 240)}</div>
+              <div class="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                {l.body.slice(0, 240)}
+              </div>
             </div>
           </div>
         </a>

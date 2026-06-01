@@ -175,7 +175,7 @@
           <div
             class="size-10 rounded-lg bg-orange-500/10 ring-1 ring-orange-500/40 flex items-center justify-center"
           >
-            <Code class="size-5 text-orange-400" />
+            <Code class="size-5 text-orange-600 dark:text-orange-400" />
           </div>
           <h1 class="text-2xl font-semibold tracking-tight">Drill mode</h1>
         </div>
@@ -246,7 +246,7 @@
             <Card.Root>
               <Card.Header class="pb-2">
                 <Card.Title class="text-sm flex items-center gap-1.5"
-                  ><Sparkles class="size-3 text-amber-400" /> Coach feedback</Card.Title
+                  ><Sparkles class="size-3 text-accent-strong" /> Coach feedback</Card.Title
                 >
               </Card.Header>
               <Card.Content class="space-y-2">
@@ -263,19 +263,27 @@
                       Round {i + 1}
                     </div>
                     {#if f.working}<div>
-                        <span class="text-emerald-300 font-mono text-[9px]">WORKING</span>
+                        <span class="text-emerald-700 dark:text-emerald-300 font-mono text-[9px]"
+                          >WORKING</span
+                        >
                         <span class="text-muted-foreground">{f.working}</span>
                       </div>{/if}
                     {#if f.watch}<div>
-                        <span class="text-amber-300 font-mono text-[9px]">WATCH</span>
+                        <span class="text-amber-700 dark:text-amber-300 font-mono text-[9px]"
+                          >WATCH</span
+                        >
                         <span class="text-muted-foreground">{f.watch}</span>
                       </div>{/if}
                     {#if f.suggest}<div>
-                        <span class="text-cyan-300 font-mono text-[9px]">SUGGEST</span>
+                        <span class="text-cyan-700 dark:text-cyan-300 font-mono text-[9px]"
+                          >SUGGEST</span
+                        >
                         <span class="text-muted-foreground">{f.suggest}</span>
                       </div>{/if}
                     {#if f.question}<div>
-                        <span class="text-fuchsia-300 font-mono text-[9px]">QUESTION</span>
+                        <span class="text-fuchsia-700 dark:text-fuchsia-300 font-mono text-[9px]"
+                          >QUESTION</span
+                        >
                         <span class="text-muted-foreground italic">"{f.question}"</span>
                       </div>{/if}
                   </div>
@@ -323,14 +331,14 @@
                             y1={from.y + 20}
                             x2={to.x + 50}
                             y2={to.y + 20}
-                            stroke="#666"
+                            stroke="var(--border)"
                             stroke-width="2"
                           />
                           {#if edge.label}
                             <text
                               x={(from.x + to.x) / 2 + 50}
                               y={(from.y + to.y) / 2 + 12}
-                              fill="#999"
+                              fill="var(--muted-foreground)"
                               font-size="10"
                               text-anchor="middle">{edge.label}</text
                             >
@@ -388,7 +396,7 @@
                         />
                         <button
                           onclick={() => removeNode(node.id)}
-                          class="text-muted-foreground hover:text-red-300"
+                          class="text-muted-foreground hover:text-destructive"
                           aria-label="Remove node"><X class="size-3" /></button
                         >
                       </div>
@@ -426,7 +434,7 @@
                         </select>
                         <button
                           onclick={() => removeEdge(i)}
-                          class="text-muted-foreground hover:text-red-300"
+                          class="text-muted-foreground hover:text-destructive"
                           aria-label="Remove edge"><X class="size-3" /></button
                         >
                       </div>
@@ -454,7 +462,7 @@
             <Card.Root>
               <Card.Header class="pb-2">
                 <Card.Title class="text-sm flex items-center gap-1.5"
-                  ><Sparkles class="size-3 text-amber-400" /> Coach feedback</Card.Title
+                  ><Sparkles class="size-3 text-accent-strong" /> Coach feedback</Card.Title
                 >
               </Card.Header>
               <Card.Content class="space-y-2">
@@ -471,19 +479,27 @@
                       Round {i + 1}
                     </div>
                     {#if f.working}<div>
-                        <span class="text-emerald-300 font-mono text-[9px]">WORKING</span>
+                        <span class="text-emerald-700 dark:text-emerald-300 font-mono text-[9px]"
+                          >WORKING</span
+                        >
                         <span class="text-muted-foreground">{f.working}</span>
                       </div>{/if}
                     {#if f.watch}<div>
-                        <span class="text-amber-300 font-mono text-[9px]">WATCH</span>
+                        <span class="text-amber-700 dark:text-amber-300 font-mono text-[9px]"
+                          >WATCH</span
+                        >
                         <span class="text-muted-foreground">{f.watch}</span>
                       </div>{/if}
                     {#if f.suggest}<div>
-                        <span class="text-cyan-300 font-mono text-[9px]">SUGGEST</span>
+                        <span class="text-cyan-700 dark:text-cyan-300 font-mono text-[9px]"
+                          >SUGGEST</span
+                        >
                         <span class="text-muted-foreground">{f.suggest}</span>
                       </div>{/if}
                     {#if f.question}<div>
-                        <span class="text-fuchsia-300 font-mono text-[9px]">QUESTION</span>
+                        <span class="text-fuchsia-700 dark:text-fuchsia-300 font-mono text-[9px]"
+                          >QUESTION</span
+                        >
                         <span class="text-muted-foreground italic">"{f.question}"</span>
                       </div>{/if}
                   </div>

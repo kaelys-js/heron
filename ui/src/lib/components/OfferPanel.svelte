@@ -205,7 +205,7 @@
   }
 </script>
 
-<section id="offer" class="space-y-4 rounded-lg border border-zinc-700 bg-zinc-900/40 p-5">
+<section id="offer" class="space-y-4 rounded-lg border border-border bg-card p-5">
   <header class="flex items-center justify-between">
     <h3 class="text-base font-medium">Offer & negotiation</h3>
     {#if offer}
@@ -220,10 +220,10 @@
 
   <div class="grid grid-cols-2 gap-3 text-sm">
     <label class="flex items-center gap-2">
-      <span class="w-20 text-xs text-zinc-400">Currency</span>
+      <span class="w-20 text-xs text-muted-foreground">Currency</span>
       <select
         bind:value={formCurrency}
-        class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+        class="flex-1 rounded border border-input bg-muted px-2 py-1"
       >
         <option>USD</option>
         <option>EUR</option>
@@ -234,59 +234,59 @@
       </select>
     </label>
     <label class="flex items-center gap-2">
-      <span class="w-20 text-xs text-zinc-400">Deadline</span>
+      <span class="w-20 text-xs text-muted-foreground">Deadline</span>
       <input
         type="datetime-local"
         bind:value={formDeadline}
-        class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+        class="flex-1 rounded border border-input bg-muted px-2 py-1"
       />
     </label>
     <label class="flex items-center gap-2">
-      <span class="w-20 text-xs text-zinc-400">Base</span>
+      <span class="w-20 text-xs text-muted-foreground">Base</span>
       <input
         type="number"
         bind:value={formBase}
-        class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono"
+        class="flex-1 rounded border border-input bg-muted px-2 py-1 font-mono"
       />
     </label>
     <label class="flex items-center gap-2">
-      <span class="w-20 text-xs text-zinc-400">Bonus</span>
+      <span class="w-20 text-xs text-muted-foreground">Bonus</span>
       <input
         type="number"
         bind:value={formBonus}
-        class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono"
+        class="flex-1 rounded border border-input bg-muted px-2 py-1 font-mono"
       />
     </label>
     <label class="flex items-center gap-2">
-      <span class="w-20 text-xs text-zinc-400">Signing</span>
+      <span class="w-20 text-xs text-muted-foreground">Signing</span>
       <input
         type="number"
         bind:value={formSigning}
-        class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono"
+        class="flex-1 rounded border border-input bg-muted px-2 py-1 font-mono"
       />
     </label>
     <label class="flex items-center gap-2">
-      <span class="w-20 text-xs text-zinc-400">Equity</span>
+      <span class="w-20 text-xs text-muted-foreground">Equity</span>
       <input
         type="number"
         bind:value={formEquity}
-        class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono"
+        class="flex-1 rounded border border-input bg-muted px-2 py-1 font-mono"
       />
     </label>
     <label class="flex items-center gap-2">
-      <span class="w-20 text-xs text-zinc-400">Vest yrs</span>
+      <span class="w-20 text-xs text-muted-foreground">Vest yrs</span>
       <input
         type="number"
         bind:value={formEquityYears}
-        class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono"
+        class="flex-1 rounded border border-input bg-muted px-2 py-1 font-mono"
       />
     </label>
     <label class="flex items-center gap-2">
-      <span class="w-20 text-xs text-zinc-400">Other</span>
+      <span class="w-20 text-xs text-muted-foreground">Other</span>
       <input
         type="number"
         bind:value={formOther}
-        class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono"
+        class="flex-1 rounded border border-input bg-muted px-2 py-1 font-mono"
       />
     </label>
   </div>
@@ -311,8 +311,8 @@
   </div>
 
   {#if offer?.benchmark}
-    <div class="rounded border border-zinc-800 bg-zinc-950/50 p-3 text-sm">
-      <div class="text-xs text-zinc-400">
+    <div class="rounded border border-border bg-muted p-3 text-sm">
+      <div class="text-xs text-muted-foreground">
         Band — {offer.benchmark.source} · refreshed {new Date(
           offer.benchmark.refreshedAt,
         ).toLocaleDateString()}
@@ -330,8 +330,8 @@
   {/if}
 
   {#if showEvForm}
-    <div class="space-y-2 rounded border border-zinc-800 bg-zinc-950/50 p-3 text-sm">
-      <h4 class="text-xs uppercase text-zinc-400">EV calculator (rate each 1-5)</h4>
+    <div class="space-y-2 rounded border border-border bg-muted p-3 text-sm">
+      <h4 class="text-xs uppercase text-muted-foreground">EV calculator (rate each 1-5)</h4>
       {#each [{ k: 'growth', label: 'Growth fit', v: evGrowth }, { k: 'team', label: 'Team fit', v: evTeam }, { k: 'commute', label: 'Commute fit', v: evCommute }, { k: 'mission', label: 'Mission fit', v: evMission }, { k: 'wlb', label: 'Work-life balance', v: evWLB }] as row}
         <label class="flex items-center gap-3">
           <span class="w-40 text-xs">{row.label}</span>
@@ -355,9 +355,9 @@
       {/each}
       <Button size="sm" onclick={computeEv} disabled={busy === 'ev'}>Compute</Button>
       {#if evResult}
-        <div class="mt-2 rounded border border-emerald-500/30 bg-emerald-500/5 p-3">
+        <div class="mt-2 rounded border border-success/30 bg-success/5 p-3">
           <div class="text-lg font-mono">
-            EV {evResult.ev}/100 — <span class="text-emerald-300">{evResult.verdict}</span>
+            EV {evResult.ev}/100 — <span class="text-success">{evResult.verdict}</span>
           </div>
         </div>
       {/if}

@@ -17,5 +17,5 @@
     className,
   )}
 >
-  <Check class="size-3.5 text-emerald-400" />
+  <Check class="size-3.5 text-success" />
 </span>

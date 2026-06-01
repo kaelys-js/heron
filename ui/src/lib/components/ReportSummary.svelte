@@ -27,10 +27,10 @@
 
   let scoreClass = $derived.by(() => {
     if (summary.score == null) return 'border-border bg-muted text-muted-foreground';
-    if (summary.score >= 4.5) return 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200';
-    if (summary.score >= 4) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
-    if (summary.score >= 3) return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
-    return 'border-red-500/40 bg-red-500/10 text-red-300';
+    if (summary.score >= 4.5) return 'border-success/50 bg-success/15 text-success';
+    if (summary.score >= 4) return 'border-success/40 bg-success/10 text-success/90';
+    if (summary.score >= 3) return 'border-warning/40 bg-warning/10 text-warning';
+    return 'border-destructive/40 bg-destructive/10 text-destructive';
   });
 
   let scoreVerdict = $derived.by(() => {
@@ -47,19 +47,19 @@
     remote: {
       label: 'Remote',
       icon: Wifi,
-      tint: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/40',
+      tint: 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/40',
       tip: 'Fully remote — no required office presence',
     },
     hybrid: {
       label: 'Hybrid',
       icon: Building,
-      tint: 'text-amber-300 bg-amber-500/10 border-amber-500/40',
+      tint: 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/40',
       tip: 'Hybrid — some office presence required',
     },
     onsite: {
       label: 'On-site',
       icon: Building,
-      tint: 'text-red-300 bg-red-500/10 border-red-500/40',
+      tint: 'text-red-700 dark:text-red-300 bg-red-500/10 border-red-500/40',
       tip: 'On-site — must work from a specific location',
     },
     unknown: {
@@ -88,7 +88,7 @@
         label: 'Comp',
         value: summary.salary,
         tip: 'Salary / total comp range from the posting',
-        tint: 'text-emerald-300',
+        tint: 'text-success',
       });
     }
     const wm = WORK_MODE[summary.workMode];
@@ -264,10 +264,10 @@
       <!-- BG note (when present and non-trivial) -->
       {#if summary.bgNote}
         <div
-          class="flex items-start gap-2 px-3 py-2 rounded-md border border-amber-500/30 bg-amber-500/5 text-xs"
+          class="flex items-start gap-2 px-3 py-2 rounded-md border border-warning/30 bg-warning/5 text-xs"
         >
-          <ShieldCheck class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p class="text-amber-200/90 leading-relaxed">{summary.bgNote}</p>
+          <ShieldCheck class="size-3.5 text-warning mt-0.5 flex-shrink-0" />
+          <p class="text-warning/90 leading-relaxed">{summary.bgNote}</p>
         </div>
       {/if}
 
@@ -277,7 +277,7 @@
           {#if summary.strongMatches.length > 0}
             <div class="space-y-1.5">
               <div
-                class="text-[11px] uppercase tracking-wider text-emerald-400/80 font-medium flex items-center gap-1.5"
+                class="text-[11px] uppercase tracking-wider text-success/80 font-medium flex items-center gap-1.5"
               >
                 <CheckCircle2 class="size-3" />
                 Why you fit
@@ -285,7 +285,7 @@
               <ul class="space-y-1">
                 {#each summary.strongMatches as m}
                   <li class="text-xs leading-relaxed flex items-start gap-1.5">
-                    <span class="text-emerald-400/70 select-none flex-shrink-0">·</span>
+                    <span class="text-success/70 select-none flex-shrink-0">·</span>
                     <span class="text-foreground/90">{m.requirement}</span>
                   </li>
                 {/each}
@@ -295,7 +295,7 @@
           {#if summary.gaps.length > 0}
             <div class="space-y-1.5">
               <div
-                class="text-[11px] uppercase tracking-wider text-amber-400/80 font-medium flex items-center gap-1.5"
+                class="text-[11px] uppercase tracking-wider text-warning/80 font-medium flex items-center gap-1.5"
               >
                 <AlertTriangle class="size-3" />
                 Gaps to address
@@ -303,7 +303,7 @@
               <ul class="space-y-1">
                 {#each summary.gaps as g}
                   <li class="text-xs leading-relaxed flex items-start gap-1.5">
-                    <span class="text-amber-400/70 select-none flex-shrink-0">·</span>
+                    <span class="text-warning/70 select-none flex-shrink-0">·</span>
                     <span class="text-foreground/90">{g.requirement}</span>
                   </li>
                 {/each}

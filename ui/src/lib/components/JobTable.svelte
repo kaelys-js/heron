@@ -65,9 +65,9 @@
   });
 
   const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string }> = {
-    remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300' },
-    hybrid: { label: 'Hybrid', icon: Building, tint: 'text-amber-300' },
-    onsite: { label: 'On-site', icon: Building, tint: 'text-red-300' },
+    remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-700 dark:text-emerald-300' },
+    hybrid: { label: 'Hybrid', icon: Building, tint: 'text-amber-700 dark:text-amber-300' },
+    onsite: { label: 'On-site', icon: Building, tint: 'text-red-700 dark:text-red-300' },
     unknown: { label: '—', icon: Globe, tint: 'text-muted-foreground/50' },
   };
 
@@ -116,10 +116,10 @@
 
   function scoreColor(s: number | null | undefined): string {
     if (s == null) return 'text-muted-foreground/50';
-    if (s >= 4.5) return 'text-emerald-300';
-    if (s >= 4) return 'text-emerald-400/90';
-    if (s >= 3) return 'text-amber-400/90';
-    return 'text-red-400/80';
+    if (s >= 4.5) return 'text-success';
+    if (s >= 4) return 'text-success/90';
+    if (s >= 3) return 'text-warning/90';
+    return 'text-destructive/80';
   }
 
   type ColDef = {
@@ -334,7 +334,7 @@
               {/if}
             </td>
             <!-- Salary -->
-            <td class="px-3 py-1.5 align-middle text-emerald-400/80 truncate max-w-[180px]">
+            <td class="px-3 py-1.5 align-middle text-success/80 truncate max-w-[180px]">
               {#if job.salary}
                 <Tooltip.Provider delayDuration={300}>
                   <Tooltip.Root>
@@ -371,7 +371,7 @@
                   {#if job.pdfFile}
                     <Tooltip.Root>
                       <Tooltip.Trigger>
-                        {#snippet child({ props })}<span {...props} class="text-emerald-400/60"
+                        {#snippet child({ props })}<span {...props} class="text-success/60"
                             ><FileBadge2 class="size-3" /></span
                           >{/snippet}
                       </Tooltip.Trigger>

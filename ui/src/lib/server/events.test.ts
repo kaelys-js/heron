@@ -72,6 +72,19 @@ describe('logEvent', () => {
     expect(ev.stack).toBe('Error at line 1');
   });
 
+  it('threads an explicit kind onto the event (read by bell-gating)', () => {
+    // WHY: a product-domain event emitted on the system category needs an
+    // explicit kind to route loud -- eventKind() would otherwise derive
+    // technical from the category. logEvent must carry the override through.
+    const ev = logEvent('s', 't', { category: 'system', kind: 'product' });
+    expect(ev.kind).toBe('product');
+  });
+
+  it('leaves kind undefined when not provided (eventKind derives it)', () => {
+    const ev = logEvent('s', 't');
+    expect(ev.kind).toBeUndefined();
+  });
+
   it('tags userId from AsyncLocalStorage when no explicit override', () => {
     __currentUserId = '11111111-1111-1111-1111-111111111111';
     const ev = logEvent('s', 't');
@@ -160,6 +173,15 @@ describe('reportServerError', () => {
   it('respects category override', () => {
     const ev = reportServerError('s', 't', new Error('x'), { category: 'user' });
     expect(ev.category).toBe('user');
+  });
+
+  it('tags the event kind:technical so the bell never surfaces it', () => {
+    // WHY: server errors are diagnostics, not product problems -- they belong
+    // in the activity feed but must stay quiet (no toast/OS notify). The
+    // kind:technical tag is what the bell-gating reads, so it must be set even
+    // when the caller picks a non-system category.
+    const ev = reportServerError('s', 't', new Error('x'), { category: 'user' });
+    expect(ev.kind).toBe('technical');
   });
 });
 

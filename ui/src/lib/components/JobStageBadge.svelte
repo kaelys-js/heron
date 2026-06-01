@@ -34,17 +34,18 @@
   }
 
   function staleTint(days: number): string {
-    if (days >= 21) return 'border-zinc-600/40 bg-zinc-700/15 text-zinc-300 border-dashed';
-    if (days >= 14) return 'border-amber-500/40 bg-amber-500/10 text-amber-200';
-    if (days >= 7) return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200';
-    return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
+    if (days >= 21) return 'border-zinc-600/40 bg-zinc-700/15 text-muted-foreground border-dashed';
+    if (days >= 14) return 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-200';
+    if (days >= 7) return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-700 dark:text-cyan-200';
+    return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200';
   }
 
   function dueTint(hours: number): string {
-    if (hours < 0) return 'border-red-500/50 bg-red-500/15 text-red-200';
-    if (hours < 24) return 'border-amber-500/50 bg-amber-500/15 text-amber-200';
-    if (hours < 72) return 'border-orange-500/40 bg-orange-500/10 text-orange-200';
-    return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200';
+    if (hours < 0) return 'border-red-500/50 bg-red-500/15 text-red-700 dark:text-red-200';
+    if (hours < 24) return 'border-amber-500/50 bg-amber-500/15 text-amber-700 dark:text-amber-200';
+    if (hours < 72)
+      return 'border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-200';
+    return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-700 dark:text-cyan-200';
   }
 </script>
 
@@ -52,7 +53,7 @@
   <div class="flex flex-wrap items-center gap-1.5">
     {#if stage.ghostedAt}
       <span
-        class="rounded border border-zinc-600/40 bg-zinc-700/15 px-1.5 py-0.5 text-[11px] text-zinc-300 border-dashed"
+        class="rounded border border-zinc-600/40 bg-zinc-700/15 px-1.5 py-0.5 text-[11px] text-muted-foreground border-dashed"
       >
         ghosted
       </span>

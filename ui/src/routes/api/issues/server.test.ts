@@ -135,64 +135,36 @@ describe('pOST /api/issues', () => {
   });
 });
 
-describe('pOST /api/issues -- create (client error-reporter ingestion)', () => {
-  it('persists an open issue from a client report (no id, has summary)', async () => {
-    // WHY: this is THE bug fix -- a client-shaped body (browser/native error
-    // reporter) used to 400 ("id required to resolve") and never persist. It
-    // must now create + return an open issue in the same store the Inbox reads.
+describe('pOST /api/issues -- create branch removed (product-only endpoint)', () => {
+  // WHY: this endpoint used to accept a client-shaped body (browser/native
+  // error reporter) and CREATE an Issue. The reporting refactor makes Issue
+  // creation SERVER-ONLY (reportIssue); the browser's technical diagnostics now
+  // POST to /api/telemetry instead. So a summary/title-only body must NOT open
+  // an Issue here -- it 400s, and reportIssue is never reached from the route.
+  it('does NOT create an Issue from a client summary body (now 400)', async () => {
     const r = await post({
       source: 'window.onerror',
       level: 'error',
       summary: 'TypeError: x is not a function',
       route: '/inbox',
     });
-    expect(r.status).toBe(200);
-    expect(r.body.ok).toBe(true);
-    expect(r.body.issue.summary).toBe('TypeError: x is not a function');
-    expect(openIssues.length).toBe(1);
-    expect(lastReported?.source).toBe('window.onerror');
-    expect(lastReported?.severity).toBe('error');
+    expect(r.status).toBe(400);
+    expect(openIssues.length).toBe(0);
+    // The route must not have called the issue writer at all.
+    expect(lastReported).toBeNull();
   });
 
-  it('accepts `title` when `summary` is absent', async () => {
+  it('does NOT create an Issue from a `title`-only body either', async () => {
     const r = await post({ title: 'Boom', level: 'warn' });
-    expect(r.status).toBe(200);
-    expect(lastReported?.summary).toBe('Boom');
-    expect(lastReported?.severity).toBe('warn');
+    expect(r.status).toBe(400);
+    expect(openIssues.length).toBe(0);
+    expect(lastReported).toBeNull();
   });
 
-  it('maps level→severity (info/warn pass through, anything else → error)', async () => {
-    await post({ summary: 'a', level: 'info' });
-    expect(lastReported?.severity).toBe('info');
-    await post({ summary: 'b', level: 'bogus' });
-    expect(lastReported?.severity).toBe('error');
-    await post({ summary: 'c' }); // no level
-    expect(lastReported?.severity).toBe('error');
-  });
-
-  it('folds requestId + route + stack into the persisted detail (log pivot)', async () => {
-    // WHY: Issue has no requestId field, so the correlation id is carried in
-    // detail -- it's how a maintainer pivots from the issue to the server log.
-    await post({
-      summary: 'fetch failed',
-      requestId: 'req-abc-123',
-      route: '/queue',
-      stack: 'Error: fetch failed\n  at f (app.js:1)',
-    });
-    const detail = String(lastReported?.detail ?? '');
-    expect(detail).toContain('Request ID: req-abc-123');
-    expect(detail).toContain('Route: /queue');
-    expect(detail).toContain('at f (app.js:1)');
-  });
-
-  it('forwards the client dedupeKey so repeat errors collapse', async () => {
-    await post({ summary: 'dup', dedupeKey: 'client:onerror:dup' });
-    expect(lastReported?.dedupeKey).toBe('client:onerror:dup');
-  });
-
-  it('400 when neither id nor summary/title is present', async () => {
+  it('400 when neither id nor anything else is present', async () => {
     const r = await post({ source: 'client', level: 'error' });
     expect(r.status).toBe(400);
+    expect(lastReported).toBeNull();
   });
 });
 

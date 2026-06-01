@@ -144,7 +144,7 @@
               <Check
                 class={cn(
                   'size-3.5 mt-0.5 flex-shrink-0',
-                  active ? 'opacity-100 text-emerald-400' : 'opacity-0',
+                  active ? 'opacity-100 text-success' : 'opacity-0',
                 )}
               />
               <div class="flex-1 min-w-0">

@@ -76,7 +76,7 @@
 <div
   class={cn(
     'inline-flex items-stretch h-9 rounded-md border bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring/40 transition-shadow',
-    invalid && 'border-red-500/60 focus-within:ring-red-500/30',
+    invalid && 'border-destructive/60 focus-within:ring-destructive/30',
     className,
   )}
 >
@@ -100,7 +100,7 @@
       onkeydown={onKey}
       class={cn(
         'w-full h-full bg-transparent text-center text-sm font-mono tabular-nums outline-none',
-        invalid && 'text-red-300',
+        invalid && 'text-destructive',
       )}
       aria-label={label}
       aria-invalid={invalid}

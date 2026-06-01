@@ -395,10 +395,10 @@
         {:else if bodyError}
           <div class="px-5">
             <div
-              class="flex items-start gap-2 px-3 py-2.5 rounded-md border border-amber-500/40 bg-amber-500/10 text-xs"
+              class="flex items-start gap-2 px-3 py-2.5 rounded-md border border-warning/40 bg-warning/10 text-xs"
             >
-              <AlertTriangle class="size-3.5 text-amber-300 mt-0.5 flex-shrink-0" />
-              <div class="text-amber-200/90 flex-1">
+              <AlertTriangle class="size-3.5 text-warning mt-0.5 flex-shrink-0" />
+              <div class="text-warning/90 flex-1">
                 <strong>cv.md not found.</strong> Use the Replace tab to paste a CV — we'll create the
                 file for you.
               </div>
@@ -422,7 +422,7 @@
                         onclick={copyBody}
                       >
                         {#if copyState === 'copied'}
-                          <Check class="size-3 text-emerald-400" /> Copied
+                          <Check class="size-3 text-success" /> Copied
                         {:else}
                           <Copy class="size-3" /> Copy
                         {/if}
@@ -479,7 +479,7 @@
               with a backup to <code class="font-mono text-foreground/80">cv.md.bak</code>.
             </div>
             {#if editDirty}
-              <div class="text-[11px] text-amber-300 font-mono tabular-nums">unsaved</div>
+              <div class="text-[11px] text-warning font-mono tabular-nums">unsaved</div>
             {/if}
           </div>
           <div class="flex-1 overflow-hidden px-5">
@@ -498,7 +498,7 @@
               class={cn(
                 'gap-1.5 transition-all',
                 editDiscardArmed &&
-                  'bg-red-500/15 text-red-300 hover:bg-red-500/25 ring-1 ring-red-500/40 animate-pulse',
+                  'bg-destructive/15 text-destructive hover:bg-destructive/25 ring-1 ring-destructive/40 animate-pulse',
               )}
             >
               <RotateCcw class="size-3.5" />
@@ -519,10 +519,10 @@
       <Tabs.Content value="replace" class="flex-1 min-h-0 flex flex-col mt-3">
         <div class="px-5 pb-3 space-y-2">
           <div
-            class="flex items-start gap-2 px-3 py-2.5 rounded-md border border-amber-500/40 bg-amber-500/10 text-xs"
+            class="flex items-start gap-2 px-3 py-2.5 rounded-md border border-warning/40 bg-warning/10 text-xs"
           >
-            <AlertTriangle class="size-3.5 text-amber-300 mt-0.5 flex-shrink-0" />
-            <div class="text-amber-200/90 leading-relaxed">
+            <AlertTriangle class="size-3.5 text-warning mt-0.5 flex-shrink-0" />
+            <div class="text-warning/90 leading-relaxed">
               <strong>Replace overwrites the entire CV.</strong> The current file is backed up to
               <code class="font-mono">cv.md.bak</code> so you can recover if needed. After
               replacing, run
@@ -563,7 +563,7 @@
               class={cn(
                 'gap-1.5 transition-all',
                 replaceArmed &&
-                  'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40 animate-pulse',
+                  'bg-destructive/20 text-destructive hover:bg-destructive/30 border border-destructive/40 animate-pulse',
               )}
             >
               {#if replaceBusy}
@@ -583,7 +583,7 @@
         <div class="px-5 pb-3 space-y-3">
           <div class="rounded-md border border-border/40 bg-muted/30 p-3 space-y-2">
             <div class="flex items-baseline gap-2">
-              <Sparkles class="size-3.5 text-amber-400" />
+              <Sparkles class="size-3.5 text-accent-strong" />
               <span class="text-sm font-medium">What this does</span>
             </div>
             <ul
@@ -605,7 +605,7 @@
           <div
             class="flex items-start gap-2 px-3 py-2 rounded-md border border-border/40 bg-card text-[11px] text-muted-foreground"
           >
-            <Info class="size-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+            <Info class="size-3.5 text-info mt-0.5 flex-shrink-0" />
             <p class="leading-relaxed">
               Costs one Anthropic API call (~$0.10–$0.30 on Opus depending on CV size). Requires <code
                 class="font-mono">ANTHROPIC_API_KEY</code
@@ -617,10 +617,10 @@
         <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-3">
           {#if reprocessError && !suggestion}
             <div
-              class="flex items-start gap-2 px-3 py-2.5 rounded-md border border-red-500/40 bg-red-500/10 text-xs"
+              class="flex items-start gap-2 px-3 py-2.5 rounded-md border border-destructive/40 bg-destructive/10 text-xs"
             >
-              <AlertTriangle class="size-3.5 text-red-300 mt-0.5 flex-shrink-0" />
-              <div class="text-red-200/90 flex-1">
+              <AlertTriangle class="size-3.5 text-destructive mt-0.5 flex-shrink-0" />
+              <div class="text-destructive/90 flex-1">
                 <strong>Reprocess failed.</strong>
                 <div class="font-mono text-[11px] mt-1 break-all">{reprocessError}</div>
               </div>
@@ -673,7 +673,7 @@
                 class={cn(
                   'gap-1.5 transition-all',
                   reprocessDiscardArmed &&
-                    'bg-red-500/15 text-red-300 hover:bg-red-500/25 ring-1 ring-red-500/40 animate-pulse',
+                    'bg-destructive/15 text-destructive hover:bg-destructive/25 ring-1 ring-destructive/40 animate-pulse',
                 )}
               >
                 <RotateCcw class="size-3.5" />
