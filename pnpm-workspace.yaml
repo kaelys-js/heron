@@ -145,7 +145,7 @@ catalog:
   "@lucide/svelte": "1.14.0"
   "@sveltejs/adapter-node": "5.5.4"
   "@sveltejs/adapter-static": "3.0.10"
-  "@sveltejs/kit": "2.60.1"
+  "@sveltejs/kit": "2.61.1"
   "@sveltejs/vite-plugin-svelte": "7.1.2"
   "@tailwindcss/typography": "0.5.19"
   "@tailwindcss/vite": "4.3.0"
