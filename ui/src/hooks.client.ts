@@ -1,4 +1,5 @@
 import type { HandleClientError } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { reportClientError } from '$lib/notifications.svelte';
 import { stringify as devalueStringify } from 'devalue';
 
@@ -124,10 +125,15 @@ if (typeof window !== 'undefined' && !window.location.protocol.startsWith('http'
  */
 export const handleError: HandleClientError = ({ error, event, status, message }) => {
   const url = event?.url?.pathname ?? '?';
-  reportClientError('sveltekit', `[${status}] ${url}`, error);
+  // Correlation id: embedded in the reporter message AND returned on page.error,
+  // so the error page can show it (copyable) and support can grep logs for it.
+  const errorId = crypto.randomUUID();
+  reportClientError('sveltekit', `[${status}] ${url} · ref ${errorId}`, error);
   return {
     message: status >= 500 ? 'Something broke on our end.' : message,
     code: (error as { code?: string })?.code,
+    errorId,
+    ...(dev ? { stack: (error as Error)?.stack } : {}),
   };
 };
 

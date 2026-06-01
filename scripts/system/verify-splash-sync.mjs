@@ -11,7 +11,7 @@
  *
  * Checks (whitespace-normalised so prettier/biome layout can't false-positive):
  *   - the SPLASH surfaces (app.html #boot-fallback, electron/splash.ts) use the
- *     solid mascot-sampled `splashBg` + carry the mark + arc + splash keyframes
+ *     mascot-sampled `splashBg` + vignette + grain + mark + arc + splash keyframes
  *   - login + signup keep the dawn-sky bloom (their separate treatment)
  *   - LaunchScreen.storyboard's launch bg == `splashBg`
  *
@@ -20,7 +20,12 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadBrandSource, bloomLayers } from '../native/splash-spec.mjs';
+import {
+  loadBrandSource,
+  bloomLayers,
+  bloomLayersLight,
+  bloomGrainStyle,
+} from '../native/splash-spec.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rel = (p) => p.replace(ROOT + '/', '');
@@ -47,6 +52,8 @@ for (const p of ['ui/src/app.html', 'ui/electron/src/splash.ts']) {
   const n = norm(content);
   for (const token of [
     `background: ${splashBg}`,
+    'splash-vignette',
+    'splash-grain',
     'splash-mark',
     'splash-arc',
     '@keyframes splash-',
@@ -57,16 +64,22 @@ for (const p of ['ui/src/app.html', 'ui/electron/src/splash.ts']) {
   }
 }
 
-// 2. login + signup keep the dawn-sky bloom (every layer present).
-const layers = bloomLayers(colors).map(norm);
+// 2. The centralized BloomBackground carries the dawn-sky bloom -- the dark AND
+//    light layer sets plus the grain overlay must all be present; login + signup
+//    render <BloomBackground /> rather than inlining it.
+const layers = [...bloomLayers(colors), ...bloomLayersLight(colors), bloomGrainStyle()].map(norm);
+const bloomFile = 'ui/src/lib/components/BloomBackground.svelte';
+const bloomContent = norm(read(bloomFile) ?? '');
+for (const layer of layers) {
+  if (!bloomContent.includes(layer)) {
+    errors.push(
+      `${rel(bloomFile)}: stale/absent bloom layer — run \`pnpm brand:apply\`\n    expected: ${layer}`,
+    );
+  }
+}
 for (const p of ['ui/src/routes/login/+page.svelte', 'ui/src/routes/signup/+page.svelte']) {
-  const n = norm(read(p) ?? '');
-  for (const layer of layers) {
-    if (!n.includes(layer)) {
-      errors.push(
-        `${rel(p)}: stale/absent bloom layer — run \`pnpm brand:apply\`\n    expected: ${layer}`,
-      );
-    }
+  if (!norm(read(p) ?? '').includes('<BloomBackground')) {
+    errors.push(`${rel(p)}: should render <BloomBackground /> (centralized bloom)`);
   }
 }
 

@@ -72,9 +72,21 @@ export class ApiError extends Error {
   code?: string;
   details?: unknown;
   data?: unknown;
+  /** The failing response's `X-Request-Id` -- the SAME id the server logged,
+   *  the error page shows as `· ref <id>`, and handleError used as errorId.
+   *  Lets a catch handler / the error reporter quote the EXACT request to
+   *  support rather than the page-level meta id. Undefined for transport
+   *  failures (no response) or when the header wasn't present/exposed. */
+  requestId?: string;
   constructor(
     message: string,
-    init: { status: number; code?: string; details?: unknown; data?: unknown },
+    init: {
+      status: number;
+      code?: string;
+      details?: unknown;
+      data?: unknown;
+      requestId?: string;
+    },
   ) {
     super(message);
     this.name = 'ApiError';
@@ -82,6 +94,7 @@ export class ApiError extends Error {
     this.code = init.code;
     this.details = init.details;
     this.data = init.data;
+    this.requestId = init.requestId;
   }
 }
 
@@ -227,7 +240,12 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
                   data?.message ||
                   replayResponse.statusText ||
                   'Request failed';
-                reject(new ApiError(msg, { status: replayResponse.status }));
+                reject(
+                  new ApiError(msg, {
+                    status: replayResponse.status,
+                    requestId: replayResponse.headers.get('x-request-id') ?? undefined,
+                  }),
+                );
                 return;
               }
               if (method === 'GET') {
@@ -283,6 +301,11 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
       'Request failed';
     const code = envelope?.code;
     const details = envelope?.details;
+    // Correlation id off the failing response -- mirrors the server log line
+    // + the on-screen error `· ref <id>`. Exposed cross-origin via the CORS
+    // `Access-Control-Expose-Headers` set in hooks.server.ts. Header lookup
+    // is case-insensitive.
+    const requestId = response.headers.get('x-request-id') ?? undefined;
 
     // F8 -- session expiry: if the server says 401 AND we previously
     // marked the client as locally-authed, the session lapsed under us.
@@ -348,7 +371,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
         },
       });
     }
-    throw new ApiError(message, { status: response.status, code, details, data });
+    throw new ApiError(message, { status: response.status, code, details, data, requestId });
   }
 
   if (successToast) {

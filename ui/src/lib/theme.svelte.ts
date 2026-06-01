@@ -59,20 +59,20 @@ class ThemeStore {
     this.inited = false;
   }
 
-  set(mode: ThemeMode) {
+  set(mode: ThemeMode, origin?: { x: number; y: number }) {
     this.mode = mode;
     if (browser) {
       try {
         localStorage.setItem(STORAGE_KEY, mode);
       } catch {}
     }
-    this.apply(this.computeResolved());
+    this.apply(this.computeResolved(), origin);
   }
 
   /** Toggle between explicit light <-> dark. Maps 'system' to its current resolved opposite. */
-  toggle() {
+  toggle(origin?: { x: number; y: number }) {
     const next: ThemeMode = this.resolved === 'dark' ? 'light' : 'dark';
-    this.set(next);
+    this.set(next, origin);
   }
 
   private computeResolved(): ResolvedTheme {
@@ -94,7 +94,7 @@ class ThemeStore {
     return this.mql?.matches ? 'dark' : 'light';
   }
 
-  private apply(next: ResolvedTheme) {
+  private apply(next: ResolvedTheme, origin?: { x: number; y: number }) {
     // No-op if the resolved theme didn't actually change (e.g. user
     // toggled from 'system' to 'dark' while system was already dark).
     // Avoids running the view-transition for nothing.
@@ -122,13 +122,15 @@ class ThemeStore {
     // Modern theme-swap animation via the View Transitions API
     // (Chrome 111+, Safari 18+, iOS WKWebView 18+). The browser
     // captures a full-viewport snapshot, applies the DOM change
-    // inside the callback, then crossfades the new state over the
-    // old -- single-shot GPU-composited transition, no per-element
-    // CSS transitions, no FOUC. CSS keyframes attached to the
-    // ::view-transition pseudo-elements live in app.css.
+    // inside the callback, then REVEALS the new theme over the old
+    // via an expanding clip-path circle anchored at the toggle (a
+    // crossfade between a light + dark snapshot reads as a muddy
+    // double-exposure flash; a hard-edged wipe does not). Single-shot
+    // GPU-composited, no per-element transitions, no FOUC. CSS keyframes
+    // attached to the ::view-transition pseudo-elements live in app.css.
     //
     // Honour `prefers-reduced-motion` -- users with vestibular
-    // disorders explicitly opt out of crossfades.
+    // disorders explicitly opt out of the reveal.
     const reduced =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -136,12 +138,23 @@ class ThemeStore {
       startViewTransition?: (cb: () => void | Promise<void>) => { finished: Promise<void> };
     };
     if (!reduced && typeof doc.startViewTransition === 'function') {
-      // `theme-swap` flag class scopes the view-transition CSS
-      // overrides in app.css so the sidebar + topbar crossfade too
-      // (during navigation they snap instead -- see view-transition
-      // section in app.css). The flag is removed when the transition
-      // completes OR if the browser cancels.
+      // `theme-swap` flag class scopes the view-transition CSS in app.css:
+      // it folds the sidebar + topbar back into `root` so the whole viewport
+      // reveals as ONE surface, and runs the clip-path circle reveal. Anchor
+      // the reveal at the toggle (`origin`) -- or the top-right corner, where
+      // the floating / topbar toggle lives, when the change came from an OS
+      // theme switch with no pointer origin. `--theme-r` is the distance to
+      // the farthest corner so the circle always covers the viewport. The flag
+      // is removed when the transition completes OR if the browser cancels.
       const root = document.documentElement;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const x = origin?.x ?? w;
+      const y = origin?.y ?? 0;
+      const r = Math.hypot(Math.max(x, w - x), Math.max(y, h - y));
+      root.style.setProperty('--theme-x', `${x}px`);
+      root.style.setProperty('--theme-y', `${y}px`);
+      root.style.setProperty('--theme-r', `${r}px`);
       root.classList.add('theme-swap');
       const t = doc.startViewTransition(swap);
       t.finished.finally(() => root.classList.remove('theme-swap'));

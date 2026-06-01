@@ -21,6 +21,8 @@
   import CheckMark from './CheckMark.svelte';
   import { useIsMobile } from '$lib/hooks/use-is-mobile.svelte';
   import { cn } from '$lib/utils';
+  import { scale } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import type { Snippet } from 'svelte';
 
   type Props = {
@@ -114,7 +116,12 @@
       {@render trailing()}
     {/if}
     {#if active}
-      <CheckMark class="size-4 flex-shrink-0 text-tint" />
+      <span
+        class="flex-shrink-0"
+        transition:scale={{ duration: 160, start: 0.6, easing: cubicOut }}
+      >
+        <CheckMark active class="size-4" />
+      </span>
     {/if}
   </button>
 {:else}
@@ -148,7 +155,12 @@
       {@render trailing()}
     {/if}
     {#if active}
-      <CheckMark class="ml-auto size-3.5 flex-shrink-0 text-tint" />
+      <span
+        class="ml-auto flex-shrink-0"
+        transition:scale={{ duration: 160, start: 0.6, easing: cubicOut }}
+      >
+        <CheckMark active class="size-3.5" />
+      </span>
     {/if}
   </DropdownMenu.Item>
 {/if}

@@ -134,7 +134,7 @@ const config: Config = {
                 "'wasm-unsafe-eval'",
                 "'sha256-MegZb3SbZVAzUiaf6ATlJAKhkmCEkr6O499YSuBjk14='", // theme bootstrap
                 "'sha256-AXMfZ0Qft2fuay5SZHCsOAG2dtpQN7X51WmFaMr33hA='", // speculationrules
-                "'sha256-onfd55iQ1MDS3EaPDrpnTofArAEtpaE1HoihzSutX18='", // app.html bootstrap + diagnostics
+                "'sha256-nqbTk2C9AYxK2aim7Dorj8PN4hj4Fa6SueN00fDGZPg='", // app.html bootstrap + diagnostics
                 "'sha256-ctdFQ0DAi7RYIXKN3mXFXyP6e30ct5aV+fwqy3FMS4o='", // boot-fallback UX driver
               ],
               'style-src': ["'self'", "'unsafe-inline'"], // Tailwind JIT inline styles

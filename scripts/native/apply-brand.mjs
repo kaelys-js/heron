@@ -39,6 +39,8 @@ import {
   buildSplashVisual,
   buildSplashHtml,
   bloomCssInline,
+  bloomCssInlineLight,
+  bloomGrainStyle,
 } from './splash-spec.mjs';
 import { readMascotB64 } from './brand-mascot.mjs';
 
@@ -970,13 +972,33 @@ function applyFavicon(brand) {
     log.warn(`logo.svg missing — skipping favicon copy`);
     return;
   }
-  const srcContent = readFileSync(src, 'utf8');
-  if (existsSync(dest) && readFileSync(dest, 'utf8') === srcContent) {
+  // favicon.svg is logo.svg with ONE change: the mascot <image> is swapped for a
+  // WHITE, detail-preserving variant (mascot-b64.json::iconPngWhite -- white RGB
+  // with alpha keyed to luminance, so dark outlines/eyes let the gradient show
+  // through). So the app icons (electron / iOS / web / dock, all rasterised from
+  // favicon.svg by generate-icons) read as a clean white mascot on the brand
+  // squircle, not a flat blob. We swap the embedded PNG rather than apply an SVG
+  // feColorMatrix because sharp's SVG rasteriser renders filter-based white far
+  // too weakly. branding/logo.svg keeps the full-colour mascot (README / press).
+  const mascot = readMascotB64(ROOT);
+  let faviconContent = readFileSync(src, 'utf8');
+  if (mascot.iconPng && mascot.iconPngWhite) {
+    faviconContent = faviconContent.split(mascot.iconPng).join(mascot.iconPngWhite);
+  } else {
+    log.warn(
+      `mascot-b64.json missing iconPngWhite — run \`pnpm mascot\`; favicon keeps the full-colour mascot`,
+    );
+  }
+  // The white heron sits on the brand gradient (no dark background). It's made to
+  // read by the silhouette pipeline itself: bold (dilated) strokes + a soft dark
+  // halo baked into iconPngWhite (see cleanSilhouette), so it pops on the gradient
+  // the way the reference icon does.
+  if (existsSync(dest) && readFileSync(dest, 'utf8') === faviconContent) {
     log.skip(`static/favicon.svg — already current`);
     return;
   }
-  copyFileSync(src, dest);
-  log.ok(`static/favicon.svg ← branding/logo.svg`);
+  writeFileSync(dest, faviconContent);
+  log.ok(`static/favicon.svg ← branding/logo.svg (white mascot, detail-preserved)`);
 }
 
 /**
@@ -1974,10 +1996,15 @@ function applyAppHtml(brand) {
  * SVGs share a page):
  *
  *   1. ui/src/error.html                                       (err-bg)
- *   2. ui/src/app.html (boot fallback)                         (bfb-bg)
- *   3. ui/src/lib/components/BackendUnreachableOverlay.svelte  (bu-grad)
- *   4. ui/src/routes/signup/+page.svelte                       (signup-bg)
- *   5. ui/src/routes/login/+page.svelte                        (login-bg)
+ *   2. ui/src/routes/login/+page.svelte                        (login-bg)
+ *   3. ui/src/routes/signup/+page.svelte                       (signup-bg)
+ *   4. ui/src/lib/components/ConnectivityCard.svelte           (conn-grad)
+ *   5. ui/src/lib/components/ErrorScreen.svelte                (errscreen-bg)
+ *   6. ui/src/lib/components/LoadingState.svelte               (loading-bg)
+ *
+ * (ConnectivityCard is the shared shell behind both BackendBootGuard's
+ * boot gate and BackendUnreachableOverlay's live-disconnect blocker, so
+ * neither of those two carries its own brand-mark marker anymore.)
  *
  * branding/logo.svg itself is NOT a consumer; it's the source. The
  * AUTO-GENERATED:brand-gradient marker pair INSIDE logo.svg only wraps
@@ -2061,8 +2088,9 @@ function applyMascot(brand) {
     join(UI, 'src', 'error.html'),
     join(UI, 'src', 'routes', 'login', '+page.svelte'),
     join(UI, 'src', 'routes', 'signup', '+page.svelte'),
-    join(UI, 'src', 'lib', 'components', 'BackendBootGuard.svelte'),
-    join(UI, 'src', 'lib', 'components', 'BackendUnreachableOverlay.svelte'),
+    join(UI, 'src', 'lib', 'components', 'ConnectivityCard.svelte'),
+    join(UI, 'src', 'lib', 'components', 'ErrorScreen.svelte'),
+    join(UI, 'src', 'lib', 'components', 'LoadingState.svelte'),
   ]) {
     if (
       fill(p, /<!-- AUTO-GENERATED:brand-mark[^>]*-->/, '<!-- /AUTO-GENERATED:brand-mark -->', bare)
@@ -2141,8 +2169,8 @@ function applyErrorHtml(brand) {
     // Reload button -- "Reload {displayName}"
     [/(>Reload\s+)[^<]+(<\/a>)/, `$1${brand.displayName}$2`],
     // Inline SVG gradient + glyph + squircle are reconciled by
-    // applyBrandMark(brand) so every consumer (app.html, error.html,
-    // BackendUnreachableOverlay, signup, login) tracks branding/logo.svg
+    // applyBrandMark(brand) so every consumer (error.html, login, signup,
+    // ConnectivityCard, ErrorScreen) tracks branding/logo.svg
     // via AUTO-GENERATED:brand-mark gradient-id="X-bg" marker pairs.
   ];
   for (const [re, val] of subs) {
@@ -2477,6 +2505,17 @@ function applyElectronBrandTs(brand) {
   // Same for the Electron main process. Imported by electron/src/index.ts,
   // mdns.ts, etc.
   const path = join(UI, 'electron', 'src', 'brand.ts');
+  // The window paints the splash before the app (setup.ts loads the splash into
+  // the SAME BrowserWindow), so its native backgroundColor must be the
+  // mascot-sampled splash tone -- otherwise the dark default flashes through
+  // during the splash -> app navigation. Read from the same mascot-b64.json the
+  // splash surfaces use; fall back to darkBg if the mascot isn't built yet.
+  let splashBg = brand.colors.darkBg;
+  try {
+    splashBg = readMascotB64(ROOT).splashBg ?? splashBg;
+  } catch {
+    /* mascot not generated yet -- darkBg is a safe pre-mascot default */
+  }
   const body = [
     `// AUTO-GENERATED by scripts/native/apply-brand.mjs -- do not edit.`,
     `// Edit branding/brand.json and run \`pnpm brand:apply\`.`,
@@ -2502,6 +2541,7 @@ function applyElectronBrandTs(brand) {
     `    darkBg: ${JSON.stringify(brand.colors.darkBg)},`,
     `    darkSurface: ${JSON.stringify(brand.colors.darkSurface)},`,
     `    textOnDark: ${JSON.stringify(brand.colors.textOnDark)},`,
+    `    splashBg: ${JSON.stringify(splashBg)},`,
     `  },`,
     `} as const;`,
     ``,
@@ -2774,6 +2814,7 @@ function computeApplyHash() {
     join(ROOT, 'scripts', 'native', 'splash-spec.mjs'), // single-source splash look
     join(ROOT, 'scripts', 'native', 'brand-mascot.mjs'), // mascot embed encoder
     join(ROOT, 'branding', 'assets', 'mascot-b64.json'), // mascot embeds (injected)
+    join(ROOT, 'ui', 'static', 'heron-particles.js'), // inlined into the Electron splash
   ];
   const h = createHash('sha256');
   for (const p of inputs) {
@@ -2985,7 +3026,7 @@ function applyAndroidFastlane(brand) {
  *
  *   - ui/src/app.html #boot-fallback                (AUTO-GENERATED:splash)
  *   - ui/electron/src/splash.ts                     (whole generated file)
- *   - ui/src/routes/{login,signup}/+page.svelte     (AUTO-GENERATED:splash-bloom)
+ *   - ui/src/lib/components/BloomBackground.svelte    (AUTO-GENERATED:splash-bloom)
  *   - ui/ios/.../Base.lproj/LaunchScreen.storyboard (bg colour == darkBg)
  *
  * The iOS native launch PNG (Splash.imageset) is rendered separately by
@@ -3044,23 +3085,58 @@ function applySplash(brand) {
   });
   if (replaceBlock(join(UI, 'src', 'app.html'), 'splash', visual.split('\n'))) touched++;
 
-  // 2. login + signup -- the dawn-sky bloom backdrop only (single-line value
-  //    so prettier never reflows it out of sync with the spec).
+  // 2. The centralized BloomBackground component owns the dawn-sky bloom
+  //    backdrop (single-line values so prettier never reflows them out of sync
+  //    with the spec). login/signup + the dev-view states render
+  //    <BloomBackground /> rather than each carrying their own copy.
+  //    Three stacked layers: a dark-mode glow (shown in .dark), a light-mode
+  //    glow (shown otherwise), and a faint grain overlay on top. The
+  //    `bloom-surface` class is a stable hook for the auth view-transition.
   const bloomDiv = [
     `<div`,
     `  aria-hidden="true"`,
-    `  class="pointer-events-none absolute inset-0 overflow-hidden"`,
+    `  class="bloom-surface pointer-events-none absolute inset-0 hidden overflow-hidden dark:block"`,
     `  style="background: ${bloomCssInline(colors)};"`,
     `></div>`,
+    `<div`,
+    `  aria-hidden="true"`,
+    `  class="bloom-surface pointer-events-none absolute inset-0 overflow-hidden dark:hidden"`,
+    `  style="background: ${bloomCssInlineLight(colors)};"`,
+    `></div>`,
+    `<div`,
+    `  aria-hidden="true"`,
+    `  class="pointer-events-none absolute inset-0 overflow-hidden"`,
+    `  style="${bloomGrainStyle()}"`,
+    `></div>`,
   ];
-  for (const f of ['login', 'signup']) {
-    if (replaceBlock(join(UI, 'src', 'routes', f, '+page.svelte'), 'splash-bloom', bloomDiv)) {
-      touched++;
-    }
+  if (
+    replaceBlock(
+      join(UI, 'src', 'lib', 'components', 'BloomBackground.svelte'),
+      'splash-bloom',
+      bloomDiv,
+    )
+  ) {
+    touched++;
   }
 
-  // 3. Electron splash.ts -- whole generated file (the spec is the source).
-  const html = buildSplashHtml({ colors, splashBg, mascotDataUri, animated: true });
+  // 3. Electron splash.ts -- whole generated file (the spec is the source). The
+  //    splash is a data: URL loaded before any server, so it can't fetch the
+  //    shared particle bundle -- inline its source instead (built by
+  //    scripts/build-particles.mjs into ui/static/heron-particles.js).
+  const particlesPath = join(UI, 'static', 'heron-particles.js');
+  const particlesScript = existsSync(particlesPath) ? readFileSync(particlesPath, 'utf8') : '';
+  if (!particlesScript) {
+    log.warn(
+      `ui/static/heron-particles.js missing — run \`pnpm particles:build\`; Electron splash ships without motes`,
+    );
+  }
+  const html = buildSplashHtml({
+    colors,
+    splashBg,
+    mascotDataUri,
+    animated: true,
+    particlesScript,
+  });
   const splashTs =
     [
       `// AUTO-GENERATED by scripts/native/apply-brand.mjs from scripts/native/splash-spec.mjs.`,

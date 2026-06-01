@@ -56,6 +56,7 @@ const mocks = vi.hoisted(() => {
     shellOpenExternal: vi.fn(),
     clipboardWriteText: vi.fn(),
     readFileSync: vi.fn(),
+    watch: vi.fn(() => ({ close: vi.fn() })),
   };
 });
 
@@ -64,15 +65,17 @@ const __ipcOn = mocks.ipcOn;
 const __shellOpenExternal = mocks.shellOpenExternal;
 const __clipboardWriteText = mocks.clipboardWriteText;
 const __readFileSync = mocks.readFileSync;
+const __watch = mocks.watch;
 
 vi.mock('electron', () => ({
   BrowserWindow: mocks.MockBrowserWindow,
   ipcMain: { on: mocks.ipcOn },
   shell: { openExternal: mocks.shellOpenExternal },
   clipboard: { writeText: mocks.clipboardWriteText },
+  app: { isPackaged: false },
 }));
 
-vi.mock('node:fs', () => ({ readFileSync: mocks.readFileSync }));
+vi.mock('node:fs', () => ({ readFileSync: mocks.readFileSync, watch: mocks.watch }));
 
 import { buildAboutHtml } from './about-window';
 import type { AboutInfo } from './about-window';
@@ -145,7 +148,7 @@ describe('buildAboutHtml', () => {
 
   it('embeds the logo as an <img> when a data URI is provided', () => {
     const html = buildAboutHtml(info({ logoDataUri: 'data:image/png;base64,AAAA' }));
-    expect(html).toContain('<img class="logo" src="data:image/png;base64,AAAA"');
+    expect(html).toContain('<img class="logo logo--img" src="data:image/png;base64,AAAA"');
     // The text-fallback ELEMENT must not be rendered (the .logo--text CSS rule
     // always exists in <style>, so assert on the markup, not the class name).
     expect(html).not.toContain('<div class="logo logo--text"');
@@ -178,6 +181,13 @@ describe('buildAboutHtml', () => {
     const html = buildAboutHtml(info());
     expect(html).toContain('--accent: #c89b4a');
     expect(html).toContain('--bg: #0e1014');
+  });
+
+  it('places the close button on the right by default, left on macOS (closeOnLeft)', () => {
+    expect(buildAboutHtml(info())).toContain('right: 14px');
+    const mac = buildAboutHtml(info({ closeOnLeft: true }));
+    expect(mac).toContain('left: 14px');
+    expect(mac).not.toContain('right: 14px');
   });
 });
 
@@ -345,6 +355,27 @@ describe('openAboutWindow + wireAboutIpc (electron glue)', () => {
     MockBrowserWindow.fromWebContents = vi.fn(() => undefined);
     const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:close')![1];
     expect(() => handler({ sender: {} })).not.toThrow();
+  });
+
+  it('dev HMR: reloads the open window when build/mascot.png is regenerated', () => {
+    let captured: ((event: string, file: string) => void) | undefined;
+    __watch.mockImplementation(((_dir: string, cb: (event: string, file: string) => void) => {
+      captured = cb;
+      return { close: vi.fn() };
+    }) as never);
+    __readFileSync.mockReturnValue(Buffer.from('PNGDATA'));
+    const win = openAboutWindow({
+      info: info(),
+      brandName: 'heron',
+      preloadPath: '/app/about-preload.js',
+      appPath: '/app',
+    });
+    expect(__watch).toHaveBeenCalled();
+    win.loadURL.mockClear();
+    captured?.('change', 'other.png'); // unrelated file -> no reload
+    expect(win.loadURL).not.toHaveBeenCalled();
+    captured?.('change', 'mascot.png'); // the mascot was regenerated -> reload
+    expect(win.loadURL).toHaveBeenCalled();
   });
 });
 

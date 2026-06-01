@@ -5,14 +5,18 @@
   import * as Sidebar from '$lib/components/ui/sidebar';
   import AppSidebar from '$lib/components/AppSidebar.svelte';
   import DevGalleryDrawer from './dev/views/DevGalleryDrawer.svelte';
+  import { installAuthMenuBridge } from '$lib/client/auth-menu';
+  import BloomBackground from '$lib/components/BloomBackground.svelte';
   import AgentChat from '$lib/components/AgentChat.svelte';
   import GlobalSearch from '$lib/components/GlobalSearch.svelte';
   import AddJobDialog from '$lib/components/AddJobDialog.svelte';
   import PostRejectionSheet from '$lib/components/PostRejectionSheet.svelte';
   import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
+  import ErrorScreen from '$lib/components/ErrorScreen.svelte';
+  import CopyButton from '$lib/components/CopyButton.svelte';
   import { Toaster } from '$lib/components/ui/sonner';
   import { Button } from '$lib/components/ui/button';
-  import { AlertTriangle, RefreshCw, FlaskConical } from '@lucide/svelte';
+  import { RefreshCw, RotateCw, FlaskConical } from '@lucide/svelte';
   import { reportClientError } from '$lib/notifications.svelte';
   import { BRAND_EVENTS, BRAND_STORAGE_KEYS } from '$lib/client/brand';
   import { onNavigate } from '$app/navigation';
@@ -86,6 +90,10 @@
       path.startsWith('/onboarding')
     );
   }
+
+  // Electron native File-menu auth actions (login/signup/passkey) -> renderer.
+  // No-op on web/iOS. Separate onMount so its teardown is self-contained.
+  onMount(() => installAuthMenuBridge());
 
   onMount(() => {
     diag('+layout.svelte onMount entered');
@@ -573,6 +581,11 @@
    * that surfaces as an unhandledrejection → red toast. Skip the in-flight
    * one explicitly so the new transition starts clean.
    */
+  // login ↔ signup share the brand hero + bloom (held steady by view-transition
+  // name); everything else rides `root`. Default root timing has a 90ms gap that
+  // makes the new card pop in, so for THESE navs we tag `html.auth-swap` and the
+  // CSS gives root a smooth overlapping crossfade + gentle rise instead.
+  const AUTH_PATHS = new Set(['/login', '/signup']);
   let inFlightTransition: { skipTransition?: () => void; finished?: Promise<void> } | null = null;
   onNavigate((navigation) => {
     if (typeof document === 'undefined') return;
@@ -583,13 +596,22 @@
     } catch {
       /* skipTransition is post-WAICG; older Chromium may lack it */
     }
+    const authSwap =
+      AUTH_PATHS.has(navigation.from?.url.pathname ?? '') &&
+      AUTH_PATHS.has(navigation.to?.url.pathname ?? '');
+    if (authSwap) document.documentElement.classList.add('auth-swap');
     return new Promise<void>((resolve) => {
       const t = sxt.call(document, async () => {
         resolve();
         await navigation.complete;
       });
       inFlightTransition = t;
-      t.finished?.finally?.(() => {
+      // Always clear the auth-swap tag once the transition settles (or
+      // immediately if `finished` isn't supported) so it never leaks into the
+      // next navigation.
+      const done = t.finished ?? Promise.resolve();
+      done.finally(() => {
+        if (authSwap) document.documentElement.classList.remove('auth-swap');
         if (inFlightTransition === t) inFlightTransition = null;
       });
     });
@@ -634,83 +656,65 @@
     <svelte:boundary onerror={handleBoundaryError}>
       {@render children?.()}
       {#snippet failed(error, reset)}
-        <!-- Page-level crash UI. Same visual language as ErrorBoundary
-               (the wrapper used by AgentChat / dialogs) so the user sees
-               a consistent failure surface across the app. Reload uses
-               location.reload() instead of location.assign('') so the
-               URL stays intact and the bug is reproducible. -->
-        <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 sm:p-8">
-          <div
-            class="relative w-full max-w-xl flex flex-col gap-4 p-6 rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/5 via-card to-card overflow-hidden"
-          >
-            <div
-              class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
-            ></div>
-            <div class="flex items-start gap-3">
-              <div
-                class="size-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0"
+        <!-- Page-level crash UI on the shared ErrorScreen surface (same visual
+               language as the route +error.svelte). No status numeral — this is
+               a client render crash, not an HTTP error. Reload uses
+               location.reload() instead of location.assign('') so the URL stays
+               intact and the bug is reproducible. -->
+        <ErrorScreen
+          title="This page crashed"
+          description="A part of the app hit an unexpected error. The rest keeps running — this was logged."
+          accent="text-red-400"
+        >
+          {#snippet actions()}
+            <Button onclick={reset} class="w-full gap-1.5">
+              <RotateCw class="size-4" />
+              Try again
+            </Button>
+            <Button variant="outline" onclick={() => location.reload()} class="w-full gap-1.5">
+              <RefreshCw class="size-4" />
+              Reload page
+            </Button>
+            <Button
+              variant="ghost"
+              onclick={() => {
+                window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
+              }}
+              class="w-full gap-1.5 text-muted-foreground"
+            >
+              Open activity log
+            </Button>
+          {/snippet}
+
+          {#snippet details()}
+            {#if dev && error instanceof Error && error.stack}
+              <!-- Dev-only diagnostics: a disclosure with a rotating chevron and
+                     the stack in a copyable monospace block. Never in prod. -->
+              <details
+                class="group w-full rounded-lg border border-border/50 bg-muted/30 text-left"
               >
-                <AlertTriangle class="size-5 text-red-400" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <h2 class="text-base font-semibold">This page crashed</h2>
-                <p class="text-xs text-muted-foreground mt-0.5">
-                  <span
-                    class="font-mono text-[11px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded mr-1"
-                  >
-                    {error instanceof Error ? error.constructor.name || 'Error' : typeof error}
-                  </span>
-                  The rest of the app keeps running. This was logged to the activity feed.
-                </p>
-              </div>
-            </div>
-            <pre
-              class="text-xs font-mono leading-relaxed bg-muted/40 border border-border/50 rounded-md p-3 max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-foreground/90">{error instanceof
-              Error
-                ? error.message || String(error)
-                : typeof error === 'string'
-                  ? error
-                  : JSON.stringify(error, null, 2)}</pre>
-            {#if error instanceof Error && error.stack}
-              <details class="group">
                 <summary
-                  class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors select-none flex items-center gap-1.5"
+                  class="flex cursor-pointer select-none items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <span
-                    class="inline-block transition-transform group-open:rotate-90 text-muted-foreground/60"
+                    aria-hidden="true"
+                    class="inline-block text-muted-foreground/60 transition-transform group-open:rotate-90"
                     >▸</span
                   >
-                  Stack trace
+                  Developer details
                 </summary>
-                <pre
-                  class="mt-2 p-3 text-[11px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{error.stack}</pre>
+                <div class="space-y-2 border-t border-border/50 px-3 py-2.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] text-muted-foreground">Stack trace</span>
+                    <CopyButton text={error.stack} label="error details" />
+                  </div>
+                  <pre
+                    class="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-background/60 p-2.5 text-[11px] font-mono leading-relaxed text-foreground/80">{error.stack}</pre>
+                </div>
               </details>
             {/if}
-            <div class="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onclick={reset} class="h-8 gap-1.5">
-                <RefreshCw class="size-3.5" /> Try again
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onclick={() => location.reload()}
-                class="h-8 gap-1.5"
-              >
-                <RefreshCw class="size-3.5" /> Reload page
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                class="h-8 gap-1.5"
-                onclick={() => {
-                  window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
-                }}
-              >
-                Open activity log
-              </Button>
-            </div>
-          </div>
-        </div>
+          {/snippet}
+        </ErrorScreen>
       {/snippet}
     </svelte:boundary>
   </main>
@@ -725,7 +729,7 @@
     <!-- `data.authed` is the SSR-accurate auth signal (no flash); isAuthed is
          the reactive client flag so it flips the instant you sign in / out. -->
     {#if data?.authed || isAuthed}
-      <Sidebar.Provider class="h-svh overflow-hidden">
+      <Sidebar.Provider class="app-shell-root h-svh overflow-hidden">
         <AppSidebar
           inboxCount={data?.inboxCount ?? 0}
           queueCount={data?.queueCount ?? 0}
@@ -739,8 +743,9 @@
       </Sidebar.Provider>
     {:else}
       <!-- Unauthed: no sidebar/app chrome at all -- the auth + onboarding pages
-           render full-screen on their own. -->
-      <div class="h-svh overflow-hidden">
+           render full-screen on their own. `app-chromeless` lets the Electron
+           build add a top drag strip here (no topbar to drag from otherwise). -->
+      <div class="app-chromeless h-svh overflow-hidden">
         {@render routeContent()}
       </div>
     {/if}
@@ -801,18 +806,21 @@
     {/if}
     {#snippet failed(error)}
       <div
-        class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background p-6 text-center"
+        class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 overflow-hidden bg-background p-6 text-center"
       >
-        <h1 class="text-xl font-semibold">The app failed to load</h1>
-        <p class="max-w-md text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : String(error)}
-        </p>
-        <button
-          class="rounded-md border border-border bg-card px-4 py-2 text-sm hover:bg-accent"
-          onclick={() => location.reload()}
-        >
-          Reload
-        </button>
+        <BloomBackground />
+        <div class="relative z-10 flex flex-col items-center gap-4">
+          <h1 class="text-xl font-semibold">The app failed to load</h1>
+          <p class="max-w-md text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
+          <button
+            class="rounded-md border border-border bg-card px-4 py-2 text-sm hover:bg-accent"
+            onclick={() => location.reload()}
+          >
+            Reload
+          </button>
+        </div>
       </div>
     {/snippet}
   </svelte:boundary>
@@ -826,16 +834,20 @@
        primitive the theme menu uses. Always shown under the live dev server;
        in built/native apps it appears once developer tools are opted in. -->
   {#if !devGalleryOpen}
-    <!-- Hidden while the drawer is open so the launcher never floats ON TOP of
-         the drawer (the Sheet renders at z-50; this button sat at z-90). -->
+    <!-- z-[9998] keeps the launcher above ALL app chrome (sidebars, topbars,
+         dialogs, page overlays) on every route -- it's a dev affordance that
+         should always be reachable. Just below toasts (z-9999). Hidden while
+         the drawer is open so it never floats on top of the Sheet. -->
     <button
       type="button"
       onclick={() => (devGalleryOpen = true)}
       title="Dev view gallery"
       aria-label="Open dev view gallery"
-      class="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[max(0.75rem,env(safe-area-inset-left))] z-[90] flex size-9 items-center justify-center rounded-full border border-border/50 bg-card/70 text-muted-foreground/70 shadow-sm backdrop-blur transition-all duration-150 hover:scale-105 hover:bg-card hover:text-foreground active:scale-95"
+      class="group fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[max(0.75rem,env(safe-area-inset-left))] z-[9998] flex size-10 items-center justify-center rounded-full border border-border/60 bg-gradient-to-br from-card/95 to-card/60 text-muted-foreground shadow-md backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:border-accent/50 hover:text-accent hover:shadow-lg hover:shadow-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95"
     >
-      <FlaskConical class="size-4" />
+      <FlaskConical
+        class="size-[18px] transition-transform duration-300 group-hover:rotate-[8deg]"
+      />
     </button>
   {/if}
   <DevGalleryDrawer bind:open={devGalleryOpen} />

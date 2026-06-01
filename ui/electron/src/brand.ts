@@ -22,5 +22,6 @@ export const BRAND = {
     darkBg: "#0e1014",
     darkSurface: "#14181f",
     textOnDark: "#e8eaed",
+    splashBg: "#3e4f5e",
   },
 } as const;

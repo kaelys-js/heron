@@ -28,7 +28,7 @@ vi.mock('./notifications', () => ({
   }),
 }));
 
-const { reportError, reportWarning, reportInfo, setReporterBackend } = await import(
+const { reportError, reportWarning, reportInfo, setReporterBackend, _testHelpers } = await import(
   './error-reporter'
 );
 
@@ -59,6 +59,48 @@ describe('reportError — input coercion', () => {
   it('truncates very long messages to 200 chars', async () => {
     await reportError(new Error('a'.repeat(500)));
     expect(toastCalls.error[0].msg.length).toBeLessThanOrEqual(200);
+  });
+});
+
+describe('reportError — requestId correlation', () => {
+  beforeEach(() => {
+    toastCalls.error.length = 0;
+    // Null backend → sendToBackend fails → queueLocally, so we can read the
+    // captured context off the localStorage retry queue.
+    setReporterBackend(null);
+    const { QUEUE_KEY } = _testHelpers();
+    localStorage.removeItem(QUEUE_KEY);
+    document.head.innerHTML = '';
+  });
+
+  function lastQueuedContext(): { requestId?: string } | undefined {
+    const { QUEUE_KEY } = _testHelpers();
+    const queued = JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]');
+    return queued.at(-1)?.context;
+  }
+
+  it('prefers an error’s own .requestId (ApiError) over the page <meta> id', async () => {
+    // WHY: the failing request's own X-Request-Id (carried on ApiError from
+    // api.ts) pins the EXACT request; the page <meta> id is only the document's
+    // request. When a fetch error is reported, the precise id must win so the
+    // logged issue correlates to the request that actually failed.
+    document.head.innerHTML = '<meta name="x-request-id" content="page-meta-id" />';
+    const apiErr = Object.assign(new Error('fetch failed'), { requestId: 'api-req-id' });
+    await reportError(apiErr);
+    expect(lastQueuedContext()?.requestId).toBe('api-req-id');
+  });
+
+  it('falls back to the page <meta> id when the error carries none', async () => {
+    document.head.innerHTML = '<meta name="x-request-id" content="page-meta-id" />';
+    await reportError(new Error('plain error'));
+    expect(lastQueuedContext()?.requestId).toBe('page-meta-id');
+  });
+
+  it('an explicit context.requestId still wins over both', async () => {
+    document.head.innerHTML = '<meta name="x-request-id" content="page-meta-id" />';
+    const apiErr = Object.assign(new Error('fetch failed'), { requestId: 'api-req-id' });
+    await reportError(apiErr, { requestId: 'explicit-id' });
+    expect(lastQueuedContext()?.requestId).toBe('explicit-id');
   });
 });
 

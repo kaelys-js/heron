@@ -180,6 +180,59 @@ test('main process registers the get-server-url IPC handler', async () => {
   expect(alreadyRegistered).toBe(true);
 });
 
+test('preload relays the File-menu IPC channels to the renderer (the fix)', async () => {
+  // Regression guard for the File-menu auth items (Login page / Sign in with
+  // passkey / Set up with invite code). Pre-fix, electronAPI.on() refused the
+  // `<brand>:menu:navigate` / `:menu:passkey` channels (allowlist) and returned
+  // a no-op, so the renderer bridge never registered and clicking the items did
+  // nothing. Register listeners in the renderer, send from main, assert ARRIVAL.
+  const window = await app!.firstWindow();
+  const navChannel = `${BRAND.name}:menu:navigate`;
+  const passkeyChannel = `${BRAND.name}:menu:passkey`;
+
+  await window.evaluate(
+    ({ nav, passkey }) => {
+      const w = window as unknown as {
+        __menuNav?: unknown;
+        __menuPasskey?: boolean;
+        electronAPI?: { on?: (c: string, h: (...a: unknown[]) => void) => unknown };
+      };
+      w.__menuNav = undefined;
+      w.__menuPasskey = false;
+      w.electronAPI?.on?.(nav, (path: unknown) => {
+        w.__menuNav = path;
+      });
+      w.electronAPI?.on?.(passkey, () => {
+        w.__menuPasskey = true;
+      });
+    },
+    { nav: navChannel, passkey: passkeyChannel },
+  );
+
+  await app!.evaluate(
+    ({ BrowserWindow }, { nav, passkey }) => {
+      const wc = BrowserWindow.getAllWindows()[0]?.webContents;
+      wc?.send(nav, '/signup');
+      wc?.send(passkey);
+    },
+    { nav: navChannel, passkey: passkeyChannel },
+  );
+
+  await expect
+    .poll(
+      async () => window.evaluate(() => (window as unknown as { __menuNav?: unknown }).__menuNav),
+      {
+        timeout: 5_000,
+        message: 'menu:navigate never reached the renderer (preload allowlist?)',
+      },
+    )
+    .toBe('/signup');
+  const gotPasskey = await window.evaluate(
+    () => (window as unknown as { __menuPasskey?: boolean }).__menuPasskey,
+  );
+  expect(gotPasskey, 'menu:passkey never reached the renderer').toBe(true);
+});
+
 test('window-all-closed handler is wired', async () => {
   // Verify the app responds to window-all-closed by inspecting the
   // registered listeners on the `app` module.

@@ -97,6 +97,11 @@ function runStaged() {
     diff = execSync('git diff --cached --diff-filter=AM --unified=0', {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      // execSync defaults to a 1 MB stdout buffer; a large staged diff (many
+      // files, regenerated binaries, big inline base64 blocks) overflows it and
+      // throws ENOBUFS, aborting the commit on size rather than on any
+      // deflection. Give it plenty of headroom so the hook scans the real diff.
+      maxBuffer: 256 * 1024 * 1024,
     });
   } catch (e) {
     console.error('::error::verify-no-deflection: git diff failed:', e.message);

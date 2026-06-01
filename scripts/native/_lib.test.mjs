@@ -21,7 +21,7 @@ function t(name, fn) {
   }
 }
 
-t('leader clean exit -> done (kills siblings) — THE dock-quit fix', () => {
+t('leader clean exit -> done (kills siblings) -- THE dock-quit fix', () => {
   assert.equal(runParallelExitAction({ code: 0, leader: true, remaining: 1 }), 'done');
 });
 

@@ -220,7 +220,8 @@
   font-display: swap;
   src: url('/fonts/fraunces-latin.woff2') format('woff2');
   unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: 'Fraunces';
@@ -229,7 +230,9 @@
   font-display: swap;
   src: url('/fonts/fraunces-latin-ext.woff2') format('woff2');
   unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
 }
 @font-face {
   font-family: 'Inter';
@@ -238,7 +241,8 @@
   font-display: swap;
   src: url('/fonts/inter-latin.woff2') format('woff2');
   unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: 'Inter';
@@ -247,7 +251,9 @@
   font-display: swap;
   src: url('/fonts/inter-latin-ext.woff2') format('woff2');
   unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
 }
 @font-face {
   font-family: 'IBM Plex Mono';
@@ -256,7 +262,8 @@
   font-display: swap;
   src: url('/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
   unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: 'IBM Plex Mono';
@@ -265,7 +272,9 @@
   font-display: swap;
   src: url('/fonts/ibm-plex-mono-400-latin-ext.woff2') format('woff2');
   unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
 }
 @font-face {
   font-family: 'IBM Plex Mono';
@@ -274,7 +283,8 @@
   font-display: swap;
   src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
   unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: 'IBM Plex Mono';
@@ -283,7 +293,9 @@
   font-display: swap;
   src: url('/fonts/ibm-plex-mono-500-latin-ext.woff2') format('woff2');
   unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
 }
 
 @theme inline {
@@ -532,6 +544,72 @@
   view-transition-name: app-topbar;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Electron custom window chrome. `.is-electron` (+ `.is-mac` / `.is-win`) is
+   set by the desktop preload (preload.ts) and NEVER on web / iOS / Android, so
+   these rules are desktop-only by construction. The main window paints to its
+   own edge (macOS hiddenInset + vibrancy / Win11 mica — see window-chrome.ts),
+   so the app must: (a) give the user a draggable top strip + macOS traffic-light
+   clearance where the native title bar used to be, and (b) go translucent over
+   the OS material. Kept UNLAYERED so the translucent backgrounds win over the
+   Tailwind `bg-sidebar` utilities.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --electron-drag-strip: 44px; /* mirrors DRAG_STRIP_HEIGHT in window-chrome.ts */
+}
+
+/* (a) Draggability. The app shell's topbar + sidebar header act as the title
+   bar; interactive descendants opt back out so clicks / inputs still work. */
+html.is-electron .app-shell-topbar,
+html.is-electron .app-shell-sidebar [data-sidebar='header'] {
+  -webkit-app-region: drag;
+}
+html.is-electron
+  .app-shell-topbar
+  :is(button, a, input, select, textarea, label, [role='button'], [data-sidebar='trigger']),
+html.is-electron .app-shell-sidebar [data-sidebar='header'] :is(button, a, input, [role='button']) {
+  -webkit-app-region: no-drag;
+}
+/* Chromeless screens (auth / onboarding) have no topbar: a thin fixed drag
+   strip across the top. z-index BELOW the floating theme toggle / back button
+   (z-50) so those stay clickable; the empty top area becomes the drag handle. */
+html.is-electron .app-chromeless::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--electron-drag-strip);
+  -webkit-app-region: drag;
+  z-index: 40;
+}
+
+/* (b) macOS traffic lights sit at top-left over the sidebar: clear them so the
+   sidebar header (logo / workspace switcher) doesn't hide under the lights. */
+html.is-electron.is-mac .app-shell-sidebar [data-sidebar='header'] {
+  padding-top: calc(var(--electron-drag-strip) - 0.5rem);
+}
+
+/* (c) Translucency so the vibrancy / mica material reads through. The inset
+   content card stays opaque (Sidebar.Inset = bg-card) for readability; only the
+   full-window canvas (provider) goes translucent — ONE frosted layer at ~38%
+   material. The sidebar panel (inner) is made fully transparent so it doesn't
+   STACK a second tint on top of the provider (which double-darkened the frost to
+   ~86% and killed the effect). body must be transparent so the provider shows
+   the OS material, not a solid colour. */
+html.is-electron.is-mac,
+html.is-electron.is-mac body {
+  /* Both must be transparent: the app.html pre-paint <style> + the Tailwind base
+     paint an opaque #0e1014 on BOTH html and body, either of which would sit
+     behind the translucent provider and block the OS material. Higher
+     specificity (2 classes) + later load wins over those base rules. */
+  background: transparent;
+}
+html.is-electron.is-mac .app-shell-root {
+  background: color-mix(in srgb, var(--sidebar) 62%, transparent);
+}
+html.is-electron.is-mac .app-shell-sidebar [data-slot='sidebar-inner'] {
+  background: transparent;
+}
+
 @keyframes view-fade-in {
   from {
     opacity: 0;
@@ -570,29 +648,113 @@
 }
 
 /*
- * Theme-swap override — when the user toggles light/dark/system,
- * theme.svelte.ts wraps the class change in `document.startViewTransition`
- * AND adds `html.theme-swap` for the duration of the transition. Here
- * we RE-ENABLE the sidebar/topbar crossfade (they'd otherwise snap and
- * the user would see two halves of the page flip at different times),
- * and we slow root + chrome to a single coordinated 260ms ease so the
- * whole viewport crossfades as one surface. Falls back automatically
- * on `prefers-reduced-motion: reduce` via the @media block below.
+ * Auth flow (login ↔ signup). Both screens share an identical brand-mark hero
+ * and full-screen bloom. Naming them holds them STEADY across the transition
+ * (the browser matches old↔new by name and, since they're identical, there's
+ * nothing to animate) while only the card + headline crossfade via `root`.
+ * Turns the swap into a calm morph instead of a whole-page flash. The hero gets
+ * its name inline on each page; the bloom is named here, scoped to `.auth-page`
+ * so the same <BloomBackground /> stays unnamed on every other route. Only the
+ * theme-visible `.bloom-surface` is rendered (the other is `display:none`), so
+ * there's never a duplicate `auth-bloom` name on one page.
  */
-html.theme-swap::view-transition-old(root),
-html.theme-swap::view-transition-old(app-sidebar),
-html.theme-swap::view-transition-old(app-topbar) {
-  animation: 260ms ease-out both view-fade-out !important;
+.auth-page .bloom-surface {
+  view-transition-name: auth-bloom;
 }
-html.theme-swap::view-transition-new(root),
-html.theme-swap::view-transition-new(app-sidebar),
-html.theme-swap::view-transition-new(app-topbar) {
-  animation: 260ms ease-out both view-fade-in !important;
+::view-transition-old(auth-hero),
+::view-transition-new(auth-hero),
+::view-transition-old(auth-bloom),
+::view-transition-new(auth-bloom) {
+  animation: none !important;
+  mix-blend-mode: normal;
+}
+
+/*
+ * Auth content crossfade: the card/headline ride `root`, whose default timing
+ * fades the old out (90ms) then the new in after a 90ms GAP — which reads as the
+ * form popping in. On a login↔signup swap (html.auth-swap, set in +layout's
+ * onNavigate) overlap them instead: old and new both animate from t=0 over
+ * ~220ms, and the incoming content eases up 8px so it settles rather than snaps.
+ */
+@keyframes auth-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+html.auth-swap::view-transition-old(root) {
+  animation: 180ms ease-out both view-fade-out !important;
+}
+html.auth-swap::view-transition-new(root) {
+  animation: 240ms cubic-bezier(0.22, 1, 0.36, 1) both auth-content-in !important;
+}
+
+/*
+ * Auth CONTENT panel — named `auth-content` on /login + /signup. Lifting the
+ * headline+form into its own group lets the browser MORPH the panel box (short
+ * login → taller signup) and crossfade only its contents, so the form settles
+ * into place instead of popping in at a mismatched Y (the old behaviour, when
+ * the whole `root` — toggle, particles, footer — crossfaded as one). The hero
+ * is nested + separately named, so it holds steady. Old/new use a plain opacity
+ * crossfade; the GROUP wrapper owns the box morph (a transform here would fight
+ * it). Active only during an auth-swap.
+ */
+html.auth-swap::view-transition-group(auth-content) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+html.auth-swap::view-transition-old(auth-content) {
+  animation: 200ms ease-out both view-fade-out !important;
+}
+html.auth-swap::view-transition-new(auth-content) {
+  animation: 320ms cubic-bezier(0.22, 1, 0.36, 1) both view-fade-in !important;
+}
+
+/*
+ * Theme-swap — when the user toggles light/dark/system, theme.svelte.ts wraps
+ * the class flip in `document.startViewTransition`, adds `html.theme-swap`, and
+ * sets --theme-x / --theme-y / --theme-r (the reveal's origin + cover radius).
+ * A light↔dark OPACITY crossfade reads as a muddy double-exposure flash, so
+ * instead we REVEAL the new theme over the old with a hard-edged clip-path
+ * circle expanding from the toggle:
+ *   - fold the sidebar + topbar back into `root` (drop their names) so the whole
+ *     viewport wipes as ONE surface — no two-halves snap;
+ *   - hold the OLD snapshot static underneath;
+ *   - clip the NEW snapshot from a 0-radius circle out to --theme-r.
+ * Falls back to an instant swap on `prefers-reduced-motion` (theme.svelte.ts
+ * skips startViewTransition entirely; the @media block below is belt-and-braces).
+ */
+html.theme-swap .app-shell-sidebar,
+html.theme-swap .app-shell-topbar {
+  view-transition-name: none;
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-x, 100%) var(--theme-y, 0%));
+  }
+  to {
+    clip-path: circle(var(--theme-r, 150%) at var(--theme-x, 100%) var(--theme-y, 0%));
+  }
+}
+html.theme-swap::view-transition-old(root) {
+  animation: none !important;
+}
+html.theme-swap::view-transition-new(root) {
+  animation: 480ms cubic-bezier(0.22, 1, 0.36, 1) both theme-reveal !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
-  ::view-transition-new(root) {
+  ::view-transition-new(root),
+  html.theme-swap::view-transition-old(root),
+  html.theme-swap::view-transition-new(root),
+  html.auth-swap::view-transition-old(auth-content),
+  html.auth-swap::view-transition-new(auth-content),
+  html.auth-swap::view-transition-group(auth-content) {
     animation: none !important;
   }
 

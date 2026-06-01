@@ -8,7 +8,7 @@
 // background reachable from the edge and PRESERVE whites walled off by the dark
 // outline. The de-fringe must shave pale edge pixels without eating the outline.
 import assert from 'node:assert/strict';
-import { removeWhiteBackground, defringeLightEdges } from './process-mascot.mjs';
+import { removeWhiteBackground, defringeLightEdges, extractLineArt } from './process-mascot.mjs';
 
 let pass = 0;
 let fail = 0;
@@ -81,6 +81,23 @@ t('de-fringe shaves a pale edge pixel but keeps a dark edge pixel', () => {
   assert.equal(cleared, 1, 'exactly the light edge pixel is cleared');
   assert.equal(data[7], 0, 'light fringe pixel -> transparent');
   assert.equal(data[11], 255, 'dark pixel preserved');
+});
+
+t('extractLineArt: light strokes -> opaque white, dark field -> transparent', () => {
+  // 3×1: [dark navy bg][light stroke][mid]. luminance ramp lo=90,hi=170.
+  const W = 3,
+    H = 1;
+  const data = new Uint8Array(W * H * 4);
+  data.set([10, 34, 66, 255], 0); // dark navy (lum ~31) -> transparent
+  data.set([240, 240, 240, 255], 4); // light stroke (lum ~240) -> opaque white
+  data.set([130, 130, 130, 255], 8); // mid (lum 130) -> ~half alpha
+  const out = extractLineArt(data, W, H);
+  assert.equal(out[3], 0, 'dark navy field must be transparent');
+  assert.equal(out[7], 255, 'light stroke must be fully opaque');
+  assert.equal(out[4], 255, 'stroke RGB recoloured to white');
+  assert.equal(out[5], 255);
+  assert.equal(out[6], 255);
+  assert.ok(out[11] > 80 && out[11] < 200, 'mid-luminance pixel gets partial alpha (anti-alias)');
 });
 
 console.log(`\nprocess-mascot.test: ${pass} passed, ${fail} failed`);

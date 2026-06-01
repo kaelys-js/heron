@@ -4,7 +4,7 @@
  *
  * These pages are emitted by apply-brand, which runs on every `pnpm dev`
  * startup (vite plugin) and in CI. The footer used to embed
- * `new Date().toISOString().slice(0,10)` — TODAY — so on any new day the three
+ * `new Date().toISOString().slice(0,10)` -- TODAY -- so on any new day the three
  * files regenerated with a different date and left the working tree
  * permanently dirty (masking real diffs). The date now derives from the last
  * commit that touched the brand source, so it only changes when branding
@@ -18,7 +18,7 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Pure: normalize a `git log --format=%cs` value (YYYY-MM-DD) or fall back.
- * Never returns today's date — the fallback is fixed so non-git installs
+ * Never returns today's date -- the fallback is fixed so non-git installs
  * (release tarballs) stay deterministic too.
  */
 export function resolveLegalUpdated(gitDateRaw, fallback = '2026-01-01') {

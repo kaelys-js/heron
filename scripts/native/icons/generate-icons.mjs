@@ -56,6 +56,38 @@ const ROOT = path.resolve(__dirname, '../../..');
 const SVG = path.join(ROOT, 'ui/static/favicon.svg');
 const BUILD = path.join(__dirname, '_build');
 
+/**
+ * Scale the `<image>` inside an SVG fragment about its OWN centre by `scale`,
+ * leaving every other element (the gradient squircle `<rect>`, etc.) untouched.
+ * Centre-preserving: recomputes x/y so the mark stays put while it grows/shrinks.
+ * Used by the macOS dock tile to make the heron read larger inside the squircle
+ * without disturbing the card. Pure; returns the fragment unchanged if it has no
+ * `<image>`. Exported for unit testing.
+ */
+export function scaleSvgImage(svgInner, scale) {
+  return svgInner.replace(/<image\b[^>]*>/, (tag) => {
+    const read = (attr) => {
+      const m = tag.match(new RegExp(`\\b${attr}="([\\d.]+)"`));
+      return m ? Number.parseFloat(m[1]) : null;
+    };
+    const x = read('x');
+    const y = read('y');
+    const w = read('width');
+    const h = read('height');
+    if (x === null || y === null || w === null || h === null) return tag;
+    const nw = w * scale;
+    const nh = h * scale;
+    const nx = x + w / 2 - nw / 2;
+    const ny = y + h / 2 - nh / 2;
+    const fmt = (n) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(3))));
+    return tag
+      .replace(/\bx="[\d.]+"/, `x="${fmt(nx)}"`)
+      .replace(/\by="[\d.]+"/, `y="${fmt(ny)}"`)
+      .replace(/\bwidth="[\d.]+"/, `width="${fmt(nw)}"`)
+      .replace(/\bheight="[\d.]+"/, `height="${fmt(nh)}"`);
+  });
+}
+
 // Read brand.json so the web-manifest filenames track the brand name.
 // Previously hardcoded `heron-${size}.png`; if the user renamed the
 // brand to e.g. "myapp" the generator would still write
@@ -175,7 +207,10 @@ async function renderAtSize(sharp, svg, size, outPath, opaque = false) {
   // dark background to drop the channel. macOS / web icons keep their alpha
   // (squircle shape, favicon transparency).
   if (opaque) pipe = pipe.flatten({ background: '#0e1014' });
-  await pipe.png().toFile(outPath);
+  // Palette-quantise every icon: the mark is a flat cartoon, so a 256-colour
+  // indexed PNG is visually identical but multiples smaller than full RGBA
+  // (e.g. AppIcon-1024 ~330 KB -> ~80 KB), matching the original glyph icons.
+  await pipe.png({ palette: true, quality: 90, effort: 10, compressionLevel: 9 }).toFile(outPath);
 }
 
 async function readCacheKey() {
@@ -215,7 +250,10 @@ async function main() {
     // v5: brand mark is the cartoon MASCOT -- icons composite the mascot-on-squircle
     // (via favicon.svg) and the Splash.imageset is the BARE mascot on the halo.
     // v6: splash = solid mascot-sampled bg + centered mascot + soft drop shadow.
-    renderRev: 6,
+    // v7: small (~11%) centered mascot + soft lens vignette (grain is CSS-only,
+    //     never baked here -- keeps the PNG compressible).
+    // v8: macOS dock tile scales the heron 1.5x inside the squircle (scaleSvgImage).
+    renderRev: 8,
   });
   const key = createHash('sha256').update(svgBuffer).update(matrixKey).digest('hex').slice(0, 16);
   const prev = await readCacheKey();
@@ -332,6 +370,11 @@ async function main() {
   const mascotMaster = path.join(ROOT, 'branding/assets/mascot.png');
   const mascotB64 = (await fs.readFile(mascotMaster)).toString('base64');
   const mascotOffset = Math.round((splashSize - mascotSize) / 2);
+  // Vignette mirrors the web boot's .splash-vignette (splash-spec.mjs
+  // SPLASH_VIGNETTE). It's a smooth gradient, so it palette-compresses cleanly.
+  // The web boot's film GRAIN is deliberately NOT baked here: per-pixel noise is
+  // incompressible (it ballooned this PNG to ~7 MB) and the iOS launch image
+  // must be static -- grain lives only in the live CSS layer painted over it.
   const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${splashSize}" height="${splashSize}" viewBox="0 0 ${splashSize} ${splashSize}">
     <defs>
       <filter id="mascotShadow" x="-40%" y="-40%" width="180%" height="180%">
@@ -346,14 +389,23 @@ async function main() {
           <feMergeNode in="SourceGraphic"/>
         </feMerge>
       </filter>
+      <radialGradient id="vignette" cx="50%" cy="42%" r="75%">
+        <stop offset="35%" stop-color="#000000" stop-opacity="0" />
+        <stop offset="68%" stop-color="#000000" stop-opacity="0.12" />
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.3" />
+      </radialGradient>
     </defs>
     <rect width="${splashSize}" height="${splashSize}" fill="${splashBg}" />
+    <rect width="${splashSize}" height="${splashSize}" fill="url(#vignette)" />
     <image x="${mascotOffset}" y="${mascotOffset}" width="${mascotSize}" height="${mascotSize}" filter="url(#mascotShadow)" href="data:image/png;base64,${mascotB64}" />
   </svg>`;
 
   const splashBuffer = await sharp(Buffer.from(fullSvg))
     .resize(splashSize, splashSize, { fit: 'cover' })
-    .png()
+    // Palette-quantise: solid bg + flat mascot + soft shadow reduce to a small
+    // colour set, so a 256-colour PNG is visually identical but ~3x smaller than
+    // full RGBA (the 2732² splash drops from ~770 KB to ~250 KB).
+    .png({ palette: true, quality: 90, effort: 10, compressionLevel: 9 })
     .toBuffer();
   // iOS expects three @1x/@2x/@3x variants under the same imageset; we
   // render the same 2732 image for all three (iOS scales down for older
@@ -387,6 +439,24 @@ async function main() {
   await renderAtSize(sharp, svgBuffer, 256, path.join(electronBuild, 'icon-256.png'));
   await renderAtSize(sharp, svgBuffer, 1024, path.join(electronBuild, 'icon-1024.png'));
 
+  // Menu-bar / tray icon: the BARE mascot (NO squircle), trimmed of its
+  // transparent margin so it fills the small icon, on a transparent canvas.
+  // tray.ts loads this (not icon.png) so the menu bar shows the mascot itself,
+  // not the gradient app-icon tile. 44px = crisp at the 22pt menu-bar size.
+  await sharp(path.join(ROOT, 'branding/assets/mascot.png'))
+    .trim()
+    .resize(44, 44, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ palette: true, quality: 90, effort: 10, compressionLevel: 9 })
+    .toFile(path.join(electronBuild, 'tray.png'));
+
+  // Bare mascot (no squircle) for the About window logo. Larger than the tray
+  // icon so it's crisp at the ~78px About hero size.
+  await sharp(path.join(ROOT, 'branding/assets/mascot.png'))
+    .trim()
+    .resize(256, 256, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ palette: true, quality: 90, effort: 10, compressionLevel: 9 })
+    .toFile(path.join(electronBuild, 'mascot.png'));
+
   // macOS dock tile -- Apple's icon grid insets the rounded-rect "card"
   // to 824/1024 of the canvas (≈100px transparent margin per side, plus
   // room for the system drop shadow). Every stock macOS app follows this,
@@ -402,8 +472,23 @@ async function main() {
   const logoInner = faviconSvgText
     .replace(/^[\s\S]*?<svg[^>]*>/, '')
     .replace(/<\/svg>[\s\S]*$/, '');
-  const macIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><g transform="translate(100, 100) scale(0.8046875)">${logoInner}</g></svg>`;
+  // Dock-only: scale the heron 1.5x WITHIN the squircle so the bird reads larger
+  // in the Dock (the gradient card stays the Apple-grid size; only the <image>
+  // grows, centre-preserved). iOS (`svgBuffer`) + web favicon keep the full-bleed
+  // 66% mark, so this is scoped to the macOS dock tile and never couples to them.
+  const DOCK_HERON_SCALE = 1.5;
+  const dockLogoInner = scaleSvgImage(logoInner, DOCK_HERON_SCALE);
+  const macIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><g transform="translate(100, 100) scale(0.8046875)">${dockLogoInner}</g></svg>`;
   const macIconBuffer = Buffer.from(macIconSvg);
+
+  // macOS Dock PNG -- the SAME Apple-grid inset as the .icns (824/1024 card),
+  // as a standalone high-res PNG. app.dock.setIcon() loads THIS rather than the
+  // full-bleed icon.png, so the dev Dock tile is correctly inset (matches stock
+  // apps) even when nativeImage can't parse the .icns in dev.
+  await sharp(macIconBuffer)
+    .resize(1024, 1024, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ palette: true, quality: 90, effort: 10, compressionLevel: 9 })
+    .toFile(path.join(electronBuild, 'dock.png'));
 
   // .icns (macOS) -- prefer iconutil (macOS-native, best output) and fall
   // back to png2icns (libicns, available on Linux CI via icnsutils).
@@ -598,7 +683,12 @@ async function main() {
   console.log('\n✓ All icons generated');
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Run only when executed directly (apply-brand spawns this as a subprocess, and
+// the CLI invokes it by path). Importing the module -- e.g. from the unit test
+// for `scaleSvgImage` -- must NOT trigger a full icon render.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

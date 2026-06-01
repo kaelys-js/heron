@@ -192,6 +192,32 @@ describe('hooks — CORS preflight', () => {
     expect(r.headers.get('Access-Control-Allow-Credentials')).toBe('true');
     expect(r.headers.get('Vary')).toBe('Origin');
   });
+
+  it('exposes correlation + version + timing headers to the cross-origin client', async () => {
+    // WHY: without Access-Control-Expose-Headers the CORS layer hides every
+    // non-safelisted response header from cross-origin JS (the Capacitor
+    // WebView / LAN client), so api.ts could never read X-Request-Id off a
+    // failed fetch. Timing-Allow-Origin does the same for Resource Timing /
+    // Server-Timing. Both must name the echoed allow-listed origin, not '*'.
+    sessions.set('s1', { user: { id: 'u-1', email: 'a@b' }, session: { id: 's1' } });
+    const e = evt('http://localhost:5173/api/jobs', {
+      headers: { Origin: 'heron://localhost', Cookie: 'sid=s1' },
+    });
+    const r = await run(e);
+    const expose = r.headers.get('Access-Control-Expose-Headers') ?? '';
+    expect(expose).toContain('X-Request-Id');
+    expect(expose).toContain('X-App-Version');
+    expect(expose).toContain('Server-Timing');
+    expect(r.headers.get('Timing-Allow-Origin')).toBe('heron://localhost');
+  });
+
+  it('does NOT expose headers / Timing-Allow-Origin same-origin (no Origin header)', async () => {
+    // Same-origin JS reads every header natively, so emitting Expose-Headers
+    // there is misleading noise -- it must be gated on an allow-listed Origin.
+    const r = await run(evt('http://localhost:5173/login'));
+    expect(r.headers.get('Access-Control-Expose-Headers')).toBeNull();
+    expect(r.headers.get('Timing-Allow-Origin')).toBeNull();
+  });
 });
 
 describe('hooks -- guard (auth)', () => {
@@ -283,6 +309,38 @@ describe('hooks -- security headers', () => {
   it('always sets X-Content-Type-Options: nosniff', async () => {
     const r = await run(evt('http://localhost:5173/login'));
     expect(r.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
+
+  it('sets X-Request-Id on every response (correlation id)', async () => {
+    const r = await run(evt('http://localhost:5173/login'));
+    // (crypto.randomUUID is the deterministic test-uuid mock here.)
+    expect(r.headers.get('X-Request-Id')).toMatch(/^test-uuid-/);
+  });
+
+  it('sets X-App-Version on every response (pin the build a response came from)', async () => {
+    // __APP_VERSION__ is mirrored into the vitest define from root
+    // package.json (see vitest.base.ts), so it resolves the same literal
+    // here as in a real build.
+    const r = await run(evt('http://localhost:5173/login'));
+    expect(r.headers.get('X-App-Version')).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
+  it('sets a lean Server-Timing on EVERY response (not just dev)', async () => {
+    // dev is mocked false in this suite, so this asserts the production path:
+    // a `total;dur=<ms>` measurement clients can read off the Network panel.
+    const r = await run(evt('http://localhost:5173/login'));
+    expect(r.headers.get('Server-Timing')).toMatch(/^total;dur=[\d.]+$/);
+  });
+
+  it('sets Cache-Control: no-store on /api/* (auth-scoped payloads never cached)', async () => {
+    // /api/health is public so it reaches the handler with a 200.
+    const r = await run(evt('http://localhost:5173/api/health'));
+    expect(r.headers.get('Cache-Control')).toBe('no-store');
+  });
+
+  it('does NOT force no-store on non-API routes (asset/page caching intact)', async () => {
+    const r = await run(evt('http://localhost:5173/login'));
+    expect(r.headers.get('Cache-Control')).toBeNull();
   });
 
   it('always sets X-Frame-Options: DENY', async () => {
@@ -382,18 +440,51 @@ describe('handleError', () => {
       status: 500,
       message: 'Internal Server Error',
     }) as unknown as { message: string };
-    expect(r.message).toBe('Something broke on our end.');
+    // 5xx maps to the generic human line; a ` · ref <id>` suffix carries the
+    // correlation id into the catastrophic error.html fallback (only %message%
+    // is templated there). The human prefix must be preserved.
+    expect(r.message).toMatch(/^Something broke on our end\. · ref \S+$/);
     expect(reportedErrors.length).toBe(1);
   });
 
-  it('passes through 4xx messages unchanged', () => {
+  it('passes through 4xx messages (+ appends the correlation ref)', () => {
     const r = handleError({
       error: { code: 'NOT_FOUND' },
       event: { url: new URL('http://localhost/api/jobs/1') } as never,
       status: 404,
       message: 'Not Found',
     }) as unknown as { message: string; code: string };
-    expect(r.message).toBe('Not Found');
+    expect(r.message).toMatch(/^Not Found · ref \S+$/);
     expect(r.code).toBe('NOT_FOUND');
+  });
+
+  it('returns a correlation errorId AND embeds it in the report (logs ↔ page)', () => {
+    // WHY: the error page shows this id (copyable) so a user can quote it to
+    // support; the SAME id must be in the server log message so support can find
+    // the matching error. A returned id that isn't logged would be useless.
+    const r = handleError({
+      error: new Error('boom'),
+      event: { url: new URL('http://localhost/api/jobs') } as never,
+      status: 500,
+      message: 'Internal Server Error',
+    }) as unknown as { errorId: string };
+    // (crypto.randomUUID is mocked deterministically in this suite, so assert a
+    // non-empty id + the correlation rather than a strict uuid shape.)
+    expect(typeof r.errorId).toBe('string');
+    expect(r.errorId.length).toBeGreaterThan(0);
+    expect(reportedErrors.at(-1)?.msg).toContain(r.errorId);
+  });
+
+  it('reuses event.locals.requestId as the error reference (one id end-to-end)', () => {
+    // The error reference shown on-screen == X-Request-Id == the log line, so
+    // support can pivot between them. handleError reads the id off locals.
+    const r = handleError({
+      error: new Error('boom'),
+      event: { url: new URL('http://localhost/x'), locals: { requestId: 'req-abc-123' } } as never,
+      status: 500,
+      message: 'Internal Server Error',
+    }) as unknown as { errorId: string; message: string };
+    expect(r.errorId).toBe('req-abc-123');
+    expect(r.message).toContain('req-abc-123');
   });
 });

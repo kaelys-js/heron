@@ -30,6 +30,7 @@ export const MASCOT_EMBEDS = {
 };
 
 const masterPath = (rootDir) => join(rootDir, 'branding', 'assets', 'mascot.png');
+const silhouettePath = (rootDir) => join(rootDir, 'branding', 'assets', 'mascot-silhouette.png');
 export const mascotB64Path = (rootDir) => join(rootDir, 'branding', 'assets', 'mascot-b64.json');
 
 /** Sample the mascot's darker-blue tone for the splash background, so the splash
@@ -73,8 +74,24 @@ export async function encodeMascot(rootDir) {
         : await base.png({ compressionLevel: 9, palette: true }).toBuffer();
     out[key] = `data:image/${format};base64,${buf.toString('base64')}`;
   }
+  out.iconPngWhite = await encodeSilhouette(rootDir, MASCOT_EMBEDS.iconPng.size);
   out.splashBg = await sampleSplashBg(rootDir);
   return out;
+}
+
+/** The user-provided WHITE SILHOUETTE mascot for the app-icon glyph: the
+ *  cleaned, cut-out master at branding/assets/mascot-silhouette.png (produced by
+ *  process-mascot.cleanMaster from branding/mascot-silhouette.png), resized and
+ *  encoded as PNG. apply-brand swaps it in for the full-colour mascot in
+ *  favicon.svg, so every rasterised app icon shows the silhouette on the brand
+ *  squircle. PNG because resvg (sharp's SVG rasteriser) renders PNG `<image>`. */
+export async function encodeSilhouette(rootDir, size) {
+  const sharp = require(join(rootDir, 'ui', 'node_modules', 'sharp'));
+  const buf = await sharp(silhouettePath(rootDir))
+    .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+  return `data:image/png;base64,${buf.toString('base64')}`;
 }
 
 /** Read the committed embeds synchronously (for apply-brand + splash-spec). */

@@ -15,6 +15,7 @@ const __trayPopUpContextMenu = vi.fn();
 const __trayDestroy = vi.fn();
 const __traySetTitle = vi.fn();
 const __traySetContextMenu = vi.fn();
+const __traySetImage = vi.fn();
 const __menuBuildFromTemplate = vi.fn();
 const __createFromPath = vi.fn();
 const __resize = vi.fn();
@@ -30,6 +31,10 @@ const __existsSync = vi.fn(() => false);
 const __unlinkSync = vi.fn();
 const __rmSync = vi.fn();
 const __writeFileSync = vi.fn();
+const __watchClose = vi.fn();
+const __watch = vi.fn(() => ({ close: __watchClose }));
+// Toggles app.isPackaged so we can exercise the dev (watch) vs packaged (skip) paths.
+let __isPackaged = false;
 
 // Selector: `dock: 'present'` (default) renders the dock API; `'missing'`
 // drops it so we can exercise the `!app.dock` defensive branches.
@@ -43,6 +48,9 @@ vi.mock('electron', () => ({
     getPath: __appGetPath,
     getVersion: __appGetVersion,
     on: __appOn,
+    get isPackaged() {
+      return __isPackaged;
+    },
     get dock() {
       if (__dockShape === 'missing') {
         return undefined;
@@ -59,11 +67,13 @@ vi.mock('node:fs', () => ({
     unlinkSync: __unlinkSync,
     rmSync: __rmSync,
     writeFileSync: __writeFileSync,
+    watch: __watch,
   },
   existsSync: __existsSync,
   unlinkSync: __unlinkSync,
   rmSync: __rmSync,
   writeFileSync: __writeFileSync,
+  watch: __watch,
 }));
 
 // Mock http/https: throw synchronously inside `request()` so the outer
@@ -84,6 +94,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.useFakeTimers();
   __dockShape = 'present';
+  __isPackaged = false;
+  __watch.mockReturnValue({ close: __watchClose } as never);
   __existsSync.mockReturnValue(false);
   __trayCtor.mockImplementation(function () {
     return {
@@ -93,6 +105,7 @@ beforeEach(() => {
       destroy: __trayDestroy,
       setTitle: __traySetTitle,
       setContextMenu: __traySetContextMenu,
+      setImage: __traySetImage,
     };
   });
   __createFromPath.mockReturnValue({
@@ -209,6 +222,43 @@ describe('desktopTray -- stop', () => {
     const t = new DesktopTray(handlers());
     expect(() => t.stop()).not.toThrow();
   });
+
+  it('closes the icon watcher on stop', async () => {
+    const { DesktopTray } = await import('./tray.js');
+    const t = new DesktopTray(handlers());
+    t.start();
+    t.stop();
+    expect(__watchClose).toHaveBeenCalled();
+  });
+});
+
+describe('desktopTray -- icon hot-reload (dev HMR)', () => {
+  it('watches the build dir and re-applies the icon when tray.png changes', async () => {
+    let captured: ((event: string, file: string) => void) | undefined;
+    __watch.mockImplementation(((_dir: string, cb: (event: string, file: string) => void) => {
+      captured = cb;
+      return { close: __watchClose };
+    }) as never);
+    const { DesktopTray } = await import('./tray.js');
+    const t = new DesktopTray(handlers());
+    t.start();
+    expect(__watch).toHaveBeenCalled();
+    __traySetImage.mockClear();
+    captured?.('change', 'other.png'); // unrelated file -> no reload
+    expect(__traySetImage).not.toHaveBeenCalled();
+    captured?.('change', 'tray.png'); // the icon was regenerated -> reload
+    expect(__traySetImage).toHaveBeenCalled();
+    t.stop();
+  });
+
+  it('does NOT watch in a packaged build', async () => {
+    __isPackaged = true;
+    const { DesktopTray } = await import('./tray.js');
+    const t = new DesktopTray(handlers());
+    t.start();
+    expect(__watch).not.toHaveBeenCalled();
+    t.stop();
+  });
 });
 
 describe('desktopTray -- click handlers', () => {
@@ -318,63 +368,52 @@ describe('desktopTray -- refresh + menu', () => {
     t.stop();
   });
 
-  it('menu template includes "(backend offline)" when stats are null', async () => {
+  it('menu is the trimmed set (no quick-jumps / scan / autopilot / stats)', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
     const t = await startAndRefresh(handlers());
     const items = lastMenuTemplate();
-    const offline = items.find((i) => i.label === '(backend offline)');
-    expect(offline).toBeTruthy();
+    const labels = items.filter((i) => i.type !== 'separator').map((i) => String(i.label));
+    // No window visible (mock getAllWindows() === []) -> the toggle reads "Show Window".
+    expect(labels).toContain('Show Window');
+    expect(labels.some((l) => /^Version /.test(l))).toBe(true);
+    expect(labels.some((l) => /^Quit /.test(l))).toBe(true);
+    for (const gone of [
+      'Pipeline',
+      'Inbox',
+      'Queue',
+      'Stats',
+      'Scan now',
+      'Show dashboard',
+      'Hide window',
+      '(backend offline)',
+    ]) {
+      expect(labels).not.toContain(gone);
+    }
     t.stop();
   });
 
-  it('menu template has the section quick-jumps', async () => {
-    const t = await startAndRefresh(handlers());
-    const items = lastMenuTemplate();
-    expect(items.find((i) => i.label === 'Pipeline')).toBeTruthy();
-    expect(items.find((i) => i.label === 'Inbox')).toBeTruthy();
-    expect(items.find((i) => i.label === 'Queue')).toBeTruthy();
-    expect(items.find((i) => i.label === 'Stats')).toBeTruthy();
-    t.stop();
-  });
-
-  it('click on Pipeline routes to onOpenPath("/pipeline")', async () => {
+  it('window toggle reads "Show Window" + invokes onOpen when none is visible', async () => {
+    __browserWindowGetAll.mockReturnValue([] as any);
     const h = handlers();
     const t = await startAndRefresh(h);
     const items = lastMenuTemplate();
-    const pipeline = items.find((i) => i.label === 'Pipeline')!;
-    (pipeline.click as () => void)();
-    expect(h.onOpenPath).toHaveBeenCalledWith('/pipeline');
-    t.stop();
-  });
-
-  it('falls back to onOpen when onOpenPath is undefined', async () => {
-    const h = handlers();
-    delete (h as any).onOpenPath;
-    const t = await startAndRefresh(h);
-    const items = lastMenuTemplate();
-    const inbox = items.find((i) => i.label === 'Inbox')!;
-    (inbox.click as () => void)();
+    const toggle = items.find((i) => i.label === 'Show Window')!;
+    (toggle.click as () => void)();
     expect(h.onOpen).toHaveBeenCalled();
     t.stop();
   });
 
-  it('click on Show dashboard invokes handlers.onOpen', async () => {
-    const h = handlers();
-    const t = await startAndRefresh(h);
-    const items = lastMenuTemplate();
-    const show = items.find((i) => i.label === 'Show dashboard')!;
-    (show.click as () => void)();
-    expect(h.onOpen).toHaveBeenCalled();
-    t.stop();
-  });
-
-  it('click on Hide window invokes BrowserWindow.getAllWindows().hide()', async () => {
+  it('window toggle reads "Hide Window" + hides all when one is visible', async () => {
     const hide1 = vi.fn();
     const hide2 = vi.fn();
-    __browserWindowGetAll.mockReturnValue([{ hide: hide1 }, { hide: hide2 }] as any);
+    __browserWindowGetAll.mockReturnValue([
+      { isVisible: () => true, isDestroyed: () => false, on: vi.fn(), hide: hide1 },
+      { isVisible: () => false, isDestroyed: () => false, on: vi.fn(), hide: hide2 },
+    ] as any);
     const t = await startAndRefresh(handlers());
     const items = lastMenuTemplate();
-    const hide = items.find((i) => i.label === 'Hide window')!;
-    (hide.click as () => void)();
+    const toggle = items.find((i) => i.label === 'Hide Window')!;
+    (toggle.click as () => void)();
     expect(hide1).toHaveBeenCalled();
     expect(hide2).toHaveBeenCalled();
     t.stop();
@@ -390,13 +429,23 @@ describe('desktopTray -- refresh + menu', () => {
     t.stop();
   });
 
-  it('click on Scan now invokes runTask (postEmpty failure is silent)', async () => {
+  it('rebuilds the menu when a window show/hide event fires (keeps the label fresh)', async () => {
+    const captured: Record<string, () => void> = {};
+    __browserWindowGetAll.mockReturnValue([
+      {
+        isVisible: () => false,
+        isDestroyed: () => false,
+        hide: vi.fn(),
+        on: (ev: string, cb: () => void) => {
+          captured[ev] = cb;
+        },
+      },
+    ] as any);
     const t = await startAndRefresh(handlers());
-    const items = lastMenuTemplate();
-    const scan = items.find((i) => i.label === 'Scan now')!;
-    // postEmpty also uses node:http which is mocked to throw; the call
-    // should be invoked + resolve null silently.
-    expect(() => (scan.click as () => void)()).not.toThrow();
+    __menuBuildFromTemplate.mockClear();
+    captured.show?.(); // simulate the window becoming visible
+    captured.hide?.(); // ...and hidden
+    expect(__menuBuildFromTemplate).toHaveBeenCalled();
     t.stop();
   });
 });
@@ -406,7 +455,7 @@ describe('desktopTray -- macOS Menu Bar Only', () => {
     Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
     const t = await startAndRefresh(handlers());
     const items = lastMenuTemplate();
-    const toggle = items.find((i) => i.label === 'Menu Bar Only (hide Dock icon)')!;
+    const toggle = items.find((i) => i.label === 'Hide Dock Icon')!;
     (toggle.click as () => void)();
     expect(__appDockHide).toHaveBeenCalled();
     expect(__writeFileSync).toHaveBeenCalledWith(expect.stringContaining('menubar-only.pref'), '1');
@@ -418,7 +467,7 @@ describe('desktopTray -- macOS Menu Bar Only', () => {
     const t = await startAndRefresh(handlers());
     // Grab the click handler BEFORE clearing mocks.
     const items = lastMenuTemplate();
-    const toggle = items.find((i) => i.label === 'Menu Bar Only (hide Dock icon)')!;
+    const toggle = items.find((i) => i.label === 'Hide Dock Icon')!;
     __menuBuildFromTemplate.mockClear();
     (toggle.click as () => void)();
     // setMenuBarOnly calls rebuildMenu -> buildFromTemplate.
@@ -431,7 +480,7 @@ describe('desktopTray -- macOS Menu Bar Only', () => {
     const t = await startAndRefresh(handlers());
     const items = lastMenuTemplate();
     // No Menu Bar Only item on linux.
-    expect(items.find((i) => i.label === 'Menu Bar Only (hide Dock icon)')).toBeUndefined();
+    expect(items.find((i) => i.label === 'Hide Dock Icon')).toBeUndefined();
     t.stop();
   });
 
@@ -442,7 +491,7 @@ describe('desktopTray -- macOS Menu Bar Only', () => {
     const t = await startAndRefresh(handlers());
     // First toggle click flips from true -> false (disable path).
     const items = lastMenuTemplate();
-    const toggle = items.find((i) => i.label === 'Menu Bar Only (hide Dock icon)')!;
+    const toggle = items.find((i) => i.label === 'Hide Dock Icon')!;
     (toggle.click as () => void)();
     expect(__appDockShow).toHaveBeenCalled();
     expect(__rmSync).toHaveBeenCalledWith(expect.stringContaining('menubar-only.pref'), {
@@ -470,59 +519,13 @@ describe('desktopTray -- defensive paths', () => {
     __dockShape = 'missing';
     const t = await startAndRefresh(handlers());
     const items = lastMenuTemplate();
-    const toggle = items.find((i) => i.label === 'Menu Bar Only (hide Dock icon)');
+    const toggle = items.find((i) => i.label === 'Hide Dock Icon');
     if (toggle) {
       (toggle.click as () => void)();
     }
     expect(__appDockHide).not.toHaveBeenCalled();
     expect(__appDockShow).not.toHaveBeenCalled();
     expect(__writeFileSync).not.toHaveBeenCalled();
-    t.stop();
-  });
-});
-
-describe('desktopTray -- runTask + toggleAutopilot (mocked tray-http)', () => {
-  // For this block we override the tray-http module to give the tray
-  // real stats + a successful postEmpty, so the autopilot toggle path
-  // (postEmpty -> .then -> refresh) is exercised.
-  beforeEach(() => {
-    vi.doMock('./tray-http', () => ({
-      fetchStats: vi.fn(async () => ({
-        queued: 2,
-        appliedToday: 1,
-        upcomingInterviews: 0,
-        autopilotPaused: false,
-      })),
-      postEmpty: vi.fn(async () => undefined),
-    }));
-  });
-
-  afterEach(() => {
-    vi.doUnmock('./tray-http');
-  });
-
-  it('clicking Pause autopilot invokes postEmpty then refreshes the menu', async () => {
-    const t = await startAndRefresh(handlers());
-    const items = lastMenuTemplate();
-    const pauseItem = items.find((i) => i.label === 'Pause autopilot');
-    expect(pauseItem).toBeTruthy();
-    __menuBuildFromTemplate.mockClear();
-    (pauseItem!.click as () => void)();
-    // Let postEmpty resolve, .then(refresh) chain through fetchStats await,
-    // then rebuildMenu. Drain microtask queue via setImmediate.
-    vi.useRealTimers();
-    await new Promise<void>((r) => setImmediate(r));
-    await new Promise<void>((r) => setImmediate(r));
-    expect(__menuBuildFromTemplate).toHaveBeenCalled();
-    vi.useFakeTimers();
-    t.stop();
-  });
-
-  it('clicking Scan now invokes postEmpty (fire-and-forget)', async () => {
-    const t = await startAndRefresh(handlers());
-    const items = lastMenuTemplate();
-    const scan = items.find((i) => i.label === 'Scan now')!;
-    expect(() => (scan.click as () => void)()).not.toThrow();
     t.stop();
   });
 });

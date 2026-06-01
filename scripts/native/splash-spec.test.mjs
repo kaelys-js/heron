@@ -5,8 +5,10 @@
 // vitest workspace, matching the other scripts/*.test.mjs.
 //
 // Invariants under test:
-//   - the splash mark is the MASCOT (data-URI <img>), not a vector glyph
-//   - the background is the SOLID mascot-sampled splashBg (no bloom/glow/grain)
+//   - the splash mark is the BARE MASCOT (data-URI <img>), not a squircle tile
+//     or a vector glyph
+//   - the background is the mascot-sampled splashBg, given depth by a soft
+//     vignette + a film grain (NOT the login/signup dawn-sky bloom)
 //   - the still frame (animated:false) is the resting frame: SAME mark/arc/bg,
 //     only the motion block differs -- native-PNG -> web-boot handoff can't drift
 //   - reduced-motion always collapses to the still frame
@@ -50,20 +52,27 @@ t('arc is the dawn-gold loader ring', () => {
   assert.ok(arc.includes('splash-arc-ring') && arc.includes('stroke-dasharray'));
 });
 
-t('the splash mark is the mascot image, on a SOLID sampled background', () => {
+t('the splash is the BARE mascot on the sampled bg, with vignette + grain', () => {
   const html = buildSplashHtml({ colors, splashBg, mascotDataUri, animated: true });
-  assert.ok(html.includes('class="splash-mark-img"'), 'mascot <img> present');
+  assert.ok(html.includes('class="splash-mark-img"'), 'bare mascot <img> present');
   assert.ok(html.includes(mascotDataUri), 'the mascot data-URI is embedded');
-  assert.ok(html.includes(`background: ${splashBg}`), 'solid sampled background');
-  assert.ok(!html.includes('radial-gradient') && !html.includes('feTurbulence'), 'no bloom/grain');
+  assert.ok(html.includes(`background: ${splashBg}`), 'sampled-blue base layer');
+  assert.ok(html.includes('splash-vignette') && html.includes('radial-gradient'), 'vignette layer');
+  assert.ok(html.includes('splash-grain') && html.includes('feTurbulence'), 'film-grain layer');
+  // Bare mascot: NO squircle tile (rx) and NO login/signup dawn-sky bloom.
+  assert.ok(!html.includes('rx="232"'), 'no squircle tile on the splash');
+  assert.ok(!html.includes('#090b0f'), 'no dawn-sky bloom on the splash');
   assert.ok(!html.includes('<symbol') && !html.includes('pathLength'), 'no vector glyph remnants');
 });
 
 t('animated splash bounces the mascot; still frame has no motion', () => {
   const anim = buildSplashHtml({ colors, splashBg, mascotDataUri, animated: true });
   const still = buildSplashHtml({ colors, splashBg, mascotDataUri, animated: false });
-  assert.ok(anim.includes('@keyframes splash-bounce'), 'animated must define the bounce');
-  assert.ok(anim.includes('@keyframes splash-bob'), 'animated must define the idle bob');
+  assert.ok(anim.includes('@keyframes splash-bounce'), 'animated must define the entrance bounce');
+  assert.ok(
+    anim.includes('@keyframes splash-rebounce'),
+    'animated must define the looping re-bounce',
+  );
   assert.ok(!still.includes('@keyframes'), 'still frame must define NO keyframes');
   for (const html of [anim, still]) {
     assert.ok(

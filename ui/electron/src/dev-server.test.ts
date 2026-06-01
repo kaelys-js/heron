@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDevServerUrl, buildCsp, isInternalNavigation } from './dev-server';
+import {
+  resolveDevServerUrl,
+  buildCsp,
+  isInternalNavigation,
+  decideWindowOpen,
+} from './dev-server';
 import { BRAND } from './brand';
 
 // Brand scheme from the generated constant -- never hardcode `heron`.
@@ -96,5 +101,33 @@ describe('isInternalNavigation', () => {
     );
     expect(isInternalNavigation('https://github.com', scheme, null)).toBe(false);
     expect(isInternalNavigation('', scheme, 'http://localhost:5173')).toBe(false);
+  });
+});
+
+describe('decideWindowOpen', () => {
+  it('allows internal URLs (app scheme + dev origin) in-app', () => {
+    expect(decideWindowOpen(`${scheme}://localhost/inbox`, scheme, null)).toBe('allow');
+    expect(decideWindowOpen('http://localhost:5173/x', scheme, 'http://localhost:5173')).toBe(
+      'allow',
+    );
+  });
+  it('routes external http(s) URLs to the system browser', () => {
+    // WHY: a real external link (docs, GitHub, a job posting) should open in the
+    // user's browser, not a rogue in-app window -- so the handler returns
+    // 'external' and the caller calls shell.openExternal.
+    expect(decideWindowOpen('https://github.com/kaelys-js/heron', scheme, null)).toBe('external');
+    expect(decideWindowOpen('http://example.com', scheme, 'http://localhost:5173')).toBe(
+      'external',
+    );
+  });
+  it('DENIES non-http(s) schemes outright (no arbitrary protocol launches)', () => {
+    // WHY: a compromised renderer must not be able to launch file:/javascript:/
+    // data:/foreign-app handlers via window.open -- only http(s) reach the OS.
+    expect(decideWindowOpen('file:///etc/passwd', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('javascript:alert(1)', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('data:text/html,<script>', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('mailto:x@y.z', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('not a url', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('', scheme, null)).toBe('deny');
   });
 });

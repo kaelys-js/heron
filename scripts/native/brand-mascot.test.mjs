@@ -26,10 +26,18 @@ async function run() {
   };
 
   const keys = Object.keys(MASCOT_EMBEDS);
+  // encodeMascot also emits the app-icon silhouette (iconPngWhite, a PNG data
+  // URI from the cut-out branding/assets/mascot-silhouette.png) and the sampled
+  // splashBg hex, on top of the MASCOT_EMBEDS keys.
+  const extraKeys = ['iconPngWhite', 'splashBg'];
 
   await t('encodeMascot yields a valid data-URI per embed + a splashBg hex', async () => {
     const embeds = await encodeMascot(ROOT);
-    assert.deepEqual(Object.keys(embeds).sort(), [...keys, 'splashBg'].sort());
+    assert.deepEqual(Object.keys(embeds).sort(), [...keys, ...extraKeys].sort());
+    assert.ok(
+      embeds.iconPngWhite.startsWith('data:image/png;base64,'),
+      'iconPngWhite should be a PNG data URI',
+    );
     for (const [key, { format }] of Object.entries(MASCOT_EMBEDS)) {
       assert.ok(
         embeds[key].startsWith(`data:image/${format};base64,`),
@@ -50,8 +58,8 @@ async function run() {
 
   await t('committed mascot-b64.json round-trips the encoder keys + splashBg', async () => {
     const onDisk = readMascotB64(ROOT);
-    assert.deepEqual(Object.keys(onDisk).sort(), [...keys, 'splashBg'].sort());
-    for (const k of keys) assert.ok(onDisk[k].startsWith('data:image/'));
+    assert.deepEqual(Object.keys(onDisk).sort(), [...keys, ...extraKeys].sort());
+    for (const k of [...keys, 'iconPngWhite']) assert.ok(onDisk[k].startsWith('data:image/'));
     assert.match(onDisk.splashBg, /^#[0-9a-f]{6}$/);
   });
 

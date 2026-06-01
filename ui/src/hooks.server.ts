@@ -349,6 +349,19 @@ const cors: Handle = async ({ event, resolve }) => {
     response.headers.set('Access-Control-Allow-Origin', origin!);
     response.headers.set('Access-Control-Allow-Credentials', 'true');
     response.headers.set('Vary', 'Origin');
+    // Let the cross-origin caller (Capacitor WebView / LAN client) actually
+    // READ our correlation + version + timing headers. The CORS spec hides
+    // every non-safelisted response header from cross-origin JS unless it's
+    // named here. (Same-origin web reads all headers natively, so this is a
+    // no-op there -- it only matters for the WebView/Tailscale origins.)
+    response.headers.set(
+      'Access-Control-Expose-Headers',
+      'X-Request-Id, X-App-Version, Server-Timing',
+    );
+    // Let the Resource Timing API surface detailed timing (incl. our
+    // Server-Timing) to the initiating origin for these cross-origin
+    // requests. Scoped to the echoed allow-listed origin, never '*'.
+    response.headers.set('Timing-Allow-Origin', origin!);
   }
   return response;
 };
@@ -383,14 +396,20 @@ const cors: Handle = async ({ event, resolve }) => {
  *   Cross-Origin-Resource-Policy: same-site
  *     Refuse cross-site embeds of our resources (icons, JS).
  *
- *   Content-Security-Policy
- *     Tight on script-src/style-src + allows the API domains we
- *     legitimately hit. `'unsafe-inline'` on style needs Tailwind's
- *     JIT (CSS-in-JS for theme classes); we tighten to a hash later.
+ *   Cache-Control: no-store  (ONLY on /api/*)
+ *     API payloads are per-user + auth-scoped; never let a browser or
+ *     shared intermediary cache them. Scoped to /api/* so SvelteKit's
+ *     immutable hashing on /_app/* assets (and HTML caching) is untouched,
+ *     and so a route that set its own Cache-Control wins (we don't clobber).
  *
- * Skip these for /api/auth/* because Better Auth's responses are pure
- * JSON and don't need page-level headers -- sending CSP there is just
- * bytes-on-the-wire noise for IPC-style endpoints.
+ * NOTE: the Content-Security-Policy is NOT set by this handler. It's
+ * configured in `svelte.config.ts` (`kit.csp`, mode 'auto' with the manual
+ * app.html script hashes) and emitted by SvelteKit itself -- a per-response
+ * header on the adapter-node build, baked into <meta> on the Capacitor
+ * static build. This handler only adds the headers SvelteKit doesn't.
+ * It runs for EVERY route, including /api/auth/*: nosniff / frame-options /
+ * COOP are cheap and harmless on JSON responses, and a blanket pass is
+ * simpler + safer than a per-prefix skip-list that could leak a header gap.
  */
 const securityHeaders: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
@@ -445,14 +464,27 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   if (isHttps && !headers.has('Strict-Transport-Security')) {
     headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
+  // API payloads are per-user + auth-scoped -- never cache them. Scoped to
+  // /api/* so SvelteKit's immutable /_app/* asset hashing is untouched, and
+  // a route that already chose a Cache-Control policy keeps it.
+  if (url.pathname.startsWith('/api/') && !headers.has('Cache-Control')) {
+    headers.set('Cache-Control', 'no-store');
+  }
   return response;
 };
 
-/** Sequence: cors (short-circuits OPTIONS) → populateAuth → guard
- *  → withUserContext → securityHeaders → user handler. CORS runs first
- *  so preflights don't even touch auth or per-user context. */
-export const handle: Handle = async ({ event, resolve }) =>
-  cors({
+/** Sequence: requestId → cors (short-circuits OPTIONS) → populateAuth → guard
+ *  → withUserContext → securityHeaders → user handler. CORS runs first after the
+ *  id so preflights don't touch auth/context. The per-request id is generated up
+ *  front (so it's on `event.locals` for every handler + handleError), emitted as
+ *  the `X-Request-Id` response header, and injected as a `<meta>` so the client
+ *  can read its own request's id (a page can't read its own response headers). */
+export const handle: Handle = async ({ event, resolve }) => {
+  const requestId = crypto.randomUUID();
+  event.locals.requestId = requestId;
+  const startedAt = performance.now();
+
+  const response = await cors({
     event,
     resolve: (e0) =>
       populateAuth({
@@ -472,7 +504,14 @@ export const handle: Handle = async ({ event, resolve }) =>
                         resolve: (e5) =>
                           securityHeaders({
                             event: e5,
-                            resolve: (e6) => resolve(e6),
+                            resolve: (e6) =>
+                              resolve(e6, {
+                                transformPageChunk: ({ html }) =>
+                                  html.replace(
+                                    '</head>',
+                                    `<meta name="x-request-id" content="${requestId}" /></head>`,
+                                  ),
+                              }),
                           }),
                       }),
                   }),
@@ -481,14 +520,53 @@ export const handle: Handle = async ({ event, resolve }) =>
       }),
   });
 
+  // Correlation id on every (non-fatal) response -- client fetches can read it,
+  // support can grep logs for it, and handleError reuses it as the error ref.
+  if (!response.headers.has('X-Request-Id')) {
+    response.headers.set('X-Request-Id', requestId);
+  }
+  // App version on every response -- lets clients, log-scrapers, and support
+  // pin the exact build a response came from. `__APP_VERSION__` is the Vite
+  // define (root package.json version); the `typeof` guard keeps this safe in
+  // the test env where the define isn't applied (undeclared global → 'undefined').
+  const appVersion = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '';
+  if (appVersion && !response.headers.has('X-App-Version')) {
+    response.headers.set('X-App-Version', appVersion);
+  }
+  // Server-Timing on EVERY response (not just dev). A lean `total;dur` is safe
+  // to expose and powers the browser Network "Timing" panel + Resource Timing;
+  // cross-origin reads are gated by the Timing-Allow-Origin set in `cors`.
+  if (!response.headers.has('Server-Timing')) {
+    response.headers.set(
+      'Server-Timing',
+      `total;dur=${(performance.now() - startedAt).toFixed(1)}`,
+    );
+  }
+  return response;
+};
+
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
   const url = event.url.pathname;
-  reportServerError('server', `[${status}] ${url}`, error);
+  // Reuse the per-request id (set by the requestId handle step) so the error
+  // reference == X-Request-Id == the log line. Fall back to a fresh id if a
+  // pre-handle failure means locals was never populated.
+  const errorId = event.locals?.requestId ?? crypto.randomUUID();
+  reportServerError('server', `[${status}] ${url} · ref ${errorId}`, error);
   const code = (error as Record<string, unknown>)?.code as string | undefined;
   const details = (error as Record<string, unknown>)?.details;
+  const human = status >= 500 ? 'Something broke on our end.' : message;
+  const stack = dev ? (error as Error)?.stack : undefined;
   return {
-    message: status >= 500 ? 'Something broke on our end.' : message,
+    // `· ref <id>` carries the correlation id into error.html (only %message% is
+    // templated into that catastrophic fallback). In DEV we also append the stack
+    // after a `::stack::` marker so the fallback can show developer details too --
+    // error.html's inline script parses it out + cleans the visible message.
+    // Prod: no stack appended. +error.svelte uses the dedicated `stack` field /
+    // preset copy and strips this whole suffix on the unknown-status fallback.
+    message: `${human} · ref ${errorId}${stack ? `\n::stack::\n${stack}` : ''}`,
     code,
     details,
+    errorId,
+    ...(stack ? { stack } : {}),
   };
 };

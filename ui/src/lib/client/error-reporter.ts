@@ -5,8 +5,9 @@
  *  rate-limited OS notification for high-severity. Wire once at boot
  *  via installErrorReporter(resolvedBackendUrl). */
 import { toast } from 'svelte-sonner';
-import { BRAND, BRAND_STORAGE_PREFIX } from './brand';
+import { BRAND, BRAND_STORAGE_PREFIX, BRAND_STORAGE_KEYS } from './brand';
 import { notify } from './notifications';
+import { getRequestId } from './request-id';
 
 export type ReportLevel = 'info' | 'warn' | 'error';
 export type ReportContext = {
@@ -14,6 +15,7 @@ export type ReportContext = {
   jobId?: string; // if relevant
   route?: string; // current url path
   userAction?: string; // what the user was doing
+  requestId?: string; // X-Request-Id correlation id (auto-filled from the meta)
   data?: Record<string, unknown>; // extra diagnostic info
 };
 
@@ -100,9 +102,20 @@ export async function reportError(
 ): Promise<void> {
   const e =
     err instanceof Error ? err : new Error(typeof err === 'string' ? err : JSON.stringify(err));
+  // An ApiError carries the FAILING request's own X-Request-Id (see api.ts) --
+  // more precise than the page-level <meta> id when the report is for a fetch
+  // error, so prefer it. Duck-typed (not `instanceof ApiError`) to avoid a
+  // static import cycle: api.ts → online-status → … → error-reporter.
+  const errRequestId =
+    err && typeof err === 'object' && typeof (err as { requestId?: unknown }).requestId === 'string'
+      ? (err as { requestId: string }).requestId
+      : undefined;
   const ctx = {
     ...context,
     route: context.route ?? (typeof location !== 'undefined' ? location.pathname : undefined),
+    // Correlate the client report with the server request log + X-Request-Id.
+    // Priority: explicit ctx id → the failing request's own id → page <meta>.
+    requestId: context.requestId ?? errRequestId ?? getRequestId() ?? undefined,
   };
 
   // 1. Console always
@@ -197,10 +210,29 @@ async function sendToBackend(payload: QueuedReport): Promise<boolean> {
   }
   try {
     const url = `${backendUrl.replace(/\/$/, '')}/api/issues`;
+    // /api/issues is auth-guarded (creating an issue attributes it to a user),
+    // so the POST must carry credentials -- otherwise the route guard 401s it
+    // before the create handler runs and every client error queues forever.
+    //   • cookie session  → `credentials: 'include'` (same-origin web).
+    //   • bearer token     → Authorization header (Capacitor native, where the
+    //                        WebView is a foreign origin and cookies don't ride;
+    //                        auth-client mirrors the token into localStorage).
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    try {
+      const token =
+        typeof localStorage !== 'undefined'
+          ? localStorage.getItem(BRAND_STORAGE_KEYS.bearerToken)
+          : null;
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    } catch {
+      /* localStorage unavailable -- fall back to cookie auth below */
+    }
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'omit',
+      headers,
+      credentials: 'include',
       body: JSON.stringify({
         source: payload.context?.source ?? 'client',
         level: payload.level,
@@ -210,6 +242,9 @@ async function sendToBackend(payload: QueuedReport): Promise<boolean> {
         jobId: payload.context?.jobId,
         userAction: payload.context?.userAction,
         route: payload.context?.route,
+        // Correlation id (X-Request-Id) -- lets the persisted issue pivot to the
+        // matching server log line. Set from an ApiError's id or the page meta.
+        requestId: payload.context?.requestId,
         data: payload.context?.data,
         capturedAt: payload.capturedAt,
         // Stable dedupe key -- same error in the same route within a

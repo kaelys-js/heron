@@ -164,6 +164,12 @@ pre-commit:
       glob: "{scripts/native/splash-spec.mjs,scripts/native/splash-spec.test.mjs,scripts/system/verify-splash-sync.mjs,scripts/native/apply-brand.mjs,scripts/native/icons/generate-icons.mjs,ui/src/app.html,ui/electron/src/splash.ts,ui/src/routes/login/+page.svelte,ui/src/routes/signup/+page.svelte,ui/ios/App/App/Base.lproj/LaunchScreen.storyboard}"
       run: pnpm splash-spec:test && pnpm verify:splash-sync
 
+    "16-icons":
+      # Unit-test the icon generator's pure helpers (scaleSvgImage). Fires when
+      # the generator or its test is staged.
+      glob: "{scripts/native/icons/generate-icons.mjs,scripts/native/icons/generate-icons.test.mjs}"
+      run: pnpm icons:test
+
     # ── Full verify pipeline (typecheck + build + tests + every linter +
     #    every gate), turbo-cached. Runs LAST so the writers above have
     #    already formatted + re-staged. SAME command pre-push + CI run. ──

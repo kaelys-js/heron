@@ -87,7 +87,7 @@
       }
       new Notification(`${BRAND.displayName} · Test`, {
         body: "OS-level notifications are working. You'll see these for high-priority events when the tab is in the background.",
-        icon: '/favicon.ico',
+        icon: `/icons/${BRAND.name}-192.png`,
         tag: `${BRAND_STORAGE_PREFIX}:test`,
       });
       toast.success('Test notification fired');
@@ -122,7 +122,7 @@
       const sourceSuffix = ev.source ? ' · ' + ev.source : '';
       new Notification(BRAND.displayName + sourceSuffix, {
         body: ev.title + (ev.message ? ' — ' + ev.message : ''),
-        icon: '/favicon.ico',
+        icon: `/icons/${BRAND.name}-192.png`,
         tag: `${BRAND_STORAGE_PREFIX}:` + (ev.source ?? 'evt'),
       });
     } catch {

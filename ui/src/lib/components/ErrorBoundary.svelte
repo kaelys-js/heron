@@ -2,7 +2,9 @@
   import { Button } from '$lib/components/ui/button';
   import { AlertTriangle, RefreshCw, FileText } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
+  import { dev } from '$app/environment';
   import { BRAND_EVENTS } from '$lib/client/brand';
+  import CopyButton from '$lib/components/CopyButton.svelte';
 
   /**
    * Generic <svelte:boundary> wrapper with a rich default fail panel.
@@ -11,9 +13,11 @@
    * "Try again" button. That made every render error look identical
    * and trivial, but most of them aren't -- a crash here is the user's
    * one chance to see what went wrong. The expanded panel:
-   *   • shows the error TYPE (constructor.name) prominently
+   *   • leads with a calm, human reassurance line
    *   • formats the message in a code-styled monospace block
-   *   • exposes the stack trace behind a <details> disclosure
+   *   • exposes the stack trace + error TYPE behind a dev-only
+   *     <details> disclosure (never shown to end users -- the raw
+   *     JS stack is a production info-leak), with a CopyButton
    *   • offers both "Try again" (reset the boundary) and
    *     "Open activity log" (open the notifications panel which
    *     already has the error logged via reportError())
@@ -68,6 +72,7 @@
       {@render failedRender(error, reset)}
     {:else}
       <div
+        role="alert"
         class="relative flex flex-col gap-3 p-5 rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/5 via-card to-card overflow-hidden"
       >
         <!-- Subtle red glow stripe at the top — signals "something failed"
@@ -85,11 +90,7 @@
           <div class="flex-1 min-w-0">
             <h3 class="text-base font-semibold text-foreground">{title}</h3>
             <p class="text-xs text-muted-foreground mt-0.5">
-              <span
-                class="font-mono text-[11px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded mr-1"
-                >{errorType(error)}</span
-              >
-              The rest of the app keeps running. This was logged to the activity feed.
+              The rest of the app keeps running — this was logged to the activity feed.
             </p>
           </div>
         </div>
@@ -101,27 +102,40 @@
             error,
           )}</pre>
 
-        {#if errorStack(error)}
+        {#if dev && errorStack(error)}
+          <!-- Dev-only diagnostics: the raw JS stack is an info-leak in
+               production, so this disclosure (plus the error-type chip and
+               CopyButton) only renders under `dev`. -->
           <details class="group">
             <summary
               class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors select-none flex items-center gap-1.5"
             >
               <span
+                aria-hidden="true"
                 class="inline-block transition-transform group-open:rotate-90 text-muted-foreground/60"
                 >▸</span
               >
               Stack trace
+              <span
+                class="ml-1 font-mono text-[10px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded"
+                >{errorType(error)}</span
+              >
             </summary>
-            <pre
-              class="mt-2 p-3 text-[11px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{errorStack(
-                error,
-              )}</pre>
+            <div class="mt-2 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] text-muted-foreground">Stack trace</span>
+                <CopyButton text={errorStack(error) ?? ''} label="stack trace" />
+              </div>
+              <pre
+                class="p-3 text-[11px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{errorStack(
+                  error,
+                )}</pre>
+            </div>
           </details>
         {/if}
 
         <div class="flex items-center gap-2 mt-1">
           <Button
-            variant="outline"
             size="sm"
             class="h-8 gap-1.5"
             onclick={() => {

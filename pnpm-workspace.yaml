@@ -30,6 +30,7 @@ packages:
 #                        `pnpm exec msw init ui/static --no-save`.
 #                        Block the welcome-noise auto-run.
 allowBuilds:
+  '@tsparticles/engine': set this to true or false
   better-sqlite3: true
   electron: true
   electron-winstaller: true

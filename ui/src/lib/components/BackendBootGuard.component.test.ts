@@ -41,7 +41,9 @@ describe('backendBootGuard — per-action loading state', () => {
   it('renders the error card with a Try again button in preview mode', () => {
     const { container } = render(BackendBootGuard, { props: { preview: true } });
     expect(byTestId(container, 'boot-retry')).toBeTruthy();
-    expect(container.textContent).toContain("Can't connect");
+    // The redundant "Can't connect" eyebrow was dropped (it duplicated the
+    // heading); the heading is now the single "can't reach" signal.
+    expect(container.textContent).toContain("Can't reach");
   });
 
   it('clicking "Try again" spins ONLY the retry button, not Connect', async () => {

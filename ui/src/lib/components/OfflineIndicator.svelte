@@ -156,10 +156,10 @@
     <button
       type="button"
       onclick={retry}
-      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-3 py-1 text-[11px] font-medium text-amber-100 backdrop-blur-md transition-all duration-150 hover:bg-amber-500/25 active:scale-[0.97] active:bg-amber-500/35"
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/15 px-3 py-1 text-[11px] font-medium text-primary backdrop-blur-md transition-all duration-150 hover:bg-primary/25 active:scale-[0.97] active:bg-primary/35"
       aria-label="Offline — tap to retry"
     >
-      <span class="size-1.5 rounded-full bg-amber-400/90"></span>
+      <span class="size-1.5 rounded-full bg-primary/90"></span>
       Offline · Tap to retry
     </button>
   </div>

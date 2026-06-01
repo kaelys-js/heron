@@ -1,8 +1,10 @@
 /** Vite config -- brandWatcherPlugin + dev/build settings.
- *  brandWatcherPlugin runs `pnpm brand:apply` once at startup (dev or
- *  build) and, in dev, re-runs on branding/{brand.json,logo.svg} changes
+ *  brandWatcherPlugin runs `pnpm brand:apply` once at DEV startup (serve only,
+ *  see `apply: 'serve'`) and re-runs on branding/{brand.json,logo.svg} changes
  *  so generated configs (capacitor, Brand.swift, brand.ts, manifest,
- *  favicon, icons) are always fresh. Touched files HMR through SvelteKit.
+ *  favicon, icons) stay fresh while you work. Touched files HMR through
+ *  SvelteKit. A production `build` does NOT run it -- the committed generated
+ *  files are authoritative and a build must not mutate tracked source.
  *  Server: host:true (0.0.0.0 for iOS-on-LAN), port:5173 + strictPort
  *  (discovery's dev fallback). Build: target es2022 (Capacitor iOS WebView
  *  supports it), sourcemap on, chunkSizeWarningLimit 1500 for bits-ui +
@@ -42,6 +44,13 @@ function brandWatcherPlugin(): Plugin {
   return {
     name: 'heron:brand-watcher',
     enforce: 'pre',
+    // Dev-only (serve). A production `build` must NOT mutate tracked brand
+    // consumers (Brand.swift / brand.ts / icons): the committed generated files
+    // are authoritative, brand drift is caught by capacitor.integration + the
+    // verify gates, and reproducible builds shouldn't write source. Applying
+    // brand on build also raced the tests-dont-mutate-working-tree integrity
+    // check under the concurrent verify pipeline (rewrote Brand.swift mid-run).
+    apply: 'serve',
     configResolved() {
       runApply('vite startup');
     },

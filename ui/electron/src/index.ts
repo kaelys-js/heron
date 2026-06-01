@@ -26,6 +26,7 @@ import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 import { autoUpdater } from 'electron-updater';
 import path from 'node:path';
+import { watch } from 'node:fs';
 
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
 import { buildAppMenu } from './app-menu';
@@ -124,22 +125,44 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   return false;
 });
 
+/** (Re)apply the brand Dock icon + name on macOS. The Dock tile is reset to the
+ *  bundle defaults (in dev: the Electron icon + "Electron") whenever the Dock is
+ *  HIDDEN then SHOWN again, so we call this both at startup AND after un-hiding.
+ *  Uses build/dock.png -- it carries the SAME Apple-grid inset as the .icns
+ *  (824/1024 card), so the tile matches stock apps instead of rendering
+ *  full-bleed/oversized, and a PNG is reliable in dev where nativeImage can't
+ *  parse the .icns (which previously fell back to the full-bleed icon.png). */
+function applyDockIdentity(): void {
+  if (process.platform !== 'darwin' || !app.dock) {
+    return;
+  }
+  app.setName(BRAND.displayName);
+  try {
+    const dockIcon = nativeImage.createFromPath(path.join(app.getAppPath(), 'build', 'dock.png'));
+    if (!dockIcon.isEmpty()) {
+      app.dock.setIcon(dockIcon);
+    }
+  } catch {
+    /* non-fatal -- Dock keeps the default icon */
+  }
+}
+
 (async () => {
   await app.whenReady();
 
-  // macOS Dock identity (dev AND packaged). The BrowserWindow `icon` option
-  // does NOT affect the Dock -- only app.dock.setIcon does. Prefer the
-  // multi-resolution .icns (full-size, correctly padded macOS tile) over the
-  // small 512 .png, which the Dock rendered undersized/inset in dev. Both are
-  // apply-brand outputs (regenerated from branding/brand.json).
-  if (process.platform === 'darwin' && app.dock) {
+  applyDockIdentity();
+  // Dev-only HMR: re-apply when the brand-watcher regenerates dock.png, so a
+  // brand edit shows live without restarting Electron (vite HMR only reloads
+  // the WebView). Watch the dir -- survives generate-icons' atomic replace.
+  if (process.platform === 'darwin' && app.dock && electronIsDev) {
     try {
-      const icnsPath = path.join(app.getAppPath(), 'build', 'icon.icns');
-      const pngPath = path.join(app.getAppPath(), 'build', 'icon.png');
-      const dockIcon = nativeImage.createFromPath(icnsPath);
-      app.dock.setIcon(dockIcon.isEmpty() ? nativeImage.createFromPath(pngPath) : dockIcon);
+      watch(path.join(app.getAppPath(), 'build'), (_event, file) => {
+        if (file === 'dock.png') {
+          applyDockIdentity();
+        }
+      });
     } catch {
-      /* non-fatal -- Dock keeps the default icon */
+      /* dev convenience; ignore */
     }
   }
   // Brand the standard About panel (app menu -> About). Electron uses the
@@ -235,45 +258,107 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
       .catch(() => {});
   }
 
-  // 4. Full app menu
-  Menu.setApplicationMenu(
-    buildAppMenu({
-      onPreferences: () =>
-        state.mainWindow?.webContents.loadURL(
-          `${state.server?.url ?? 'http://localhost:5173'}/settings`,
-        ),
-      onAbout: () => {
-        openAboutWindow({
-          brandName: BRAND.name,
-          preloadPath: path.join(app.getAppPath(), 'build', 'src', 'about-preload.js'),
-          parent: state.mainWindow,
-          info: {
-            displayName: BRAND.displayName,
-            tagline: BRAND.tagline,
-            description: BRAND.description,
-            version: app.getVersion(),
-            versions: {
-              electron: process.versions.electron ?? '',
-              chromium: process.versions.chrome ?? '',
-              node: process.versions.node ?? '',
-            },
-            copyright: BRAND.copyright,
-            links: [
-              { label: 'Website', url: BRAND.homepageUrl },
-              { label: 'GitHub', url: BRAND.repoUrl },
-              { label: 'Report a bug', url: `${BRAND.issuesUrl}/new` },
-              { label: 'License', url: `${BRAND.repoUrl}/blob/main/LICENSE` },
-            ],
-            colors: BRAND.colors,
-            logoDataUri: readLogoDataUri(app.getAppPath()),
-            backendUrl: state.server?.url,
+  // Manual "Check for Updates…" controller. The silent boot check
+  // (checkForUpdatesAndNotify, below) shows nothing when already current; a
+  // user-initiated check MUST give feedback either way. `manualUpdateCheck`
+  // gates the shared autoUpdater listeners (wired once, below) so only the
+  // user-initiated flow pops a dialog. In an unpackaged/dev build electron-
+  // updater can't really check, so we say so instead of emitting a confusing
+  // error.
+  let manualUpdateCheck = false;
+  const showUpdateDialog = (opts: Electron.MessageBoxOptions) =>
+    state.mainWindow ? dialog.showMessageBox(state.mainWindow, opts) : dialog.showMessageBox(opts);
+  const triggerManualUpdateCheck = (): void => {
+    if (!app.isPackaged) {
+      void showUpdateDialog({
+        type: 'info',
+        title: BRAND.displayName,
+        message: 'Updates are available in the installed app.',
+        detail: `You're on a development build (${app.getVersion()}); auto-update only runs in the packaged release.`,
+        buttons: ['OK'],
+      });
+      return;
+    }
+    manualUpdateCheck = true;
+    autoUpdater.checkForUpdates().catch((err: unknown) => {
+      manualUpdateCheck = false;
+      void showUpdateDialog({
+        type: 'error',
+        title: BRAND.displayName,
+        message: 'Update check failed.',
+        detail: err instanceof Error ? err.message : String(err),
+        buttons: ['OK'],
+      });
+    });
+  };
+
+  // 4. Full app menu. Rebuilt on navigation so the File menu surfaces the auth
+  //    actions only while the renderer is on /login or /signup.
+  const menuHandlers = {
+    onPreferences: () =>
+      state.mainWindow?.webContents.loadURL(
+        `${state.server?.url ?? 'http://localhost:5173'}/settings`,
+      ),
+    onAbout: () => {
+      openAboutWindow({
+        brandName: BRAND.name,
+        preloadPath: path.join(app.getAppPath(), 'build', 'src', 'about-preload.js'),
+        parent: state.mainWindow,
+        appPath: app.getAppPath(),
+        info: {
+          displayName: BRAND.displayName,
+          tagline: BRAND.tagline,
+          description: BRAND.description,
+          version: app.getVersion(),
+          versions: {
+            electron: process.versions.electron ?? '',
+            chromium: process.versions.chrome ?? '',
+            node: process.versions.node ?? '',
           },
-        });
-      },
-      onOpenDocs: () => shell.openExternal(BRAND.repoUrl),
-      onReportBug: () => shell.openExternal(`${BRAND.issuesUrl}/new`),
-    }),
-  );
+          copyright: BRAND.copyright,
+          links: [
+            { label: 'Website', url: BRAND.homepageUrl },
+            { label: 'GitHub', url: BRAND.repoUrl },
+            { label: 'Report a bug', url: `${BRAND.issuesUrl}/new` },
+            { label: 'License', url: `${BRAND.repoUrl}/blob/main/LICENSE` },
+          ],
+          colors: BRAND.colors,
+          logoDataUri: readLogoDataUri(app.getAppPath()),
+          backendUrl: state.server?.url,
+          closeOnLeft: process.platform === 'darwin',
+        },
+      });
+    },
+    // Documentation → the actual docs/ tree (distinct from "View on GitHub",
+    // which opens the repo root). The repo's docs/ folder is the real handbook.
+    onOpenDocs: () => shell.openExternal(`${BRAND.repoUrl}/tree/main/docs`),
+    onCheckForUpdates: triggerManualUpdateCheck,
+    onReportBug: () => shell.openExternal(`${BRAND.issuesUrl}/new`),
+    // Auth File-menu actions -> fire IPC the renderer handles (navigate / passkey).
+    onGotoLogin: () => state.mainWindow?.webContents.send(`${BRAND.name}:menu:navigate`, '/login'),
+    onGotoSignup: () =>
+      state.mainWindow?.webContents.send(`${BRAND.name}:menu:navigate`, '/signup'),
+    onPasskeySignin: () => state.mainWindow?.webContents.send(`${BRAND.name}:menu:passkey`),
+  };
+  const currentRoute = (): string => {
+    try {
+      return new URL(state.mainWindow?.webContents.getURL() ?? '').pathname;
+    } catch {
+      return '';
+    }
+  };
+  const rebuildAppMenu = (): void =>
+    Menu.setApplicationMenu(
+      buildAppMenu(menuHandlers, { route: currentRoute(), isDev: electronIsDev }),
+    );
+  rebuildAppMenu();
+  if (state.mainWindow) {
+    // SvelteKit client navigations use history.pushState -> did-navigate-in-page;
+    // full page loads -> did-navigate. Rebuild on both so the File menu tracks
+    // the current route.
+    state.mainWindow.webContents.on('did-navigate', rebuildAppMenu);
+    state.mainWindow.webContents.on('did-navigate-in-page', rebuildAppMenu);
+  }
 
   // 5. Tray (macOS Menu Bar / Windows / Linux system tray)
   state.tray = new DesktopTray({
@@ -293,14 +378,81 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
         void state.mainWindow.loadURL(url);
       }
     },
-    onSetDockVisible: () => {
-      /* state currently tracked in tray.ts; no cross-module wiring needed yet */
+    onSetDockVisible: (visible: boolean) => {
+      // Un-hiding the Dock recreates the tile from the bundle defaults
+      // (Electron icon + name in dev), so re-apply the brand identity.
+      if (visible) {
+        applyDockIdentity();
+      }
     },
     onQuit: () => app.quit(),
   });
   state.tray.start();
 
-  // 6. Auto-update against GitHub Releases.
+  // 6. Auto-update against GitHub Releases. Listeners are wired ONCE; the boot
+  //    check (checkForUpdatesAndNotify) is notify-only when current, while a
+  //    user-initiated check (Help/app-menu → Check for Updates…) sets
+  //    `manualUpdateCheck` so the SAME events surface a dialog. The auto path's
+  //    download is handled by checkForUpdatesAndNotify's own OS notification, so
+  //    the restart prompt below is gated to the manual flow to avoid a double.
+  autoUpdater.on('update-not-available', () => {
+    if (!manualUpdateCheck) {
+      return;
+    }
+    manualUpdateCheck = false;
+    void showUpdateDialog({
+      type: 'info',
+      title: BRAND.displayName,
+      message: `You're up to date.`,
+      detail: `${BRAND.displayName} ${app.getVersion()} is the latest version.`,
+      buttons: ['OK'],
+    });
+  });
+  autoUpdater.on('update-available', (info: { version?: string }) => {
+    if (!manualUpdateCheck) {
+      return;
+    }
+    // Leave the flag set so update-downloaded still shows the restart prompt.
+    void showUpdateDialog({
+      type: 'info',
+      title: BRAND.displayName,
+      message: 'An update is available.',
+      detail: `Version ${info?.version ?? ''} is downloading in the background — you'll be asked to restart when it's ready.`,
+      buttons: ['OK'],
+    });
+  });
+  autoUpdater.on('update-downloaded', (info: { version?: string }) => {
+    if (!manualUpdateCheck) {
+      return;
+    }
+    manualUpdateCheck = false;
+    void showUpdateDialog({
+      type: 'info',
+      title: BRAND.displayName,
+      message: 'Update ready to install.',
+      detail: `Version ${info?.version ?? ''} has been downloaded. Restart ${BRAND.displayName} to apply it.`,
+      buttons: ['Restart now', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+    }).then((res) => {
+      if (res.response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+  autoUpdater.on('error', (err: unknown) => {
+    if (!manualUpdateCheck) {
+      return;
+    }
+    manualUpdateCheck = false;
+    void showUpdateDialog({
+      type: 'error',
+      title: BRAND.displayName,
+      message: 'Update check failed.',
+      detail: err instanceof Error ? err.message : String(err),
+      buttons: ['OK'],
+    });
+  });
   autoUpdater.checkForUpdatesAndNotify();
 
   // 7. Network status monitoring -- Electron exposes `net.isOnline()` as

@@ -1,9 +1,9 @@
-/** Global renderer-crash recovery for the desktop app — the Electron analogue
+/** Global renderer-crash recovery for the desktop app -- the Electron analogue
  *  of the iOS BootFailureView.
  *
  *  Gap this closes: if the Chromium RENDERER process dies (crash / OOM /
  *  killed), the BrowserWindow is left showing a blank white void with no way
- *  back — the in-page boot-fallback (app.html) is gone with the process. iOS
+ *  back -- the in-page boot-fallback (app.html) is gone with the process. iOS
  *  recovers via a native BootFailureView + reload; this gives the desktop the
  *  same: a branded recovery screen, automatic reload, and a crash-loop guard
  *  that escalates to a native Reload/Quit dialog instead of looping forever.

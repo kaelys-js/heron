@@ -11,7 +11,7 @@ describe('resolveLandingRedirect', () => {
   it('sends an unauthenticated FRESH install to /login, NOT the onboarding wizard', () => {
     // THE regression: a fresh, user-less install used to be diverted to
     // /onboarding/account. Auth precedence means it must reach /login first
-    // (which routes the first owner onward to /signup) — matching iOS +
+    // (which routes the first owner onward to /signup) -- matching iOS +
     // docs/SETUP.md. Onboarding is a POST-authentication concern.
     expect(resolveLandingRedirect({ ...base, pathname: '/', isFresh: true, hasUser: false })).toBe(
       '/login?redirectTo=%2F',

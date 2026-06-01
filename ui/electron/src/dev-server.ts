@@ -90,3 +90,32 @@ export function isInternalNavigation(
   }
   return false;
 }
+
+/** What a window.open() / target=_blank request should do:
+ *    - 'allow'    internal URL (app scheme / dev origin) → open in-app
+ *    - 'external' external http(s) URL → hand to the OS browser (openExternal)
+ *    - 'deny'     anything else (file:, javascript:, data:, custom schemes we
+ *                 don't own, unparseable) → refuse outright. A compromised or
+ *                 malicious renderer must never be able to launch an arbitrary
+ *                 protocol handler via window.open.
+ *  Pure + side-effect-free so the decision is unit-testable; the caller in
+ *  setup.ts performs the actual shell.openExternal / window action. */
+export type WindowOpenDecision = 'allow' | 'external' | 'deny';
+export function decideWindowOpen(
+  url: string,
+  customScheme: string,
+  devServerUrl: string | null,
+): WindowOpenDecision {
+  if (isInternalNavigation(url, customScheme, devServerUrl)) {
+    return 'allow';
+  }
+  try {
+    const { protocol } = new URL(url);
+    if (protocol === 'http:' || protocol === 'https:') {
+      return 'external';
+    }
+  } catch {
+    /* unparseable → deny */
+  }
+  return 'deny';
+}

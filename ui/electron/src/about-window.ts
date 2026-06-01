@@ -11,9 +11,10 @@
  *  only capabilities it gets are the three namespaced channels exposed by
  *  about-preload.ts. External links never navigate the window -- they're handed
  *  to shell.openExternal (https only) in the main process. */
-import { BrowserWindow, ipcMain, shell, clipboard } from 'electron';
+import { BrowserWindow, ipcMain, shell, clipboard, app } from 'electron';
 import { join } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readFileSync, watch } from 'node:fs';
+import type { FSWatcher } from 'node:fs';
 
 export type AboutColors = {
   accent: string;
@@ -43,6 +44,9 @@ export type AboutInfo = {
   backendUrl?: string;
   /** Global the preload exposes; the page wires its buttons to it. */
   bridge?: string;
+  /** Put the close button on the LEFT (macOS window-control convention).
+   *  Defaults to the right (Windows/Linux). */
+  closeOnLeft?: boolean;
 };
 
 const DEFAULT_BRIDGE = '__aboutBridge__';
@@ -63,6 +67,14 @@ function esc(value: string): string {
 export function buildAboutHtml(info: AboutInfo): string {
   const c = info.colors;
   const bridge = info.bridge ?? DEFAULT_BRIDGE;
+  // macOS puts window controls on the left; Windows/Linux on the right.
+  const closeSide = info.closeOnLeft ? 'left: 14px' : 'right: 14px';
+  // Inset the draggable title strip on the close-button side so it NEVER overlaps
+  // the button. An overlapping `-webkit-app-region: drag` region eats clicks --
+  // mousedown starts a window-drag instead of registering the click, which is the
+  // "close button only works ~10% of the time" bug. Dragging the rest of the
+  // strip still moves the window.
+  const dragSides = info.closeOnLeft ? 'left: 54px; right: 0' : 'left: 0; right: 54px';
   const copyText = [
     `${info.displayName} ${info.version}`,
     `Electron ${info.versions.electron}`,
@@ -74,7 +86,7 @@ export function buildAboutHtml(info: AboutInfo): string {
     .join('\n');
 
   const logo = info.logoDataUri
-    ? `<img class="logo" src="${esc(info.logoDataUri)}" alt="${esc(info.displayName)} logo" draggable="false" />`
+    ? `<img class="logo logo--img" src="${esc(info.logoDataUri)}" alt="${esc(info.displayName)} logo" draggable="false" />`
     : `<div class="logo logo--text" aria-hidden="true">${esc(info.displayName.slice(0, 1))}</div>`;
 
   const linkButtons = info.links
@@ -114,9 +126,13 @@ export function buildAboutHtml(info: AboutInfo): string {
     user-select: none;
     overflow: hidden;
   }
-  .drag { position: absolute; top: 0; left: 0; right: 0; height: 44px; -webkit-app-region: drag; }
+  .drag { position: absolute; top: 0; ${dragSides}; height: 44px; -webkit-app-region: drag; }
   .close {
-    position: absolute; top: 12px; right: 14px; width: 26px; height: 26px;
+    position: absolute; top: 12px; ${closeSide}; width: 26px; height: 26px;
+    /* z-index keeps the button above <main> (which is height:100% and runs a
+       transform animation that would otherwise paint over it and swallow the
+       click -- the "close works ~10% of the time" bug). */
+    z-index: 20;
     border: none; border-radius: 50%; cursor: pointer;
     background: color-mix(in srgb, var(--text) 8%, transparent);
     color: var(--text); font-size: 15px; line-height: 26px;
@@ -130,11 +146,18 @@ export function buildAboutHtml(info: AboutInfo): string {
     animation: rise .35s ease both;
   }
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .logo {
-    width: 78px; height: 78px; border-radius: 19px; margin-bottom: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  .logo { width: 78px; height: 78px; margin-bottom: 14px; }
+  /* The bare mascot has NO tile/border -- just a soft drop-shadow + accent glow
+     to lift it off the dark background (mirrors the login / splash mascot). */
+  .logo--img {
+    object-fit: contain;
+    filter: drop-shadow(0 8px 22px rgba(0,0,0,.5))
+      drop-shadow(0 0 16px color-mix(in srgb, var(--accent) 28%, transparent));
   }
+  /* The monogram fallback keeps the rounded gradient tile. */
   .logo--text {
+    border-radius: 19px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
     display: grid; place-items: center; font-size: 38px; font-weight: 700;
     color: var(--bg); background: linear-gradient(145deg, var(--accent), var(--primary));
   }
@@ -261,10 +284,22 @@ export type OpenAboutOptions = {
   preloadPath: string;
   /** Parent window (the About window centers over it and stays on top of it). */
   parent?: BrowserWindow;
+  /** app.getAppPath(): used in dev to re-read the logo + HMR-reload the open
+   *  window when build/mascot.png is regenerated. */
+  appPath?: string;
 };
 
 let aboutWindow: BrowserWindow | null = null;
+let aboutWatcher: FSWatcher | null = null;
 let ipcWired = false;
+
+/** (Re)render the About HTML into the window, re-reading the logo so a
+ *  regenerated mascot is picked up on dev HMR. */
+function renderAbout(win: BrowserWindow, opts: OpenAboutOptions): void {
+  const logoDataUri = opts.appPath ? readLogoDataUri(opts.appPath) : opts.info.logoDataUri;
+  const html = buildAboutHtml({ ...opts.info, logoDataUri });
+  void win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+}
 
 /** Open (or focus, if already open) the About window. */
 export function openAboutWindow(opts: OpenAboutOptions): BrowserWindow {
@@ -333,10 +368,26 @@ export function openAboutWindow(opts: OpenAboutOptions): BrowserWindow {
     if (aboutWindow === win) {
       aboutWindow = null;
     }
+    aboutWatcher?.close();
+    aboutWatcher = null;
   });
 
-  const html = buildAboutHtml(opts.info);
-  void win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  renderAbout(win, opts);
+
+  // Dev-only HMR: reload the open About window when build/mascot.png is
+  // regenerated (vite HMR only reloads the WebView, never this main-process
+  // window). No-op when packaged or when appPath wasn't supplied.
+  if (!app.isPackaged && opts.appPath) {
+    try {
+      aboutWatcher = watch(join(opts.appPath, 'build'), (_event, file) => {
+        if (file === 'mascot.png' && aboutWindow && !aboutWindow.isDestroyed()) {
+          renderAbout(aboutWindow, opts);
+        }
+      });
+    } catch {
+      /* dev convenience; ignore */
+    }
+  }
   return win;
 }
 
@@ -361,10 +412,11 @@ function wireAboutIpc(brandName: string): void {
   });
 }
 
-/** Read the app icon as a data: URI for the About logo, or undefined if absent. */
+/** Read the BARE mascot (build/mascot.png, no squircle) as a data: URI for the
+ *  About logo, or undefined if absent. */
 export function readLogoDataUri(appPath: string): string | undefined {
   try {
-    const png = readFileSync(join(appPath, 'build', 'icon.png'));
+    const png = readFileSync(join(appPath, 'build', 'mascot.png'));
     return `data:image/png;base64,${png.toString('base64')}`;
   } catch {
     return undefined;
