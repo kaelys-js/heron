@@ -91,8 +91,8 @@ catalogs:
       specifier: 3.12.1
       version: 3.12.1
     '@lucide/svelte':
-      specifier: 1.14.0
-      version: 1.14.0
+      specifier: 1.17.0
+      version: 1.17.0
     '@playwright/test':
       specifier: 1.60.0
       version: 1.60.0
@@ -422,7 +422,7 @@ importers:
         version: 3.12.1
       '@lucide/svelte':
         specifier: 'catalog:'
-        version: 1.14.0(svelte@5.55.8)
+        version: 1.17.0(svelte@5.55.8)
       better-auth:
         specifier: 'catalog:'
         version: 1.6.11(@sveltejs/kit@2.60.1(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.8)(vite@8.0.14(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.8.4)))(svelte@5.55.8)(typescript@6.0.3)(vite@8.0.14(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.8.4)))(better-sqlite3@12.10.0)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(kysely@0.28.17))(svelte@5.55.8)(vitest@4.1.7)
@@ -1552,8 +1552,8 @@ packages:
   '@levischuck/tiny-cbor@0.2.11':
     resolution: {integrity: sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==}
 
-  '@lucide/svelte@1.14.0':
-    resolution: {integrity: sha512-MVuP5VRCBQa2OaIpaRbuEV4k5OV2dy9MyxA6Tf4Sz/IN0v3zzUU72ObHc9r2Zn/wSMXDg6lLrHrczqI7w7gCzQ==}
+  '@lucide/svelte@1.17.0':
+    resolution: {integrity: sha512-q06YCFBN5CO8cd1ADmLCxWRVMVb7xxvHzqC0lvNoxGa+FLW6Cd1Y1AOxgbQk4Iwe68vkAMCRveNHint4WoaVKg==}
     peerDependencies:
       svelte: '>=5.55.7'
 
@@ -6216,7 +6216,7 @@ snapshots:
 
   '@levischuck/tiny-cbor@0.2.11': {}
 
-  '@lucide/svelte@1.14.0(svelte@5.55.8)':
+  '@lucide/svelte@1.17.0(svelte@5.55.8)':
     dependencies:
       svelte: 5.55.8
 
