@@ -32,6 +32,7 @@ import { buildWindowChrome } from './window-chrome';
 import { resolveBackgroundColor } from './background-color';
 import { buildSplashHtml } from './splash';
 import { BRAND } from './brand';
+import { mainLog } from './log-sink';
 
 /** Probe a dev-server URL: resolves true on ANY HTTP response (incl. a
  *  redirect or 4xx), false on connection-refused or a >800ms hang. Used to
@@ -177,7 +178,7 @@ export class ElectronCapacitorApp {
       }
       await new Promise((r) => setTimeout(r, 400));
     }
-    console.error(`[electron] dev server ${url} did not become available within 30s`);
+    mainLog('error', `[electron] dev server ${url} did not become available within 30s`);
     // The splash is already revealed; leave it up rather than stranding a
     // hidden window. revealMainWindow is idempotent.
     this.revealMainWindow();
@@ -292,6 +293,17 @@ export class ElectronCapacitorApp {
         // EventEmitter shim) + full IPC retest -- tracked as separate hardening,
         // not done here. @capacitor-community/electron ships sandbox:false too.
         sandbox: false,
+        // No part of the app embeds a <webview>; disabling the tag removes a
+        // whole class of renderer-escape surface (a <webview> is a fresh
+        // renderer that could re-enable nodeIntegration).
+        webviewTag: false,
+        // Never silently upgrade-and-load mixed/insecure subresources -- keep
+        // the renderer's content from pulling http:// assets into the secure
+        // app/dev origin.
+        allowRunningInsecureContent: false,
+        // Native spellcheck for the renderer's text inputs (cover-letter /
+        // form-answer editing).
+        spellcheck: true,
         preload: preloadPath,
       },
     });

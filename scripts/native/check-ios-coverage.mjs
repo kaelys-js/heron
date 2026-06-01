@@ -35,6 +35,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { error, notice } from '../lib/logger.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..', '..');
@@ -303,16 +304,14 @@ function main() {
   console.log('');
 
   if (missing > 0) {
-    console.error(`::error::${missing} cobertura.xml file(s) missing.`);
+    error(`${missing} cobertura.xml file(s) missing.`);
     console.error('Verify the slather + fastlane test_ci pipeline ran every scheme.');
   }
 
   if (failures.length > 0) {
-    console.error(`::error::${failures.length} target(s) below threshold:`);
+    error(`${failures.length} target(s) below threshold:`);
     for (const f of failures) {
-      console.error(
-        `::error::  ${f.target} -- actual ${f.actual.toFixed(2)}% vs threshold ${f.threshold}%`,
-      );
+      error(`  ${f.target} -- actual ${f.actual.toFixed(2)}% vs threshold ${f.threshold}%`);
     }
     process.exit(1);
   }
@@ -322,12 +321,10 @@ function main() {
   // per-file rates flake across iOS versions. The aggregate gate is what
   // gates.
   if (perFileFailures.length > 0) {
-    console.log(
-      `::notice::${perFileFailures.length} file(s) below the advisory per-file floor (not gating):`,
-    );
+    notice(`${perFileFailures.length} file(s) below the advisory per-file floor (not gating):`);
     for (const pf of perFileFailures) {
-      console.log(
-        `::notice::  ${pf.scheme}/${pf.filename} -- ${pf.actual.toFixed(2)}% (advisory floor ${pf.threshold}%)`,
+      notice(
+        `  ${pf.scheme}/${pf.filename} -- ${pf.actual.toFixed(2)}% (advisory floor ${pf.threshold}%)`,
       );
     }
   }

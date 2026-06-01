@@ -6,6 +6,7 @@
  */
 import { Menu, MenuItemConstructorOptions, shell, app } from 'electron';
 import { BRAND } from './brand';
+import type { UpdateChannel } from './update-prefs';
 
 export type AppMenuHandlers = {
   onAbout: () => void;
@@ -13,6 +14,15 @@ export type AppMenuHandlers = {
   /** User-initiated update check (electron-updater). Surfaces feedback even when
    *  already up to date, unlike the silent boot check. */
   onCheckForUpdates: () => void;
+  /** Set the release channel (Help → Release channel radio). Persists + re-checks
+   *  at the call site. */
+  onSetUpdateChannel: (channel: UpdateChannel) => void;
+  /** DEV-ONLY (View menu, isDev-gated). Open the styled changelog window with a
+   *  fake downloaded update to preview the release UX without a real release. */
+  onSimulateUpdate: () => void;
+  /** Clear the local cache + sign out of this device, then reload. Always present
+   *  (not dev-gated) -- a "stuck" cache is a real prod support path. */
+  onClearCache: () => void;
   onOpenDocs: () => void;
   onReportBug: () => void;
   onGotoLogin: () => void;
@@ -24,16 +34,21 @@ export type AppMenuOptions = {
   /** Current renderer pathname, used to surface auth actions in the File menu
    *  only while on the login / signup screens. */
   route?: string;
-  /** Dev build. Surfaces Reload / Force-Reload / Toggle-DevTools in the View
-   *  menu; in production those are hidden (a reload drops the user into a blank
-   *  shell, and exposing devtools is a footgun). */
+  /** Dev build. Surfaces Reload / Force-Reload / Toggle-DevTools + the
+   *  "Simulate update…" item in the View menu; in production those are hidden
+   *  (a reload drops the user into a blank shell, and exposing devtools / a fake
+   *  update card is a footgun). */
   isDev?: boolean;
+  /** Current release channel, used to check the matching Help → Release channel
+   *  radio. Defaults to 'stable'. */
+  updateChannel?: UpdateChannel;
 };
 
 export function buildAppMenu(h: AppMenuHandlers, opts: AppMenuOptions = {}): Menu {
   const isMac = process.platform === 'darwin';
   const isAuthRoute = opts.route === '/login' || opts.route === '/signup';
   const isDev = opts.isDev ?? false;
+  const updateChannel: UpdateChannel = opts.updateChannel ?? 'stable';
   const template: MenuItemConstructorOptions[] = [];
 
   if (isMac) {
@@ -124,12 +139,20 @@ export function buildAppMenu(h: AppMenuHandlers, opts: AppMenuOptions = {}): Men
             { role: 'reload' },
             { role: 'forceReload' },
             { role: 'toggleDevTools' },
+            // Preview the styled auto-update card without a real release. Dev-only
+            // -- a fake "update ready" card in production would mislead users.
+            { label: 'Simulate update…', click: h.onSimulateUpdate },
             { type: 'separator' },
           ] as MenuItemConstructorOptions[])
         : ([] as MenuItemConstructorOptions[])),
       { role: 'resetZoom' },
       { role: 'zoomIn' },
       { role: 'zoomOut' },
+      // "Clear Cache & Reload…" is NOT dev-gated (unlike the reload items above):
+      // a wedged cache / stale session is a real prod support path, and the
+      // handler confirms first + reloads via the safe load path.
+      { type: 'separator' },
+      { label: 'Clear Cache & Reload…', click: h.onClearCache },
       // macOS auto-inserts "Enter Full Screen" into the View menu
       // (NSFullScreenMenuItemEverywhere); adding our own `togglefullscreen` role
       // too renders it TWICE. So our explicit item is Win/Linux-only -- macOS
@@ -161,6 +184,27 @@ export function buildAppMenu(h: AppMenuHandlers, opts: AppMenuOptions = {}): Men
       { label: 'Documentation', click: h.onOpenDocs },
       { label: 'Release Notes', click: () => shell.openExternal(`${BRAND.repoUrl}/releases`) },
       { label: 'Report a bug…', click: h.onReportBug },
+      { type: 'separator' },
+      // Release channel: Stable (default) vs Beta (the GitHub prerelease feed).
+      // type:'radio' with `checked` mirroring the current channel; the click
+      // handler persists + re-applies the updater config at the call site.
+      {
+        label: 'Release channel',
+        submenu: [
+          {
+            label: 'Stable',
+            type: 'radio',
+            checked: updateChannel === 'stable',
+            click: () => h.onSetUpdateChannel('stable'),
+          },
+          {
+            label: 'Beta',
+            type: 'radio',
+            checked: updateChannel === 'beta',
+            click: () => h.onSetUpdateChannel('beta'),
+          },
+        ],
+      },
       { type: 'separator' },
       {
         label: 'View on GitHub',

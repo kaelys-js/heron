@@ -518,13 +518,17 @@ platform :ios do
     )
   end
 
-  desc "Production App Store prep (gated by promote.yml). STOPS before the real submit."
-  # Uploads metadata + screenshots + the version's release notes and sets the
-  # age rating, then leaves the final, irreversible Submit to Cole in ASC
-  # (submit_for_review: false). The binary is the one the beta lane already
-  # pushed to TestFlight (skip_binary_upload). Privacy label is one-time manual
-  # (see set_age_rating). Marketing version + What's New both derive from the
-  # Release Please sources (package.json $.version, CHANGELOG.md).
+  desc "Production App Store submit with phased release (gated by promote.yml)."
+  # The production half of the convergent release model (see docs/RELEASING.md):
+  # promote.yml runs this AFTER the beta soaked in TestFlight. It uploads
+  # metadata + screenshots + the version's release notes, sets the age rating,
+  # and submits for review with PHASED RELEASE -- Apple's automatic 7-day
+  # 1->100% staged rollout once the build is approved. The binary is the one the
+  # beta lane already pushed to TestFlight (skip_binary_upload). Privacy label is
+  # one-time manual (see set_age_rating). Marketing version + What's New both
+  # derive from the Release Please sources (package.json $.version, CHANGELOG.md).
+  # To pause/resume the phased rollout, see docs/RELEASING.md (ASC -> phased
+  # release controls).
   lane :app_store do
     api_key = asc_key
     version = marketing_version
@@ -537,7 +541,10 @@ platform :ios do
       skip_screenshots: false,
       force: true,
       precheck_include_in_app_purchases: false,
-      submit_for_review: false,
+      # Submit for review + phased release: Apple ramps the approved build to
+      # users over ~7 days (1/2/5/10/20/50/100%), pausable from ASC.
+      submit_for_review: true,
+      phased_release: true,
       automatic_release: false,
       metadata_path: "fastlane/metadata",
       screenshots_path: "fastlane/screenshots"

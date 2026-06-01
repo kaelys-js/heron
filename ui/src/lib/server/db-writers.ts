@@ -14,17 +14,20 @@ function shouldWrite(userId: string | undefined | null): userId is string {
   return Boolean(userId && userId !== SYSTEM_USER_ID);
 }
 
-/** Mirror an activity event into app.db.activity_events. */
+/** Mirror an activity event into app.db.activity_events.
+ *
+ *  Unlike issues (which are inherently per-user), activity events are mirrored
+ *  REGARDLESS of userId: system / broadcast / CSP / process-level diagnostics
+ *  carry no userId but still belong in the queryable store, so support can answer
+ *  "all errors in the last hour" from the indexed DB rather than only by grepping
+ *  activity.jsonl. user_id is NULL for those (the column is nullable as of v3). */
 export function dbWriteActivity(ev: ActivityEvent): void {
-  if (!shouldWrite(ev.userId)) {
-    return;
-  }
   try {
     appDb
       .insert(activityEvents)
       .values({
         id: ev.id,
-        userId: ev.userId!,
+        userId: ev.userId ?? null,
         profileId: ev.profileId ?? null,
         level: ev.level,
         category: ev.category,
@@ -34,6 +37,8 @@ export function dbWriteActivity(ev: ActivityEvent): void {
         stack: ev.stack ?? null,
         link: ev.link ?? null,
         ts: ev.ts,
+        requestId: ev.requestId ?? null,
+        fingerprint: ev.fingerprint ?? null,
       })
       .run();
   } catch {

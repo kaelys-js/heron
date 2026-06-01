@@ -5,8 +5,8 @@
  * topics) and aren't worth writing into branding/brand.json.
  *
  * Covers:
- *   - 4 deployment environments (production-ios, production-electron,
- *     npm-publish, github-pages) with required-reviewer + branch policy
+ *   - deployment environments (production, npm-publish, github-pages) with
+ *     required-reviewer + branch policy
  *   - Standard labels (good first issue, oversize-ok, no-issue, etc.)
  *   - Secret-scanning validity checks (toggle)
  *   - Actions log + artifact retention (30 days)
@@ -99,24 +99,23 @@ function logChange(label, before, after) {
 }
 
 // ── 1. Deployment environments ──────────────────────────────────
-// requireReviewer: the production gates (referenced by promote.yml) need the
+// requireReviewer: the production gate (referenced by promote.yml) needs the
 // maintainer as a required reviewer, else a dispatch would NOT pause for
 // approval before reaching production.
 const ENVS = [
   {
-    name: 'production-ios',
+    // Single production gate for the convergent release model. promote.yml's
+    // `gate` job declares `environment: production`, so ONE required-reviewer
+    // approval ships the soaked version to every production track (App Store,
+    // Play, Electron stable) together. This replaced the old per-platform
+    // production-ios/-android/-electron gates when promote.yml moved to the
+    // unified select -> gate -> promote(native-release) -> finalize flow.
+    // protected_branches (not custom): promote.yml runs only on main (schedule +
+    // workflow_dispatch default), which is protected, so this scopes deploys to
+    // main AND gates on the reviewer.
+    name: 'production',
     requireReviewer: true,
-    deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
-  },
-  {
-    name: 'production-electron',
-    requireReviewer: true,
-    deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
-  },
-  {
-    name: 'production-android',
-    requireReviewer: true,
-    deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
+    deployment_branch_policy: { protected_branches: true, custom_branch_policies: false },
   },
   {
     name: 'npm-publish',

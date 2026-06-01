@@ -5,6 +5,9 @@ import crypto from 'node:crypto';
 import type { ActivityEvent, EventLevel, EventCategory, ReportKind } from '$lib/types';
 import { ROOT, DATA_ROOT } from './files';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
+import { redact } from './redact';
+import { shouldPersist } from './logging-config';
+import { fingerprint } from './fingerprint';
 
 const LOG_FILE = path.join(DATA_ROOT, 'activity.jsonl');
 const LOG_BACKUP = `${LOG_FILE}.1`;
@@ -191,7 +194,10 @@ class Bus extends EventEmitter {
     }
   }
 
-  emitEvent(ev: ActivityEvent) {
+  emitEvent(ev: ActivityEvent, persist = true) {
+    // `persist` gates only the DURABLE sinks (disk + SQLite). The buffer + the
+    // 'event' emit (-> live SSE feed) ALWAYS run so the in-app activity feed stays
+    // real-time even when HERON_LOG_LEVEL quiets on-disk volume. See logging-config.
     // ---- recursion + burst guards ----
     if (this.depth > 8) {
       return;
@@ -240,16 +246,15 @@ class Bus extends EventEmitter {
     if (this.buf.length > MAX_BUFFER) {
       this.buf.shift();
     }
-    this.appendToDisk(ev);
-    // Mirror to app.db.activity_events for indexed per-user queries. The
-    // JSONL stays the source of truth (cheap append, easy tail-tailing);
-    // the DB row enables future "show me my last 100 errors of source=X"
-    // queries without re-parsing megabytes of JSONL.
-    //
-    // Lazy-require so a missing better-sqlite3 binary at boot doesn't
-    // crash the event bus -- events.ts MUST stay up even when the DB is
-    // broken because we use it to log DB errors.
-    if (ev.userId) {
+    if (persist) {
+      this.appendToDisk(ev);
+      // Mirror to app.db.activity_events for indexed queries. The JSONL stays the
+      // source of truth (cheap append, easy tail-tailing); the DB row enables
+      // "show me the last 100 errors of source=X" without re-parsing megabytes.
+      //
+      // Lazy-require so a missing better-sqlite3 binary at boot doesn't crash the
+      // event bus -- events.ts MUST stay up even when the DB is broken because we
+      // use it to log DB errors.
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { dbWriteActivity } = require('./db-writers') as typeof import('./db-writers');
@@ -326,6 +331,30 @@ export function installBusListener(name: string, handler: (ev: ActivityEvent) =>
 // that itself is dead (D17). `installBusListener` is idempotent across
 // HMR via the __busName tag walk, so explicit removal isn't needed.
 
+/** OPT-IN remote sink seam. A no-op UNLESS HERON_TELEMETRY_ENDPOINT is set --
+ *  the default posture stays strictly local-first. When configured, fire-and-
+ *  forget POSTs the ALREADY-REDACTED event JSON so a deployed instance's errors
+ *  reach a developer without tailing the box. Never blocks the bus, never throws,
+ *  never awaits, and never re-enters logEvent (the .catch swallows failures), so a
+ *  dead endpoint can't wedge logging. Exported for testing. */
+export function reportToRemote(ev: ActivityEvent): void {
+  const endpoint = process.env.HERON_TELEMETRY_ENDPOINT;
+  if (!endpoint) {
+    return;
+  }
+  try {
+    void fetch(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(ev),
+    }).catch(() => {
+      /* fire-and-forget -- a dead remote sink never affects local logging */
+    });
+  } catch {
+    /* fetch unavailable / threw synchronously -- ignore, local sinks already wrote */
+  }
+}
+
 export function logEvent(
   source: string,
   title: string,
@@ -348,6 +377,11 @@ export function logEvent(
      *  request) or SYSTEM_USER_ID outside a request. Pass `null` to
      *  emit a broadcast event visible to every authenticated user. */
     userId?: string | null;
+    /** Correlation id (the request's X-Request-Id). Pass it so this event is
+     *  grep-able by the on-screen error ref: hooks.server.ts threads
+     *  event.locals.requestId for server errors, and /api/telemetry forwards
+     *  the client's ORIGINAL page request id. Omit outside a request. */
+    requestId?: string;
   } = {},
 ): ActivityEvent {
   const resolvedUserId =
@@ -361,26 +395,50 @@ export function logEvent(
     category: opts.category ?? 'system',
     kind: opts.kind,
     source,
-    title,
-    message: opts.message,
-    link: opts.link,
-    stack: opts.stack,
+    // redact() masks emails / API keys / Bearer tokens / sensitive URL params /
+    // home-dir paths before anything is persisted or fed to the live SSE feed.
+    // Correlation ids (requestId UUID, event id, commit SHA) survive by design.
+    title: redact(title),
+    message: opts.message ? redact(opts.message) : undefined,
+    link: opts.link ? redact(opts.link) : undefined,
+    stack: opts.stack ? redact(opts.stack) : undefined,
     profileId: opts.profileId,
     userId: resolvedUserId && resolvedUserId !== SYSTEM_USER_ID ? resolvedUserId : undefined,
+    requestId: opts.requestId,
   };
-  bus.emitEvent(ev);
-  const prefix =
-    ev.level === 'error' ? '✗' : ev.level === 'warn' ? '⚠' : ev.level === 'success' ? '✓' : 'ℹ';
-  const head = `${prefix} [${source}] ${title}${opts.message ? ' — ' + opts.message : ''}`;
-  // safeConsole swallows EPIPE/EBADF from intercepted-console extensions --
-  // see comment at the top of this file.
-  if (ev.level === 'error') {
-    safeConsole('error', head);
-    if (opts.stack) {
-      safeConsole('error', opts.stack);
+  // Group recurring failures: fingerprint error/warn events (info/success don't
+  // need grouping). Computed from the REDACTED title/stack so it groups across
+  // machines + ignores per-occurrence ref noise (see fingerprint.ts). Enables a
+  // GROUP BY / groupByFingerprint() error-rate view with no remote service.
+  if (ev.level === 'error' || ev.level === 'warn') {
+    ev.fingerprint = fingerprint(source, ev.title, ev.stack);
+  }
+  // HERON_LOG_LEVEL / HERON_LOG_MUTE gate the durable sinks (disk + SQLite +
+  // console) only -- the bus + live SSE feed always receive the event.
+  const persist = shouldPersist(ev.level, source);
+  bus.emitEvent(ev, persist);
+  if (persist) {
+    const prefix =
+      ev.level === 'error' ? '✗' : ev.level === 'warn' ? '⚠' : ev.level === 'success' ? '✓' : 'ℹ';
+    // Use the REDACTED ev fields (not the raw opts) so stdout/CI logs are masked
+    // identically to the persisted line.
+    const head = `${prefix} [${source}] ${ev.title}${ev.message ? ' — ' + ev.message : ''}`;
+    // safeConsole swallows EPIPE/EBADF from intercepted-console extensions --
+    // see comment at the top of this file.
+    if (ev.level === 'error') {
+      safeConsole('error', head);
+      if (ev.stack) {
+        safeConsole('error', ev.stack);
+      }
+    } else {
+      safeConsole('log', head);
     }
-  } else {
-    safeConsole('log', head);
+  }
+  // Opt-in remote forwarding (default off). Only error/warn diagnostics that also
+  // persisted -- those are what a remote sink exists to surface; info/success +
+  // muted/below-threshold events stay local.
+  if (persist && (ev.level === 'error' || ev.level === 'warn')) {
+    reportToRemote(ev);
   }
   return ev;
 }
@@ -399,6 +457,9 @@ export function reportServerError(
     link?: string;
     profileId?: string;
     userId?: string | null;
+    /** Correlation id (the failing request's X-Request-Id). handleError passes
+     *  event.locals.requestId so the logged error == the on-screen ref. */
+    requestId?: string;
   } = {},
 ): ActivityEvent {
   const isError = err instanceof Error;
@@ -427,5 +488,6 @@ export function reportServerError(
     stack,
     profileId: opts.profileId,
     userId: opts.userId,
+    requestId: opts.requestId,
   });
 }

@@ -20,6 +20,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { error } from '../lib/logger.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SUMMARY = join(ROOT, 'ui', 'coverage', 'coverage-summary.json');
@@ -48,8 +49,8 @@ const THRESHOLDS = {
 };
 
 if (!existsSync(SUMMARY)) {
-  console.error(`::error::coverage-summary.json missing at ${SUMMARY}`);
-  console.error('::error::Did `vitest run --coverage` produce the json-summary reporter?');
+  error(`coverage-summary.json missing at ${SUMMARY}`);
+  error('Did `vitest run --coverage` produce the json-summary reporter?');
   process.exit(2);
 }
 
@@ -73,8 +74,8 @@ for (const [metric, threshold] of Object.entries(THRESHOLDS)) {
 
 if (failed > 0) {
   console.error('');
-  console.error(
-    `::error::${failed} coverage threshold(s) missed. Add tests or lower thresholds in scripts/system/assert-coverage-thresholds.mjs.`,
+  error(
+    `${failed} coverage threshold(s) missed. Add tests or lower thresholds in scripts/system/assert-coverage-thresholds.mjs.`,
   );
   process.exit(1);
 }

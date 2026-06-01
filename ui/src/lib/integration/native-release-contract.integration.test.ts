@@ -68,10 +68,13 @@ describe('native-release contract — App Store submission lane (#4E)', () => {
     expect(iosFastfile).toContain('lane :app_store');
     expect(iosFastfile).toContain('upload_to_app_store');
   });
-  it('nEVER auto-submits — submit_for_review is false (Cole does the real submit)', () => {
-    // The lane preps everything but stops before the irreversible Submit.
-    expect(iosFastfile).toMatch(/submit_for_review:\s*false/);
-    expect(iosFastfile).not.toMatch(/submit_for_review:\s*true/);
+  it('app_store lane submits for review with a PHASED (staged) release', () => {
+    // The convergent release model auto-promotes a soaked beta to the App Store
+    // with Apple's phased release (1->100% over ~7 days). The safety is the soak
+    // window + the production Environment required-reviewer gate + the phased
+    // ramp -- NOT a withheld submit. So submit_for_review is true AND phased.
+    expect(iosFastfile).toMatch(/submit_for_review:\s*true/);
+    expect(iosFastfile).toMatch(/phased_release:\s*true/);
   });
   it('what’s New derives from CHANGELOG.md (Release Please source)', () => {
     expect(iosFastfile).toContain('release_notes_for_version');
@@ -82,15 +85,19 @@ describe('native-release contract — App Store submission lane (#4E)', () => {
     expect(androidFastfile).toContain('lane :production');
     expect(androidFastfile).toMatch(/track_promote_to:\s*["']production["']/);
   });
-  it('promote.yml gates production on the required-reviewer environments', () => {
+  it('promote.yml gates production on the single required-reviewer environment + delegates to native-release', () => {
     const promote = read('.github/workflows/promote.yml');
-    expect(promote).toContain('environment: production-ios');
-    expect(promote).toContain('environment: production-electron');
-    expect(promote).toMatch(/bundle exec fastlane ios app_store/);
+    // Unified production Environment kill switch (replaced the 3 per-platform
+    // envs when promote moved to one select -> gate -> promote flow).
+    expect(promote).toContain('environment: production');
+    // promote.yml no longer runs fastlane directly -- it calls native-release.yml
+    // with the production flag, which runs the app_store lane on that path.
+    expect(promote).toMatch(/promote_to_production:\s*true/);
+    expect(workflow, 'native-release runs the app_store lane on promote').toMatch(/app_store/);
     // The gate is only real if the env has a required reviewer.
     const features = read('scripts/system/apply-github-features.mjs');
-    expect(features, 'production envs must require a reviewer').toContain('requireReviewer');
-    expect(features).toContain('production-android');
+    expect(features, 'production env must require a reviewer').toContain('requireReviewer');
+    expect(features, 'single production env').toMatch(/name:\s*'production'/);
   });
 });
 

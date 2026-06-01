@@ -1469,6 +1469,7 @@ function applyMarkdownSections(brand) {
     join(ROOT, 'docs', 'LEGAL_DISCLAIMER.md'),
     join(ROOT, 'docs', 'NATIVE.md'),
     join(ROOT, 'docs', 'PHILOSOPHY.md'),
+    join(ROOT, 'docs', 'RELEASING.md'),
     join(ROOT, 'docs', 'SETUP.md'),
     join(ROOT, 'docs', 'STATUS_MODEL.md'),
     join(ROOT, 'docs', 'TESTING.md'),

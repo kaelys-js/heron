@@ -39,6 +39,7 @@ import { readFileSync, readdirSync, writeFileSync, existsSync, statSync } from '
 import { createHash } from 'node:crypto';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { error } from '../lib/logger.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FONTS_DIR = join(ROOT, 'ui', 'static', 'fonts');
@@ -54,7 +55,7 @@ function sha256(path) {
 /** Walk fonts dir + compute current SHA256 for every woff2. */
 function currentChecksums() {
   if (!existsSync(FONTS_DIR) || !statSync(FONTS_DIR).isDirectory()) {
-    console.error(`::error::fonts dir missing: ${FONTS_DIR}`);
+    error(`fonts dir missing: ${FONTS_DIR}`);
     process.exit(2);
   }
   const out = {};
@@ -74,7 +75,7 @@ function loadLocked() {
     const { $comment, ...rest } = parsed;
     return rest;
   } catch (e) {
-    console.error(`::error::CHECKSUMS.json malformed: ${e.message}`);
+    error(`CHECKSUMS.json malformed: ${e.message}`);
     process.exit(2);
   }
 }

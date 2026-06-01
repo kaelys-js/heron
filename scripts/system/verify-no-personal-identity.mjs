@@ -33,6 +33,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, existsSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { error } from '../lib/logger.mjs';
 
 /**
  * SHA-256 of the normalized denied identities (personal email, work
@@ -135,7 +136,7 @@ function gitIdent(which) {
 }
 
 function fail(header, hits) {
-  console.error(`::error::${header}`);
+  error(header);
   console.error('');
   for (const h of hits) console.error(`  ${h.field}: ${h.hint}`);
   console.error('');
@@ -163,7 +164,7 @@ function runIdentity() {
 
 function runMessage(path) {
   if (!existsSync(path)) {
-    console.error(`::error::verify-no-personal-identity: message file not found: ${path}`);
+    error(`verify-no-personal-identity: message file not found: ${path}`);
     return 2;
   }
   const hits = scanMessage(readFileSync(path, 'utf8'));
@@ -179,7 +180,7 @@ function runAudit(range) {
       maxBuffer: 512 * 1024 * 1024,
     });
   } catch (e) {
-    console.error(`::error::verify-no-personal-identity: git log ${range} failed: ${e.message}`);
+    error(`verify-no-personal-identity: git log ${range} failed: ${e.message}`);
     return 2;
   }
   const offenders = [];
@@ -202,7 +203,7 @@ function runAudit(range) {
     console.log(`✓ no personal identity in ${range}`);
     return 0;
   }
-  console.error(`::error::Blocked personal identity in ${offenders.length} commit(s) of ${range}.`);
+  error(`Blocked personal identity in ${offenders.length} commit(s) of ${range}.`);
   for (const o of offenders) {
     console.error(
       `  ${o.sha.slice(0, 12)}: ${o.hits.map((h) => `${h.field}=${h.hint}`).join(', ')}`,

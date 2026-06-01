@@ -25,12 +25,13 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { error } from '../lib/logger.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LOCK = join(ROOT, 'pnpm-lock.yaml');
 
 if (!existsSync(LOCK)) {
-  console.error('::error::pnpm-lock.yaml missing at ' + LOCK);
+  error('pnpm-lock.yaml missing at ' + LOCK);
   process.exit(2);
 }
 

@@ -341,6 +341,17 @@ export type ActivityEvent = {
    *  so $lib/report-routing's eventKind() derives it from `category` when
    *  absent. An explicit kind always wins. */
   kind?: ReportKind;
+  /** Correlation id == the request's X-Request-Id (hooks.server.ts mints it per
+   *  request and surfaces it on the response header + a <meta> tag + the
+   *  on-screen error ref). Threaded here so a logged error is grep-able by that
+   *  ref: server errors carry event.locals.requestId; client errors POST their
+   *  ORIGINAL page's request id to /api/telemetry. Omitted with no request ctx. */
+  requestId?: string;
+  /** Stable error fingerprint (hash of source+title+top stack frames, line
+   *  numbers stripped) used to GROUP recurring errors + count occurrences without
+   *  a remote service. Set only for error/warn events with a stack; see
+   *  fingerprint.ts. Omitted otherwise. */
+  fingerprint?: string;
 };
 
 /**

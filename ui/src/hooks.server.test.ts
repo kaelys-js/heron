@@ -207,6 +207,7 @@ describe('hooks — CORS preflight', () => {
     const expose = r.headers.get('Access-Control-Expose-Headers') ?? '';
     expect(expose).toContain('X-Request-Id');
     expect(expose).toContain('X-App-Version');
+    expect(expose).toContain('X-App-Build');
     expect(expose).toContain('Server-Timing');
     expect(r.headers.get('Timing-Allow-Origin')).toBe('heron://localhost');
   });
@@ -290,6 +291,41 @@ describe('hooks -- populateAuth', () => {
     expect(r.status).toBe(401); // treated as unauthenticated
     expect(reportedErrors.some((e) => e.source === 'auth')).toBe(true);
   });
+
+  it('attributes a failing bearer-token lookup WITHOUT logging the raw token', async () => {
+    // WHY: a recurring auth failure must be greppable to ONE credential so
+    // support can tell "this user's session is broken" from "auth is down" --
+    // but the raw token is a secret and must NEVER reach the log. The title
+    // names the method + a fingerprint, not the token.
+    invalidSessionThrows = true;
+    await run(
+      evt('http://localhost:5173/api/jobs', {
+        headers: { Authorization: 'Bearer super-secret-token-value' },
+      }),
+    );
+    const authErr = reportedErrors.find((e) => e.source === 'auth');
+    expect(authErr?.msg).toContain('bearer token');
+    expect(authErr?.msg).not.toContain('super-secret-token-value');
+  });
+
+  it('attributes a failing session-cookie lookup to a non-secret fingerprint', async () => {
+    invalidSessionThrows = true;
+    await run(
+      evt('http://localhost:5173/api/jobs', {
+        headers: { Cookie: 'better-auth.session_token=tok.sig-secret' },
+      }),
+    );
+    const authErr = reportedErrors.find((e) => e.source === 'auth');
+    expect(authErr?.msg).toContain('session cookie');
+    expect(authErr?.msg).not.toContain('tok.sig-secret');
+  });
+
+  it('labels a credential-less failing lookup as no-credential', async () => {
+    invalidSessionThrows = true;
+    await run(evt('http://localhost:5173/api/jobs'));
+    const authErr = reportedErrors.find((e) => e.source === 'auth');
+    expect(authErr?.msg).toContain('no-credential');
+  });
 });
 
 describe('hooks -- withUserContext', () => {
@@ -325,11 +361,40 @@ describe('hooks -- security headers', () => {
     expect(r.headers.get('X-App-Version')).toMatch(/^\d+\.\d+\.\d+/);
   });
 
-  it('sets a lean Server-Timing on EVERY response (not just dev)', async () => {
-    // dev is mocked false in this suite, so this asserts the production path:
-    // a `total;dur=<ms>` measurement clients can read off the Network panel.
+  it('sets X-App-Build (git SHA) so support can pin the EXACT build', async () => {
+    // __APP_BUILD__ is mirrored to the literal 'testsha' in the vitest define;
+    // a real build sets the short git SHA. (Empty define -> header absent.)
     const r = await run(evt('http://localhost:5173/login'));
-    expect(r.headers.get('Server-Timing')).toMatch(/^total;dur=[\d.]+$/);
+    expect(r.headers.get('X-App-Build')).toBe('testsha');
+  });
+
+  it('sets a PHASED Server-Timing on EVERY response (total + middleware + render)', async () => {
+    // WHY phased: the Network "Timing" panel can then show where a slow request
+    // spent its time (auth/middleware vs render) without a profiler. Durations
+    // only -- no path/payload leakage.
+    const r = await run(evt('http://localhost:5173/login'));
+    const st = r.headers.get('Server-Timing') ?? '';
+    expect(st).toMatch(/\btotal;dur=[\d.]+/);
+    expect(st).toMatch(/\bmiddleware;dur=[\d.]+/);
+    expect(st).toMatch(/\brender;dur=[\d.]+/);
+  });
+
+  it('sets Reporting-Endpoints pointing at the telemetry diagnostics sink', async () => {
+    // Paired with the CSP report-to directive (svelte.config.ts) so CSP / COOP /
+    // deprecation reports flow to /api/telemetry.
+    const r = await run(evt('http://localhost:5173/login'));
+    const re = r.headers.get('Reporting-Endpoints') ?? '';
+    expect(re).toContain('heron-telemetry');
+    expect(re).toContain('/api/telemetry');
+  });
+
+  it('strips X-Powered-By if an adapter / proxy set it (no stack fingerprint)', async () => {
+    const r = await run(evt('http://localhost:5173/login'), () => {
+      const res = new Response('ok', { status: 200 });
+      res.headers.set('X-Powered-By', 'Express');
+      return res;
+    });
+    expect(r.headers.get('X-Powered-By')).toBeNull();
   });
 
   it('sets Cache-Control: no-store on /api/* (auth-scoped payloads never cached)', async () => {

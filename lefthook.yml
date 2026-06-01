@@ -179,6 +179,12 @@ pre-commit:
       glob: "{branding/brand.json,scripts/native/app-css-block.mjs,scripts/native/app-css-block.test.mjs,scripts/native/apply-brand.mjs,scripts/system/verify-contrast.mjs}"
       run: pnpm app-css-block:test && pnpm verify:contrast
 
+    "18-symbolicate":
+      # Unit-test the offline client-stack symbolicator's pure helpers. Fires
+      # only when the script or its test is staged.
+      glob: "{scripts/system/symbolicate.mjs,scripts/system/symbolicate.test.mjs}"
+      run: pnpm symbolicate:test
+
     # ── Full verify pipeline (typecheck + build + tests + every linter +
     #    every gate), turbo-cached. Runs LAST so the writers above have
     #    already formatted + re-staged. SAME command pre-push + CI run. ──

@@ -5,6 +5,9 @@
  * main→renderer events, never invoke:
  *
  *  - `:main-error` / `:net-status`      -- error + connectivity events
+ *  - `:theme`                            -- OS dark/light appearance changes
+ *    (index.ts pushes nativeTheme 'updated'); the renderer's theme store
+ *    follows the OS without a reload.
  *  - `:menu:navigate` / `:menu:passkey` -- File-menu auth actions. The native
  *    File menu (index.ts) sends these; without them here the renderer bridge in
  *    `$lib/client/auth-menu.ts` gets a no-op listener and the menu items do
@@ -15,6 +18,7 @@
 export const ALLOWED_CHANNEL_SUFFIXES = [
   ':main-error',
   ':net-status',
+  ':theme',
   ':menu:navigate',
   ':menu:passkey',
 ] as const;

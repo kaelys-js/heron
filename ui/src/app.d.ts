@@ -1,6 +1,7 @@
 // See https://kit.svelte.dev/docs/types#app
 
 import type { auth } from '$lib/server/auth';
+import type { HeronGlobal } from '$lib/client/dev-global';
 
 type AuthSession = Awaited<ReturnType<typeof auth.api.getSession>>;
 type AuthUser = NonNullable<AuthSession>['user'];
@@ -11,6 +12,18 @@ declare global {
    *  undefined where the define isn't applied (e.g. some test runners), so
    *  always read it with a fallback. */
   const __APP_VERSION__: string | undefined;
+
+  /** Short git SHA of the build, injected by vite `define`. Empty string on a
+   *  shallow / non-git checkout; undefined where the define isn't applied (some
+   *  test runners). Always read with a fallback. */
+  const __APP_BUILD__: string | undefined;
+
+  interface Window {
+    /** Frozen, paste-safe developer global -- build identity + public links +
+     *  safe action facades (help / diagnostics / clearCacheAndReset). Installed
+     *  in +layout's onMount. Carries NO credential surface (see dev-global.ts). */
+    heron?: HeronGlobal;
+  }
 
   namespace App {
     /** Shape of `page.error` -- what `handleError` returns. Beyond SvelteKit's

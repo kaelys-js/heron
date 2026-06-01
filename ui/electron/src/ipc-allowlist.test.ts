@@ -17,6 +17,13 @@ describe('isAllowedChannel', () => {
     expect(isAllowedChannel('heron:net-status')).toBe(true);
   });
 
+  it('allows the OS-theme channel (nativeTheme updates push <brand>:theme)', () => {
+    // index.ts forwards nativeTheme 'updated' on this channel; without it in the
+    // allowlist the renderer theme store never follows the OS appearance.
+    expect(isAllowedChannel('heron:theme')).toBe(true);
+    expect(isAllowedChannel('acme:theme')).toBe(true);
+  });
+
   it('is brand-agnostic (suffix match, any prefix)', () => {
     expect(isAllowedChannel('acme:menu:navigate')).toBe(true);
     expect(isAllowedChannel('acme:main-error')).toBe(true);

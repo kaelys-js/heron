@@ -40,6 +40,15 @@ describe('buildCsp', () => {
     expect(csp).not.toContain('ws://localhost');
     expect(csp).not.toContain('devtools');
   });
+  it('prod CSP tightens plugin / base-href / framing surface', () => {
+    // These directives remove attack surface default-src alone doesn't cover:
+    // no <object>/<embed> plugins, no <base href> hijack, no being framed
+    // (clickjacking). Regression guard -- dropping any is a hardening loss.
+    const csp = buildCsp(scheme, false);
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("base-uri 'none'");
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
   it('dev CSP additionally allows the vite dev server + HMR websocket', () => {
     const csp = buildCsp(scheme, true);
     expect(csp).toContain(`default-src ${scheme}://*`);

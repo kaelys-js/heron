@@ -26,6 +26,23 @@ const APPLY_BRAND = resolve(REPO_ROOT, 'scripts/native/apply-brand.mjs');
 const APP_VERSION: string = JSON.parse(
   readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8'),
 ).version;
+// Short git SHA captured at config time. Surfaced in the X-App-Build response
+// header, the console boot banner, and Settings so support can pin the EXACT
+// build a response/session came from (semver alone can't distinguish two builds
+// of the same version). Falls back to '' on a shallow / non-git checkout (e.g.
+// a CI tarball) so the build never fails on its absence -- consumers guard for ''.
+const APP_BUILD: string = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      cwd: REPO_ROOT,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+  } catch {
+    return '';
+  }
+})();
 const WATCH_FILES = [
   resolve(REPO_ROOT, 'branding/brand.json'),
   resolve(REPO_ROOT, 'branding/logo.svg'),
@@ -87,6 +104,7 @@ export default defineConfig({
       process.env.PUBLIC_CAPACITOR_BUILD ?? '',
     ),
     __APP_VERSION__: JSON.stringify(APP_VERSION),
+    __APP_BUILD__: JSON.stringify(APP_BUILD),
   },
   plugins: [brandWatcherPlugin(), tailwindcss(), sveltekit()],
   server: {

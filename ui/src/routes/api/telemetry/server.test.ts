@@ -94,6 +94,10 @@ describe('POST /api/telemetry -- type: error', () => {
     expect(opts.level).toBe('error');
     expect(opts.message).toBe('while loading /inbox');
     expect(opts.stack).toContain('at f (app.js:1)');
+    // Correlation: the client's ORIGINAL X-Request-Id must thread into the log
+    // so support can grep activity.jsonl for the on-screen ref. Dropping it severs
+    // the chain for every client-side error.
+    expect(opts.requestId).toBe('req-abc');
     // The contract's whole purpose: diagnostics never become Issues.
     expect(reportIssue).not.toHaveBeenCalled();
   });
@@ -159,6 +163,58 @@ describe('POST /api/telemetry -- type: vitals', () => {
   });
 });
 
+describe('POST /api/telemetry -- oversize body', () => {
+  function postWithLength(contentLength: string, body: unknown) {
+    const event = {
+      request: new Request('http://localhost/api/telemetry', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'content-length': contentLength },
+        body: typeof body === 'string' ? body : JSON.stringify(body),
+      }),
+      getClientAddress: () => '10.0.0.5',
+      locals: { session: null, user: null, requestId: 'req-test' } as unknown as App.Locals,
+    };
+    return (POST as (e: unknown) => Promise<Response>)(event);
+  }
+
+  it('400s a >1MiB Content-Length BEFORE logEvent (no parse, no event)', async () => {
+    // WHY: an oversize body must be rejected from the declared length without
+    // ever paying the JSON.parse cost -- so logEvent must NOT fire. This is the
+    // memory-safety guard against a client streaming a multi-megabyte report.
+    const r = await postWithLength(String(2 * 1024 * 1024), {
+      type: 'error',
+      summary: 'huge',
+    });
+    expect(r.status).toBe(400);
+    expect((await r.json()).error).toBe('too-large');
+    expect(logEvent).not.toHaveBeenCalled();
+    expect(reportIssue).not.toHaveBeenCalled();
+  });
+
+  it('still 204s a normal-sized body (the cap does not block honest reports)', async () => {
+    const r = await postWithLength('120', { type: 'error', summary: 'small' });
+    expect(r.status).toBe(204);
+    expect(logEvent).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('POST /api/telemetry -- error body carries the app build', () => {
+  it('folds the client build into the persisted stack for later symbolication', async () => {
+    // WHY: minified prod stacks are only legible if the build that produced
+    // them is recoverable. The handler must persist the build alongside the
+    // stack so scripts/system/symbolicate.mjs can find the matching .js.map.
+    await post({
+      type: 'error',
+      summary: 'TypeError: boom',
+      stack: 'Error: boom\n  at f (app-abc123.js:1:50)',
+      build: '1.2.3+deadbee',
+    });
+    const opts = logEvent.mock.calls[0][2] as Record<string, unknown>;
+    expect(String(opts.stack)).toContain('build: 1.2.3+deadbee');
+    expect(String(opts.stack)).toContain('app-abc123.js:1:50');
+  });
+});
+
 describe('POST /api/telemetry -- malformed', () => {
   it('400s invalid JSON', async () => {
     const r = await post('{not json');
@@ -204,5 +260,110 @@ describe('POST /api/telemetry -- rate limiting', () => {
     // A DIFFERENT session/IP must still be accepted.
     const bOk = await post({ type: 'error', summary: 'b' }, { ip: '2.2.2.2', sessionId: 'B' });
     expect(bOk.status).toBe(204);
+  });
+});
+
+describe('POST /api/telemetry -- CSP / Reporting-API violation reports', () => {
+  function postReport(contentType: string, body: unknown, origin?: string) {
+    const headers: Record<string, string> = { 'content-type': contentType };
+    if (origin !== undefined) {
+      headers.origin = origin;
+    }
+    const event = {
+      request: new Request('http://localhost/api/telemetry', {
+        method: 'POST',
+        headers,
+        body: typeof body === 'string' ? body : JSON.stringify(body),
+      }),
+      getClientAddress: () => '10.0.0.2',
+      locals: { session: null, user: null, requestId: 'req-test' } as unknown as App.Locals,
+    };
+    return (POST as (e: unknown) => Promise<Response>)(event);
+  }
+
+  it('legacy application/csp-report -> one technical warn event, NEVER an Issue', async () => {
+    const r = await postReport('application/csp-report', {
+      'csp-report': {
+        'document-uri': 'https://app/x',
+        'violated-directive': 'script-src',
+        'effective-directive': 'script-src-elem',
+        'blocked-uri': 'https://evil.example/x.js',
+      },
+    });
+    expect(r.status).toBe(204);
+    expect(logEvent).toHaveBeenCalledTimes(1);
+    const [source, title, opts] = logEvent.mock.calls[0] as EventArgs;
+    expect(source).toBe('csp');
+    expect(title).toContain('script-src-elem');
+    expect(opts.kind).toBe('technical');
+    expect(opts.level).toBe('warn');
+    expect(reportIssue).not.toHaveBeenCalled();
+  });
+
+  it('modern application/reports+json batch -> one technical event per report', async () => {
+    const r = await postReport('application/reports+json', [
+      {
+        type: 'csp-violation',
+        url: 'https://app/x',
+        body: { effectiveDirective: 'img-src', blockedURL: 'https://evil/x.png' },
+      },
+      { type: 'deprecation', url: 'https://app/x', body: { message: 'foo() is deprecated' } },
+    ]);
+    expect(r.status).toBe(204);
+    expect(logEvent).toHaveBeenCalledTimes(2);
+    const sources = logEvent.mock.calls.map((c) => c[0]);
+    expect(sources).toContain('csp'); // csp-violation normalises to 'csp'
+    expect(sources).toContain('deprecation');
+    for (const c of logEvent.mock.calls) {
+      expect((c[2] as Record<string, unknown>).kind).toBe('technical');
+    }
+    expect(reportIssue).not.toHaveBeenCalled();
+  });
+
+  it('caps a flood batch at 10 reports (one giant POST cannot spam the feed)', async () => {
+    const many = Array.from({ length: 50 }, (_, i) => ({
+      type: 'csp-violation',
+      body: { effectiveDirective: `d${i}` },
+    }));
+    const r = await postReport('application/reports+json', many);
+    expect(r.status).toBe(204);
+    expect(logEvent.mock.calls.length).toBeLessThanOrEqual(10);
+    expect(reportIssue).not.toHaveBeenCalled();
+  });
+
+  it('400s a malformed report body (no event, no Issue)', async () => {
+    const r = await postReport('application/csp-report', 'not json{');
+    expect(r.status).toBe(400);
+    expect(logEvent).not.toHaveBeenCalled();
+    expect(reportIssue).not.toHaveBeenCalled();
+  });
+
+  it('accepts a null-origin browser report untagged (the standard report path)', async () => {
+    // WHY: browsers post genuine CSP reports with Origin: null (opaque-origin
+    // documents, report-uri POSTs). Tagging those as foreign would mislabel
+    // every legit report, so null/absent origin must pass through clean.
+    const r = await postReport(
+      'application/csp-report',
+      { 'csp-report': { 'effective-directive': 'script-src' } },
+      'null',
+    );
+    expect(r.status).toBe(204);
+    expect(logEvent).toHaveBeenCalledTimes(1);
+    expect(logEvent.mock.calls[0][0]).toBe('csp'); // not foreign:csp
+  });
+
+  it('tags (does not drop) a cross-origin report so a forged flood is visible', async () => {
+    // WHY: a report POSTed from a DIFFERENT site can't be a first-party browser
+    // report. We accept-but-tag (a hard 400 risks dropping a real report from an
+    // origin shape we didn't anticipate) so the persisted event is filterable.
+    const r = await postReport(
+      'application/csp-report',
+      { 'csp-report': { 'effective-directive': 'script-src' } },
+      'https://evil.example',
+    );
+    expect(r.status).toBe(204);
+    expect(logEvent).toHaveBeenCalledTimes(1);
+    expect(logEvent.mock.calls[0][0]).toBe('foreign:csp');
+    expect(reportIssue).not.toHaveBeenCalled();
   });
 });

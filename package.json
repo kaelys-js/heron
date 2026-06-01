@@ -132,6 +132,7 @@
     "semantic:match": "node scripts/quality/semantic-match.mjs",
     "setup:native": "node scripts/native/setup.mjs",
     "splash-spec:test": "node scripts/native/splash-spec.test.mjs",
+    "symbolicate:test": "node scripts/system/symbolicate.test.mjs",
     "sync-check": "node scripts/quality/cv-sync-check.mjs",
     "test": "bash scripts/system/mise-shim.sh turbo test",
     "test:coverage": "bash scripts/system/mise-shim.sh turbo test:coverage",
@@ -192,6 +193,7 @@
     "pixelmatch": "catalog:",
     "pngjs": "catalog:",
     "sort-package-json": "catalog:",
+    "source-map": "catalog:",
     "turbo": "catalog:",
     "vitest": "catalog:"
   },

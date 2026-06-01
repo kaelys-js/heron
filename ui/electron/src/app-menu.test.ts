@@ -46,6 +46,9 @@ function handlers() {
     onAbout: vi.fn(),
     onPreferences: vi.fn(),
     onCheckForUpdates: vi.fn(),
+    onSetUpdateChannel: vi.fn(),
+    onSimulateUpdate: vi.fn(),
+    onClearCache: vi.fn(),
     onOpenDocs: vi.fn(),
     onReportBug: vi.fn(),
     onGotoLogin: vi.fn(),
@@ -332,6 +335,123 @@ describe('buildAppMenu -- common menus', () => {
     expect(rn, 'Help should have a Release Notes item').toBeDefined();
     rn.click();
     expect(__openExternal).toHaveBeenCalledWith('https://github.com/example/heron/releases');
+  });
+});
+
+describe('buildAppMenu -- View menu Clear Cache & Reload', () => {
+  const viewLabels = () => {
+    const template = __buildFromTemplate.mock.calls.at(-1)![0];
+    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+    return viewMenu.submenu.map((s: { label?: string }) => s.label).filter(Boolean);
+  };
+
+  // WHY: a wedged cache / stale session is a real PROD support path, so unlike
+  // the dev-gated reload/devtools items this MUST be present regardless of isDev.
+  it('includes a "Clear Cache & Reload" item in production (no isDev)', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    expect(viewLabels()).toEqual(expect.arrayContaining(['Clear Cache & Reload…']));
+  });
+
+  it('includes a "Clear Cache & Reload" item in dev (isDev: true)', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers(), { isDev: true });
+    expect(viewLabels()).toEqual(expect.arrayContaining(['Clear Cache & Reload…']));
+  });
+
+  it('Clear Cache & Reload click invokes h.onClearCache', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    const h = handlers();
+    buildAppMenu(h);
+    const template = __buildFromTemplate.mock.calls[0][0];
+    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+    const item = viewMenu.submenu.find(
+      (s: { label?: string }) => s.label === 'Clear Cache & Reload…',
+    );
+    item.click();
+    expect(h.onClearCache).toHaveBeenCalled();
+  });
+});
+
+describe('buildAppMenu -- View menu Simulate update (dev-gated)', () => {
+  const viewItems = () => {
+    const template = __buildFromTemplate.mock.calls.at(-1)![0];
+    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+    return viewMenu.submenu as Array<{ label?: string; role?: string; click?: () => void }>;
+  };
+
+  // WHY: a fake "update ready" card in PRODUCTION would mislead users into
+  // thinking a real update is staged. It's a dev-only preview affordance, gated
+  // like the reload / devtools items.
+  it('hides "Simulate update…" in production (no isDev)', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    const labels = viewItems()
+      .map((s) => s.label)
+      .filter(Boolean);
+    expect(labels).not.toContain('Simulate update…');
+  });
+
+  it('shows "Simulate update…" in dev (isDev: true) and wires onSimulateUpdate', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    const h = handlers();
+    buildAppMenu(h, { isDev: true });
+    const item = viewItems().find((s) => s.label === 'Simulate update…');
+    expect(item, 'dev View menu should hold Simulate update…').toBeDefined();
+    item!.click!();
+    expect(h.onSimulateUpdate).toHaveBeenCalled();
+  });
+});
+
+describe('buildAppMenu -- Help menu Release channel submenu', () => {
+  const channelSubmenu = () => {
+    const template = __buildFromTemplate.mock.calls.at(-1)![0];
+    const helpMenu = template.find((t: { label?: string }) => t.label === '&Help');
+    const rc = helpMenu.submenu.find((s: { label?: string }) => s.label === 'Release channel');
+    return rc?.submenu as
+      | Array<{ label?: string; type?: string; checked?: boolean; click?: () => void }>
+      | undefined;
+  };
+
+  // WHY: opting into prereleases is a per-user choice that must survive restarts
+  // (persisted by the handler) and be discoverable in the native menu, mirroring
+  // the Settings UI radio group.
+  it('Help has a Release channel submenu with Stable + Beta radios', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    const sub = channelSubmenu();
+    expect(sub, 'Help should have a Release channel submenu').toBeDefined();
+    const stable = sub!.find((s) => s.label === 'Stable');
+    const beta = sub!.find((s) => s.label === 'Beta');
+    expect(stable?.type).toBe('radio');
+    expect(beta?.type).toBe('radio');
+  });
+
+  it('checks the Stable radio by default (no updateChannel given)', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    const sub = channelSubmenu()!;
+    expect(sub.find((s) => s.label === 'Stable')!.checked).toBe(true);
+    expect(sub.find((s) => s.label === 'Beta')!.checked).toBe(false);
+  });
+
+  it('checks the Beta radio when updateChannel is beta', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers(), { updateChannel: 'beta' });
+    const sub = channelSubmenu()!;
+    expect(sub.find((s) => s.label === 'Stable')!.checked).toBe(false);
+    expect(sub.find((s) => s.label === 'Beta')!.checked).toBe(true);
+  });
+
+  it('clicking a radio invokes onSetUpdateChannel with the chosen channel', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    const h = handlers();
+    buildAppMenu(h);
+    const sub = channelSubmenu()!;
+    sub.find((s) => s.label === 'Beta')!.click!();
+    expect(h.onSetUpdateChannel).toHaveBeenCalledWith('beta');
+    sub.find((s) => s.label === 'Stable')!.click!();
+    expect(h.onSetUpdateChannel).toHaveBeenCalledWith('stable');
   });
 });
 

@@ -364,6 +364,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     'docs/LEGAL_DISCLAIMER.md',
     'docs/NATIVE.md',
     'docs/PHILOSOPHY.md',
+    'docs/RELEASING.md',
     'docs/SETUP.md',
     'docs/STATUS_MODEL.md',
     'docs/TESTING.md',
@@ -488,6 +489,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
       '.lostpixel/baseline/README.md',
       'docs/screenshots/README.md',
       'ui/e2e/README.md',
+      'scripts/README.md', // dev-facing scripts conventions (exit codes + logger), not brand-propagated
       'branding/screenshots/README.md', // per-store screenshot specs
       // all-contributors auto-generates the contributors list block.
       'CONTRIBUTORS.md',

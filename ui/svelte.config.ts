@@ -154,6 +154,15 @@ const config: Config = {
               'form-action': ["'self'"],
               'base-uri': ["'self'"],
               'object-src': ["'none'"],
+              // Route CSP violation reports to /api/telemetry (the diagnostics
+              // sink). `report-to` names the group defined by the
+              // Reporting-Endpoints response header (hooks.server.ts
+              // securityHeaders); `report-uri` is the legacy fallback for
+              // engines without the Reporting API. adapter-node emits CSP as a
+              // response header so both work; the Capacitor static build sets no
+              // CSP at all (csp: undefined above), so there's nothing to report.
+              'report-to': ['heron-telemetry'],
+              'report-uri': ['/api/telemetry'],
               // Omitted for the HTTP preview build (see HTTP_PREVIEW above);
               // kept as defence-in-depth for the HTTPS production build.
               ...(HTTP_PREVIEW ? {} : { 'upgrade-insecure-requests': true }),

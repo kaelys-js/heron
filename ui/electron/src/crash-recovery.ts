@@ -70,6 +70,9 @@ export function buildRecoveryHtml(opts: {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- In-document CSP for this data: URL. The recovery page is static: inline
+     <style> + a data: logo, no script, no network, no plugins, no framing. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" />
 <title>${esc(displayName)}</title>
 <style>
   :root { --accent:${esc(c.accent)}; --primary:${esc(c.primary)}; --bg:${esc(c.darkBg)}; --surface:${esc(c.darkSurface)}; --text:${esc(c.textOnDark)}; }

@@ -81,6 +81,10 @@ export default defineConfig({
   // against the same defines the app does (see __appVersion above).
   define: {
     __APP_VERSION__: JSON.stringify(__appVersion),
+    // Mirror vite.config.ts's `__APP_BUILD__` (short git SHA). A fixed literal
+    // here so the X-App-Build header + console banner resolve deterministically
+    // under `vitest run` (a real git SHA would make snapshots non-reproducible).
+    __APP_BUILD__: JSON.stringify('testsha'),
   },
   // NOTE: We deliberately do NOT include the `brandWatcherPlugin` from
   // vite.config.ts. That plugin shells out to `apply-brand.mjs` on every

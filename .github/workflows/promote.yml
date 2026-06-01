@@ -1,94 +1,244 @@
 name: promote
 
-# Gated PRODUCTION promotion: App Store + Play + desktop "latest". Each job
-# runs in a GitHub Environment whose required reviewer is the maintainer, so a
-# dispatch PAUSES for explicit approval before anything reaches production.
+# Auto-promote-after-soak -- the production half of the convergent release
+# model (see docs/RELEASING.md).
 #
-# What it does NOT do: the irreversible final submit. The iOS app_store lane
-# preps the App Store version (metadata + screenshots + release notes + age
-# rating) and stops at submit_for_review:false; the maintainer clicks Submit in
-# App Store Connect. Android promotes the internal track to production. Desktop
-# flips the version's GitHub pre-release to "latest".
+# The model: a Release Please cut (vX.Y.Z) publishes to every BETA track
+# (iOS TestFlight, Android Play internal, Electron beta channel) and is marked
+# a GitHub prerelease. This workflow runs on a daily schedule, picks the newest
+# soaked-and-unblocked prerelease that is not yet in production, and promotes
+# that SAME version to every PRODUCTION track (App Store app_store lane with
+# phased release, Play production with staged rollout, Electron stable
+# latest*.yml with stagingPercentage) by calling native-release.yml with
+# channel=stable + promote_to_production. Idempotent: a promoted release is
+# un-prereleased, which is the marker the selection core reads to never
+# re-promote it.
 #
-# workflow_dispatch only, on a released tag/version. Reuses the same secrets as
-# native-release (set by `pnpm setup:native`).
+# Halt switches (any one stops a promotion):
+#   - an open issue labelled `release-blocker`  -> global hold (all versions)
+#   - an open issue labelled `hold-promotion` whose title names the vX.Y.Z tag
+#     -> per-version hold
+#   - the `production` GitHub Environment's required-reviewer gate on the
+#     promote job (a human must approve even though selection is automatic)
+#   - SOAK_DAYS not yet elapsed since the cut was published
+#
+# Triggers:
+#   - schedule: daily. Picks + promotes the soaked version automatically.
+#   - workflow_dispatch: a manual run. `version` overrides the selection;
+#     `dry_run` logs the decision without promoting.
 on:
+  schedule:
+    # Daily at 17:00 UTC. Off-peak; one promotion decision per day.
+    - cron: '0 17 * * *'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Marketing version to promote (e.g. 1.2.0). Defaults to package.json $.version.'
+        description: 'Override: promote this exact version (e.g. 1.2.0), bypassing soak selection. Leave empty to auto-select.'
         required: false
         type: string
+      dry_run:
+        description: 'Log the selected version without promoting (no native-release call, no release edit).'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
+# One promotion decision at a time -- two overlapping schedule/dispatch runs
+# must never double-promote. Not cancel-in-progress: a half-done promote
+# (e.g. iOS submitted, Android pending) should finish, not abort.
+concurrency:
+  group: promote
+  cancel-in-progress: false
+
 jobs:
-  ios-app-store:
-    name: iOS — App Store (prep, stops before Submit)
-    environment: production-ios # required-reviewer gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Harden runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
-        with:
-          egress-policy: audit
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
-      # app_store uses deliver + ConnectAPI only (skip_binary_upload) -- no
-      # Xcode, so Linux + Ruby is enough.
-      - name: Setup Ruby + bundler-cache (Fastlane gems)
-        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.308.0
-        with:
-          working-directory: ui/ios/App
-          bundler-cache: true
-      - name: Prep App Store version via Fastlane (submit_for_review:false)
-        working-directory: ui/ios/App
-        env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-        run: bundle exec fastlane ios app_store
-
-  android-production:
-    name: Android — promote internal to production
-    # Inert until Play is configured: build-android is gated the same way.
-    if: ${{ vars.PLAY_STORE_ENABLED == 'true' }}
-    environment: production-android # required-reviewer gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Harden runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
-        with:
-          egress-policy: audit
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
-      - name: Setup Ruby + bundler-cache (Fastlane gems)
-        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.308.0
-        with:
-          working-directory: ui/android
-          bundler-cache: true
-      - name: Write Play service-account key
-        env:
-          PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
-        run: |
-          set -euo pipefail
-          printf '%s' "$PLAY_STORE_JSON_KEY" | base64 --decode > ui/android/play-key.json
-      - name: Promote internal -> production via Fastlane
-        working-directory: ui/android
-        run: bundle exec fastlane android production
-
-  desktop-latest:
-    name: Desktop — mark the GitHub release latest
-    environment: production-electron # required-reviewer gate
+  # Pure-core selection. Gathers the inputs the decision needs (the release
+  # list, the soak window, the global + per-version holds, the
+  # already-promoted set) and feeds them to selectReleaseToPromote so the
+  # safety-critical "which version, if any" logic stays unit-tested
+  # (scripts/system/select-release-to-promote.{mjs,test.mjs}).
+  select:
+    name: Select the version to promote (soak + holds)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read # gh release list
+      issues: read # release-blocker / hold-promotion issue check
+    outputs:
+      version: ${{ steps.pick.outputs.version }}
+      reason: ${{ steps.pick.outputs.reason }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Select soaked version
+        id: pick
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          # Soak window in days; repo var SOAK_DAYS overrides the 3-day default.
+          SOAK_DAYS: ${{ vars.SOAK_DAYS || '3' }}
+          # Manual override -- promote this exact version, skipping selection.
+          OVERRIDE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          # 1. Releases -> the array the selection core consumes. tag_name
+          #    drops its leading v; the core compares plain X.Y.Z. Drafts are
+          #    excluded (not yet a real release). published_at -> epoch ms.
+          gh api "repos/$REPO/releases?per_page=100" --paginate > releases.json
+
+          # 2. Global hold: any OPEN issue labelled release-blocker.
+          blocker_count=$(gh issue list --repo "$REPO" --label release-blocker \
+            --state open --json number --jq 'length')
+          if [ "$blocker_count" -gt 0 ]; then GLOBAL_HOLD=true; else GLOBAL_HOLD=false; fi
+          export GLOBAL_HOLD
+
+          # 3. Per-version holds: OPEN issues labelled hold-promotion. The
+          #    version is taken from the issue TITLE (it must name the vX.Y.Z
+          #    tag). The core skips any release whose labels include
+          #    'hold-promotion', so we tag matching releases with it.
+          gh issue list --repo "$REPO" --label hold-promotion --state open \
+            --json title --jq '[.[].title]' > holds.json
+
+          # 4. Feed the pure core. promotedVersions = releases already in
+          #    production = the ones we un-prereleased (prerelease == false).
+          #    The decision + reason print to the log and to the outputs.
+          node --input-type=module <<'EOF' >> "$GITHUB_OUTPUT"
+          import { readFileSync } from 'node:fs';
+          import { selectReleaseToPromote } from './scripts/system/select-release-to-promote.mjs';
+
+          const releasesRaw = JSON.parse(readFileSync('releases.json', 'utf8'));
+          const holdTitles = JSON.parse(readFileSync('holds.json', 'utf8'));
+          const soakDays = Number.parseInt(process.env.SOAK_DAYS, 10) || 3;
+          const globalHold = process.env.GLOBAL_HOLD === 'true';
+
+          const stripV = (t) => String(t).replace(/^v/, '');
+          // A release is held if an open hold-promotion issue title names its tag.
+          const isHeld = (tag) =>
+            holdTitles.some((t) => String(t).includes(tag) || String(t).includes(stripV(tag)));
+
+          const releases = releasesRaw
+            .filter((r) => !r.draft)
+            .map((r) => ({
+              version: stripV(r.tag_name),
+              publishedAtMs: r.published_at ? Date.parse(r.published_at) : 0,
+              isPrerelease: Boolean(r.prerelease),
+              labels: isHeld(r.tag_name) ? ['hold-promotion'] : [],
+            }));
+
+          // Already in production = non-prerelease releases (we un-prerelease on
+          // promote, so this is the idempotency / never-regress high-water set).
+          const promotedVersions = releasesRaw
+            .filter((r) => !r.draft && !r.prerelease)
+            .map((r) => stripV(r.tag_name));
+
+          const override = (process.env.OVERRIDE_VERSION || '').trim();
+          let version = null;
+          let reason = '';
+          if (override) {
+            version = override;
+            reason = `manual override: promote ${override}`;
+          } else {
+            const out = selectReleaseToPromote({
+              releases,
+              nowMs: Date.now(),
+              soakDays,
+              promotedVersions,
+              globalHold,
+            });
+            version = out.version;
+            reason = out.reason;
+          }
+
+          console.error(`promote selection: version=${version ?? '(none)'} reason=${reason}`);
+          console.log(`version=${version ?? ''}`);
+          console.log(`reason=${reason}`);
+          EOF
+      - name: Surface the decision
+        env:
+          VERSION: ${{ steps.pick.outputs.version }}
+          REASON: ${{ steps.pick.outputs.reason }}
+        run: |
+          if [ -n "$VERSION" ]; then
+            echo "::notice::promote -> v$VERSION ($REASON)"
+          else
+            echo "::notice::no promotion this run ($REASON)"
+          fi
+          {
+            echo "### Promote selection"
+            echo ""
+            echo "- Version: \`${VERSION:-none}\`"
+            echo "- Reason: $REASON"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Required-reviewer kill switch. A reusable-workflow caller job (`uses:`)
+  # cannot itself declare `environment:`, so the `production` Environment gate
+  # lives on this standalone job that `promote` depends on. The Environment can
+  # carry a manual approver + a deployment-branch rule, so even an automatic
+  # schedule PAUSES here for a human OK before anything ships -- and a
+  # maintainer can decline to halt a bad promotion (defence-in-depth).
+  gate:
+    name: Production gate (required-reviewer approval)
+    needs: select
+    if: ${{ needs.select.outputs.version != '' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Record the approved version
+        env:
+          VERSION: ${{ needs.select.outputs.version }}
+        run: echo "::notice::production gate approved -- promoting v$VERSION"
+
+  # Build + ship the selected version to every PRODUCTION track. Reuses
+  # native-release.yml with channel=stable + promote_to_production so the iOS
+  # app_store lane (phased release), the Android production track (staged
+  # rollout), and the Electron stable latest*.yml (stagingPercentage) all run.
+  # Gated on the production approval (gate job) AND a real selection.
+  #
+  # zizmor: ignore[secrets-inherit]
+  # Same-repo reusable workflow (./.github/workflows/native-release.yml);
+  # native-release's preflight validates each required secret. Inheriting all
+  # secrets avoids the parse-time startup_failure that `required: true`
+  # declarations cause when an Apple/Play secret is unset on a fork. There is no
+  # third-party-secret-exfiltration risk -- the callee is in this repo.
+  promote:
+    name: Promote to production (staged rollout)
+    needs: [select, gate]
+    if: ${{ needs.select.outputs.version != '' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    permissions:
+      contents: write # gh release upload (native-release) + gh release edit
+      id-token: write # SLSA / Sigstore provenance
+      attestations: write # actions/attest-build-provenance
+    uses: ./.github/workflows/native-release.yml
+    with:
+      version: ${{ needs.select.outputs.version }}
+      channel: stable
+      promote_to_production: true
+      # 25% staged rollout for Electron's stable latest*.yml. The maintainer
+      # bumps to 100% (or halts) per docs/RELEASING.md. App Store phased release
+      # + Play production rollout are driven by the Fastlane lanes.
+      staging_percentage: '25'
+    secrets: inherit
+
+  # Idempotency marker: once production is live, un-prerelease the GitHub
+  # release + mark it latest. The selection core reads non-prerelease as
+  # "already promoted" and never picks it again.
+  finalize:
+    name: Finalize (un-prerelease + mark latest)
+    needs: [select, promote]
+    if: ${{ needs.select.outputs.version != '' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write # gh release edit
     steps:
@@ -96,17 +246,15 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
-      - name: Promote the version's GitHub pre-release to latest
+      - name: Mark the release promoted (un-prerelease + latest)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_VERSION: ${{ inputs.version }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.select.outputs.version }}
         run: |
           set -euo pipefail
-          VERSION="${INPUT_VERSION:-$(node -p "require('./package.json').version")}"
           TAG="v${VERSION}"
-          echo "Promoting release $TAG to latest"
-          gh release edit "$TAG" --draft=false --prerelease=false --latest
+          echo "Finalizing $TAG -> production (un-prerelease, latest)."
+          # --prerelease=false is the promoted marker selectReleaseToPromote
+          # reads; --latest flips electron-updater's stable feed to this build.
+          gh release edit "$TAG" --repo "$REPO" --prerelease=false --latest

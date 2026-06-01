@@ -11,6 +11,7 @@ require('./rt/electron-rt');
 // ipcRenderer so the WebView can't access arbitrary channels.
 import { ipcRenderer, contextBridge } from 'electron';
 import { isAllowedChannel } from './ipc-allowlist';
+import { BRAND } from './brand';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   on(channel: string, handler: (...args: any[]) => void) {
@@ -22,6 +23,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on(channel, wrapped);
     return () => ipcRenderer.removeListener(channel, wrapped);
   },
+  // Clear the native Electron session (cache + storage + cookies). The renderer's
+  // clearClientCacheAndReset (reset.ts) awaits this, then drives its own reload to
+  // /login -- so this only clears, it does NOT reload.
+  clearCache: (): Promise<void> => ipcRenderer.invoke(`${BRAND.name}:clear-cache`),
+  // Release channel (stable / beta). The Settings UI reads the current channel +
+  // writes the user's choice; the main process persists it + re-applies the
+  // updater config + re-checks. Returns the live channel string ('stable'|'beta').
+  getUpdateChannel: (): Promise<'stable' | 'beta'> =>
+    ipcRenderer.invoke(`${BRAND.name}:get-update-channel`),
+  setUpdateChannel: (channel: 'stable' | 'beta'): Promise<boolean> =>
+    ipcRenderer.invoke(`${BRAND.name}:set-update-channel`, channel),
 });
 
 // Tag <html> so the renderer can opt into Electron-only window chrome: the

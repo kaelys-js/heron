@@ -140,6 +140,89 @@ describe('buildAboutHtml', () => {
     expect(html).toMatch(/data-copy="[^"]*Backend http:\/\/localhost:5173/);
   });
 
+  it('renders the build-provenance line under the version when fields are present', () => {
+    const html = buildAboutHtml(
+      info({ commit: 'a1b2c3d', buildDate: '2026-06-01T19:07:58.168Z', channel: 'beta' }),
+    );
+    // "v{version} · {commit} · {date} · {channel}" -- date is the day only, the
+    // full ISO timestamp is reserved for the copy payload.
+    expect(html).toContain('class="buildmeta"');
+    expect(html).toMatch(/class="buildmeta">v1\.4\.2 · a1b2c3d · 2026-06-01 · beta</);
+  });
+
+  it('omits missing build-provenance parts cleanly (no stray separators)', () => {
+    const html = buildAboutHtml(info({ commit: 'a1b2c3d' }));
+    // Only version + commit present -> joined with a single separator, no
+    // leading/trailing/doubled " · ".
+    expect(html).toMatch(/class="buildmeta">v1\.4\.2 · a1b2c3d</);
+    expect(html).not.toContain('·  ·');
+  });
+
+  it('omits the build-provenance line entirely when only the version is known', () => {
+    // version alone is already the .version pill -- a one-part meta line would be
+    // redundant, so it is suppressed.
+    expect(buildAboutHtml(info())).not.toContain('class="buildmeta"');
+  });
+
+  it('renders a Platform runtime cell when platformArch is given, omits it otherwise', () => {
+    const withPlat = buildAboutHtml(info({ platformArch: 'darwin/arm64' }));
+    expect(withPlat).toContain('Platform<b>darwin/arm64</b>');
+    expect(buildAboutHtml(info())).not.toContain('Platform<b>');
+  });
+
+  it("renders a What's New button only when releaseNotes are present", () => {
+    const withNotes = buildAboutHtml(info({ releaseNotes: '### 1.4.2\n- Did a thing' }));
+    expect(withNotes).toContain('data-whatsnew="1"');
+    expect(withNotes).toContain("What's New");
+    // Absent / blank notes -> no button. Assert on the button's `data-whatsnew="1"`
+    // attribute, not the bare token -- the inline IIFE always queries
+    // `[data-whatsnew]`, so the selector string is present regardless.
+    expect(buildAboutHtml(info())).not.toContain('data-whatsnew="1"');
+    expect(buildAboutHtml(info({ releaseNotes: '   ' }))).not.toContain('data-whatsnew="1"');
+  });
+
+  it('puts commit, channel, build timestamp and platform in the copy payload', () => {
+    const html = buildAboutHtml(
+      info({
+        commit: 'a1b2c3d',
+        buildDate: '2026-06-01T19:07:58.168Z',
+        channel: 'beta',
+        platformArch: 'darwin/arm64',
+      }),
+    );
+    expect(html).toMatch(/data-copy="[^"]*Commit a1b2c3d/);
+    expect(html).toMatch(/data-copy="[^"]*Channel beta/);
+    // The copy payload carries the FULL ISO timestamp (not just the day).
+    expect(html).toMatch(/data-copy="[^"]*Build 2026-06-01T19:07:58\.168Z/);
+    expect(html).toMatch(/data-copy="[^"]*Platform darwin\/arm64/);
+  });
+
+  it('shows the runtime channel in the headline + a "Built as" diagnostic when the build origin differs', () => {
+    // Promoted-to-stable: the user is on 'stable', but the binary was cut as a beta
+    // prerelease and promoted WITHOUT a rebuild, so its origin is 'beta'. The
+    // headline must read the channel the user actually receives ('stable'); the
+    // build origin moves to a "Built as" copy diagnostic so support sees both.
+    const html = buildAboutHtml(info({ channel: 'stable', buildChannel: 'beta' }));
+    expect(html).toMatch(/class="buildmeta">[^<]*· stable</);
+    expect(html).not.toMatch(/class="buildmeta">[^<]*· beta</);
+    expect(html).toMatch(/data-copy="[^"]*Channel stable/);
+    expect(html).toMatch(/data-copy="[^"]*Built as beta/);
+  });
+
+  it('omits "Built as" when the build origin matches the runtime channel (no redundancy)', () => {
+    // A beta user on a beta build (origin == channel) -- the extra line would just
+    // repeat the channel, so it is suppressed.
+    const html = buildAboutHtml(info({ channel: 'beta', buildChannel: 'beta' }));
+    expect(html).toMatch(/data-copy="[^"]*Channel beta/);
+    expect(html).not.toMatch(/data-copy="[^"]*Built as/);
+  });
+
+  it('omits absent diagnostics fields from the copy payload', () => {
+    const html = buildAboutHtml(info());
+    expect(html).not.toMatch(/data-copy="[^"]*Commit /);
+    expect(html).not.toMatch(/data-copy="[^"]*Platform /);
+  });
+
   it('escapes HTML in interpolated values (no raw tag injection)', () => {
     const html = buildAboutHtml(info({ displayName: '<img src=x onerror=alert(1)>' }));
     expect(html).not.toContain('<img src=x onerror=alert(1)>');
@@ -181,6 +264,16 @@ describe('buildAboutHtml', () => {
     const html = buildAboutHtml(info());
     expect(html).toContain('--accent: #c89b4a');
     expect(html).toContain('--bg: #0e1014');
+  });
+
+  it('embeds a strict in-document CSP meta (no network/plugins/framing)', () => {
+    const html = buildAboutHtml(info());
+    expect(html).toContain('http-equiv="Content-Security-Policy"');
+    expect(html).toContain("default-src 'none'");
+    expect(html).toContain('img-src data:'); // the data: logo
+    expect(html).toContain("script-src 'unsafe-inline'"); // the inline IIFE
+    expect(html).toContain("object-src 'none'");
+    expect(html).toContain("frame-ancestors 'none'");
   });
 
   it('places the close button on the right by default, left on macOS (closeOnLeft)', () => {
@@ -225,8 +318,12 @@ describe('openAboutWindow + wireAboutIpc (electron glue)', () => {
     const wp = win.opts.webPreferences as Record<string, unknown>;
     expect(wp.contextIsolation).toBe(true);
     expect(wp.nodeIntegration).toBe(false);
-    // sandbox MUST be false so the preload can require('./brand').
-    expect(wp.sandbox).toBe(false);
+    // sandbox is now TRUE: the preload reads the brand name from
+    // additionalArguments (process.argv) instead of require('./brand').
+    expect(wp.sandbox).toBe(true);
+    expect(wp.additionalArguments).toEqual(['--brand-name=heron']);
+    expect(wp.webviewTag).toBe(false);
+    expect(wp.allowRunningInsecureContent).toBe(false);
     expect(wp.preload).toBe('/app/about-preload.js');
     expect(win.loadURL).toHaveBeenCalledWith(expect.stringContaining('data:text/html'));
   });
@@ -321,40 +418,108 @@ describe('openAboutWindow + wireAboutIpc (electron glue)', () => {
   });
 
   it('open-external IPC opens only http(s) urls via shell', () => {
-    open();
+    const win = open();
+    const sender = win.webContents;
     const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:open-external')![1];
-    handler({}, 'https://heron.app');
+    handler({ sender }, 'https://heron.app');
     expect(__shellOpenExternal).toHaveBeenCalledWith('https://heron.app');
     __shellOpenExternal.mockClear();
-    handler({}, 'javascript:alert(1)'); // not http(s)
-    handler({}, 42); // not a string
+    handler({ sender }, 'javascript:alert(1)'); // not http(s)
+    handler({ sender }, 42); // not a string
+    expect(__shellOpenExternal).not.toHaveBeenCalled();
+  });
+
+  it('rejects IPC from a sender that is NOT the About window (sender-identity guard)', () => {
+    open();
+    const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:open-external')![1];
+    // A foreign sender (the main renderer, an injected frame) must be ignored
+    // even for a well-formed https url.
+    handler({ sender: { not: 'the about window' } }, 'https://heron.app');
     expect(__shellOpenExternal).not.toHaveBeenCalled();
   });
 
   it('copy IPC writes strings to the clipboard and ignores non-strings', () => {
-    open();
+    const win = open();
+    const sender = win.webContents;
     const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:copy')![1];
-    handler({}, 'Heron 1.4.2');
+    handler({ sender }, 'Heron 1.4.2');
     expect(__clipboardWriteText).toHaveBeenCalledWith('Heron 1.4.2');
     __clipboardWriteText.mockClear();
-    handler({}, { not: 'a string' });
+    handler({ sender }, { not: 'a string' });
+    expect(__clipboardWriteText).not.toHaveBeenCalled();
+    // A foreign sender is ignored even with a valid string payload.
+    handler({ sender: {} }, 'Heron 1.4.2');
     expect(__clipboardWriteText).not.toHaveBeenCalled();
   });
 
-  it('close IPC closes the sender window when resolvable', () => {
+  it('close IPC closes the sender window when it is the About window', () => {
+    const win = open();
+    const closeSpy = vi.fn();
+    MockBrowserWindow.fromWebContents = vi.fn(() => ({ close: closeSpy }) as never);
+    const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:close')![1];
+    handler({ sender: win.webContents });
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('close IPC ignores a foreign sender (sender-identity guard)', () => {
     open();
     const closeSpy = vi.fn();
     MockBrowserWindow.fromWebContents = vi.fn(() => ({ close: closeSpy }) as never);
     const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:close')![1];
     handler({ sender: {} });
-    expect(closeSpy).toHaveBeenCalled();
+    expect(closeSpy).not.toHaveBeenCalled();
   });
 
-  it('close IPC is a no-op when the sender window is gone', () => {
-    open();
-    MockBrowserWindow.fromWebContents = vi.fn(() => undefined);
-    const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:close')![1];
-    expect(() => handler({ sender: {} })).not.toThrow();
+  it('whats-new IPC fires the onWhatsNew callback for the About window sender', () => {
+    const onWhatsNew = vi.fn();
+    const win = openAboutWindow({
+      info: info(),
+      brandName: 'heron',
+      preloadPath: '/app/about-preload.js',
+      onWhatsNew,
+    });
+    const channels = __ipcOn.mock.calls.map((c) => c[0]);
+    expect(channels).toContain('heron:about:whats-new');
+    const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:whats-new')![1];
+    handler({ sender: win.webContents });
+    expect(onWhatsNew).toHaveBeenCalledTimes(1);
+  });
+
+  it('whats-new IPC ignores a foreign sender (sender-identity guard)', () => {
+    const onWhatsNew = vi.fn();
+    openAboutWindow({
+      info: info(),
+      brandName: 'heron',
+      preloadPath: '/app/about-preload.js',
+      onWhatsNew,
+    });
+    const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:whats-new')![1];
+    handler({ sender: { not: 'the about window' } });
+    expect(onWhatsNew).not.toHaveBeenCalled();
+  });
+
+  it('routes whats-new to the CURRENT open window callback across reopens', () => {
+    // The IPC is wired once; reopening with a fresh callback must re-bind it
+    // (mirrors changelog-window's action re-binding).
+    const first = vi.fn();
+    const win = openAboutWindow({
+      info: info(),
+      brandName: 'heron',
+      preloadPath: '/app/about-preload.js',
+      onWhatsNew: first,
+    });
+    win.onHandlers.closed?.(); // close -> clears the singleton, IPC stays wired
+    const second = vi.fn();
+    const win2 = openAboutWindow({
+      info: info(),
+      brandName: 'heron',
+      preloadPath: '/app/about-preload.js',
+      onWhatsNew: second,
+    });
+    const handler = __ipcOn.mock.calls.find((c) => c[0] === 'heron:about:whats-new')![1];
+    handler({ sender: win2.webContents });
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(first).not.toHaveBeenCalled();
   });
 
   it('dev HMR: reloads the open window when build/mascot.png is regenerated', () => {

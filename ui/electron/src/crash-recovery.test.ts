@@ -87,6 +87,15 @@ describe('buildRecoveryHtml', () => {
     expect(html).toContain('--accent:#c89b4a');
     expect(html).toContain('--bg:#0e1014');
   });
+  it('embeds a strict in-document CSP meta (static page, no script)', () => {
+    const html = buildRecoveryHtml({ displayName: 'Heron', colors, looping: false });
+    expect(html).toContain('http-equiv="Content-Security-Policy"');
+    expect(html).toContain("default-src 'none'");
+    expect(html).toContain('img-src data:');
+    expect(html).toContain("object-src 'none'");
+    // No inline script in the recovery page -- it must NOT need script-src.
+    expect(html).not.toContain('<script');
+  });
   it('escapes the display name', () => {
     const html = buildRecoveryHtml({ displayName: '<b>x</b>', colors, looping: false });
     expect(html).not.toContain('<b>x</b>');

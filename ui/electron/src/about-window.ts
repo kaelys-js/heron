@@ -34,6 +34,27 @@ export type AboutInfo = {
   version: string;
   /** Runtime versions for the bug-report-friendly detail block. */
   versions: { electron: string; chromium: string; node: string };
+  /** Short git SHA of the build (BUILD_INFO.commit). Omitted from the buildmeta
+   *  line + the copy payload when absent. */
+  commit?: string;
+  /** ISO build timestamp (BUILD_INFO.buildDate). Rendered as the date portion. */
+  buildDate?: string;
+  /** The user's RUNTIME update channel ('stable' | 'beta' | 'dev') -- what updates
+   *  they actually receive (from update-prefs). Shown in the buildmeta line + copy
+   *  payload. This is NOT the build-origin stamp: every production build is promoted
+   *  from a beta cut WITHOUT a rebuild, so its origin is 'beta' even on the stable
+   *  channel -- that goes in `buildChannel`. */
+  channel?: string;
+  /** Build-origin channel (BUILD_INFO.channel: how the binary was cut). Surfaced in
+   *  the copy diagnostics as "Built as ..." ONLY when it differs from the runtime
+   *  `channel`, so support can tell a promoted-from-beta build apart. */
+  buildChannel?: string;
+  /** `${process.platform}/${process.arch}` -- shown as a Platform runtime cell
+   *  and in the copy payload. */
+  platformArch?: string;
+  /** Current version's raw-markdown CHANGELOG section. When present a "What's New"
+   *  button is rendered that posts the about:whats-new IPC. */
+  releaseNotes?: string;
   copyright: string;
   /** Buttons rendered in the link row (Website / GitHub / Report a bug / License). */
   links: AboutLink[];
@@ -75,11 +96,32 @@ export function buildAboutHtml(info: AboutInfo): string {
   // "close button only works ~10% of the time" bug. Dragging the rest of the
   // strip still moves the window.
   const dragSides = info.closeOnLeft ? 'left: 54px; right: 0' : 'left: 0; right: 54px';
+  // The build date in the meta line is the calendar day only (the full ISO
+  // timestamp goes in the copy payload for support). Guard a malformed value.
+  const buildDay = info.buildDate ? info.buildDate.slice(0, 10) : '';
+  // Compact build-provenance line under the version pill:
+  // "v{version} · {commit} · {date} · {channel}", omitting any missing part.
+  const buildMetaParts = [
+    `v${info.version}`,
+    info.commit ? info.commit : '',
+    buildDay,
+    info.channel ? info.channel : '',
+  ].filter(Boolean);
+  const buildMetaLine =
+    buildMetaParts.length > 1
+      ? `<div class="buildmeta">${esc(buildMetaParts.join(' · '))}</div>`
+      : '';
+
   const copyText = [
     `${info.displayName} ${info.version}`,
+    info.commit ? `Commit ${info.commit}` : '',
+    info.buildDate ? `Build ${info.buildDate}` : '',
+    info.channel ? `Channel ${info.channel}` : '',
+    info.buildChannel && info.buildChannel !== info.channel ? `Built as ${info.buildChannel}` : '',
     `Electron ${info.versions.electron}`,
     `Chromium ${info.versions.chromium}`,
     `Node ${info.versions.node}`,
+    info.platformArch ? `Platform ${info.platformArch}` : '',
     info.backendUrl ? `Backend ${info.backendUrl}` : '',
   ]
     .filter(Boolean)
@@ -96,6 +138,14 @@ export function buildAboutHtml(info: AboutInfo): string {
     )
     .join('');
 
+  // "What's New" opens the changelog window with the current version's notes.
+  // Rendered only when releaseNotes are present (a build without a CHANGELOG
+  // section shouldn't show an empty card button). data-whatsnew is read by the
+  // inline IIFE and routed to the bridge.
+  const whatsNewButton = info.releaseNotes?.trim()
+    ? `<button class="link" type="button" data-whatsnew="1">What's New</button>`
+    : '';
+
   const backendLine = info.backendUrl
     ? `<div class="backend">Backend · ${esc(info.backendUrl)}</div>`
     : '';
@@ -105,6 +155,11 @@ export function buildAboutHtml(info: AboutInfo): string {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- In-document CSP for this data: URL. The page is fully self-contained:
+     inline <style> + an inline IIFE (needs script-src 'unsafe-inline'), a
+     data: logo image, no network, no plugins, no framing. Locks the doc to
+     exactly that so an injected <script src>/<object>/<iframe> can't load. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" />
 <title>About ${esc(info.displayName)}</title>
 <style>
   :root {
@@ -170,6 +225,11 @@ export function buildAboutHtml(info: AboutInfo): string {
     background: color-mix(in srgb, var(--accent) 12%, transparent);
     border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
   }
+  .buildmeta {
+    margin-top: 7px;
+    font: 10.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: color-mix(in srgb, var(--text) 46%, transparent);
+  }
   .desc {
     margin-top: 16px; max-width: 360px; font-size: 12.5px; line-height: 1.55;
     color: color-mix(in srgb, var(--text) 72%, transparent);
@@ -227,18 +287,20 @@ export function buildAboutHtml(info: AboutInfo): string {
     <h1>${esc(info.displayName)}</h1>
     <div class="tagline">${esc(info.tagline)}</div>
     <span class="version">${esc(info.version)}</span>
+    ${buildMetaLine}
     <p class="desc">${esc(info.description)}</p>
     <div class="runtimes">
       <span>Electron<b>${esc(info.versions.electron)}</b></span>
       <span>Chromium<b>${esc(info.versions.chromium)}</b></span>
       <span>Node<b>${esc(info.versions.node)}</b></span>
+      ${info.platformArch ? `<span>Platform<b>${esc(info.platformArch)}</b></span>` : ''}
     </div>
-    <div class="links">${linkButtons}</div>
+    <div class="links">${linkButtons}${whatsNewButton}</div>
     <div class="footer">
       <button class="copy" id="copyBtn" type="button" data-copy="${esc(copyText)}">
         <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-        <span id="copyLabel">Copy version info</span>
+        <span id="copyLabel">Copy diagnostics</span>
       </button>
       ${backendLine}
       <div class="copyright">${esc(info.copyright)}</div>
@@ -250,6 +312,9 @@ export function buildAboutHtml(info: AboutInfo): string {
   document.querySelectorAll('[data-href]').forEach(function (el) {
     el.addEventListener('click', function () { if (b.openExternal) b.openExternal(el.getAttribute('data-href')); });
   });
+  document.querySelectorAll('[data-whatsnew]').forEach(function (el) {
+    el.addEventListener('click', function () { if (b.whatsNew) b.whatsNew(); });
+  });
   var copyBtn = document.getElementById('copyBtn');
   var copyLabel = document.getElementById('copyLabel');
   var copyTimer = null;
@@ -260,7 +325,7 @@ export function buildAboutHtml(info: AboutInfo): string {
     clearTimeout(copyTimer);
     copyTimer = setTimeout(function () {
       copyBtn.classList.remove('copied');
-      if (copyLabel) copyLabel.textContent = 'Copy version info';
+      if (copyLabel) copyLabel.textContent = 'Copy diagnostics';
     }, 1500);
   });
   var closeBtn = document.getElementById('closeBtn');
@@ -287,11 +352,19 @@ export type OpenAboutOptions = {
   /** app.getAppPath(): used in dev to re-read the logo + HMR-reload the open
    *  window when build/mascot.png is regenerated. */
   appPath?: string;
+  /** Called when the user clicks "What's New". Wire to openChangelogWindow({
+   *  mode:'current', ... }) at the call site so this module stays decoupled from
+   *  changelog-window + electron-updater. */
+  onWhatsNew?: () => void;
 };
 
 let aboutWindow: BrowserWindow | null = null;
 let aboutWatcher: FSWatcher | null = null;
 let ipcWired = false;
+// The action callback lives on a module-level handle so the IPC handler (wired
+// once) always reaches the CURRENT open window's callback, even across reopens
+// -- mirrors changelog-window.ts's `actions` pattern.
+let actions: { onWhatsNew?: () => void } = {};
 
 /** (Re)render the About HTML into the window, re-reading the logo so a
  *  regenerated mascot is picked up on dev HMR. */
@@ -303,6 +376,9 @@ function renderAbout(win: BrowserWindow, opts: OpenAboutOptions): void {
 
 /** Open (or focus, if already open) the About window. */
 export function openAboutWindow(opts: OpenAboutOptions): BrowserWindow {
+  // Keep the current window's action callback reachable by the wired-once IPC.
+  actions = { onWhatsNew: opts.onWhatsNew };
+
   if (aboutWindow && !aboutWindow.isDestroyed()) {
     aboutWindow.show();
     aboutWindow.focus();
@@ -326,13 +402,21 @@ export function openAboutWindow(opts: OpenAboutOptions): BrowserWindow {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      // sandbox MUST be false: about-preload.js does `require('./brand')` to
-      // namespace its IPC channels, and a sandboxed preload can only require
-      // 'electron' -- so under sandbox:true the preload throws on load, the
-      // contextBridge never runs, and window.__aboutBridge__ is undefined,
-      // which silently breaks the close button, ESC, the links and copy.
-      // The renderer is still locked down by contextIsolation + nodeIntegration:false.
-      sandbox: false,
+      // sandbox:true -- the strongest renderer lockdown Electron offers. The
+      // preload no longer `require('./brand')` (a sandboxed preload can only
+      // require 'electron'); it reads the brand name from the additionalArguments
+      // below via process.argv instead, so the IPC namespace stays correct
+      // without a relative require. The About page is static, locally-generated
+      // HTML -- it never needs Node.
+      sandbox: true,
+      // The brand name is the IPC channel namespace; the sandboxed preload reads
+      // it from process.argv (apply-brand remains the single source -- we just
+      // forward BRAND.name through here rather than importing brand.ts).
+      additionalArguments: [`--brand-name=${opts.brandName}`],
+      // No <webview>, no insecure-content upgrades. Defence-in-depth on a window
+      // that only ever shows trusted local HTML.
+      webviewTag: false,
+      allowRunningInsecureContent: false,
       preload: opts.preloadPath,
     },
   });
@@ -391,24 +475,51 @@ export function openAboutWindow(opts: OpenAboutOptions): BrowserWindow {
   return win;
 }
 
+/** True only when `sender` is the About window's own webContents. The About
+ *  page loads a data: URL (opaque/null origin), so an origin-based sender check
+ *  would reject it -- the correct validation for this trusted, main-controlled
+ *  data: doc is identity: the message must come from the window WE created. A
+ *  message from any other frame (the main renderer, an injected one) is refused.
+ *  Exported for unit testing. */
+export function isFromAboutWindow(sender: Electron.WebContents | undefined): boolean {
+  return (
+    !!sender && !!aboutWindow && !aboutWindow.isDestroyed() && aboutWindow.webContents === sender
+  );
+}
+
 /** Register the About IPC channels once. Idempotent across repeated opens. */
 function wireAboutIpc(brandName: string): void {
   if (ipcWired) {
     return;
   }
   ipcWired = true;
-  ipcMain.on(`${brandName}:about:open-external`, (_e, url: unknown) => {
+  ipcMain.on(`${brandName}:about:open-external`, (e, url: unknown) => {
+    if (!isFromAboutWindow(e.sender)) {
+      return;
+    }
     if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
       void shell.openExternal(url);
     }
   });
-  ipcMain.on(`${brandName}:about:copy`, (_e, text: unknown) => {
+  ipcMain.on(`${brandName}:about:copy`, (e, text: unknown) => {
+    if (!isFromAboutWindow(e.sender)) {
+      return;
+    }
     if (typeof text === 'string') {
       clipboard.writeText(text);
     }
   });
   ipcMain.on(`${brandName}:about:close`, (e) => {
+    if (!isFromAboutWindow(e.sender)) {
+      return;
+    }
     BrowserWindow.fromWebContents(e.sender)?.close();
+  });
+  ipcMain.on(`${brandName}:about:whats-new`, (e) => {
+    if (!isFromAboutWindow(e.sender)) {
+      return;
+    }
+    actions.onWhatsNew?.();
   });
 }
 

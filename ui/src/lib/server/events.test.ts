@@ -120,6 +120,31 @@ describe('logEvent', () => {
     expect(ev.profileId).toBe('default');
   });
 
+  it('carries an explicit requestId through to the event + the persisted JSONL line', () => {
+    // WHY: this is the correlation thread. A client error POSTs the ORIGINAL
+    // request's X-Request-Id; if logEvent drops it, support's on-screen "ref" can
+    // never be grepped out of activity.jsonl. The id must land on the event object
+    // AND in the serialized disk line.
+    const ev = logEvent('s', 't', { requestId: 'req-correlate-1' });
+    expect(ev.requestId).toBe('req-correlate-1');
+    const args = (fs.appendFileSync as ReturnType<typeof vi.fn>).mock.calls.slice(-1)[0];
+    expect(String(args[1])).toContain('req-correlate-1');
+  });
+
+  it('omits requestId when none is supplied (no empty field churn)', () => {
+    const ev = logEvent('s', 't');
+    expect(ev.requestId).toBeUndefined();
+  });
+
+  it('fingerprints error/warn events for grouping, but not info/success', () => {
+    const err = logEvent('db', 'connection lost', {
+      level: 'error',
+      stack: 'E\n at f (~/a.ts:1:2)',
+    });
+    expect(err.fingerprint).toMatch(/^[0-9a-f]{12}$/);
+    expect(logEvent('s', 'just info').fingerprint).toBeUndefined();
+  });
+
   it('persists the event in the bus buffer', () => {
     const ev = logEvent('persist-test', 'persisted');
     expect(bus.recent().some((e) => e.id === ev.id)).toBe(true);
@@ -182,6 +207,76 @@ describe('reportServerError', () => {
     // when the caller picks a non-system category.
     const ev = reportServerError('s', 't', new Error('x'), { category: 'user' });
     expect(ev.kind).toBe('technical');
+  });
+
+  it('threads requestId so a server error correlates to its request', () => {
+    // WHY: handleError passes event.locals.requestId here so the logged error
+    // row == the X-Request-Id response header == the on-screen error ref.
+    const ev = reportServerError('server', 't', new Error('x'), { requestId: 'req-server-9' });
+    expect(ev.requestId).toBe('req-server-9');
+  });
+});
+
+describe('HERON_LOG_LEVEL durable-sink gating', () => {
+  afterEach(() => {
+    delete process.env.HERON_LOG_LEVEL;
+  });
+
+  it('an info event below the threshold stays in the live bus but is NOT written to disk', () => {
+    // WHY: prod can quiet on-disk volume via HERON_LOG_LEVEL, but the in-app
+    // activity feed (the bus) must stay real-time -- quieting the disk must never
+    // blind a watching dashboard. This pins that split.
+    process.env.HERON_LOG_LEVEL = 'warn';
+    (fs.appendFileSync as ReturnType<typeof vi.fn>).mockClear();
+    const ev = logEvent('gated', 'quiet info', { level: 'info' });
+    expect(bus.recent().some((e) => e.id === ev.id)).toBe(true); // live feed has it
+    const wrote = (fs.appendFileSync as ReturnType<typeof vi.fn>).mock.calls.some((c) =>
+      String(c[1]).includes('quiet info'),
+    );
+    expect(wrote).toBe(false); // durable JSONL did not
+  });
+
+  it('a warn event at the threshold IS written to disk', () => {
+    process.env.HERON_LOG_LEVEL = 'warn';
+    (fs.appendFileSync as ReturnType<typeof vi.fn>).mockClear();
+    logEvent('gated', 'loud warn', { level: 'warn' });
+    const wrote = (fs.appendFileSync as ReturnType<typeof vi.fn>).mock.calls.some((c) =>
+      String(c[1]).includes('loud warn'),
+    );
+    expect(wrote).toBe(true);
+  });
+});
+
+describe('reportToRemote (opt-in remote sink seam)', () => {
+  const realFetch = global.fetch;
+  let fetchMock: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    fetchMock = vi.fn(() => Promise.resolve(new Response(null, { status: 204 })));
+    global.fetch = fetchMock as unknown as typeof fetch;
+  });
+  afterEach(() => {
+    global.fetch = realFetch;
+    delete process.env.HERON_TELEMETRY_ENDPOINT;
+  });
+
+  it('is a no-op when HERON_TELEMETRY_ENDPOINT is unset (strict local-first default)', () => {
+    logEvent('s', 'boom', { level: 'error' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('fire-and-forget POSTs error/warn events to the configured endpoint', () => {
+    process.env.HERON_TELEMETRY_ENDPOINT = 'https://sink.example/ingest';
+    logEvent('s', 'boom', { level: 'error' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe('https://sink.example/ingest');
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as { body: string }).body);
+    expect(body.title).toBe('boom');
+  });
+
+  it('does NOT forward info/success even when configured (only diagnostics leave the box)', () => {
+    process.env.HERON_TELEMETRY_ENDPOINT = 'https://sink.example/ingest';
+    logEvent('s', 'just info', { level: 'info' });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

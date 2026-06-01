@@ -151,6 +151,16 @@
   color: ededed
   description: Snapshot release (pre-tag preview)
 
+# ── Release promotion (promote.yml halt switches) ────────────────────
+# The auto-promote-after-soak job (promote.yml) reads OPEN issues with
+# these labels to halt promotion. See docs/RELEASING.md.
+- name: release-blocker
+  color: b60205
+  description: Open issue halts ALL release promotion (promote.yml global hold)
+- name: hold-promotion
+  color: fbca04
+  description: Open issue naming a vX.Y.Z tag halts that version's promotion to production
+
 # ── Area labels (emoji-prefixed; referenced by .github/labeler.yml) ──
 - name: '⚙️ ci'
   color: '000000'

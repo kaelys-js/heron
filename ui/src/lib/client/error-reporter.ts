@@ -45,7 +45,24 @@ type QueuedReport = {
 };
 
 const QUEUE_KEY = `${BRAND_STORAGE_PREFIX}:error-queue`;
+// Drop a queued report once it's older than this. A backend that was
+// unreachable for a day means the report is stale -- the route/build it
+// captured has moved on, so retrying it forever only ages-out useful queue
+// slots + replays diagnostics no longer actionable.
+const QUEUE_TTL_MS = 24 * 60 * 60 * 1000;
 let backendUrl: string | null = null;
+
+/** App build (`<version>+<build>`) the page is running, read from the
+ *  `<meta name="app-version">` hooks.server.ts injects. Threaded into the
+ *  telemetry context so a persisted error carries the build that produced its
+ *  minified stack -- the offline symbolicator keys off it. Returns '' off-server
+ *  / pre-hydration (Capacitor static build), where the meta is absent. */
+function getAppBuild(): string {
+  if (typeof document === 'undefined') {
+    return '';
+  }
+  return document.querySelector('meta[name="app-version"]')?.getAttribute('content') ?? '';
+}
 
 /** Set the resolved backend URL -- called once after backend-discovery. */
 export function setReporterBackend(url: string | null): void {
@@ -188,6 +205,39 @@ export function reportInfo(message: string, context?: ReportContext): Promise<vo
   return report({ err: new Error(message), level: 'info', kind: 'technical', context });
 }
 
+/** Count of client error reports queued in localStorage waiting to flush --
+ *  the backend was unreachable when they were captured. Surfaced in Settings →
+ *  Diagnostics so the user can see (and clear) a backlog. Returns 0 when
+ *  localStorage is unavailable or the queue is empty / unreadable. */
+export function pendingReportCount(): number {
+  if (typeof localStorage === 'undefined') {
+    return 0;
+  }
+  try {
+    const raw = localStorage.getItem(QUEUE_KEY);
+    if (!raw) {
+      return 0;
+    }
+    const queue = JSON.parse(raw);
+    return Array.isArray(queue) ? queue.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Discard every queued report. Backs the Settings → Diagnostics "Clear"
+ *  control so a user can drop a stuck backlog without waiting out the TTL. */
+export function clearReportQueue(): void {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+  try {
+    localStorage.removeItem(QUEUE_KEY);
+  } catch {
+    /* localStorage unavailable -- nothing to clear */
+  }
+}
+
 /**
  * Some thrown values reach `unhandledrejection` even though they're
  * spec-defined "this is fine" notices -- most notably the view-transition
@@ -256,6 +306,11 @@ async function sendToBackend(payload: QueuedReport): Promise<boolean> {
         // pivot to the matching server log line. Set from an ApiError's id or
         // the page meta.
         requestId: payload.context?.requestId,
+        // App build (`<version>+<build>`) the client was running. Captured at
+        // SEND time, not report time, but the build is constant for a session
+        // so it's the same value either way -- the server persists it with the
+        // stack for the offline symbolicator. '' (omitted) on a meta-less page.
+        build: getAppBuild() || undefined,
       }),
     });
     return res.ok;
@@ -325,7 +380,14 @@ async function flushQueue(): Promise<void> {
   }
 
   const remaining: QueuedReport[] = [];
+  const now = Date.now();
   for (const item of queue) {
+    // Drop reports older than the TTL -- don't retry stale diagnostics forever.
+    // Guard a missing/NaN capturedAt (a hand-written or legacy entry) so it's
+    // never treated as infinitely old.
+    if (Number.isFinite(item.capturedAt) && now - item.capturedAt > QUEUE_TTL_MS) {
+      continue;
+    }
     item.attempts++;
     if (item.attempts > 5) {
       continue;

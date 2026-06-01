@@ -35,7 +35,17 @@ export function buildCsp(
   devServerUrl?: string | null,
 ): string {
   if (!isDev) {
-    return `default-src ${customScheme}://* 'unsafe-inline' data:`;
+    // Production: lock to the app scheme + data:. The extra directives below
+    // remove plugin (<object>/<embed>), <base href> hijack, and clickjacking
+    // (frame-ancestors) surface that default-src alone doesn't cover.
+    //
+    // NOTE -- 'unsafe-inline' in the (implied) script-src is retained: the
+    // SvelteKit static output served from the app scheme uses inline bootstrap
+    // scripts + inline styles, and tightening script-src to a nonce/hash needs
+    // to be validated against a PACKAGED build (flagged in the return notes) --
+    // dropping it blind would white-screen the app. Left as-is here; the added
+    // directives are pure tightening with no app-script impact.
+    return `default-src ${customScheme}://* 'unsafe-inline' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`;
   }
   // Allow the ACTUAL dev-server origin (http + ws), not just localhost, so a
   // non-localhost ELECTRON_DEV_SERVER_URL / CAPACITOR_SERVER_URL override (e.g.

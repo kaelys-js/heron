@@ -47,12 +47,20 @@ platform :android do
     )
   end
 
-  desc "Promote latest internal build to production"
+  desc "Promote latest internal build to production with a staged rollout"
+  # The production half of the convergent release model (see docs/RELEASING.md):
+  # promote.yml runs this AFTER the build soaked on the internal track. It
+  # promotes that same build to production at a 10% STAGED rollout -- Play serves
+  # the new version to 10% of devices; the maintainer bumps to 100% (or halts)
+  # from the Play Console per docs/RELEASING.md. No rebuild (track_promote_to +
+  # skip_upload_aab): the production binary IS the soaked internal one.
   lane :production do
     upload_to_play_store(
       package_name: PACKAGE_NAME,
       track: "internal",
       track_promote_to: "production",
+      # Staged rollout fraction (0.0-1.0). 0.1 = 10% of devices initially.
+      rollout: "0.1",
       skip_upload_apk: true,
       skip_upload_aab: true,
       skip_upload_metadata: true

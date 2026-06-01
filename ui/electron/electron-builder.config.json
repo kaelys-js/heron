@@ -3,6 +3,7 @@
   "appId": "com.resistjs.heron",
   "productName": "Heron",
   "copyright": "© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License.",
+  "afterPack": "build/afterPack.js",
   "directories": {
     "buildResources": "build",
     "output": "dist"

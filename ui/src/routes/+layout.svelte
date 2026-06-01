@@ -25,6 +25,8 @@
   import { onMount, setContext } from 'svelte';
   import { goto } from '$app/navigation';
   import { installErrorReporter, setReporterBackend } from '$lib/client/error-reporter';
+  import { installConsoleBanner } from '$lib/client/console-banner';
+  import { installDevGlobal } from '$lib/client/dev-global';
   import { onlineStore } from '$lib/client/online-status.svelte';
   import { authClient } from '$lib/client/auth-client';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
@@ -108,6 +110,14 @@
     // running native -- but in plain web mode, location.origin is correct.
     if (typeof window !== 'undefined') {
       installErrorReporter(window.location.origin);
+      // One-time styled boot banner: brand + exact build (version + git SHA) +
+      // links in every env; a self-XSS / paste-jacking warning in production.
+      installConsoleBanner();
+      // Install the frozen, paste-safe `window.heron` developer global (build
+      // identity + public links + safe actions: help / diagnostics /
+      // clearCacheAndReset). Carries no credential surface; pairs with the
+      // banner's self-XSS warning. One-time guarded like the banner.
+      installDevGlobal();
       // Initialize the cross-platform online-status store. Periodic /api/health
       // probe + navigator.onLine listeners + native hints (iOS/Electron) all
       // funnel through one boolean -- OfflineIndicator + api.ts subscribe.
