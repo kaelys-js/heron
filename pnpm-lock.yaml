@@ -259,8 +259,8 @@ catalogs:
       specifier: 3.8.3
       version: 3.8.3
     prettier-plugin-svelte:
-      specifier: 3.5.2
-      version: 3.5.2
+      specifier: 4.1.0
+      version: 4.1.0
     sharp:
       specifier: 0.34.5
       version: 0.34.5
@@ -600,7 +600,7 @@ importers:
         version: 3.8.3
       prettier-plugin-svelte:
         specifier: 'catalog:'
-        version: 3.5.2(prettier@3.8.3)(svelte@5.55.8)
+        version: 4.1.0(prettier@3.8.3)(svelte@5.55.8)
       sharp:
         specifier: 'catalog:'
         version: 0.34.5
@@ -4490,8 +4490,9 @@ packages:
     deprecated: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
     hasBin: true
 
-  prettier-plugin-svelte@3.5.2:
-    resolution: {integrity: sha512-ItFouLvzSFE3ulNl4DKoWM3BGcbDCNVpIyy/Y3F2gC3aNiGLxtFUdffVqO5Z5hhYG+DFT5KULWaxmeFFpdbvaQ==}
+  prettier-plugin-svelte@4.1.0:
+    resolution: {integrity: sha512-YZkhA2Q9oOerFFG9tq+2f98WYT7Z2JgrybJrAyrB78jpsH9i/DdgplXemehuFPgsldetFNCcR/yCcYlDjPy94Q==}
+    engines: {node: '>=20'}
     peerDependencies:
       prettier: ^3.0.0
       svelte: '>=5.55.7'
@@ -9135,7 +9136,7 @@ snapshots:
       tar-fs: 2.1.4
       tunnel-agent: 0.6.0
 
-  prettier-plugin-svelte@3.5.2(prettier@3.8.3)(svelte@5.55.8):
+  prettier-plugin-svelte@4.1.0(prettier@3.8.3)(svelte@5.55.8):
     dependencies:
       prettier: 3.8.3
       svelte: 5.55.8
