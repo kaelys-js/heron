@@ -624,6 +624,19 @@ platform :ios do
     ios_destination = newest_sim_destination("iOS", prefer: "iPhone")
     watch_destination = newest_sim_destination("watchOS")
 
+    # Shard support (CI): TEST_SCHEMES (comma-separated) restricts THIS run to a
+    # subset of schemes, so test.yml's ios-shards matrix can fan the suite across
+    # parallel macOS runners. Unset = run the full suite (local + single-job).
+    # We filter the canonical ordered lists so AppTests still runs LAST within
+    # whatever shard contains it (its xccov must stay the most-recent App.app
+    # entry). SKIP_COVERAGE_GATE=1 leaves check-ios-coverage to the aggregator
+    # job, which merges every shard's cobertura first.
+    selected = ENV["TEST_SCHEMES"]&.split(",")&.map(&:strip)&.reject(&:empty?)
+    active_ios = selected ? IOS_TEST_SCHEMES.select { |s| selected.include?(s) } : IOS_TEST_SCHEMES.dup
+    run_watch = selected.nil? || selected.include?(WATCH_TEST_SCHEME)
+    active_cov = COVERAGE_TARGETS.select { |s, _| selected.nil? || selected.include?(s) }
+    UI.message("test_ci schemes -> iOS: #{active_ios.join(', ')}#{run_watch ? ' + WatchTests' : ''}")
+
     # Run iOS schemes sequentially. Each gets its own output_directory so
     # the xcresult bundles don't clobber each other (run_tests would
     # otherwise reuse the same path and the second invocation would fail
@@ -661,24 +674,26 @@ platform :ios do
 
     # Run WatchTests FIRST (different SDK / sim, so its xccov in
     # DerivedData lives at a separate path and won't clobber the iOS
-    # entries).
-    run_tests(
-      project: PROJECT,
-      scheme: WATCH_TEST_SCHEME,
-      destination: watch_destination,
-      code_coverage: true,
-      result_bundle: true,
-      fail_build: true,
-      xcargs: common_xcargs,
-      output_directory: "fastlane/test_output/#{WATCH_TEST_SCHEME}"
-    )
+    # entries). Skipped when this shard's TEST_SCHEMES excludes it.
+    if run_watch
+      run_tests(
+        project: PROJECT,
+        scheme: WATCH_TEST_SCHEME,
+        destination: watch_destination,
+        code_coverage: true,
+        result_bundle: true,
+        fail_build: true,
+        xcargs: common_xcargs,
+        output_directory: "fastlane/test_output/#{WATCH_TEST_SCHEME}"
+      )
+    end
 
     # AppTests writes to the default `fastlane/test_output/`; every other
     # scheme goes into its own `fastlane/test_output/<scheme>/`
     # subdirectory so the result bundles don't collide (run_tests refuses
     # to overwrite an existing bundle). The xccov->cobertura step below
     # reads each scheme's bundle from exactly these paths.
-    IOS_TEST_SCHEMES.each do |scheme|
+    active_ios.each do |scheme|
       output_dir = (scheme == "AppTests") ? "fastlane/test_output" : "fastlane/test_output/#{scheme}"
       run_tests(
         project: PROJECT,
@@ -714,7 +729,7 @@ platform :ios do
     #
     # `sh` runs from this Fastfile's dir (ui/ios/App/fastlane): test_output/
     # + coverage/ are under it, and four `../` reach the repo-root scripts.
-    COVERAGE_TARGETS.each do |scheme, source_match|
+    active_cov.each do |scheme, source_match|
       xcresult = (scheme == "AppTests") ? "test_output/AppTests.xcresult" : "test_output/#{scheme}/#{scheme}.xcresult"
       sh "node ../../../../scripts/native/xccov-to-cobertura.mjs " \
          "--xcresult #{xcresult} --source-match '#{source_match}' " \
@@ -729,7 +744,15 @@ platform :ios do
     # `sh` runs from this Fastfile's dir (ui/ios/App/fastlane). The
     # script lives at <repo-root>/scripts/native/...; four `../` to
     # walk up out of fastlane -> App -> ios -> ui -> repo-root.
-    sh "node ../../../../scripts/native/check-ios-coverage.mjs"
+    # SKIP_COVERAGE_GATE=1 (set per ios-shards matrix job): this run only
+    # produced a SUBSET of the cobertura files, so the per-target gate can't
+    # see all targets yet -- the aggregator (ios gate job) merges every
+    # shard's coverage/ and runs check-ios-coverage.mjs once.
+    if ENV["SKIP_COVERAGE_GATE"] == "1"
+      UI.message("SKIP_COVERAGE_GATE=1 -- shard run; coverage gate runs in the aggregator job")
+    else
+      sh "node ../../../../scripts/native/check-ios-coverage.mjs"
+    end
   end
 
   # Build an xcodebuild `-destination` for the NEWEST installed simulator

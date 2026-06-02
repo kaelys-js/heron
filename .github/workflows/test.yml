@@ -699,9 +699,27 @@ jobs:
   # Runs XCTest + XCUITest + snapshot tests across AppTests, AppUITests,
   # WidgetTests, WatchTests. xcov produces a Cobertura report consumed by
   # the codecov upload step below (separate `ios` flag from the `ts` flag).
-  ios:
-    name: iOS — XCTest + XCUITest + Snapshot
+  ios-shards:
+    name: iOS shard (${{ matrix.id }})
     needs: changes
+    strategy:
+      # Shard the 6 schemes across 3 parallel macOS runners (was one ~28min
+      # serial job). fail-fast off so one shard's failure still lets the others
+      # report; the `ios` aggregator-gate below is the required check.
+      fail-fast: false
+      matrix:
+        include:
+          # AppUITests + AppTests share App.app's xccov, and AppTests MUST run
+          # LAST (its xccov stays the most-recent App.app entry the converter
+          # reads) -- so they live in ONE shard, AppUITests first.
+          - id: app
+            schemes: AppUITests,AppTests
+          # Extension logic bundles -- each measures its own extension source.
+          - id: ext
+            schemes: WidgetTests,AppLiveActivityTests,AppShareExtensionTests
+          # watchOS sim (separate SDK).
+          - id: watch
+            schemes: WatchTests
     # Path-gated, not disabled: macos-latest is always allocated (cheap), but the
     # expensive xcodebuild + slather + coverage steps run only when
     # iOS-affecting paths changed, via the per-step
@@ -811,8 +829,9 @@ jobs:
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/Library/Developer/Xcode/DerivedData
-          key: derived-data-${{ runner.os }}-${{ hashFiles('ui/ios/App/App.xcodeproj/project.pbxproj', 'ui/ios/App/Package.resolved') }}
+          key: derived-data-${{ runner.os }}-${{ matrix.id }}-${{ hashFiles('ui/ios/App/App.xcodeproj/project.pbxproj', 'ui/ios/App/Package.resolved') }}
           restore-keys: |
+            derived-data-${{ runner.os }}-${{ matrix.id }}-
             derived-data-${{ runner.os }}-
 
       - name: Cache SPM
@@ -895,13 +914,18 @@ jobs:
           # uploads those PNGs as a workflow artifact for download +
           # local commit.
           RECORD_MODE: ${{ github.event.inputs.record_mode == 'true' && '1' || '' }}
+          # Run only THIS shard's schemes (Fastfile filters IOS_TEST_SCHEMES +
+          # WatchTests by this list). SKIP_COVERAGE_GATE makes the per-target
+          # threshold check run in the `ios` aggregator, which merges all shards.
+          TEST_SCHEMES: ${{ matrix.schemes }}
+          SKIP_COVERAGE_GATE: "1"
         run: bundle exec fastlane test_ci
 
       - name: Upload xcresult bundle
         if: always() && needs.changes.outputs.ios == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: xcresult-bundle
+          name: xcresult-bundle-${{ matrix.id }}
           path: ui/ios/App/fastlane/test_output/
           retention-days: 14
 
@@ -915,25 +939,89 @@ jobs:
         if: always() && needs.changes.outputs.ios == 'true' && (hashFiles('ui/ios/App/WidgetTests/__Snapshots__/**') != '' || hashFiles('ui/ios/App/WatchTests/__Snapshots__/**') != '')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ios-snapshot-baselines-${{ github.run_id }}
+          name: ios-snapshot-baselines-${{ matrix.id }}-${{ github.run_id }}
           path: |
             ui/ios/App/WidgetTests/__Snapshots__/
             ui/ios/App/WatchTests/__Snapshots__/
           retention-days: 14
           if-no-files-found: ignore
 
-      - name: Upload coverage to Codecov (ios flag)
-        # G12 -- see the ts upload above for OIDC rationale.
-        # Six per-scheme cobertura.xml files (AppTests / AppUITests / WidgetTests /
-        # AppLiveActivityTests / AppShareExtensionTests / WatchTests)
-        # uploaded under the single `ios` flag. Codecov merges them
-        # into one tree -- per-binary coverage is preserved through
-        # the source paths, which already differ per target. The
-        # threshold gate (scripts/native/check-ios-coverage.mjs) ran
-        # inside fastlane test_ci, so by the time we reach this step
-        # the per-target floors (95% App.app + 50% extensions/watch)
-        # are already enforced.
+      # Per-shard cobertura -> artifact. The `ios` aggregator-gate downloads
+      # every shard's `ios-coverage-<id>`, merges them, runs the per-target
+      # threshold gate ONCE (check-ios-coverage.mjs needs all targets present),
+      # then does the single Codecov upload + sticky-comment artifact.
+      - name: Upload shard coverage (cobertura)
         if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ios-coverage-${{ matrix.id }}
+          path: ui/ios/App/fastlane/coverage/
+          retention-days: 14
+          if-no-files-found: warn
+
+  # ─────────────────────────────────────────────────────────────────
+  # iOS aggregator-GATE -- the REQUIRED check (the job `name:` below is the
+  # exact required context). Cheap ubuntu runner (no Xcode): it fails if any
+  # shard failed, merges every shard's cobertura, runs the per-target threshold
+  # gate once, and uploads to Codecov + the sticky-comment artifact.
+  # Keeping the job KEY `ios` preserves the coverage: job's needs:[ts,ios,
+  # android] edge AND the exact required-check context name.
+  # ─────────────────────────────────────────────────────────────────
+  ios:
+    name: iOS — XCTest + XCUITest + Snapshot
+    needs: [changes, ios-shards]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload
+    steps:
+      - name: iOS gate green — no iOS-relevant paths changed
+        if: needs.changes.outputs.ios != 'true'
+        run: echo "::notice::iOS gate green — no iOS-affecting paths changed (shards skipped)."
+
+      - name: Fail if any iOS shard failed
+        if: needs.changes.outputs.ios == 'true' && needs.ios-shards.result != 'success'
+        run: |
+          echo "::error::one or more iOS shards did not succeed (ios-shards result: ${{ needs.ios-shards.result }})"
+          exit 1
+
+      - name: Harden runner
+        if: needs.changes.outputs.ios == 'true'
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        if: needs.changes.outputs.ios == 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup mise (Node)
+        if: needs.changes.outputs.ios == 'true'
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Download every shard's coverage
+        if: needs.changes.outputs.ios == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
+        with:
+          pattern: ios-coverage-*
+          merge-multiple: true
+          path: ui/ios/App/fastlane/coverage
+
+      - name: Enforce per-target iOS coverage thresholds (merged)
+        if: needs.changes.outputs.ios == 'true'
+        # check-ios-coverage.mjs resolves the coverage dir from its own
+        # __dirname (-> ui/ios/App/fastlane/coverage), so it runs from anywhere.
+        run: node scripts/native/check-ios-coverage.mjs
+
+      - name: Upload merged coverage to Codecov (ios flag)
+        if: needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           files: ui/ios/App/fastlane/coverage/AppTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppUITests/cobertura.xml,ui/ios/App/fastlane/coverage/WidgetTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppLiveActivityTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppShareExtensionTests/cobertura.xml,ui/ios/App/fastlane/coverage/WatchTests/cobertura.xml
@@ -945,7 +1033,7 @@ jobs:
 
       # Sibling of the ts-job upload, for the heron-pr-coverage sticky.
       - name: Upload iOS coverage artifact for sticky-comment workflow
-        if: needs.changes.outputs.ios == 'true' && always() && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
+        if: needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage-ios
