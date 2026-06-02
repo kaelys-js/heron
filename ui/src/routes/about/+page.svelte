@@ -1,218 +1,141 @@
 <script lang="ts">
   /**
-   * Login page -- passkey-first sign-in with optional GitHub OAuth and
-   * invite-code-based signup. Designed as the user's FIRST visual
-   * impression of the app, so the layout treats the brand mark as a
-   * hero element above the form, mirrors the boot-fallback's gradient
-   * energy, and keeps copy under 8 words per line for mobile reading.
+   * /about -- the PUBLIC About surface (web + iOS + Electron WebView).
    *
-   * Errors surface inline above the form. On success we mark the local
-   * auth flag (so the Capacitor client-side gate accepts subsequent
-   * navigations) and redirect to the original destination.
+   * Mirrors the Electron "About <brand>" window (ui/electron/src/about-window.ts)
+   * MINUS the desktop-only runtimes (electron / chromium / node) and the updater
+   * "channel" (no iOS equivalent). It is the single About source: /settings links
+   * here, and the login/signup footers link here so it's reachable logged-out
+   * (hence /about is in hooks.server.ts PUBLIC_PREFIXES).
+   *
+   * Client-renderable with NO server load: it reads the compile-time build
+   * identity from the Vite defines (build-info) and, on iOS, the native bundle
+   * identity + device fingerprint from the Capacitor bridges at mount. Off iOS
+   * those rows are simply absent. All assembly is delegated to the pure
+   * about-info / build-info helpers so this stays a thin renderer.
+   *
+   * Hosts the hidden developer-tools opt-in (tap the version 7x) -- the SAME
+   * gesture as Settings, reusing the shared devtools store so the two can't
+   * drift. The mascot mark is the AUTO-GENERATED:brand-mark marker pair
+   * (apply-brand fills it from branding/logo.svg, like login/signup).
    */
-  import { authClient, markLocallyAuthed } from '$lib/client/auth-client';
-  import { setPasskeyTrigger } from '$lib/client/auth-menu';
   import { onMount } from 'svelte';
+  import { toast } from 'svelte-sonner';
   import { Button } from '$lib/components/ui/button';
+  import { Badge } from '$lib/components/ui/badge';
   import BloomBackground from '$lib/components/BloomBackground.svelte';
-  import { KeyRound, Ticket, AlertCircle, ShieldCheck } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { APP_NAME } from '$lib/config/branding';
-  // `slide` animates height + opacity together, so the error banner
-  // grows DOWN from zero-height instead of popping fully formed into
-  // existence -- eliminates the layout jump when the banner first
-  // appears (or disappears on success).
-  import { slide } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
+  import { ExternalLink, Copy, Check, Smartphone } from '@lucide/svelte';
+  import { BRAND } from '$lib/client/brand';
+  import { buildInfo, buildMetaLine } from '$lib/client/build-info';
+  import {
+    aboutLinks,
+    deviceLine,
+    nativeBundleLine,
+    diagnosticsPayload,
+  } from '$lib/client/about-info';
+  import { getBuildInfo, isIos, type NativeBuildInfo } from '$lib/client/native-bridge';
+  import {
+    copyToClipboard,
+    nativeShare,
+    openExternal,
+    deviceInfo,
+    type DeviceFingerprint,
+  } from '$lib/client/capacitor-plugins';
+  import { devtoolsEnabled, setDevtools } from '$lib/client/devtools.svelte';
 
-  let { data } = $props<{
-    data: { githubEnabled: boolean; redirectTo: string };
-  }>();
+  const info = buildInfo();
+  const metaLine = buildMetaLine(info);
+  const links = aboutLinks();
 
-  let busy = $state(false);
-  let error = $state<string | null>(null);
+  // Native-only rows, resolved at mount (null off iOS / web).
+  let bundle = $state<NativeBuildInfo | null>(null);
+  let device = $state<DeviceFingerprint | null>(null);
 
-  /**
-   * Translate raw passkey/WebAuthn errors into copy a non-engineer can act
-   * on. Better-auth surfaces things like "Auth cancelled" / "NotAllowedError"
-   * / "The operation either timed out or was not allowed" -- none of which
-   * tell the user what to do next. The mapper below covers every error code
-   * a browser or Capacitor WebView can emit during a passkey sign-in, plus
-   * a sane default for anything we haven't seen yet.
-   *
-   * The biggest source of mysterious "Auth cancelled" errors is a first-
-   * time user pressing "Sign in with passkey" before they've ever created
-   * one -- the platform throws NotAllowedError because there's no credential
-   * to choose. We catch that and redirect them to the invite-code flow.
-   */
-  function friendlyAuthError(raw: unknown): string {
-    const msg =
-      raw instanceof Error
-        ? raw.message
-        : typeof raw === 'string'
-          ? raw
-          : raw && typeof raw === 'object' && 'message' in raw
-            ? String((raw as { message: unknown }).message ?? '')
-            : '';
-    const name =
-      raw instanceof Error
-        ? raw.name
-        : raw && typeof raw === 'object' && 'name' in raw
-          ? String((raw as { name: unknown }).name ?? '')
-          : '';
-    const haystack = (name + ' ' + msg).toLowerCase();
+  let bundleLine = $derived(nativeBundleLine(bundle));
+  let deviceText = $derived(deviceLine(device));
 
-    if (
-      haystack.includes('cancel') ||
-      haystack.includes('aborted') ||
-      haystack.includes('notallowed') ||
-      haystack.includes('timeout') ||
-      haystack.includes('timed out') ||
-      haystack.includes('not allowed')
-    ) {
-      // The user dismissed the system prompt, or there's no passkey
-      // registered for this site on this device. Either way, point them
-      // to the invite-code flow which is the only path that actually
-      // creates one. Short, action-oriented copy.
-      return 'No passkey on this device yet. Tap “Set up with invite code” below to create one.';
-    }
-    if (haystack.includes('not supported') || haystack.includes('unsupported')) {
-      return "This device doesn't support passkeys.";
-    }
-    if (
-      haystack.includes('network') ||
-      haystack.includes('fetch') ||
-      // WebKit/iOS surface a failed fetch as the bare TypeError "Load failed"
-      // (Chrome says "Failed to fetch", Firefox "NetworkError") -- none of which
-      // contain "network", so match the WebKit phrasing explicitly. This is the
-      // exact message users saw when the backend was unreachable on iOS.
-      haystack.includes('load failed') ||
-      haystack.includes('connection') ||
-      haystack.includes('offline')
-    ) {
-      return `Couldn't reach the server. Open ${APP_NAME} on your computer (same Wi-Fi), then try again.`;
-    }
-    if (haystack.includes('invalid state') || haystack.includes('invalidstate')) {
-      return 'This passkey is already set up — try signing in again.';
-    }
-    if (!msg) return 'Sign-in failed. Try again.';
-    return msg;
-  }
+  onMount(() => {
+    // getBuildInfo() / isIos() are null/false off iOS, so the rows stay hidden
+    // on web + Electron without a platform branch here.
+    void (async () => {
+      bundle = await getBuildInfo();
+      if (isIos()) {
+        device = await deviceInfo();
+      }
+    })();
+  });
 
-  /** Is a platform authenticator (Touch ID / Windows Hello / phone passkey)
-   *  actually usable here? The desktop/Electron WebView exposes
-   *  `PublicKeyCredential` but has NO authenticator, so `signIn.passkey()`
-   *  HANGS forever (button stuck disabled, nothing happens). We feature-detect
-   *  first and bail with guidance instead of hanging. */
-  async function passkeyAvailable(): Promise<boolean> {
-    if (typeof window === 'undefined' || !window.PublicKeyCredential) {
-      return false;
-    }
-    try {
-      return await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    } catch {
-      return false;
-    }
-  }
-
-  async function signInWithPasskey() {
-    if (!(await passkeyAvailable())) {
-      // No usable authenticator (e.g. the desktop app) -- point them at the
-      // invite-code flow rather than spinning forever.
-      error = 'No passkey on this device yet. Tap “Set up with invite code” below to create one.';
+  // ── Copy / share diagnostics ────────────────────────────────────────────
+  let copied = $state(false);
+  let copyTimer: ReturnType<typeof setTimeout> | undefined;
+  async function copyDiagnostics() {
+    const payload = diagnosticsPayload({
+      displayName: BRAND.displayName,
+      version: info.version,
+      commit: info.commit,
+      buildDate: info.buildDate,
+      bundle,
+      device,
+    });
+    // Prefer the native share sheet (so the payload can go straight into a bug
+    // report); fall back to the clipboard when sharing isn't available / was
+    // dismissed. The clipboard is always written so the "Copied" affordance is
+    // honest even when the share sheet was offered.
+    const shared = await nativeShare(payload, `${BRAND.displayName} diagnostics`);
+    const ok = await copyToClipboard(payload);
+    if (!ok && !shared) {
       return;
     }
-    busy = true;
-    // Don't clear `error = null` here -- that causes the inline banner
-    // to unmount, then remount with the (same) message on the next
-    // failed attempt, jumping the layout. We only clear on SUCCESS;
-    // on retry-and-fail the existing banner just stays put with the
-    // new copy. If the new error is identical to the previous one,
-    // Svelte detects no change and the DOM doesn't even update.
-    try {
-      // Race against a timeout so a never-resolving WebAuthn prompt can't
-      // strand the disabled button (belt-and-suspenders to the check above).
-      const result = await Promise.race([
-        authClient.signIn.passkey({ autoFill: false }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Passkey sign-in timed out')), 45_000),
-        ),
-      ]);
-      if (result?.error) {
-        error = friendlyAuthError(result.error);
-      } else {
-        error = null;
-        markLocallyAuthed();
-        await goto(data.redirectTo, { invalidateAll: true });
-      }
-    } catch (e) {
-      error = friendlyAuthError(e);
-    } finally {
-      busy = false;
-    }
+    copied = true;
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => (copied = false), 1600);
   }
 
-  async function signInWithGitHub() {
-    busy = true;
-    // Same rationale as signInWithPasskey -- keep the previous error
-    // visible until we know the new attempt outcome.
-    try {
-      await authClient.signIn.social({
-        provider: 'github',
-        callbackURL: data.redirectTo,
+  // ── Hidden developer-tools opt-in (tap the version 7x) ───────────────────
+  // Reuses the shared devtools store (same as Settings) so the unlock + the
+  // /dev gallery gate can't drift between the two surfaces.
+  let versionTaps = 0;
+  let versionTapTimer: ReturnType<typeof setTimeout> | null = null;
+  function onVersionTap(): void {
+    if (devtoolsEnabled()) {
+      return;
+    }
+    versionTaps += 1;
+    if (versionTapTimer) {
+      clearTimeout(versionTapTimer);
+    }
+    versionTapTimer = setTimeout(() => (versionTaps = 0), 1200);
+    if (versionTaps >= 7) {
+      versionTaps = 0;
+      setDevtools(true);
+      toast.success('Developer tools enabled', {
+        description: 'The view-gallery button is now available on every screen.',
       });
-      error = null;
-    } catch (e) {
-      // Same friendly mapper as passkey -- OAuth surfaces network /
-      // cancellation errors identically and the user benefits from
-      // consistent copy.
-      error = friendlyAuthError(e);
-      busy = false;
     }
   }
 
-  // Electron: the native File menu's "Sign in with passkey" fires this. Register
-  // the trigger while this page is mounted; clear it on unmount. No-op on web.
-  onMount(() => {
-    setPasskeyTrigger(() => void signInWithPasskey());
-    return () => setPasskeyTrigger(null);
-  });
+  async function openLink(url: string): Promise<void> {
+    await openExternal(url);
+  }
 </script>
 
 <svelte:head>
-  <title>Sign in — {APP_NAME}</title>
+  <title>About — {BRAND.displayName}</title>
 </svelte:head>
 
-<!-- A <div>, not <main>: the root layout already wraps the page in
-     <main id="main-content"> (the skip-link target), so a second <main> here
-     would create a duplicate landmark (WCAG 1.3.1). The `.auth-page` class is
-     what the bloom view-transition CSS keys off, so it stays. -->
+<!-- A <div>, not <main>: the root layout already provides the page's single
+     <main id="main-content"> landmark; a second would duplicate it (WCAG 1.3.1). -->
 <div
-  class="auth-page relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background px-6 py-12"
+  class="relative flex min-h-svh flex-col items-center overflow-y-auto bg-background px-6 pt-safe pb-safe"
 >
-  <!-- Dawn-sky bloom backdrop — centralized in BloomBackground (single source:
-       splash-spec.mjs bloomCssInline via apply-brand), shared with the boot +
-       splash screens + the dev-view states so every entry surface is one
-       continuous identity. -->
   <BloomBackground />
 
-  <!-- The content panel is its own view-transition group (`auth-content`) so the
-       login↔signup swap MORPHS this box (short login → taller signup) and
-       crossfades only its contents — instead of the whole `root` (toggle,
-       particles, footer) crossfading and the form popping in at a mismatched Y. -->
-  <div
-    class="relative z-10 flex w-full max-w-sm flex-col items-center"
-    style="view-transition-name: auth-content;"
-  >
-    <!-- Brand mark hero — mirrors branding/logo.svg + boot-fallback so
-         the sign-in screen feels like the same app, not a generic gate. -->
-    <div
-      class="brand-hero-glow mb-7 flex size-16 items-center justify-center"
-      style="view-transition-name: auth-hero;"
-      aria-hidden="true"
-    >
-      <svg width="64" height="64" viewBox="0 0 1024 1024">
-        <!-- AUTO-GENERATED:brand-mark gradient-id="login-bg" -->
+  <div class="relative z-10 flex w-full max-w-md flex-col items-center py-12 text-center">
+    <!-- Mascot mark — AUTO-GENERATED:brand-mark marker pair, filled by
+         apply-brand from branding/logo.svg (mirrors login/signup). -->
+    <div class="brand-hero-glow mb-6 flex size-20 items-center justify-center" aria-hidden="true">
+      <svg width="80" height="80" viewBox="0 0 1024 1024">
+        <!-- AUTO-GENERATED:brand-mark gradient-id="about-bg" -->
         <image
           width="1024"
           height="1024"
@@ -223,142 +146,102 @@
       </svg>
     </div>
 
-    <!-- Headline + subhead. Short, on-brand, no marketing fluff. -->
-    <h1 class="text-center text-3xl font-semibold tracking-tight">Welcome back</h1>
-    <p class="mt-2 text-center text-sm text-muted-foreground">
-      Sign in to your {APP_NAME} workspace
+    <h1 class="text-3xl font-semibold tracking-tight">{BRAND.displayName}</h1>
+    <p class="mt-1 text-sm italic text-accent">{BRAND.tagline}</p>
+
+    <!-- Version pill — the 7-tap developer-tools unlock gesture lives here
+         (same as Settings). It's a <button> so it's keyboard-reachable; the
+         taps must be a deliberate gesture, so it carries no visible affordance. -->
+    {#if info.version}
+      <button
+        type="button"
+        onclick={onVersionTap}
+        class="mt-3 inline-flex min-h-11 cursor-default select-none items-center rounded-full border border-accent/30 bg-accent/10 px-3 font-mono text-sm font-semibold text-accent"
+        aria-label="App version {info.version}"
+      >
+        {info.version}
+      </button>
+    {/if}
+
+    {#if metaLine}
+      <div class="mt-2 font-mono text-xs text-muted-foreground/70">{metaLine}</div>
+    {/if}
+
+    <p class="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+      {BRAND.description}
     </p>
 
-    <!-- Error surface — appears above the form so it's the first thing
-         the user reads on retry. -->
-    {#if error}
-      <!--
-        Icon alignment: render as an INLINE element with
-        `vertical-align: middle` inside the same `<p>` as the message
-        text, NOT as a separate flex item. This delegates alignment
-        to the browser's typography engine — `align-middle` aligns
-        the icon's vertical center to the text's x-height center,
-        which is what the eye reads as "centered with the text".
-        Tracks font / line-height changes without magic-number
-        margins. Icon stays on the first line; lines 2+ wrap to the
-        start of the container — the standard pattern for an inline
-        icon next to multi-line text.
-      -->
+    <!-- Native bundle + device rows — present only on iOS (the bridges return
+         null/'' elsewhere, so the {#if} hides them). -->
+    {#if bundleLine || deviceText}
       <div
-        class="mt-6 flex w-full items-start gap-3 overflow-hidden rounded-xl border border-red-500/25 bg-red-500/[0.07] p-3.5 text-sm shadow-sm backdrop-blur-sm"
-        role="alert"
-        transition:slide={{ duration: 220, easing: cubicOut }}
+        class="mt-5 flex w-full flex-col items-center gap-1 rounded-lg border border-border/40 bg-card/40 py-3 text-xs text-muted-foreground"
       >
-        <span
-          class="mt-px flex size-7 flex-shrink-0 items-center justify-center rounded-lg bg-red-500/15 text-red-600 dark:text-red-300"
-        >
-          <AlertCircle class="size-4" />
-        </span>
-        <p class="leading-relaxed text-red-700 dark:text-red-200/90">{error}</p>
+        {#if bundleLine}
+          <div class="font-mono">{bundleLine}</div>
+        {/if}
+        {#if deviceText}
+          <div class="flex items-center gap-1.5">
+            <Smartphone class="size-3" />
+            {deviceText}
+          </div>
+        {/if}
       </div>
     {/if}
 
-    <!-- Card wrapping the actions. A subtle gradient border + glassy
-         backdrop keeps the form anchored against the bloom. -->
-    <div
-      class="mt-6 w-full rounded-2xl border border-border/40 bg-card/60 p-5 shadow-2xl backdrop-blur-xl"
-    >
-      <!-- Primary action: passkey. Discoverable / usernameless — the button IS
-           the whole flow (no username field; conditional-UI autofill needs an
-           email anchor that doesn't fit a passkey-first design). Gradient sheen
-           so it reads as THE action; h-12 for a comfortable mobile tap target.
-           aria-busy + the label swap announce the in-flight ceremony (SC 4.1.3). -->
-      <Button
-        onclick={signInWithPasskey}
-        disabled={busy}
-        aria-busy={busy}
-        class="h-12 w-full justify-center gap-2 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 font-medium text-white shadow-lg shadow-violet-500/25 transition-all hover:shadow-violet-500/40 disabled:opacity-60"
-      >
-        <KeyRound class="size-4" />
-        {busy ? 'Waiting for passkey…' : 'Sign in with passkey'}
-      </Button>
-
-      {#if data.githubEnabled}
-        <!-- Divider -- "or" with hairlines, classic auth pattern. -->
-        <div
-          class="my-4 flex items-center gap-3 text-[11px] uppercase tracking-wider text-muted-foreground/60"
-        >
-          <span class="h-px flex-1 bg-border/60"></span>
-          or
-          <span class="h-px flex-1 bg-border/60"></span>
-        </div>
-
+    <!-- External links — Website / GitHub / Report a bug / License. Opened via
+         the Capacitor Browser plugin (SFSafariViewController on iOS) so the
+         user stays inside the app. >=44pt tap targets, >=16px text. -->
+    <div class="mt-6 flex flex-wrap justify-center gap-2">
+      {#each links as link (link.label)}
         <Button
-          onclick={signInWithGitHub}
-          disabled={busy}
-          aria-busy={busy}
           variant="outline"
-          class="h-11 w-full justify-center gap-2 border-border/60 bg-background/40 font-medium"
+          class="min-h-11 gap-1.5 text-sm"
+          onclick={() => openLink(link.url)}
         >
-          <!-- Inline GitHub octocat — lucide-svelte dropped branded
-               icons; this is the upstream GitHub mark in SVG path form,
-               which is allowed under GitHub's brand guidelines for
-               "sign in with GitHub" buttons. -->
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path
-              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-            />
-          </svg>
-          Continue with GitHub
+          {link.label}
+          <ExternalLink class="size-3.5" />
         </Button>
-      {/if}
+      {/each}
+    </div>
 
-      <!-- Divider above the invite-code button if GitHub isn't enabled
-           (GitHub's "or" divider doesn't render, so the invite CTA
-           would otherwise sit immediately under the passkey button
-           with no breathing room). -->
-      {#if !data.githubEnabled}
-        <div
-          class="my-4 flex items-center gap-3 text-[11px] uppercase tracking-wider text-muted-foreground/60"
+    <!-- Copy / share diagnostics — bundles build + device into a bug-report
+         payload. Native share sheet when available; clipboard otherwise. -->
+    <Button
+      variant="ghost"
+      class="mt-4 min-h-11 gap-1.5 text-sm text-muted-foreground"
+      onclick={copyDiagnostics}
+    >
+      {#if copied}
+        <Check class="size-4 text-success" />
+        Copied
+      {:else}
+        <Copy class="size-4" />
+        Copy diagnostics
+      {/if}
+    </Button>
+
+    <!-- Developer-tools badge — shown once unlocked, with a Disable control.
+         Parity with the Settings card. -->
+    {#if devtoolsEnabled()}
+      <div class="mt-4 flex items-center gap-2">
+        <Badge variant="secondary" class="text-[11px]">Developer tools on</Badge>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="min-h-11"
+          onclick={() => {
+            setDevtools(false);
+            toast.info('Developer tools disabled');
+          }}
         >
-          <span class="h-px flex-1 bg-border/60"></span>
-          new here?
-          <span class="h-px flex-1 bg-border/60"></span>
-        </div>
-      {/if}
+          Disable
+        </Button>
+      </div>
+    {/if}
 
-      <!-- Invite-code button — peer to the passkey + GitHub buttons,
-           same outline-button visual so the action stack reads as a
-           coherent list of sign-in options rather than "primary CTA +
-           hidden text link". For first-time users this IS the primary
-           path; we just don't visually outrank the passkey since
-           returning users are the more common case. -->
-      <Button
-        href="/signup"
-        variant="outline"
-        disabled={busy}
-        class={`h-12 w-full justify-center gap-2 border-border/60 bg-background/40 font-medium ${data.githubEnabled ? 'mt-3' : 'mt-0'}`}
-      >
-        <Ticket class="size-4" />
-        Set up with invite code
-      </Button>
-    </div>
-
-    <!-- Reassurance / trust signal. Modern apps include this — it
-         answers the unspoken "is this safe?" question right at the
-         decision point. Copy describes the SECURITY MODEL accurately
-         (passkey private key never leaves the device) without
-         marketing-speak like "end-to-end" which is properly a term
-         for E2E encryption and not what passkeys actually are. -->
-    <div
-      class="mt-6 flex items-center gap-2 rounded-full bg-emerald-500/8 px-3 py-1.5 text-[11px] text-emerald-800 dark:text-emerald-300/80"
-    >
-      <ShieldCheck class="size-3.5" />
-      <span>Private by design · Your device is the key</span>
-    </div>
-
-    <!-- About link — reachable logged-out (the /about route is public). Sits
-         below the trust signal so it never competes with the sign-in actions. -->
-    <a
-      href="/about"
-      class="mt-5 text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-    >
-      About {APP_NAME}
-    </a>
+    <p class="mt-8 max-w-sm text-[11px] leading-relaxed text-muted-foreground/50">
+      {BRAND.copyright}
+    </p>
   </div>
 </div>

@@ -43,6 +43,12 @@ const APP_BUILD: string = (() => {
     return '';
   }
 })();
+// ISO timestamp captured at config time. Surfaced in the About surface's
+// build-meta line (rendered as the calendar day) and the copy-diagnostics
+// payload (full ISO) so support can date a build to the minute -- semver +
+// SHA alone don't say WHEN a binary was cut. Mirrors the APP_BUILD pattern:
+// a single literal folded in at build time, consumers guard for ''.
+const APP_BUILD_DATE: string = new Date().toISOString();
 const WATCH_FILES = [
   resolve(REPO_ROOT, 'branding/brand.json'),
   resolve(REPO_ROOT, 'branding/logo.svg'),
@@ -105,6 +111,7 @@ export default defineConfig({
     ),
     __APP_VERSION__: JSON.stringify(APP_VERSION),
     __APP_BUILD__: JSON.stringify(APP_BUILD),
+    __APP_BUILD_DATE__: JSON.stringify(APP_BUILD_DATE),
   },
   plugins: [brandWatcherPlugin(), tailwindcss(), sveltekit()],
   server: {
@@ -176,7 +183,10 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Force-include heavy deps so vite pre-bundles them once on cold
-    // start instead of doing it lazily during route navigation.
-    include: ['svelte-sonner', 'marked', 'gray-matter'],
+    // start instead of doing it lazily during route navigation. @capacitor/share
+    // is here too: the About surface lazy-imports it, and a first-navigation
+    // discovery triggers a dep re-optimize + reload (flaky under vitest browser
+    // mode) -- pre-bundling it avoids the mid-run reload.
+    include: ['svelte-sonner', 'marked', 'gray-matter', '@capacitor/share'],
   },
 });

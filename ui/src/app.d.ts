@@ -18,6 +18,12 @@ declare global {
    *  test runners). Always read with a fallback. */
   const __APP_BUILD__: string | undefined;
 
+  /** ISO build timestamp, injected by vite `define` at config time. Empty
+   *  string / undefined where the define isn't applied (some test runners).
+   *  Surfaced on the About surface (build-meta line + copy diagnostics).
+   *  Always read with a fallback. */
+  const __APP_BUILD_DATE__: string | undefined;
+
   interface Window {
     /** Frozen, paste-safe developer global -- build identity + public links +
      *  safe action facades (help / diagnostics / clearCacheAndReset). Installed

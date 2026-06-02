@@ -185,6 +185,14 @@ pre-commit:
       glob: "{scripts/system/symbolicate.mjs,scripts/system/symbolicate.test.mjs}"
       run: pnpm symbolicate:test
 
+    "19-pbxproj-version":
+      # Unit-test the pure pbxproj version-stamp rewrite (MARKETING_VERSION +
+      # CURRENT_PROJECT_VERSION derived from package.json semver, idempotently).
+      # Fires when the helper, its test, or either call site (apply-brand +
+      # _bump-versions) is staged.
+      glob: "{scripts/native/pbxproj-version.mjs,scripts/native/pbxproj-version.test.mjs,scripts/native/apply-brand.mjs,scripts/native/_bump-versions.mjs}"
+      run: pnpm pbxproj-version:test
+
     # ── Full verify pipeline (typecheck + build + tests + every linter +
     #    every gate), turbo-cached. Runs LAST so the writers above have
     #    already formatted + re-staged. SAME command pre-push + CI run. ──

@@ -352,5 +352,13 @@
         <a href="/login" class="text-foreground underline-offset-4 hover:underline">Sign in</a>
       </p>
     {/if}
+
+    <!-- About link — reachable logged-out (the /about route is public). -->
+    <a
+      href="/about"
+      class="mt-5 text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+    >
+      About {APP_NAME}
+    </a>
   </div>
 </div>

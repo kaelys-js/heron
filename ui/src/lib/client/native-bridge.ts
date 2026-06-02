@@ -45,7 +45,14 @@ type NativePlugin = {
   getSharedProductionUrl(): Promise<{ url: string }>;
   setSharedQuietHours(opts: { json: string }): Promise<{ ok: boolean }>;
   clearAllSharedState(): Promise<{ ok: boolean }>;
+  getBuildInfo(): Promise<{ shortVersion: string; buildNumber: string }>;
 };
+
+/** The native bundle's identity, read from Info.plist on iOS. Distinct from the
+ *  WebView's compile-time __APP_VERSION__ literal: this is the actual binary's
+ *  CFBundleShortVersionString + CFBundleVersion -- the only trustworthy build
+ *  identity the About screen can show. Null off iOS (no native bundle to read). */
+export type NativeBuildInfo = { shortVersion: string; buildNumber: string };
 
 export type WidgetUpdate = {
   /** Auth gate visible to every iPhone widget + the Watch.
@@ -131,6 +138,21 @@ export async function getLanUrl(): Promise<string | null> {
   try {
     const res = await native.getLanUrl();
     return res.url;
+  } catch {
+    return null;
+  }
+}
+
+/** Native bundle identity (CFBundleShortVersionString + CFBundleVersion) for the
+ *  About screen. Null off iOS or on failure -- the caller falls back to the
+ *  __APP_VERSION__ Vite literal. */
+export async function getBuildInfo(): Promise<NativeBuildInfo | null> {
+  if (!isIos()) {
+    return null;
+  }
+  try {
+    const res = await native.getBuildInfo();
+    return { shortVersion: res.shortVersion, buildNumber: res.buildNumber };
   } catch {
     return null;
   }

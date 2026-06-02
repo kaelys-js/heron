@@ -131,6 +131,36 @@ export async function openExternal(url: string): Promise<void> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
+// Share -- the native iOS/Android share sheet. Used by the About surface's
+// "Copy diagnostics" action so a bug report's build/device payload can be
+// handed straight to Mail / Messages / Files on device.
+// ──────────────────────────────────────────────────────────────────────
+
+/** Open the native share sheet with `text` (and optional `title`). Returns
+ *  true when the sheet was presented, false on web / when the plugin is
+ *  absent / when the user dismissed it -- callers fall back to clipboard. */
+export async function nativeShare(text: string, title?: string): Promise<boolean> {
+  if (!isNative()) {
+    return false;
+  }
+  try {
+    const { Share } = await import('@capacitor/share');
+    // canShare() guards against a platform where the sheet isn't available
+    // (older simulators) so we fall back to clipboard rather than throwing.
+    const can = await Share.canShare();
+    if (!can.value) {
+      return false;
+    }
+    await Share.share({ title, text });
+    return true;
+  } catch {
+    // The user dismissing the sheet rejects on iOS -- treat as "not shared"
+    // so the caller's clipboard fallback still runs.
+    return false;
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────
 // App Launcher -- open mailto:, tel:, system settings URLs.
 // ──────────────────────────────────────────────────────────────────────
 

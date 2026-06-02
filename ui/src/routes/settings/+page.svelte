@@ -26,35 +26,15 @@
     Trash2,
     FlaskConical,
     PackageCheck,
+    ChevronRight,
   } from '@lucide/svelte';
   import { cn } from '$lib/utils';
   import { onMount } from 'svelte';
   import { BRAND } from '$lib/client/brand';
-  import { devtoolsEnabled, setDevtools } from '$lib/client/devtools.svelte';
   import { nativeConfirm } from '$lib/client/capacitor-plugins';
   import { clearClientCacheAndReset } from '$lib/client/reset';
   import { pendingReportCount, clearReportQueue } from '$lib/client/error-reporter';
   import { Stethoscope, Download } from '@lucide/svelte';
-
-  // "About" card + hidden developer-tools opt-in. Tapping the version 7x
-  // unlocks the /dev view gallery in built/native apps (where `dev` is false) --
-  // Settings is the conventional hiding spot (cf. Android "tap build number").
-  const appVersion = __APP_VERSION__ ?? '';
-  let versionTaps = 0;
-  let versionTapTimer: ReturnType<typeof setTimeout> | null = null;
-  function onVersionTap(): void {
-    if (devtoolsEnabled()) return;
-    versionTaps += 1;
-    if (versionTapTimer) clearTimeout(versionTapTimer);
-    versionTapTimer = setTimeout(() => (versionTaps = 0), 1200);
-    if (versionTaps >= 7) {
-      versionTaps = 0;
-      setDevtools(true);
-      toast.success('Developer tools enabled', {
-        description: 'The view-gallery button is now available on every screen.',
-      });
-    }
-  }
 
   /** Compact "Nm/Nh/Nd ago" formatter for the health card. */
   function sinceShort(ts: number): string {
@@ -966,7 +946,10 @@
         </Card.Root>
       {/if}
 
-      <!-- About + hidden developer-tools opt-in (tap the version 7x). -->
+      <!-- About — links to the single About surface (/about), which carries the
+           brand + build identity, the external links, and the hidden
+           developer-tools opt-in (tap the version 7x). Keeping About in one
+           place means the version/build/gesture can't drift between two cards. -->
       <Card.Root>
         <Card.Header>
           <div class="flex items-center gap-2">
@@ -978,30 +961,11 @@
           <div class="flex items-center justify-between gap-3">
             <div class="min-w-0">
               <div class="text-sm font-medium">{BRAND.displayName}</div>
-              <button
-                type="button"
-                onclick={onVersionTap}
-                class="cursor-default text-xs text-muted-foreground select-none"
-                aria-label="App version"
-              >
-                {appVersion ? `Version ${appVersion}` : 'Local-first job search'}
-              </button>
+              <div class="text-xs text-muted-foreground">{BRAND.tagline}</div>
             </div>
-            {#if devtoolsEnabled()}
-              <div class="flex shrink-0 items-center gap-2">
-                <Badge variant="secondary" class="text-[11px]">Developer tools on</Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => {
-                    setDevtools(false);
-                    toast.info('Developer tools disabled');
-                  }}
-                >
-                  Disable
-                </Button>
-              </div>
-            {/if}
+            <Button href="/about" variant="outline" size="sm" class="shrink-0 gap-1.5">
+              About <ChevronRight class="size-3.5" />
+            </Button>
           </div>
         </Card.Content>
       </Card.Root>

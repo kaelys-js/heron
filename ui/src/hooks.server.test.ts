@@ -248,6 +248,14 @@ describe('hooks -- guard (auth)', () => {
     expect(r.status).toBe(200);
   });
 
+  it('/about is public (linked from the login/signup footers; must render logged-out)', async () => {
+    // The About surface is reachable BEFORE auth -- the footer links would dead-
+    // end at /login if the guard 302'd it. It carries no per-user data, so a
+    // session-less hit must reach the handler (200), not redirect.
+    const r = await run(evt('http://localhost:5173/about'));
+    expect(r.status).toBe(200);
+  });
+
   it('/api/health is public', async () => {
     const r = await run(evt('http://localhost:5173/api/health'));
     expect(r.status).toBe(200);

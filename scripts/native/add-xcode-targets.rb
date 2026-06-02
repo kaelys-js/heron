@@ -255,10 +255,14 @@ EXTENSIONS.each do |ext|
     # installer then rejects the .appex with error code 17:
     # "bundleVersion must be set in placeholder attributes for an app
     # extension placeholder" -- which surfaces to the user as the
-    # vague "Invalid placeholder attributes" deploy failure. Match
-    # the main App target's defaults (1 / 1.0) so versions stay in
-    # lockstep across host + extensions; the brand pipeline
-    # (apply-brand.mjs) bumps both via MARKETING_VERSION at release.
+    # vague "Invalid placeholder attributes" deploy failure. These are
+    # placeholder seeds: scripts/native/pbxproj-version.mjs (run from
+    # apply-brand.mjs's pbxproj pass AND _bump-versions.mjs) rewrites
+    # MARKETING_VERSION to the package.json semver and
+    # CURRENT_PROJECT_VERSION to the build number derived from it, for
+    # EVERY target -- so host + extensions stay in lockstep on the app's
+    # real version. The seeds just need to be non-empty so a freshly
+    # generated target before the next stamp still deploys.
     config.build_settings["CURRENT_PROJECT_VERSION"] = "1"
     config.build_settings["MARKETING_VERSION"] = "1.0"
   end

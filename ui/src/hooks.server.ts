@@ -76,6 +76,9 @@ if (typeof process !== 'undefined') {
  *
  *   /api/auth/*        -- Better Auth's own endpoints (login, register, etc.)
  *   /login, /signup    -- the auth UI pages
+ *   /about             -- public About surface (brand + build + links). Linked
+ *                         from the login/signup footers, so it must render
+ *                         logged-out; client-rendered, no per-user data.
  *   /onboarding        -- first-run setup (no users exist yet)
  *   /api/health        -- liveness probe used by backend-discovery
  *   /api/discover      -- Bonjour/mDNS pairing check
@@ -93,6 +96,7 @@ const PUBLIC_PREFIXES = [
   '/api/auth/',
   '/login',
   '/signup',
+  '/about',
   '/onboarding',
   '/api/health',
   '/api/discover',

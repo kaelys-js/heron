@@ -44,6 +44,7 @@ import {
   bloomGrainStyle,
 } from './splash-spec.mjs';
 import { readMascotB64 } from './brand-mascot.mjs';
+import { stampPbxprojVersion } from './pbxproj-version.mjs';
 
 // ROOT is the repo root by default -- the script lives at
 // scripts/native/apply-brand.mjs so two `..` jumps land at /<repo>.
@@ -1999,9 +2000,10 @@ function applyAppHtml(brand) {
  *   1. ui/src/error.html                                       (err-bg)
  *   2. ui/src/routes/login/+page.svelte                        (login-bg)
  *   3. ui/src/routes/signup/+page.svelte                       (signup-bg)
- *   4. ui/src/lib/components/ConnectivityCard.svelte           (conn-grad)
- *   5. ui/src/lib/components/ErrorScreen.svelte                (errscreen-bg)
- *   6. ui/src/lib/components/LoadingState.svelte               (loading-bg)
+ *   4. ui/src/routes/about/+page.svelte                        (about-bg)
+ *   5. ui/src/lib/components/ConnectivityCard.svelte           (conn-grad)
+ *   6. ui/src/lib/components/ErrorScreen.svelte                (errscreen-bg)
+ *   7. ui/src/lib/components/LoadingState.svelte               (loading-bg)
  *
  * (ConnectivityCard is the shared shell behind both BackendBootGuard's
  * boot gate and BackendUnreachableOverlay's live-disconnect blocker, so
@@ -2089,6 +2091,7 @@ function applyMascot(brand) {
     join(UI, 'src', 'error.html'),
     join(UI, 'src', 'routes', 'login', '+page.svelte'),
     join(UI, 'src', 'routes', 'signup', '+page.svelte'),
+    join(UI, 'src', 'routes', 'about', '+page.svelte'),
     join(UI, 'src', 'lib', 'components', 'ConnectivityCard.svelte'),
     join(UI, 'src', 'lib', 'components', 'ErrorScreen.svelte'),
     join(UI, 'src', 'lib', 'components', 'LoadingState.svelte'),
@@ -2417,6 +2420,8 @@ function applyClientBrandTs(brand) {
     `  name: ${JSON.stringify(brand.name)},`,
     `  displayName: ${JSON.stringify(brand.displayName)},`,
     `  tagline: ${JSON.stringify(brand.tagline)},`,
+    `  description: ${JSON.stringify(brand.description)},`,
+    `  copyright: ${JSON.stringify(brand.copyright)},`,
     `  bundleId: ${JSON.stringify(brand.identifiers.bundleId)},`,
     `  appGroup: ${JSON.stringify(brand.identifiers.appGroup)},`,
     `  urlScheme: ${JSON.stringify(brand.identifiers.urlScheme)},`,
@@ -2977,10 +2982,22 @@ function applyXcodeProject(brand) {
     '.watchkitapp',
   ];
   const body = readFileSync(path, 'utf8');
-  const next = body.replace(/PRODUCT_BUNDLE_IDENTIFIER = ([A-Za-z0-9_.]+);/g, (_m, id) => {
+  let next = body.replace(/PRODUCT_BUNDLE_IDENTIFIER = ([A-Za-z0-9_.]+);/g, (_m, id) => {
     const suffix = SUFFIXES.find((s) => id.endsWith(s)) ?? '';
     return `PRODUCT_BUNDLE_IDENTIFIER = ${brand.identifiers.bundleId}${suffix};`;
   });
+  // Stamp MARKETING_VERSION + CURRENT_PROJECT_VERSION for every target from the
+  // root package.json semver, reconciling the iOS bundle's
+  // CFBundleShortVersionString / CFBundleVersion to the app's real version on
+  // every brand apply. The targets shipped a hardcoded mix of 0.1.0 / 1.0 that
+  // nothing synced -- the About surface's native bundle line read that stale
+  // value. stampPbxprojVersion is idempotent (same version -> identical body),
+  // so the dev-startup brand-watcher pass never churns the working tree.
+  const pkgPath = join(ROOT, 'package.json');
+  if (existsSync(pkgPath)) {
+    const version = JSON.parse(readFileSync(pkgPath, 'utf8')).version;
+    next = stampPbxprojVersion(next, version);
+  }
   if (next !== body) {
     writeFileSync(path, next);
     log.ok(`project.pbxproj`);

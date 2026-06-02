@@ -110,6 +110,7 @@
     "og:generate:force": "node scripts/system/generate-og-cards.mjs --force",
     "outdated": "pnpm outdated -r",
     "particles:build": "node scripts/build-particles.mjs",
+    "pbxproj-version:test": "node scripts/native/pbxproj-version.test.mjs",
     "pdf": "node scripts/cv/generate-pdf.mjs",
     "pr:metadata:test": "node scripts/system/check-pr-metadata.test.mjs",
     "pr:summary:test": "node .github/scripts/sticky/assemble-summary.test.mjs",

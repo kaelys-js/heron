@@ -10,6 +10,8 @@ export const BRAND = {
   name: "heron",
   displayName: "Heron",
   tagline: "Stand still. Strike well.",
+  description: "Heron is a thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
+  copyright: "© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License.",
   bundleId: "com.resistjs.heron",
   appGroup: "group.com.resistjs.heron",
   urlScheme: "heron",

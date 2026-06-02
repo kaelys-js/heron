@@ -85,6 +85,10 @@ export default defineConfig({
     // here so the X-App-Build header + console banner resolve deterministically
     // under `vitest run` (a real git SHA would make snapshots non-reproducible).
     __APP_BUILD__: JSON.stringify('testsha'),
+    // Mirror vite.config.ts's `__APP_BUILD_DATE__` (ISO build timestamp). A
+    // fixed literal under `vitest run` so the build-info helper + About-surface
+    // assertions resolve deterministically (a real Date would make them flaky).
+    __APP_BUILD_DATE__: JSON.stringify('2024-01-02T03:04:05.000Z'),
   },
   // NOTE: We deliberately do NOT include the `brandWatcherPlugin` from
   // vite.config.ts. That plugin shells out to `apply-brand.mjs` on every
