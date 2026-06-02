@@ -263,7 +263,17 @@ describe('hooks -- guard (auth)', () => {
 
   it('/api/vitals is public (web-vitals beacons fire pre-auth, no 401 spam)', async () => {
     const r = await run(evt('http://localhost:5173/api/vitals'));
-    expect(r.status).not.toBe(401);
+    // Assert the success path directly (200), not merely "not 401": a regression
+    // to any other failure status would slip through a not.toBe(401) check.
+    expect(r.status).toBe(200);
+  });
+
+  it('/api/vitals matches by segment boundary, not bare prefix (no /api/vitals-x widening)', async () => {
+    // WHY: hooks.server.ts is the auth guard. A startsWith match would make a
+    // sibling like /api/vitals-export public too; only the exact route + its
+    // children may be unauthenticated.
+    const r = await run(evt('http://localhost:5173/api/vitals-export'));
+    expect(r.status).toBe(401);
   });
 
   it('/api/auth/* is public (Better Auth handles its own routes)', async () => {

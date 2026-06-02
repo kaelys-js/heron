@@ -9,7 +9,7 @@
  *
  * Usage:  node scripts/native/_bump-versions.mjs 1.7.0
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stampPbxprojVersion } from './pbxproj-version.mjs';
@@ -38,10 +38,18 @@ for (const f of FILES) {
 // release version. apply-brand reconciles these on every brand apply too;
 // stamping here means a release that doesn't touch branding still bumps them.
 const PBXPROJ = join(ROOT, 'ui', 'ios', 'App', 'App.xcodeproj', 'project.pbxproj');
-if (existsSync(PBXPROJ)) {
-  const body = readFileSync(PBXPROJ, 'utf8');
-  const stamped = stampPbxprojVersion(body, next);
-  if (stamped !== body) {
+// Read-and-catch instead of existsSync-then-read: a check-then-use pair is a
+// CodeQL `js/file-system-race`. ENOENT means the iOS project isn't present
+// (non-iOS checkout) -- skip silently; any other error is real, so rethrow.
+let pbxBody;
+try {
+  pbxBody = readFileSync(PBXPROJ, 'utf8');
+} catch (e) {
+  if (e.code !== 'ENOENT') throw e;
+}
+if (pbxBody !== undefined) {
+  const stamped = stampPbxprojVersion(pbxBody, next);
+  if (stamped !== pbxBody) {
     writeFileSync(PBXPROJ, stamped);
     console.log(`  ./ui/ios/App/App.xcodeproj/project.pbxproj: MARKETING_VERSION → ${next}`);
   }

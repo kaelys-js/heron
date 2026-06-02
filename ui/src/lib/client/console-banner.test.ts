@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { buildConsoleBanner } from './console-banner';
+import { describe, it, expect, vi } from 'vitest';
+import { buildConsoleBanner, installConsoleBanner } from './console-banner';
 
 const base = {
   displayName: 'Heron',
@@ -72,6 +72,35 @@ describe('buildConsoleBanner', () => {
       const pct = (fmt.match(/%c/g) ?? []).length;
       // args = [format, ...styles]; one style string per %c.
       expect(c.args.length - 1).toBe(pct);
+    }
+  });
+});
+
+describe('installConsoleBanner (side effect)', () => {
+  it('prints the banner to the console once and is idempotent across re-mounts', () => {
+    // WHY: the banner must surface the build identity to the console, but exactly
+    // ONCE -- HMR / layout re-mounts must not spam it (module-flag guarded).
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // A request-id meta exercises the dev correlation line inside the install path.
+    const meta = document.createElement('meta');
+    meta.setAttribute('name', 'x-request-id');
+    meta.setAttribute('content', 'req-test');
+    document.head.appendChild(meta);
+    try {
+      installConsoleBanner();
+      const writes = () =>
+        logSpy.mock.calls.length + infoSpy.mock.calls.length + warnSpy.mock.calls.length;
+      const firstCount = writes();
+      expect(firstCount).toBeGreaterThan(0); // it actually printed
+      installConsoleBanner(); // second call is suppressed by the `installed` flag
+      expect(writes()).toBe(firstCount);
+    } finally {
+      logSpy.mockRestore();
+      infoSpy.mockRestore();
+      warnSpy.mockRestore();
+      meta.remove();
     }
   });
 });

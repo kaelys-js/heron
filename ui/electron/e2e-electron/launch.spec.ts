@@ -143,22 +143,15 @@ test('recovers after a renderer-process crash (iOS BootFailureView parity)', asy
       async () =>
         app!.evaluate(({ BrowserWindow }) => {
           const w = BrowserWindow.getAllWindows()[0];
-          if (!w) {
-            return 'no-window';
-          }
-          return JSON.stringify({
-            crashed: w.webContents.isCrashed(),
-            url: w.webContents.getURL(),
-          });
+          // Recovery is complete only when the renderer is no longer crashed AND
+          // the real app URL has reloaded. Checking the URL alone can pass while
+          // the renderer is still crashed mid-recovery, so the test could go
+          // green on a regression that never actually recovers.
+          return !!w && !w.webContents.isCrashed() && w.webContents.getURL().includes('127.0.0.1');
         }),
       { timeout: 20_000, message: 'window did not recover after renderer crash' },
     )
-    .toContain('127.0.0.1');
-
-  const crashed = await app!.evaluate(({ BrowserWindow }) =>
-    BrowserWindow.getAllWindows()[0]?.webContents.isCrashed(),
-  );
-  expect(crashed).toBe(false);
+    .toBe(true);
 });
 
 test('main process registers the get-server-url IPC handler', async () => {

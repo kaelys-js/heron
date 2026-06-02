@@ -17,6 +17,11 @@ const __readFileSync = vi.fn();
 const __writeFileSync = vi.fn();
 const __mkdirSync = vi.fn();
 const __mockFiles = new Map<string, string>();
+// Captured so the runScheduleNow test can AWAIT the fire-and-forget runTask path
+// deterministically (otherwise runTask's async fan-out races coverage -- it was
+// the dominant source of flaky `autopilot.ts` line-coverage between runs).
+const __runScan = vi.fn();
+const __listProfilesForUser = vi.fn<(uid: string) => Array<{ slug: string }>>(() => []);
 
 vi.mock('node:fs', () => ({
   default: {
@@ -50,7 +55,7 @@ vi.mock('./events', () => ({
 
 vi.mock('./orchestrator', () => ({
   listRunning: vi.fn(() => []),
-  runScan: vi.fn(),
+  runScan: (slug?: string) => __runScan(slug),
   runGemini: vi.fn(),
   runLinkedInApply: vi.fn(),
   runAutoEval: vi.fn(() => Promise.resolve()),
@@ -61,6 +66,14 @@ vi.mock('./jobs', () => ({
   runById: vi.fn(),
   list: vi.fn(() => []),
   isRunning: vi.fn(() => false),
+}));
+
+// runTask's `scan` (no profileId) path fans out via runScanForCurrentUsersProfiles,
+// which does `await import('./profiles-db')`. Mock it so that dynamic import is
+// deterministic (the real module pulls in drizzle + the DB and made the async
+// fan-out -- and thus its coverage -- race between runs).
+vi.mock('./profiles-db', () => ({
+  listProfilesForUser: (uid: string) => __listProfilesForUser(uid),
 }));
 
 vi.mock('./job-last-run', () => ({
@@ -74,6 +87,11 @@ beforeEach(() => {
   __writeFileSync.mockReset();
   __mkdirSync.mockReset();
   __mockFiles.clear();
+  __runScan.mockClear();
+  __listProfilesForUser.mockReset();
+  // Two profiles -> runScanForCurrentUsersProfiles takes the fan-out LOOP path
+  // (the bulk of the previously-flaky lines), deterministically every run.
+  __listProfilesForUser.mockReturnValue([{ slug: 'p1' }, { slug: 'p2' }]);
   __existsSync.mockImplementation((p: string) => __mockFiles.has(p));
   __readFileSync.mockImplementation((p: string) => {
     if (__mockFiles.has(p)) {
@@ -313,11 +331,17 @@ describe('runScheduleNow', () => {
     readConfig();
     const cfg = readConfig();
     const dailySched = cfg.schedules.find((s) => s.trigger.type === 'daily');
-    if (dailySched) {
-      patchConfig({ schedules: [{ ...dailySched, enabled: true }] });
-      const r = runScheduleNow(dailySched.id);
-      expect(r.ok).toBe(true);
-      expect(r.message).toContain('Triggered');
-    }
+    expect(dailySched).toBeTruthy();
+    patchConfig({ schedules: [{ ...dailySched!, enabled: true }] });
+    const r = runScheduleNow(dailySched!.id);
+    expect(r.ok).toBe(true);
+    expect(r.message).toContain('Triggered');
+    // runScheduleNow fires runTask FIRE-AND-FORGET. Await its async fan-out
+    // (scan -> runScanForCurrentUsersProfiles -> per-profile runScan) so the path
+    // runs deterministically before the suite ends. Without this await the body
+    // raced the coverage snapshot -- the dominant source of run-to-run flake in
+    // autopilot.ts line coverage.
+    await vi.waitFor(() => expect(__runScan).toHaveBeenCalled());
+    expect(__runScan).toHaveBeenCalledTimes(2); // one runScan per mocked profile
   });
 });

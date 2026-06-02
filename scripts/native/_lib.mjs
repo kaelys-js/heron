@@ -121,16 +121,19 @@ export function runParallel(cmds) {
         stdio: 'inherit',
         env: process.env,
       });
-      child.on('exit', (code) => {
+      child.on('exit', (code, signal) => {
         if (settled) {
           return;
         }
         remaining--;
-        const action = runParallelExitAction({ code: code ?? 0, leader: !!leader, remaining });
+        // A signal-based exit (SIGTERM/SIGKILL) reports code=null; treat it as
+        // a failure (exit 1) instead of letting `code ?? 0` read it as success.
+        const exitCode = signal ? 1 : (code ?? 0);
+        const action = runParallelExitAction({ code: exitCode, leader: !!leader, remaining });
         if (action === 'fail') {
           settled = true;
           killAll();
-          reject(new Error(`${label ?? cmd} exited ${code}`));
+          reject(new Error(`${label ?? cmd} exited ${signal ? `via ${signal}` : code}`));
         } else if (action === 'done' || action === 'quiet') {
           settled = true;
           killAll();

@@ -21,7 +21,7 @@
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { encodeMascot, mascotB64Path } from './brand-mascot.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -244,6 +244,9 @@ export async function recenterByCentroid(rgba, width, height, size, margin = 0.8
  * Returns counts for logging.
  */
 export async function cleanSilhouette(rawPath, outPath) {
+  // Ensure the output dir exists before writing -- a fresh checkout may not have
+  // branding/assets yet. mkdirSync recursive is a no-op when it already exists.
+  mkdirSync(dirname(outPath), { recursive: true });
   const { data, info } = await sharp(rawPath)
     .ensureAlpha()
     .raw()
@@ -301,6 +304,7 @@ export async function cleanSilhouette(rawPath, outPath) {
  * counts for logging.
  */
 export async function cleanMaster(rawPath, outPath, { trim = true } = {}) {
+  mkdirSync(dirname(outPath), { recursive: true });
   const { data, info } = await sharp(rawPath)
     .ensureAlpha()
     .raw()

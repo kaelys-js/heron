@@ -5,7 +5,7 @@
  * product kind (R6-bell -- technical stays quiet), markRead / markAllRead,
  * clear, reportClientError now delegating to the canonical technical reporter.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BRAND_EVENTS } from '$lib/client/brand';
 
 const toastCalls = { error: [] as any[], warning: [] as any[], success: [] as any[] };
@@ -17,6 +17,15 @@ vi.mock('svelte-sonner', () => ({
   },
 }));
 vi.mock('$app/environment', () => ({ browser: true }));
+
+// Mock the SSE client wrapper so init()/connect()/destroy() are exercised without
+// a real EventSource. We capture the callbacks createSseClient is handed so the
+// test can drive onOpen/onMessage/onError deterministically.
+const sseClose = vi.fn();
+const createSseClientMock = vi.fn((_url: string, _opts: unknown) => ({ close: sseClose }));
+vi.mock('./client/sse-client', () => ({
+  createSseClient: (url: string, opts: unknown) => createSseClientMock(url, opts),
+}));
 
 // reportClientError is now a thin wrapper over error-reporter's report().
 // Mock report so we can assert delegation (and confirm reportClientError no
@@ -280,5 +289,125 @@ describe('reportClientError — thin technical wrapper', () => {
   it('falls back to the title for userAction when no extra.message', () => {
     reportClientError('test', 'TitleAsAction', new Error('e'));
     expect(reportMock.mock.calls[0][0].context.userAction).toBe('TitleAsAction');
+  });
+});
+
+describe('notifications.refreshRunning', () => {
+  beforeEach(() => {
+    notifications.clear();
+    notifications.runningTasks = [];
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('populates runningTasks from a top-level {running} array', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, json: async () => ({ running: ['a', 'b'] }) })),
+    );
+    await notifications.refreshRunning();
+    expect(notifications.runningTasks).toEqual(['a', 'b']);
+  });
+
+  it('reads the nested {data:{running}} envelope shape', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, json: async () => ({ data: { running: ['x'] } }) })),
+    );
+    await notifications.refreshRunning();
+    expect(notifications.runningTasks).toEqual(['x']);
+  });
+
+  it('keeps the prior list on a non-ok response', async () => {
+    notifications.runningTasks = ['keep'];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false })),
+    );
+    await notifications.refreshRunning();
+    expect(notifications.runningTasks).toEqual(['keep']);
+  });
+
+  it('swallows a fetch rejection (offline) without throwing or clearing', async () => {
+    notifications.runningTasks = ['keep'];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('offline');
+      }),
+    );
+    await expect(notifications.refreshRunning()).resolves.toBeUndefined();
+    expect(notifications.runningTasks).toEqual(['keep']);
+  });
+});
+
+describe('notifications.fireToast — Details action', () => {
+  beforeEach(() => {
+    notifications.clear();
+    toastCalls.error.length = 0;
+  });
+
+  it('the error toast exposes a Details action that opens the notifications panel', () => {
+    // WHY: an error toast must give the user a route into the bell/diagnostics;
+    // the action dispatches the brand openNotifications event the shell listens for.
+    const fired: number[] = [];
+    const h = () => fired.push(1);
+    window.addEventListener(BRAND_EVENTS.openNotifications, h);
+    notifications.add(makeEvent({ id: 'd', level: 'error', title: 'E' }), { autoToast: true });
+    const action = toastCalls.error[0].opts.action;
+    expect(action.label).toBe('Details');
+    action.onClick();
+    expect(fired).toHaveLength(1);
+    window.removeEventListener(BRAND_EVENTS.openNotifications, h);
+  });
+});
+
+describe('notifications.init / connect / destroy', () => {
+  beforeEach(() => {
+    notifications.destroy();
+    createSseClientMock.mockClear();
+    sseClose.mockClear();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, json: async () => ({ running: [] }) })),
+    );
+  });
+  afterEach(() => {
+    notifications.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('init opens one SSE client against /api/stream and ingests messages', async () => {
+    notifications.clear();
+    notifications.init();
+    await vi.waitFor(() => expect(createSseClientMock).toHaveBeenCalledTimes(1));
+    expect(createSseClientMock.mock.calls[0][0]).toBe('/api/stream');
+    const cbs = createSseClientMock.mock.calls[0][1] as {
+      onOpen: () => void;
+      onMessage: (e: { data: string }) => void;
+      onError: () => void;
+    };
+    cbs.onOpen();
+    expect(notifications.connected).toBe('open');
+    expect(notifications.hasEverConnected).toBe(true);
+    cbs.onMessage({ data: JSON.stringify(makeEvent({ id: 'sse-1' })) });
+    expect(notifications.events.some((e) => e.id === 'sse-1')).toBe(true);
+    cbs.onMessage({ data: 'not-json' }); // malformed payload is tolerated, not thrown
+    cbs.onError();
+    expect(notifications.connected).toBe('error');
+  });
+
+  it('init is idempotent — a second call does not open a second client', async () => {
+    notifications.init();
+    await vi.waitFor(() => expect(createSseClientMock).toHaveBeenCalledTimes(1));
+    notifications.init();
+    expect(createSseClientMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroy closes the SSE client and is safe to call again', async () => {
+    notifications.init();
+    await vi.waitFor(() => expect(createSseClientMock).toHaveBeenCalledTimes(1));
+    notifications.destroy();
+    expect(sseClose).toHaveBeenCalledTimes(1);
+    expect(() => notifications.destroy()).not.toThrow(); // null client guard
   });
 });

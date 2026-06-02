@@ -120,17 +120,24 @@ class Bus extends EventEmitter {
 
   private rotateIfNeeded(): void {
     try {
-      // Race-free size check: stat directly; ENOENT means no log yet.
-      // CodeQL flagged the previous `existsSync -> statSync` form as
-      // `js/file-system-race`.
+      // Open-then-fstat the fd rather than statSync on the path: binding the
+      // size read to an fd (not a path) drops the path-check -> path-use pair
+      // that CodeQL reports as `js/file-system-race`. loadFromDisk() uses the
+      // same form. ENOENT at open means no log yet.
       let size: number;
+      let fd: number;
       try {
-        ({ size } = fs.statSync(LOG_FILE));
+        fd = fs.openSync(LOG_FILE, 'r');
       } catch (e) {
         if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
           return;
         }
         throw e;
+      }
+      try {
+        ({ size } = fs.fstatSync(fd));
+      } finally {
+        fs.closeSync(fd);
       }
       if (size <= MAX_LOG_BYTES) {
         return;

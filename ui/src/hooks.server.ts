@@ -92,15 +92,31 @@ if (typeof process !== 'undefined') {
  *   /_app/*            -- SvelteKit's hashed bundle assets (served by adapter-node)
  *   /assets/*, /static/*, /branding/* -- static folders
  */
-const PUBLIC_PREFIXES = [
+// Static-asset / namespace prefixes matched by startsWith. These serve public
+// files or a whole namespace and never per-user state, so a broad match is safe.
+// `/favicon` + `/apple-touch-icon` are FILENAME stems (e.g. /favicon.ico,
+// /apple-touch-icon-precomposed.png), so they MUST stay startsWith, not segment.
+const PUBLIC_DIR_PREFIXES = [
   '/api/auth/',
+  '/api/onboarding/',
+  '/favicon',
+  '/apple-touch-icon',
+  '/_app/',
+  '/assets/',
+  '/static/',
+  '/branding/',
+];
+
+// Public ROUTES matched by exact path OR an exact segment boundary (prefix + '/')
+// -- never a bare startsWith. This is the auth guard, so '/api/vitals' must not
+// also make '/api/vitals-anything' public (a startsWith would widen the gate).
+const PUBLIC_ROUTES = [
   '/login',
   '/signup',
   '/about',
   '/onboarding',
   '/api/health',
   '/api/discover',
-  '/api/onboarding/',
   // web-vitals beacons fire before auth hydration (on the login/signup pages
   // themselves), and the handler writes no per-user state. Without this the
   // guard 401s every beacon -> console-error noise on every cold load.
@@ -110,14 +126,8 @@ const PUBLIC_PREFIXES = [
   // (never Issues), so a 401 here would just spam console-errors on the very
   // errors we're trying to capture.
   '/api/telemetry',
-  '/favicon',
   '/robots.txt',
   '/manifest.webmanifest',
-  '/apple-touch-icon',
-  '/_app/',
-  '/assets/',
-  '/static/',
-  '/branding/',
 ];
 
 function isPublicPath(pathname: string, devServer: boolean): boolean {
@@ -133,8 +143,13 @@ function isPublicPath(pathname: string, devServer: boolean): boolean {
   if (devServer && (pathname === '/dev' || pathname.startsWith('/dev/'))) {
     return true;
   }
-  for (const prefix of PUBLIC_PREFIXES) {
-    if (pathname === prefix || pathname.startsWith(prefix)) {
+  for (const prefix of PUBLIC_DIR_PREFIXES) {
+    if (pathname.startsWith(prefix)) {
+      return true;
+    }
+  }
+  for (const route of PUBLIC_ROUTES) {
+    if (pathname === route || pathname.startsWith(`${route}/`)) {
       return true;
     }
   }

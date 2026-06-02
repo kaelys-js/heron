@@ -664,7 +664,7 @@ jobs:
       # forced crash, and the IPC + lifecycle handlers are wired. This was
       # previously documented as a CI job but never actually added, so the
       # launch path shipped untested. Electron needs a display on Linux, so
-      # it runs under xvfb (installed by the Playwright --with-deps step above).
+      # it runs under xvfb (pre-installed on GitHub's ubuntu-latest runners).
       - name: Electron E2E (launch + crash recovery)
         if: needs.changes.outputs.ts == 'true'
         run: xvfb-run -a pnpm --filter heron-electron test:e2e

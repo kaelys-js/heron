@@ -92,10 +92,13 @@ function inlineMarkup(escaped: string): string {
   // the entities esc() introduced so shell.openExternal gets the real href,
   // and re-esc() it into the data-href attribute defensively.
   out = out.replace(/https:\/\/[^\s<]+/g, (m) => {
+    // Reverse esc() in the inverse order it escaped: decode the `&`-prefixed
+    // entities (&#39;, &quot;) FIRST and `&amp;` LAST. Decoding &amp; first
+    // would turn `&amp;#39;` into `&#39;` and then into `'` -- a double-unescape.
     const raw = m
-      .replace(/&amp;/g, '&')
       .replace(/&#39;/g, "'")
-      .replace(/&quot;/g, '"');
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&');
     return `<button class="cl-link" type="button" data-href="${esc(raw)}">${m}</button>`;
   });
   return out;

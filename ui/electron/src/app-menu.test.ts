@@ -456,14 +456,21 @@ describe('buildAppMenu -- Help menu Release channel submenu', () => {
 });
 
 describe('buildAppMenu -- File menu', () => {
-  it('File menu has no in-app nav items (Import URL / Open Pipeline removed)', async () => {
+  // WHY: with no auth route, the File menu must collapse to the SINGLE standard
+  // platform action (close on macOS, quit elsewhere) -- the design keeps in-app
+  // navigation out of the native menu. Asserting the exact length + role fails
+  // if any new File item is added, where a `not.toContain(...)` check would not.
+  it('File menu is limited to the standard platform close/quit action', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const labels = fileMenu.submenu.map((s: { label?: string }) => s.label).filter(Boolean);
-    expect(labels).not.toContain('Import URL…');
-    expect(labels).not.toContain('Open Pipeline');
+    for (const platform of ['darwin', 'linux'] as const) {
+      setPlatform(platform);
+      buildAppMenu(handlers());
+      const template = __buildFromTemplate.mock.calls.at(-1)![0];
+      const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
+      const actionable = fileMenu.submenu.filter((s: { type?: string }) => s.type !== 'separator');
+      expect(actionable).toHaveLength(1);
+      expect(actionable[0].role).toBe(platform === 'darwin' ? 'close' : 'quit');
+    }
   });
 });
 

@@ -86,7 +86,15 @@ for (const p of ['ui/src/routes/login/+page.svelte', 'ui/src/routes/signup/+page
 // 3. iOS launch storyboard bg == splashBg (matches the Splash.imageset PNG).
 const sb = read('ui/ios/App/App/Base.lproj/LaunchScreen.storyboard');
 const m = /^#?([0-9a-fA-F]{6})$/.exec(splashBg);
-if (sb && m) {
+// Fail closed: a missing storyboard or an unparseable splashBg must be a hard
+// error, not a silent skip that lets the verifier go green without checking.
+if (sb == null) {
+  errors.push(
+    'ui/ios/App/App/Base.lproj/LaunchScreen.storyboard: missing or unreadable (cannot verify launch bg)',
+  );
+} else if (!m) {
+  errors.push(`splashBg is not a valid 6-hex color (got "${splashBg}")`);
+} else {
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255);
   const want = `red="${r}" green="${g}" blue="${b}"`;
   if (!norm(sb).includes(want)) {

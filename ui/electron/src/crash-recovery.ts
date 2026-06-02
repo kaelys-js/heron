@@ -121,6 +121,11 @@ export type CrashRecoveryOptions = {
 export function wireCrashRecovery(win: BrowserWindow, opts: CrashRecoveryOptions): void {
   const crashes: number[] = [];
   const quit = opts.quit ?? (() => app.quit());
+  // Pending auto-reload from a non-looping crash. Tracked so crash-loop
+  // escalation can cancel it -- otherwise a timer armed by an earlier crash
+  // fires a reload while the Reload/Quit dialog is still up, contradicting the
+  // user's choice.
+  let reloadTimer: ReturnType<typeof setTimeout> | null = null;
 
   const showRecovery = (looping: boolean) => {
     if (win.isDestroyed()) {
@@ -145,7 +150,12 @@ export function wireCrashRecovery(win: BrowserWindow, opts: CrashRecoveryOptions
     showRecovery(looping);
 
     if (looping) {
-      // Stop auto-reloading into the same crash; let the user decide.
+      // Stop auto-reloading into the same crash; let the user decide. Cancel any
+      // reload armed by an earlier crash so it can't fire while the dialog is up.
+      if (reloadTimer) {
+        clearTimeout(reloadTimer);
+        reloadTimer = null;
+      }
       void dialog
         .showMessageBox(win, {
           type: 'error',
@@ -158,8 +168,13 @@ export function wireCrashRecovery(win: BrowserWindow, opts: CrashRecoveryOptions
         })
         .then(({ response }) => (response === 0 ? opts.reload() : quit()));
     } else {
-      // Brief pause so the recovery screen paints, then reload the app.
-      setTimeout(() => {
+      // Brief pause so the recovery screen paints, then reload the app. Replace
+      // any prior pending reload so rapid crashes don't stack timers.
+      if (reloadTimer) {
+        clearTimeout(reloadTimer);
+      }
+      reloadTimer = setTimeout(() => {
+        reloadTimer = null;
         if (!win.isDestroyed()) {
           opts.reload();
         }

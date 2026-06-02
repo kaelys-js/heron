@@ -357,39 +357,11 @@ function applyDockIdentity(): void {
   await myCapacitorApp.init();
   state.mainWindow = myCapacitorApp.getMainWindow();
 
-  // Global crash recovery (iOS BootFailureView parity): if the renderer
-  // process dies, show a branded recovery screen + auto-reload (with a
-  // crash-loop guard) instead of leaving a blank window.
+  // Crash recovery (iOS BootFailureView parity) + brand title postfix, extracted
+  // into wireMainWindowBehavior so app.on('activate') re-wires a recreated window
+  // with the same protections instead of leaving it bare.
   if (state.mainWindow) {
-    wireCrashRecovery(state.mainWindow, {
-      displayName: BRAND.displayName,
-      colors: BRAND.colors,
-      logoDataUri: readLogoDataUri(app.getAppPath()),
-      reload: () => {
-        void myCapacitorApp.reload();
-      },
-    });
-
-    // Always postfix the window title with the brand ("<page> -- Heron"), so the
-    // OS title bar / window switcher shows the app name regardless of what the
-    // page set. We own the title (preventDefault) instead of mirroring the
-    // raw document.title.
-    const win = state.mainWindow;
-    const applyTitle = (raw: string): void => {
-      const t = (raw ?? '').trim();
-      const next =
-        t && t !== BRAND.displayName && !t.includes(BRAND.displayName)
-          ? `${t} — ${BRAND.displayName}`
-          : t || BRAND.displayName;
-      if (!win.isDestroyed()) {
-        win.setTitle(next);
-      }
-    };
-    win.webContents.on('page-title-updated', (e, title) => {
-      e.preventDefault();
-      applyTitle(title);
-    });
-    applyTitle(win.getTitle());
+    wireMainWindowBehavior(state.mainWindow);
   }
 
   // Inject embedded URL into the WebView via window.__HERON__
@@ -861,6 +833,42 @@ function applyDockIdentity(): void {
   });
 })();
 
+/** Per-window behaviour that must be re-applied whenever the main window is
+ *  (re)created -- both at first launch and after app.on('activate') re-init:
+ *  renderer-crash recovery (iOS BootFailureView parity) + the brand title
+ *  postfix. A recreated window that skips this is left with no crash recovery
+ *  and a bare OS title. */
+function wireMainWindowBehavior(win: BrowserWindow): void {
+  wireCrashRecovery(win, {
+    displayName: BRAND.displayName,
+    colors: BRAND.colors,
+    logoDataUri: readLogoDataUri(app.getAppPath()),
+    reload: () => {
+      void myCapacitorApp.reload();
+    },
+  });
+
+  // Always postfix the window title with the brand ("<page> -- Heron"), so the
+  // OS title bar / window switcher shows the app name regardless of what the
+  // page set. We own the title (preventDefault) instead of mirroring the raw
+  // document.title.
+  const applyTitle = (raw: string): void => {
+    const t = (raw ?? '').trim();
+    const next =
+      t && t !== BRAND.displayName && !t.includes(BRAND.displayName)
+        ? `${t} — ${BRAND.displayName}`
+        : t || BRAND.displayName;
+    if (!win.isDestroyed()) {
+      win.setTitle(next);
+    }
+  };
+  win.webContents.on('page-title-updated', (e, title) => {
+    e.preventDefault();
+    applyTitle(title);
+  });
+  applyTitle(win.getTitle());
+}
+
 app.on('window-all-closed', () => {
   // Close == quit on EVERY platform (including macOS). The user expects
   // closing the window to quit the app, not leave it running invisibly in the
@@ -874,6 +882,11 @@ app.on('activate', async () => {
   if (myCapacitorApp.getMainWindow().isDestroyed()) {
     await myCapacitorApp.init();
     state.mainWindow = myCapacitorApp.getMainWindow();
+    // Re-wire the recreated window: a fresh BrowserWindow has no crash recovery
+    // or title postfix until we re-apply them.
+    if (state.mainWindow) {
+      wireMainWindowBehavior(state.mainWindow);
+    }
   } else {
     state.mainWindow?.show();
   }

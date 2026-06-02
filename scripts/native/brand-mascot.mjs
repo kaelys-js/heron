@@ -96,5 +96,17 @@ export async function encodeSilhouette(rootDir, size) {
 
 /** Read the committed embeds synchronously (for apply-brand + splash-spec). */
 export function readMascotB64(rootDir) {
-  return JSON.parse(readFileSync(mascotB64Path(rootDir), 'utf8'));
+  const path = mascotB64Path(rootDir);
+  // Read-and-catch (not existsSync-then-read, which is a TOCTOU file-system
+  // race): turn a bare ENOENT into an actionable message naming the fix.
+  let raw;
+  try {
+    raw = readFileSync(path, 'utf8');
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      throw new Error(`Missing ${path}. Run "pnpm mascot" to regenerate the mascot embeds.`);
+    }
+    throw e;
+  }
+  return JSON.parse(raw);
 }
