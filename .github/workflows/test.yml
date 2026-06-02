@@ -766,13 +766,18 @@ jobs:
       - name: Ensure Electron binary present
         run: |
           set -euo pipefail
-          if [ ! -s node_modules/electron/path.txt ] || [ ! -d node_modules/electron/dist ]; then
-            echo "electron binary missing after install; fetching via @electron/get"
-            node node_modules/electron/install.js
+          # _electron.launch() resolves the binary via require('electron') from
+          # the heron-electron workspace (electron is declared there, not at the
+          # repo root). Check it resolves to a file that exists; if a cache-miss
+          # or shared pnpm store left node_modules/.pnpm/electron without its
+          # dist, pnpm rebuild re-runs the @electron/get postinstall (fast on a
+          # warm ~/.cache/electron) to repopulate it.
+          check() { pnpm --filter heron-electron exec node -e "const p=require('electron'); process.exit(require('fs').existsSync(p)?0:3)" >/dev/null 2>&1; }
+          if ! check; then
+            echo "electron binary missing; rebuilding via pnpm"
+            pnpm rebuild electron
           fi
-          test -s node_modules/electron/path.txt
-          test -d node_modules/electron/dist
-          echo "OK electron binary present: $(cat node_modules/electron/path.txt)"
+          pnpm --filter heron-electron exec node -e "const p=require('electron'); if(!require('fs').existsSync(p)){throw new Error('electron binary still missing: '+p)}; console.log('OK electron binary:', p)"
 
       # apply-brand regenerates the generated brand.ts the electron main
       # process + tests import. The electron vitest reads it at module load.

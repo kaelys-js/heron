@@ -89,14 +89,15 @@ test.describe('Mobile UI', () => {
       // Bell trigger MUST be present on mobile -- the NotificationsBell
       // component renders it on every authenticated page.
       await expect(bell).toBeVisible({ timeout: 5000 });
-      // force: true bypasses Playwright's "stable + not-intercepted" check.
-      // On the mobile-chrome viewport an icon overlay from the ThemeToggle
-      // (z-50 sibling) intermittently sits over the bell during the animated
-      // theme-icon morph; the underlying bell IS clickable + the click
-      // does open the Sheet correctly. We force here because the test
-      // intent is "did the bell's click handler fire" not "is the bell
-      // 100% unoccluded at the moment of click".
-      await bell.click({ force: true });
+      // The e2e preview's autopilot scan spawns transient ERROR toasts
+      // (Glassdoor/ZipRecruiter have no API keys in CI) that stack in the
+      // header region. A coordinate click -- even force: true -- dispatches
+      // at the bell's center, so a toast sitting on top intercepts it and
+      // the bell's handler never fires (the failure mode this test hit:
+      // nothing opened). Fire the trigger's own click handler directly on
+      // the element instead; that exercises the intent ("did the bell's
+      // click handler fire") regardless of any transient overlay.
+      await bell.evaluate((el) => (el as HTMLElement).click());
       // The mobile bell uses bits-ui Sheet -- its open content carries
       // `data-state="open"` once the open transition completes. Tolerate
       // either the bits-ui state attribute OR a generic role=dialog (the
