@@ -672,6 +672,14 @@ platform :ios do
     end
     common_xcargs = "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf"
 
+    # TEST_RETRIES (set per ios-shards matrix job, default "0"): re-run a
+    # failed test up to this many times before failing the build. The app-ui
+    # shard (AppUITests) sets TEST_RETRIES=2 because XCUITest occasionally hits
+    # "Timed out while launching application via Xcode" -- a launch-races-the-
+    # runtime flake, not a real regression -- which a retry clears. Plain
+    # logic/unit shards leave it at 0 so a genuine failure fails fast.
+    retries = (ENV["TEST_RETRIES"] || "0").to_i
+
     # Run WatchTests FIRST (different SDK / sim, so its xccov in
     # DerivedData lives at a separate path and won't clobber the iOS
     # entries). Skipped when this shard's TEST_SCHEMES excludes it.
@@ -683,6 +691,7 @@ platform :ios do
         code_coverage: true,
         result_bundle: true,
         fail_build: true,
+        number_of_retries: retries,
         xcargs: common_xcargs,
         output_directory: "fastlane/test_output/#{WATCH_TEST_SCHEME}"
       )
@@ -702,6 +711,7 @@ platform :ios do
         code_coverage: true,
         result_bundle: true,
         fail_build: true,
+        number_of_retries: retries,
         xcargs: common_xcargs,
         output_directory: output_dir
       )

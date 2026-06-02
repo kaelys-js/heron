@@ -31,6 +31,12 @@ import { PREVIEW_BASE_URL, PREVIEW_PORT } from './e2e/_helpers/preview-server';
 
 const CI = !!process.env.CI;
 
+// When the CI e2e job has already built the app (downloaded the
+// `ts-build-output` artifact into ui/build + ui/.svelte-kit) it sets
+// PLAYWRIGHT_REUSE_BUILD=1 so the webServer skips the redundant
+// `pnpm --filter ui build` and boots `vite preview` straight away.
+const REUSE_BUILD = process.env.PLAYWRIGHT_REUSE_BUILD === '1';
+
 // Stable per-run tmpdir for the e2e seed. globalSetup creates this dir
 // + seeds auth.db; the webServer reads it as HERON_DATA_DIR via the
 // `env:` block below. CI uses a single fixed name per checkout
@@ -50,15 +56,14 @@ export default defineConfig({
   // Per-test budget. The default is 30s; on CI the WebKit-family engines
   // (webkit / mobile-safari) cold-start + reload slower, so give a margin.
   timeout: CI ? 45_000 : 30_000,
-  // Parallel workers: CI runs all 5 browser projects in ONE monolithic job
-  // (the test.yml E2E step is not sharded). workers=1 there: the runner has
-  // 2 cores, and running two WebKit-family browsers (webkit + mobile-safari)
-  // concurrently starved each so theme-toggle / mobile-Sheet / web-vitals
-  // tests hit the 30s timeout or their internal 5-10s waits. Serial CI runs
-  // are slower but stable. Local dev keeps the Playwright default (CPU/2) for
-  // snappy reruns. To regain CI parallelism, shard across matrix runners:
-  // bump to `workers: 4` and add `--shard ${{ matrix.shard }}/4` in test.yml.
-  workers: CI ? 1 : undefined,
+  // Parallel workers: CI now shards e2e by PROJECT across separate
+  // matrix runners (one browser per runner via --project), so a single
+  // runner never runs two WebKit-family engines (webkit + mobile-safari)
+  // at once. That cross-browser contention -- which previously starved
+  // theme-toggle / mobile-Sheet / web-vitals on a 2-core runner -- is
+  // gone, so each runner can use 2 workers safely. Local dev keeps the
+  // Playwright default (CPU/2) for snappy reruns.
+  workers: CI ? 2 : undefined,
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 
   // Single-run seed lifecycle. globalSetup populates HERON_E2E_DATA_DIR
@@ -84,8 +89,8 @@ export default defineConfig({
     // WebKit with the touch-events + viewport sizes that the responsive
     // breakpoints depend on (Sheet drag, mobile drawer, bottom-nav).
     //
-    // CI runs ALL 5 projects in one job, serially (workers=1, see above).
-    // Local dev runs all 5 too -- the cost is browser boot (~3s/project)
+    // CI runs each project on its own matrix runner (--project=<name>);
+    // local dev runs all 5 -- the cost is browser boot (~3s/project)
     // but a regression in one engine alone is the most common
     // test-failure shape.
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
@@ -96,8 +101,13 @@ export default defineConfig({
   ],
 
   webServer: {
-    // Build first so `vite preview` serves prod-mode artifacts.
-    command: `pnpm --filter ui run build && pnpm --filter ui exec vite preview --port ${PREVIEW_PORT}`,
+    // Build first so `vite preview` serves prod-mode artifacts. When the
+    // CI e2e job has already restored the `ts-build-output` artifact it
+    // sets PLAYWRIGHT_REUSE_BUILD=1; we then skip the redundant build and
+    // boot `vite preview` against the prebuilt ui/build + ui/.svelte-kit.
+    command: REUSE_BUILD
+      ? `pnpm --filter ui exec vite preview --port ${PREVIEW_PORT}`
+      : `pnpm --filter ui run build && pnpm --filter ui exec vite preview --port ${PREVIEW_PORT}`,
     port: PREVIEW_PORT,
     reuseExistingServer: !CI,
     timeout: 180_000, // give the build + preview boot a budget

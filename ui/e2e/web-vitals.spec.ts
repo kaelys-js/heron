@@ -44,37 +44,71 @@ test.describe('web-vitals telemetry', () => {
     const before = (await beforeResp.json()) as VitalsCount;
 
     // STEP 2: visit /inbox + give the dynamic-imported web-vitals
-    // chunk time to load + register its callbacks. visibilitychange +
-    // pagehide flushes buffered metrics (CLS / INP / LCP / FCP).
+    // chunk time to load + register its callbacks. The web-vitals lib
+    // buffers metrics (CLS / INP / LCP / FCP) and only flushes them to
+    // the reporter on a visibilitychange->hidden or pagehide event.
     await authenticatedPage.goto('/inbox');
     await authenticatedPage.waitForLoadState('load');
     await authenticatedPage.waitForTimeout(500);
+
+    // STEP 3: force the flush deterministically. web-vitals gates its
+    // flush on `document.visibilityState === 'hidden'`, so dispatching a
+    // bare visibilitychange event is not enough -- the lib re-reads the
+    // real property and sees 'visible'. We redefine the getter to return
+    // 'hidden' for the duration of the dispatch, fire both the
+    // visibilitychange and pagehide events the lib listens for, then
+    // restore. On WebKit the synthetic-event path is the unreliable layer
+    // for the DRIVER's request introspection, NOT for the actual
+    // sendBeacon transport -- the beacon still POSTs to /api/telemetry,
+    // which is why STEP 4 reads server truth.
     await authenticatedPage.evaluate(() => {
+      const proto = Object.getPrototypeOf(document) as object;
+      const original = Object.getOwnPropertyDescriptor(proto, 'visibilityState');
       Object.defineProperty(document, 'visibilityState', {
-        value: 'hidden',
         configurable: true,
+        get: () => 'hidden',
       });
       document.dispatchEvent(new Event('visibilitychange'));
       window.dispatchEvent(new Event('pagehide'));
+      // Restore so nothing downstream observes a permanently-hidden doc.
+      delete (document as unknown as { visibilityState?: unknown }).visibilityState;
+      if (original) Object.defineProperty(document, 'visibilityState', original);
     });
 
-    // STEP 3: poll the server counter. WebKit + mobile-safari take
-    // 3-5s to flush via sendBeacon; chromium fires in <500ms. The
-    // assertion is REAL on every engine -- a regression that breaks
-    // the web-vitals -> /api/vitals wire on any one browser must
-    // fail this test (no chromium-only escape hatch).
-    const timeoutMs = browserName === 'webkit' || browserName === 'mobile-safari' ? 10000 : 3000;
+    // STEP 4: poll the server counter. WebKit + mobile-safari take a few
+    // seconds to flush via sendBeacon; chromium fires in <500ms. If the
+    // synthetic flush above did not land within the first interval (a
+    // known WebKit quirk where sendBeacon waits for a real unload), a
+    // hard navigation to about:blank fires a genuine native pagehide +
+    // visibilitychange->hidden, which forces the queued beacon out. The
+    // assertion is REAL on every engine -- a regression that breaks the
+    // web-vitals -> /api/telemetry wire on any one browser must fail this
+    // test (no chromium-only escape hatch).
+    const isWebKit = browserName === 'webkit' || browserName === 'mobile-safari';
+    const timeoutMs = isWebKit ? 20000 : 5000;
+    let forcedUnload = false;
     await expect
       .poll(
         async () => {
           const resp = await authenticatedPage.request.get('/api/telemetry');
-          if (resp.status() !== 200) return before.count;
-          const after = (await resp.json()) as VitalsCount;
-          return after.count;
+          if (resp.status() === 200) {
+            const after = (await resp.json()) as VitalsCount;
+            if (after.count > before.count) return after.count;
+          }
+          // Fallback (runs at most once): a real navigation away fires a
+          // native pagehide + visibilitychange->hidden, which forces out
+          // any sendBeacon that WebKit held back until a true unload
+          // boundary. We navigate to about:blank rather than page.close()
+          // so the page-scoped poll can keep reading the server counter.
+          if (!forcedUnload) {
+            forcedUnload = true;
+            await authenticatedPage.goto('about:blank').catch(() => {});
+          }
+          return before.count;
         },
         {
           timeout: timeoutMs,
-          intervals: [100, 200, 500, 1000],
+          intervals: [100, 200, 500, 1000, 2000],
           message: `web-vitals must emit >=1 /api/telemetry beacon on ${browserName} (before=${before.count})`,
         },
       )

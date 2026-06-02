@@ -181,6 +181,8 @@ jobs:
           key: codeql-derived-data-${{ runner.os }}-${{ hashFiles('ui/ios/App/App.xcodeproj/project.pbxproj', 'ui/ios/App/Package.resolved') }}
           restore-keys: |
             codeql-derived-data-${{ runner.os }}-
+            derived-data-${{ runner.os }}-app-tests-
+            derived-data-${{ runner.os }}-
 
       - name: Cache SPM (Swift only)
         if: steps.gate.outputs.should_run == 'true' && matrix.language == 'swift'
@@ -190,6 +192,7 @@ jobs:
           key: codeql-spm-${{ runner.os }}-${{ hashFiles('ui/ios/App/Package.resolved') }}
           restore-keys: |
             codeql-spm-${{ runner.os }}-
+            spm-${{ runner.os }}-
 
       # JavaScript/TypeScript pnpm-store cache. CodeQL's `autobuild`
       # step runs `pnpm install` internally; without this cache that's
