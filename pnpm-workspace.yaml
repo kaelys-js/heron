@@ -30,7 +30,12 @@ packages:
 #                        `pnpm exec msw init ui/static --no-save`.
 #                        Block the welcome-noise auto-run.
 allowBuilds:
-  '@tsparticles/engine': set this to true or false
+  # @tsparticles/engine -- install.js only READS package.json to warn about
+  # incompatible / deprecated sibling packages (particles.js, react-particles,
+  # ...); it builds + downloads nothing. The splash + ambient particles render
+  # from the shipped JS without it. Block the advisory auto-run (like msw). A
+  # non-boolean placeholder here is a fatal ERR_PNPM_IGNORED_BUILDS in CI.
+  '@tsparticles/engine': false
   better-sqlite3: true
   electron: true
   electron-winstaller: true
