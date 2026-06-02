@@ -47,12 +47,18 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: CI,
   retries: CI ? 2 : 0,
-  // Parallel workers: CI runs all 5 browser projects in a single job
-  // with workers=2 (no shard split today -- the test.yml E2E step is
-  // monolithic). Local dev keeps the Playwright default (CPU/2) for
-  // snappy reruns. If we shard across matrix runners later, swap to
-  // `workers: 4` and add `--shard ${{ matrix.shard }}/4` in test.yml.
-  workers: CI ? 2 : undefined,
+  // Per-test budget. The default is 30s; on CI the WebKit-family engines
+  // (webkit / mobile-safari) cold-start + reload slower, so give a margin.
+  timeout: CI ? 45_000 : 30_000,
+  // Parallel workers: CI runs all 5 browser projects in ONE monolithic job
+  // (the test.yml E2E step is not sharded). workers=1 there: the runner has
+  // 2 cores, and running two WebKit-family browsers (webkit + mobile-safari)
+  // concurrently starved each so theme-toggle / mobile-Sheet / web-vitals
+  // tests hit the 30s timeout or their internal 5-10s waits. Serial CI runs
+  // are slower but stable. Local dev keeps the Playwright default (CPU/2) for
+  // snappy reruns. To regain CI parallelism, shard across matrix runners:
+  // bump to `workers: 4` and add `--shard ${{ matrix.shard }}/4` in test.yml.
+  workers: CI ? 1 : undefined,
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 
   // Single-run seed lifecycle. globalSetup populates HERON_E2E_DATA_DIR
@@ -78,10 +84,10 @@ export default defineConfig({
     // WebKit with the touch-events + viewport sizes that the responsive
     // breakpoints depend on (Sheet drag, mobile drawer, bottom-nav).
     //
-    // CI runs ALL 5 projects, sharded across 4 parallel jobs via
-    // --shard=N/4 in test.yml. Local dev runs all 5 too -- the cost is
-    // browser boot (~3s/project) but a regression in one engine alone
-    // is the most common test-failure shape.
+    // CI runs ALL 5 projects in one job, serially (workers=1, see above).
+    // Local dev runs all 5 too -- the cost is browser boot (~3s/project)
+    // but a regression in one engine alone is the most common
+    // test-failure shape.
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
