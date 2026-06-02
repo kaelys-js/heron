@@ -491,7 +491,7 @@
                 <Tabs.Trigger value="interview-panel" class="text-xs h-8 px-3 whitespace-nowrap">
                   <Briefcase class="size-3.5 mr-1.5" /> Panel
                   {#if data.interviewers && data.interviewers.length > 0}
-                    <span class="ml-1.5 rounded bg-zinc-700/50 px-1 text-[11px]"
+                    <span class="ml-1.5 rounded bg-muted px-1 text-[11px]"
                       >{data.interviewers.length}</span
                     >
                   {/if}
@@ -823,7 +823,7 @@
                 <div class="flex items-start justify-between gap-3 flex-wrap">
                   <div class="space-y-1 max-w-2xl">
                     <h3 class="text-sm font-semibold flex items-center gap-1.5">
-                      <Mail class="size-4 text-amber-400" /> Cover letter
+                      <Mail class="size-4 text-accent-strong" /> Cover letter
                     </h3>
                     <p class="text-[11px] text-muted-foreground leading-relaxed">
                       A one-page letter in your own voice, written specifically for this job. Two of
@@ -860,7 +860,7 @@
                   <div
                     class="rounded-md border border-border/40 bg-muted/20 px-3 py-2 flex items-start gap-2"
                   >
-                    <Mail class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <Mail class="size-3.5 text-accent-strong mt-0.5 flex-shrink-0" />
                     <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
                       Saved to
                       <code
@@ -901,7 +901,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div class="rounded-md border border-border/40 bg-card px-3 py-2.5 space-y-1">
                         <h4
-                          class="text-[11px] font-semibold uppercase tracking-wider text-emerald-300/80"
+                          class="text-[11px] font-semibold uppercase tracking-wider text-success/80"
                         >
                           What you get
                         </h4>
@@ -919,7 +919,7 @@
                       </div>
                       <div class="rounded-md border border-border/40 bg-card px-3 py-2.5 space-y-1">
                         <h4
-                          class="text-[11px] font-semibold uppercase tracking-wider text-amber-300/80"
+                          class="text-[11px] font-semibold uppercase tracking-wider text-warning/80"
                         >
                           What's still on you
                         </h4>

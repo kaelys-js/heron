@@ -17,6 +17,7 @@ import {
   waitForServer,
   startEmbeddedServer,
   stopEmbeddedServer,
+  forwardStderrLines,
 } from './server-process';
 import type { ServerHandle } from './server-process';
 
@@ -233,6 +234,109 @@ describe('startEmbeddedServer', () => {
       { env: Record<string, string> },
     ];
     expect(call[2].env.CUSTOM_VAR).toBe('hello');
+  });
+});
+
+// ── forwardStderrLines + onStderrLine wiring ──────────────────────
+describe('forwardStderrLines', () => {
+  function fakeStream() {
+    const handlers: Record<string, (arg: unknown) => void> = {};
+    return {
+      setEncoding: vi.fn(),
+      on: vi.fn((event: string, cb: (arg: unknown) => void) => {
+        handlers[event] = cb;
+      }),
+      emit: (event: string, arg: unknown) => handlers[event]?.(arg),
+    };
+  }
+
+  it('forwards each COMPLETE line, buffering chunks that straddle a newline', () => {
+    // The sink relies on one-entry-per-line; a chunk that ends mid-line must
+    // be held until its newline arrives, or the entry splits across two log
+    // records and a partial line is forwarded as if it were complete.
+    const stream = fakeStream();
+    const onLine = vi.fn();
+    forwardStderrLines({ stderr: stream } as never, onLine);
+    stream.emit('data', 'first line\nsecond ');
+    expect(onLine).toHaveBeenCalledTimes(1);
+    expect(onLine).toHaveBeenCalledWith('first line');
+    stream.emit('data', 'half\n');
+    expect(onLine).toHaveBeenCalledTimes(2);
+    expect(onLine).toHaveBeenCalledWith('second half');
+  });
+
+  it('strips a trailing CR and drops empty lines', () => {
+    const stream = fakeStream();
+    const onLine = vi.fn();
+    forwardStderrLines({ stderr: stream } as never, onLine);
+    stream.emit('data', 'crlf line\r\n\nkept\n');
+    expect(onLine).toHaveBeenCalledTimes(2);
+    expect(onLine).toHaveBeenNthCalledWith(1, 'crlf line');
+    expect(onLine).toHaveBeenNthCalledWith(2, 'kept');
+  });
+
+  it('no-ops when the child has no piped stderr (stdio:inherit gives null)', () => {
+    expect(() => forwardStderrLines({ stderr: null } as never, vi.fn())).not.toThrow();
+  });
+
+  it('keeps reading when the sink callback throws', () => {
+    const stream = fakeStream();
+    const onLine = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error('sink broke');
+      })
+      .mockImplementation(() => {});
+    forwardStderrLines({ stderr: stream } as never, onLine);
+    expect(() => stream.emit('data', 'a\nb\n')).not.toThrow();
+    expect(onLine).toHaveBeenCalledTimes(2);
+  });
+
+  it('survives setEncoding + stream error without throwing', () => {
+    const stream = fakeStream();
+    stream.setEncoding.mockImplementation(() => {
+      throw new Error('non-text stream');
+    });
+    expect(() => forwardStderrLines({ stderr: stream } as never, vi.fn())).not.toThrow();
+    expect(() => stream.emit('error', new Error('mid-write'))).not.toThrow();
+  });
+});
+
+describe('startEmbeddedServer stderr stdio', () => {
+  it("pipes stderr when onStderrLine is wired (else stays 'inherit')", async () => {
+    // 'inherit' sends backend stderr nowhere on disk in a packaged build;
+    // wiring a sink must flip stderr to 'pipe' so it can be captured.
+    const fakeChild = new EventEmitter() as any;
+    fakeChild.kill = vi.fn();
+    fakeChild.killed = false;
+    fakeChild.stderr = { setEncoding: vi.fn(), on: vi.fn() };
+    const forker = vi.fn(() => fakeChild);
+    await startEmbeddedServer({
+      entryPath: '/build/index.js',
+      existsImpl: () => true,
+      portFinder: async () => 12345,
+      forker: forker as any,
+      healthWaiter: async () => true,
+      onStderrLine: vi.fn(),
+    });
+    const opts = forker.mock.calls[0]![2] as { stdio: unknown[] };
+    expect(opts.stdio[2]).toBe('pipe');
+  });
+
+  it("leaves stderr 'inherit' when no sink is wired", async () => {
+    const fakeChild = new EventEmitter() as any;
+    fakeChild.kill = vi.fn();
+    fakeChild.killed = false;
+    const forker = vi.fn(() => fakeChild);
+    await startEmbeddedServer({
+      entryPath: '/build/index.js',
+      existsImpl: () => true,
+      portFinder: async () => 12345,
+      forker: forker as any,
+      healthWaiter: async () => true,
+    });
+    const opts = forker.mock.calls[0]![2] as { stdio: unknown[] };
+    expect(opts.stdio[2]).toBe('inherit');
   });
 });
 

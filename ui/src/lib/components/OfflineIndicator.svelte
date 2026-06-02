@@ -156,10 +156,10 @@
     <button
       type="button"
       onclick={retry}
-      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-3 py-1 text-[11px] font-medium text-amber-100 backdrop-blur-md transition-all duration-150 hover:bg-amber-500/25 active:scale-[0.97] active:bg-amber-500/35"
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/15 px-3 py-1 text-[11px] font-medium text-primary backdrop-blur-md transition-all duration-150 hover:bg-primary/25 active:scale-[0.97] active:bg-primary/35"
       aria-label="Offline — tap to retry"
     >
-      <span class="size-1.5 rounded-full bg-amber-400/90"></span>
+      <span class="size-1.5 rounded-full bg-primary/90"></span>
       Offline · Tap to retry
     </button>
   </div>
@@ -171,7 +171,7 @@
     transition:fade={{ duration: 200 }}
   >
     <div
-      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-medium text-emerald-100 backdrop-blur-md"
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/15 px-3 py-1 text-[11px] font-medium text-success backdrop-blur-md"
     >
       <span class="size-1.5 rounded-full bg-emerald-400/90"></span>
       Online
@@ -185,7 +185,7 @@
     transition:fade={{ duration: 200 }}
   >
     <div
-      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/15 px-3 py-1 text-[11px] font-medium text-blue-100 backdrop-blur-md"
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-info/30 bg-info/15 px-3 py-1 text-[11px] font-medium text-info backdrop-blur-md"
     >
       <span class="size-1.5 animate-pulse rounded-full bg-blue-400/90"></span>
       Connecting
@@ -201,7 +201,7 @@
     <button
       type="button"
       onclick={retryBackend}
-      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/15 px-3 py-1 text-[11px] font-medium text-red-100 backdrop-blur-md transition-all duration-150 hover:bg-red-500/25 active:scale-[0.97] active:bg-red-500/35"
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-destructive/30 bg-destructive/15 px-3 py-1 text-[11px] font-medium text-destructive backdrop-blur-md transition-all duration-150 hover:bg-destructive/25 active:scale-[0.97] active:bg-destructive/35"
       aria-label="Disconnected from server — tap to retry"
     >
       <span class="size-1.5 rounded-full bg-red-400/90"></span>
@@ -216,7 +216,7 @@
     transition:fade={{ duration: 200 }}
   >
     <div
-      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-medium text-emerald-100 backdrop-blur-md"
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/15 px-3 py-1 text-[11px] font-medium text-success backdrop-blur-md"
     >
       <span class="size-1.5 rounded-full bg-emerald-400/90"></span>
       Connected · {pillLabel(backend.source)}

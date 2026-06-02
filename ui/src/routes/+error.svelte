@@ -3,17 +3,9 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { dev } from '$app/environment';
   import { Button } from '$lib/components/ui/button';
-  import * as Card from '$lib/components/ui/card';
-  import {
-    ArrowLeft,
-    Home,
-    RotateCw,
-    FileSearch,
-    ServerCrash,
-    WifiOff,
-    Lock,
-    ShieldAlert,
-  } from '@lucide/svelte';
+  import ErrorScreen from '$lib/components/ErrorScreen.svelte';
+  import CopyButton from '$lib/components/CopyButton.svelte';
+  import { Home, RotateCw, ArrowLeft, LogIn } from '@lucide/svelte';
   import { docTitle } from '$lib/config/branding';
   import { reportError } from '$lib/client/error-reporter';
   import { onMount } from 'svelte';
@@ -21,8 +13,8 @@
   let status = $derived(page.status);
   let err = $derived(page.error);
 
-  // Forward every error route to the unified reporter so it lands
-  // in the Issues store + activity feed + OS notification (rate-limited).
+  // Forward every error route to the unified reporter so it lands in the Issues
+  // store + activity feed + OS notification (rate-limited).
   onMount(() => {
     if (page.error) {
       void reportError(page.error.message ?? 'Unknown route error', {
@@ -33,69 +25,76 @@
     }
   });
 
-  type ErrorPreset = {
-    title: string;
-    description: string;
-    icon: any;
-    accent: string;
-  };
+  // Recovery action that best fits each class of error.
+  type Recovery = 'home' | 'signin' | 'retry';
+  type ErrorPreset = { title: string; description: string; accent: string; recovery: Recovery };
 
+  // Human, non-blaming, actionable copy per status. SvelteKit routes EVERY
+  // non-2xx through this one component (switching on status) -- there are no
+  // per-code pages; this table is the single source of error copy.
   const presets: Record<number, ErrorPreset> = {
     400: {
-      title: 'Bad request',
-      description: "The request didn't pass server-side validation.",
-      icon: ShieldAlert,
-      accent: 'text-amber-400',
+      title: 'That request looked off',
+      description: "The link or request didn't pass validation. Check it and try again.",
+      accent: 'text-warning',
+      recovery: 'home',
     },
     401: {
-      title: 'Not authorized',
-      description: 'You need to sign in to access this.',
-      icon: Lock,
-      accent: 'text-amber-400',
+      title: 'Please sign in',
+      description: 'You need to be signed in to see this.',
+      accent: 'text-warning',
+      recovery: 'signin',
     },
     403: {
-      title: 'Forbidden',
-      description: "You don't have permission to view this resource.",
-      icon: Lock,
-      accent: 'text-red-400',
+      title: 'No access',
+      description:
+        "You don't have permission to view this. If that's unexpected, make sure you're signed in to the right account.",
+      accent: 'text-destructive',
+      recovery: 'signin',
     },
     404: {
-      title: 'Not found',
-      description:
-        "This page or job doesn't exist — it may have been moved, deleted, or the URL is wrong.",
-      icon: FileSearch,
+      title: 'Page not found',
+      description: "We couldn't find that page — it may have moved, or the link is out of date.",
       accent: 'text-muted-foreground',
+      recovery: 'home',
     },
     500: {
-      title: 'Server error',
-      description: 'Something broke on our end. The error has been logged.',
-      icon: ServerCrash,
-      accent: 'text-red-400',
+      title: 'Something broke',
+      description: "That's on us — the error's been logged. Give it another try in a moment.",
+      accent: 'text-destructive',
+      recovery: 'retry',
     },
     502: {
       title: 'Bad gateway',
-      description: "Upstream service didn't respond correctly.",
-      icon: ServerCrash,
-      accent: 'text-red-400',
+      description: "An upstream service didn't respond. Try again shortly.",
+      accent: 'text-destructive',
+      recovery: 'retry',
     },
     503: {
-      title: 'Service unavailable',
-      description: 'The server is temporarily unavailable. Try again in a moment.',
-      icon: WifiOff,
-      accent: 'text-amber-400',
+      title: 'Temporarily unavailable',
+      description: 'The server is briefly unavailable. Try again in a moment.',
+      accent: 'text-warning',
+      recovery: 'retry',
     },
   };
 
-  let preset = $derived(
-    presets[status] ?? {
-      title: 'Something went wrong',
-      description: 'An unexpected error occurred.',
-      icon: ServerCrash,
-      accent: 'text-red-400',
-    },
+  // handleError appends ` · ref <uuid>` (+ a dev-only `\n::stack::\n<stack>`) to
+  // the message so the catastrophic error.html fallback can surface the id +
+  // dev-details. Strip both here when falling back to err.message for an unknown
+  // status -- the id shows via errorId, the stack via the dev-details snippet.
+  let cleanMessage = $derived(
+    (err?.message ?? '').split('\n::stack::\n')[0].replace(/ · ref [0-9a-f-]+$/i, ''),
   );
 
-  let Icon = $derived(preset.icon);
+  let preset = $derived<ErrorPreset>(
+    presets[status] ?? {
+      title: 'Something went wrong',
+      description:
+        cleanMessage || "An unexpected error occurred. We've logged it — try again or head home.",
+      accent: 'text-destructive',
+      recovery: 'retry',
+    },
+  );
 
   async function retry() {
     await invalidateAll();
@@ -106,56 +105,87 @@
   <title>{docTitle([status + ' · ' + preset.title])}</title>
 </svelte:head>
 
-<div class="h-full flex items-center justify-center p-6 bg-card">
-  <Card.Root class="w-full max-w-md">
-    <Card.Header>
-      <div class="flex items-start gap-4">
-        <div class="size-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-          <Icon class={'size-5 ' + preset.accent} />
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-baseline gap-2">
-            <span class="font-mono text-xs text-muted-foreground tabular-nums">{status}</span>
-            <Card.Title class="text-xl tracking-tight">{preset.title}</Card.Title>
-          </div>
-          <Card.Description class="mt-1 leading-relaxed">
-            {err?.message || preset.description}
-          </Card.Description>
-        </div>
-      </div>
-    </Card.Header>
-
-    {#if dev && err}
-      <Card.Content>
-        <details class="text-xs">
-          <summary
-            class="cursor-pointer text-muted-foreground hover:text-foreground transition-colors select-none"
-          >
-            Developer details
-          </summary>
-          <pre
-            class="mt-3 overflow-auto rounded-md bg-muted p-3 text-[11px] font-mono leading-relaxed text-foreground/80 max-h-64">{JSON.stringify(
-              err,
-              Object.getOwnPropertyNames(err),
-              2,
-            )}</pre>
-        </details>
-      </Card.Content>
-    {/if}
-
-    <Card.Footer class="gap-2 flex-wrap">
-      <Button onclick={() => goto('/')} class="gap-1.5">
-        <Home class="size-3.5" />
+<ErrorScreen
+  {status}
+  title={preset.title}
+  description={preset.description}
+  accent={preset.accent}
+  errorId={err?.errorId}
+>
+  {#snippet actions()}
+    <!-- Consistent recovery stack across every code: a code-appropriate primary
+         (Sign in / Try again / Go home) + Go home (when not primary) + Go back —
+         same Button, icon size, and gap, so 4xx and 5xx read identically. -->
+    {#if preset.recovery === 'signin'}
+      <Button onclick={() => goto('/login')} class="w-full gap-1.5">
+        <LogIn class="size-4" />
+        Sign in
+      </Button>
+      <Button variant="outline" onclick={() => goto('/')} class="w-full gap-1.5">
+        <Home class="size-4" />
         Go home
       </Button>
-      <Button variant="outline" onclick={retry} class="gap-1.5">
-        <RotateCw class="size-3.5" />
+    {:else if preset.recovery === 'retry'}
+      <Button onclick={retry} class="w-full gap-1.5">
+        <RotateCw class="size-4" />
         Try again
       </Button>
-      <Button variant="ghost" onclick={() => history.back()} class="gap-1.5 text-muted-foreground">
-        <ArrowLeft class="size-3.5" />
-        Back
+      <Button variant="outline" onclick={() => goto('/')} class="w-full gap-1.5">
+        <Home class="size-4" />
+        Go home
       </Button>
-    </Card.Footer>
-  </Card.Root>
-</div>
+    {:else}
+      <Button onclick={() => goto('/')} class="w-full gap-1.5">
+        <Home class="size-4" />
+        Go home
+      </Button>
+    {/if}
+    <Button
+      variant="ghost"
+      onclick={() => history.back()}
+      class="w-full gap-1.5 text-muted-foreground"
+    >
+      <ArrowLeft class="size-4" />
+      Go back
+    </Button>
+  {/snippet}
+
+  {#snippet details()}
+    {#if dev && err}
+      <!-- Dev-only diagnostics: a disclosure with a rotating chevron, a
+           status/code chip, and the stack (or error object) in a copyable
+           monospace block. Never rendered in production. -->
+      <details class="group w-full rounded-lg border border-border/50 bg-muted/30 text-left">
+        <summary
+          class="flex cursor-pointer select-none items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <span
+            aria-hidden="true"
+            class="inline-block text-muted-foreground/60 transition-transform group-open:rotate-90"
+            >▸</span
+          >
+          Developer details
+          <span
+            class="ml-auto rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground/70"
+          >
+            {status}{err.code ? ` · ${err.code}` : ''}
+          </span>
+        </summary>
+        <div class="space-y-2 border-t border-border/50 px-3 py-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] text-muted-foreground">
+              {err.stack ? 'Stack trace' : 'Error object'}
+            </span>
+            <CopyButton
+              text={err.stack ?? JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}
+              label="error details"
+            />
+          </div>
+          <pre
+            class="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-background/60 p-2.5 text-[11px] font-mono leading-relaxed text-foreground/80">{err.stack ??
+              JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}</pre>
+        </div>
+      </details>
+    {/if}
+  {/snippet}
+</ErrorScreen>

@@ -52,7 +52,7 @@
     pipeline: 'bg-blue-500',
     interview: 'bg-amber-500',
     output: 'bg-cyan-500',
-    system: 'bg-zinc-500',
+    system: 'bg-muted-foreground',
   };
   const CATEGORY_LABEL: Record<SkillCategory, string> = {
     evaluation: 'Evaluation',
@@ -363,7 +363,7 @@
           </div>
           <div class="relative rounded-lg border border-border/60 bg-muted/40 overflow-hidden">
             <div class="flex items-center gap-2 px-3 py-3">
-              <span class="text-emerald-400/80 text-xs font-mono">›</span>
+              <span class="text-emerald-700/80 dark:text-emerald-400/80 text-xs font-mono">›</span>
               <code
                 class="flex-1 text-sm font-mono overflow-x-auto whitespace-nowrap text-foreground"
                 >{s.invocation}</code
@@ -375,7 +375,7 @@
                 onclick={() => copyText(s.invocation, 'inv')}
               >
                 {#if copiedKey === 'inv'}
-                  <Check class="size-3 text-emerald-400" /> Copied
+                  <Check class="size-3 text-success" /> Copied
                 {:else}
                   <Copy class="size-3" /> Copy
                 {/if}
@@ -394,7 +394,7 @@
                 aria-label="Copy CLI command"
               >
                 {#if copiedKey === 'cli'}
-                  <Check class="size-3 text-emerald-400" />
+                  <Check class="size-3 text-success" />
                 {:else}
                   <Copy class="size-3" />
                 {/if}
@@ -449,7 +449,7 @@
           onclick={() => copyText('modes/' + s.id + '.md', 'path')}
         >
           {#if copiedKey === 'path'}
-            <Check class="size-3 text-emerald-400" /> Copied
+            <Check class="size-3 text-success" /> Copied
           {:else}
             <Copy class="size-3" /> Copy path
           {/if}

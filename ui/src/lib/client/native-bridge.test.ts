@@ -47,6 +47,7 @@ const __pluginShape = {
   getSharedProductionUrl: vi.fn(),
   setSharedQuietHours: vi.fn(),
   clearAllSharedState: vi.fn(),
+  getBuildInfo: vi.fn(),
   addListener: vi.fn((event: string, cb: (e: { online: boolean }) => void) => {
     if (event === 'netStatusChanged') {
       __netListener = cb;
@@ -115,6 +116,31 @@ describe('getLanUrl', () => {
     setPlatform('ios');
     __pluginShape.getLanUrl.mockRejectedValue(new Error('plugin failed'));
     expect(await bridge.getLanUrl()).toBe(null);
+  });
+});
+
+describe('getBuildInfo', () => {
+  // WHY: the WebView literal (__APP_VERSION__) is the SOURCE bundle's semver, but
+  // it can drift from the actual App Store binary. CFBundleShortVersionString /
+  // CFBundleVersion are the only trustworthy build identity, and the WebView
+  // cannot read them without this native bridge. Off iOS there is no bundle to
+  // read, so the wrapper returns null and the About falls back to the literal.
+  it('returns null on web (no native bundle to read)', async () => {
+    setPlatform('web');
+    expect(await bridge.getBuildInfo()).toBe(null);
+    expect(__pluginShape.getBuildInfo).not.toHaveBeenCalled();
+  });
+
+  it('returns the bundle short version + build number on iOS', async () => {
+    setPlatform('ios');
+    __pluginShape.getBuildInfo.mockResolvedValue({ shortVersion: '1.2.0', buildNumber: '47' });
+    expect(await bridge.getBuildInfo()).toEqual({ shortVersion: '1.2.0', buildNumber: '47' });
+  });
+
+  it('returns null when the native call throws', async () => {
+    setPlatform('ios');
+    __pluginShape.getBuildInfo.mockRejectedValue(new Error('plugin failed'));
+    expect(await bridge.getBuildInfo()).toBe(null);
   });
 });
 

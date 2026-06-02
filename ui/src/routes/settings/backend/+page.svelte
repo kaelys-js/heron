@@ -165,7 +165,7 @@
         <div class="flex items-start justify-between gap-3">
           <div>
             <Card.Title class="flex items-center gap-2">
-              <Wifi class="h-4 w-4 text-emerald-500" />
+              <Wifi class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               Tailscale
             </Card.Title>
             <Card.Description>
@@ -227,7 +227,7 @@
     <Card.Root>
       <Card.Header>
         <Card.Title class="flex items-center gap-2">
-          <Globe class="h-4 w-4 text-amber-500" />
+          <Globe class="h-4 w-4 text-amber-600 dark:text-amber-400" />
           Production URL (optional)
         </Card.Title>
         <Card.Description>
@@ -253,8 +253,8 @@
     {#if probeResult}
       <div
         class="flex items-center gap-2 rounded-md border p-3 text-sm {probeResult.ok
-          ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300'
-          : 'border-red-500/30 bg-red-500/5 text-red-700 dark:text-red-300'}"
+          ? 'border-success/30 bg-success/10 text-success'
+          : 'border-destructive/30 bg-destructive/10 text-destructive'}"
       >
         {#if probeResult.ok}
           <CheckCircle2 class="h-4 w-4" />

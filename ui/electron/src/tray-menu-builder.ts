@@ -10,103 +10,43 @@ import type { MenuItemConstructorOptions } from 'electron';
 import type { Stats } from './tray-http';
 
 export type MenuBuilderHandlers = {
-  /** Open a dashboard path (e.g. /pipeline, /inbox). */
-  onOpenPath: (p: string) => void;
-  /** Bring the main window forward and show it. */
-  onShowDashboard: () => void;
-  /** Hide all windows. */
-  onHideWindow: () => void;
-  /** Trigger a backend task (e.g. scan-portals). */
-  onRunTask: (taskId: string) => void;
-  /** Toggle the autopilot pause state. */
-  onToggleAutopilot: () => void;
-  /** Toggle macOS Menu-Bar-Only mode. */
+  /** Show the window if hidden, hide it if visible. */
+  onToggleWindow: () => void;
+  /** Toggle macOS Menu-Bar-Only mode (hide/show the Dock icon). */
   onToggleMenuBarOnly: () => void;
   /** Quit the app. */
   onQuit: () => void;
 };
 
 export type MenuBuilderContext = {
-  stats: Stats | null;
   platform: NodeJS.Platform;
   menuBarOnly: boolean;
+  /** Whether any app window is currently visible (drives the Show/Hide label). */
+  windowVisible: boolean;
   appVersion: string;
   displayName: string;
 };
 
 /**
- * Build the tray context-menu template.
+ * Build the tray context-menu template. Deliberately minimal -- a menu-bar
+ * utility, not a second navigation surface:
  *
- * Layout (top -> bottom):
- *   1. Stats line (or "(backend offline)") + optional open-issues row
- *   2. Section quick-jumps: Pipeline / Inbox / Queue / Stats
- *   3. Actions: Scan now / [Pause|Resume] autopilot
- *   4. macOS-only: Menu Bar Only toggle
- *   5. Window controls: Show dashboard / Hide window
- *   6. Footer: Version label / Quit
+ *   1. macOS-only: "Hide Dock Icon" checkbox (run as a pure menu-bar app)
+ *   2. "Show Window" / "Hide Window" (label tracks the live window state)
+ *   3. Version (disabled label)
+ *   4. "Quit <brand>"
  */
 export function buildTrayMenuTemplate(
   ctx: MenuBuilderContext,
   handlers: MenuBuilderHandlers,
 ): MenuItemConstructorOptions[] {
-  const { stats, platform, menuBarOnly, appVersion, displayName } = ctx;
+  const { platform, menuBarOnly, windowVisible, appVersion, displayName } = ctx;
   const items: MenuItemConstructorOptions[] = [];
 
-  // 1. Stats header
-  if (stats) {
-    items.push({
-      label: `Today: ${stats.queued} queued · ${stats.appliedToday} applied · ${stats.upcomingInterviews} interviews`,
-      enabled: false,
-    });
-    if ((stats.openIssues ?? 0) > 0) {
-      items.push({
-        label: `⚠ ${stats.openIssues} open issue${stats.openIssues === 1 ? '' : 's'}`,
-        click: () => handlers.onOpenPath('/inbox'),
-      });
-    }
-  } else {
-    items.push({ label: '(backend offline)', enabled: false });
-  }
-  items.push({ type: 'separator' });
-
-  // 2. Section quick-jumps
-  items.push({
-    label: 'Pipeline',
-    accelerator: 'CmdOrCtrl+P',
-    click: () => handlers.onOpenPath('/pipeline'),
-  });
-  items.push({
-    label: 'Inbox',
-    accelerator: 'CmdOrCtrl+I',
-    click: () => handlers.onOpenPath('/inbox'),
-  });
-  items.push({
-    label: 'Queue',
-    click: () => handlers.onOpenPath('/queue'),
-  });
-  items.push({
-    label: 'Stats',
-    click: () => handlers.onOpenPath('/stats'),
-  });
-  items.push({ type: 'separator' });
-
-  // 3. Actions
-  items.push({
-    label: 'Scan now',
-    click: () => handlers.onRunTask('scan-portals'),
-  });
-  if (stats) {
-    items.push({
-      label: stats.autopilotPaused ? 'Resume autopilot' : 'Pause autopilot',
-      click: () => handlers.onToggleAutopilot(),
-    });
-  }
-  items.push({ type: 'separator' });
-
-  // 4. macOS Menu Bar Only toggle
+  // 1. macOS Dock-icon toggle. Checked = no Dock icon (pure menu-bar app).
   if (platform === 'darwin') {
     items.push({
-      label: 'Menu Bar Only (hide Dock icon)',
+      label: 'Hide Dock Icon',
       type: 'checkbox',
       checked: menuBarOnly,
       click: () => handlers.onToggleMenuBarOnly(),
@@ -114,20 +54,14 @@ export function buildTrayMenuTemplate(
     items.push({ type: 'separator' });
   }
 
-  // 5. Window controls
+  // 2. Window toggle -- label reflects the current visibility.
   items.push({
-    label: 'Show dashboard',
-    accelerator: 'CmdOrCtrl+0',
-    click: () => handlers.onShowDashboard(),
-  });
-  items.push({
-    label: 'Hide window',
-    accelerator: 'CmdOrCtrl+H',
-    click: () => handlers.onHideWindow(),
+    label: windowVisible ? 'Hide Window' : 'Show Window',
+    click: () => handlers.onToggleWindow(),
   });
   items.push({ type: 'separator' });
 
-  // 6. Footer
+  // 3 + 4. Version + Quit.
   items.push({ label: `Version ${appVersion}`, enabled: false });
   items.push({
     label: `Quit ${displayName}`,

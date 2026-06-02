@@ -99,10 +99,10 @@
 
   function scoreColor(s: number | null): string {
     if (s == null) return 'text-muted-foreground/50';
-    if (s >= 4.5) return 'text-emerald-300';
-    if (s >= 4) return 'text-emerald-400/80';
-    if (s >= 3) return 'text-amber-400/80';
-    return 'text-red-400/80';
+    if (s >= 4.5) return 'text-success';
+    if (s >= 4) return 'text-success/80';
+    if (s >= 3) return 'text-warning/80';
+    return 'text-destructive/80';
   }
 </script>
 

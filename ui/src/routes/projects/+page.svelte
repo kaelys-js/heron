@@ -76,14 +76,14 @@
     pink: 'bg-pink-500',
   };
   const COLOR_TINT: Record<ProjectColor, string> = {
-    emerald: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
-    blue: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
-    violet: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
-    amber: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-    rose: 'bg-rose-500/10 text-rose-300 border-rose-500/30',
-    cyan: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
-    orange: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
-    pink: 'bg-pink-500/10 text-pink-300 border-pink-500/30',
+    emerald: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+    blue: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
+    violet: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30',
+    amber: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
+    rose: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
+    cyan: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+    orange: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30',
+    pink: 'bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-500/30',
   };
   const COLOR_BORDER_L: Record<ProjectColor, string> = {
     emerald: 'border-l-emerald-500',
@@ -483,7 +483,7 @@
                         closeOnSelect={false}
                         danger
                         icon={Trash2}
-                        class={armed ? 'bg-red-500/15 animate-pulse' : ''}
+                        class={armed ? 'bg-destructive/15 animate-pulse' : ''}
                       >
                         {armed ? 'Click again to confirm delete' : 'Delete'}
                         {#snippet trailing()}
@@ -528,7 +528,7 @@
                   <div class="text-center">
                     <div
                       class="text-base font-semibold tabular-nums {stats.applied > 0
-                        ? 'text-violet-300'
+                        ? 'text-violet-700 dark:text-violet-300'
                         : 'text-muted-foreground/40'}"
                     >
                       {stats.applied}
@@ -540,7 +540,7 @@
                   <div class="text-center">
                     <div
                       class="text-base font-semibold tabular-nums {stats.interview > 0
-                        ? 'text-orange-300'
+                        ? 'text-orange-700 dark:text-orange-300'
                         : 'text-muted-foreground/40'}"
                     >
                       {stats.interview}
@@ -552,7 +552,7 @@
                   <div class="text-center">
                     <div
                       class="text-base font-semibold tabular-nums {stats.offer > 0
-                        ? 'text-emerald-300'
+                        ? 'text-emerald-700 dark:text-emerald-300'
                         : 'text-muted-foreground/40'}"
                     >
                       {stats.offer}
@@ -641,7 +641,7 @@
       <!-- Identity -->
       <div class="space-y-3">
         <div class="space-y-1.5">
-          <Label class="text-xs">Name <span class="text-red-400">*</span></Label>
+          <Label class="text-xs">Name <span class="text-destructive">*</span></Label>
           <Input
             bind:value={editor.name}
             placeholder="e.g. Vancouver Senior, Founding Engineer, AI Infra…"
@@ -729,12 +729,12 @@
                   'h-7 px-2.5 text-[11px] font-mono uppercase rounded-md border transition-all',
                   on
                     ? bg === 'LOW'
-                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                      ? 'bg-success/10 border-success/40 text-success'
                       : bg === 'MEDIUM'
-                        ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+                        ? 'bg-warning/10 border-warning/40 text-warning'
                         : bg === 'HIGH'
-                          ? 'bg-red-500/10 border-red-500/40 text-red-300'
-                          : 'bg-red-700/30 border-red-500/60 text-red-200'
+                          ? 'bg-destructive/10 border-destructive/40 text-destructive'
+                          : 'bg-destructive/20 border-destructive/60 text-destructive'
                     : 'bg-transparent border-border/50 text-muted-foreground/60 hover:border-border hover:text-muted-foreground',
                 )}>{bg}</button
               >
@@ -833,7 +833,7 @@
               'text-xl font-mono tabular-nums transition-colors',
               previewLoading && 'opacity-60',
               preview && preview.total > 0 && 'text-foreground',
-              preview && preview.total === 0 && 'text-amber-300/80',
+              preview && preview.total === 0 && 'text-warning/80',
             )}
           >
             {preview?.total ?? '—'}
@@ -848,23 +848,35 @@
           >
             {#if preview.topScore != null}
               <span
-                >top <span class="text-emerald-300 font-medium">{preview.topScore.toFixed(1)}</span
+                >top <span class="text-emerald-700 dark:text-emerald-300 font-medium"
+                  >{preview.topScore.toFixed(1)}</span
                 ></span
               >
             {/if}
             {#if preview.ready > 0}
-              <span>· <span class="text-emerald-300/90">{preview.ready} ready</span></span>
+              <span
+                >· <span class="text-emerald-700/90 dark:text-emerald-300/90"
+                  >{preview.ready} ready</span
+                ></span
+              >
             {/if}
             {#if preview.applied > 0}
-              <span>· <span class="text-violet-300/90">{preview.applied} applied</span></span>
+              <span
+                >· <span class="text-violet-700/90 dark:text-violet-300/90"
+                  >{preview.applied} applied</span
+                ></span
+              >
             {/if}
             {#if preview.interview > 0}
-              <span>· <span class="text-orange-300/90">{preview.interview} interviewing</span></span
+              <span
+                >· <span class="text-orange-700/90 dark:text-orange-300/90"
+                  >{preview.interview} interviewing</span
+                ></span
               >
             {/if}
           </div>
         {:else if preview && preview.total === 0}
-          <span class="text-[11px] text-amber-300/80">Filter is too narrow — no matches</span>
+          <span class="text-[11px] text-warning/80">Filter is too narrow — no matches</span>
         {/if}
       </div>
     </div>

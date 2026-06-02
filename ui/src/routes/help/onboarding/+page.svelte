@@ -126,7 +126,7 @@
       <!-- Hero -->
       <div class="space-y-1.5 max-w-3xl">
         <h1 class="text-xl font-semibold tracking-tight flex items-center gap-2">
-          <Sparkles class="size-5 text-fuchsia-400" />
+          <Sparkles class="size-5 text-fuchsia-600 dark:text-fuchsia-400" />
           Onboarding
         </h1>
         <p class="text-sm text-muted-foreground leading-relaxed">
@@ -148,7 +148,7 @@
       <Card.Root>
         <Card.Header>
           <div class="flex items-center gap-2">
-            <Users class="size-4 text-fuchsia-400" />
+            <Users class="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
             <Card.Title class="text-base">Multi-profile onboarding</Card.Title>
           </div>
           <Card.Description>
@@ -261,7 +261,7 @@
               <div class="text-[11px] space-y-1">
                 <div class="flex items-start gap-2">
                   <span
-                    class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 flex-shrink-0"
+                    class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 flex-shrink-0"
                     >writes</span
                   >
                   <ul class="text-muted-foreground/90 space-y-0.5">
@@ -272,7 +272,7 @@
                 </div>
                 <div class="flex items-start gap-2">
                   <span
-                    class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-blue-500/40 bg-blue-500/10 text-blue-300 flex-shrink-0"
+                    class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300 flex-shrink-0"
                     >redo</span
                   >
                   <p class="text-muted-foreground/90 leading-relaxed">{step.redo}</p>
@@ -287,7 +287,7 @@
       <Card.Root>
         <Card.Header>
           <div class="flex items-center gap-2">
-            <RotateCw class="size-4 text-amber-400" />
+            <RotateCw class="size-4 text-accent-strong" />
             <Card.Title class="text-base">Re-run onboarding</Card.Title>
           </div>
           <Card.Description>
@@ -313,7 +313,7 @@
       <Card.Root>
         <Card.Header>
           <div class="flex items-center gap-2">
-            <AlertCircle class="size-4 text-amber-400" />
+            <AlertCircle class="size-4 text-warning" />
             <Card.Title class="text-base">"Skip — I've set everything up by hand"</Card.Title>
           </div>
           <Card.Description>

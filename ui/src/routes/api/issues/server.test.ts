@@ -3,8 +3,20 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const openIssues: { id: string; summary: string; source: string }[] = [];
-const resolvedIssues: { id: string; summary: string; source: string }[] = [];
+type TestIssue = {
+  id: string;
+  summary: string;
+  source: string;
+  severity?: string;
+  detail?: string;
+  dedupeKey?: string;
+};
+const openIssues: TestIssue[] = [];
+const resolvedIssues: TestIssue[] = [];
+// Captures the last reportIssue() input so create-branch tests can assert the
+// endpoint mapped the client body (level→severity, stack/route/requestId→detail).
+let lastReported: Record<string, unknown> | null = null;
+let nextId = 0;
 
 vi.mock('$lib/server/issues', () => ({
   listOpenIssues: () => openIssues,
@@ -23,6 +35,21 @@ vi.mock('$lib/server/issues', () => ({
     resolvedIssues.length = 0;
     return n;
   },
+  // Stand-in for the real append-and-dedupe writer: record the input + persist
+  // a synthesized open issue so the route's create branch is exercised end-to-end.
+  reportIssue: (input: Record<string, unknown>) => {
+    lastReported = input;
+    const issue: TestIssue = {
+      id: `gen-${++nextId}`,
+      summary: String(input.summary),
+      source: String(input.source),
+      severity: input.severity as string,
+      detail: input.detail as string | undefined,
+      dedupeKey: input.dedupeKey as string | undefined,
+    };
+    openIssues.push(issue);
+    return issue;
+  },
 }));
 
 vi.mock('$lib/server/events', () => ({
@@ -35,6 +62,8 @@ const { GET, POST, DELETE } = await import('./+server');
 beforeEach(() => {
   openIssues.length = 0;
   resolvedIssues.length = 0;
+  lastReported = null;
+  nextId = 0;
 });
 
 afterEach(() => {
@@ -103,6 +132,39 @@ describe('pOST /api/issues', () => {
     expect(r.body.issue.id).toBe('i1');
     expect(openIssues.length).toBe(0);
     expect(resolvedIssues.length).toBe(1);
+  });
+});
+
+describe('pOST /api/issues -- create branch removed (product-only endpoint)', () => {
+  // WHY: this endpoint used to accept a client-shaped body (browser/native
+  // error reporter) and CREATE an Issue. The reporting refactor makes Issue
+  // creation SERVER-ONLY (reportIssue); the browser's technical diagnostics now
+  // POST to /api/telemetry instead. So a summary/title-only body must NOT open
+  // an Issue here -- it 400s, and reportIssue is never reached from the route.
+  it('does NOT create an Issue from a client summary body (now 400)', async () => {
+    const r = await post({
+      source: 'window.onerror',
+      level: 'error',
+      summary: 'TypeError: x is not a function',
+      route: '/inbox',
+    });
+    expect(r.status).toBe(400);
+    expect(openIssues.length).toBe(0);
+    // The route must not have called the issue writer at all.
+    expect(lastReported).toBeNull();
+  });
+
+  it('does NOT create an Issue from a `title`-only body either', async () => {
+    const r = await post({ title: 'Boom', level: 'warn' });
+    expect(r.status).toBe(400);
+    expect(openIssues.length).toBe(0);
+    expect(lastReported).toBeNull();
+  });
+
+  it('400 when neither id nor anything else is present', async () => {
+    const r = await post({ source: 'client', level: 'error' });
+    expect(r.status).toBe(400);
+    expect(lastReported).toBeNull();
   });
 });
 

@@ -36,22 +36,22 @@
   };
 
   const STATUS_DOT: Record<RuntimeStatus, string> = {
-    healthy: 'bg-emerald-500',
-    degraded: 'bg-amber-500',
-    down: 'bg-red-500',
-    unconfigured: 'bg-zinc-500',
+    healthy: 'bg-success',
+    degraded: 'bg-warning',
+    down: 'bg-destructive',
+    unconfigured: 'bg-muted-foreground',
   };
   const STATUS_RING: Record<RuntimeStatus, string> = {
-    healthy: 'ring-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-    degraded: 'ring-amber-500/30 bg-amber-500/10 text-amber-300',
-    down: 'ring-red-500/30 bg-red-500/10 text-red-300',
-    unconfigured: 'ring-zinc-500/30 bg-zinc-500/10 text-zinc-400',
+    healthy: 'ring-success/30 bg-success/10 text-success',
+    degraded: 'ring-warning/30 bg-warning/10 text-warning',
+    down: 'ring-destructive/30 bg-destructive/10 text-destructive',
+    unconfigured: 'ring-border bg-muted text-muted-foreground',
   };
   const STATUS_BORDER: Record<RuntimeStatus, string> = {
-    healthy: 'border-l-emerald-500/60',
-    degraded: 'border-l-amber-500/60',
-    down: 'border-l-red-500/60',
-    unconfigured: 'border-l-zinc-700',
+    healthy: 'border-l-success/60',
+    degraded: 'border-l-warning/60',
+    down: 'border-l-destructive/60',
+    unconfigured: 'border-l-border',
   };
   const STATUS_LABEL: Record<RuntimeStatus, string> = {
     healthy: 'Healthy',
@@ -144,66 +144,72 @@
 
       <!-- Stat strip -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div class="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
+        <div class="rounded-lg border border-success/30 bg-success/5 px-4 py-3">
           <div class="flex items-center gap-2">
-            <CheckCircle2 class="size-4 text-emerald-400" />
-            <span class="text-[11px] uppercase tracking-wide text-emerald-300/80 font-medium"
+            <CheckCircle2 class="size-4 text-success" />
+            <span class="text-[11px] uppercase tracking-wide text-success/80 font-medium"
               >Healthy</span
             >
           </div>
-          <div class="text-2xl font-mono tabular-nums mt-1 text-emerald-200">{stats.healthy}</div>
+          <div class="text-2xl font-mono tabular-nums mt-1 text-success">{stats.healthy}</div>
           <div class="text-[11px] text-muted-foreground">of {stats.total} components</div>
         </div>
         <div
           class={cn(
             'rounded-lg border px-4 py-3',
-            stats.issues > 0 ? 'border-red-500/30 bg-red-500/5' : 'border-border/40 bg-card',
+            stats.issues > 0
+              ? 'border-destructive/30 bg-destructive/5'
+              : 'border-border/40 bg-card',
           )}
         >
           <div class="flex items-center gap-2">
             <AlertTriangle
-              class={cn('size-4', stats.issues > 0 ? 'text-red-400' : 'text-muted-foreground/50')}
+              class={cn(
+                'size-4',
+                stats.issues > 0 ? 'text-destructive' : 'text-muted-foreground/50',
+              )}
             />
             <span
               class={cn(
                 'text-[11px] uppercase tracking-wide font-medium',
-                stats.issues > 0 ? 'text-red-300/80' : 'text-muted-foreground/70',
+                stats.issues > 0 ? 'text-destructive/80' : 'text-muted-foreground/70',
               )}>Issues</span
             >
           </div>
           <div
             class={cn(
               'text-2xl font-mono tabular-nums mt-1',
-              stats.issues > 0 ? 'text-red-200' : 'text-muted-foreground',
+              stats.issues > 0 ? 'text-destructive' : 'text-muted-foreground',
             )}
           >
             {stats.issues}
           </div>
           <div class="text-[11px] text-muted-foreground">degraded or down</div>
         </div>
-        <div class="rounded-lg border border-zinc-500/30 bg-zinc-500/5 px-4 py-3">
+        <div class="rounded-lg border border-border bg-muted px-4 py-3">
           <div class="flex items-center gap-2">
-            <XCircle class="size-4 text-zinc-400" />
-            <span class="text-[11px] uppercase tracking-wide text-zinc-300/80 font-medium"
+            <XCircle class="size-4 text-muted-foreground" />
+            <span class="text-[11px] uppercase tracking-wide text-muted-foreground font-medium"
               >Not set up</span
             >
           </div>
-          <div class="text-2xl font-mono tabular-nums mt-1 text-zinc-200">{stats.unconfigured}</div>
+          <div class="text-2xl font-mono tabular-nums mt-1 text-foreground">
+            {stats.unconfigured}
+          </div>
           <div class="text-[11px] text-muted-foreground">awaiting config</div>
         </div>
-        <div class="rounded-lg border border-blue-500/30 bg-blue-500/5 px-4 py-3">
+        <div class="rounded-lg border border-info/30 bg-info/5 px-4 py-3">
           <div class="flex items-center gap-2">
             <Activity
               class={cn(
-                'size-4 text-blue-400',
+                'size-4 text-info',
                 data.report.summary.runningTasks.length > 0 && 'animate-pulse',
               )}
             />
-            <span class="text-[11px] uppercase tracking-wide text-blue-300/80 font-medium"
-              >Running</span
+            <span class="text-[11px] uppercase tracking-wide text-info/80 font-medium">Running</span
             >
           </div>
-          <div class="text-2xl font-mono tabular-nums mt-1 text-blue-200">
+          <div class="text-2xl font-mono tabular-nums mt-1 text-info">
             {data.report.summary.runningTasks.length}
           </div>
           <div class="text-[11px] text-muted-foreground overflow-hidden whitespace-nowrap">
@@ -235,7 +241,8 @@
                   <div class="flex items-center gap-2 flex-wrap">
                     <Card.Title class="text-sm leading-tight">{c.name}</Card.Title>
                     {#if c.required}
-                      <span class="text-[11px] font-medium text-red-400/90 uppercase tracking-wide"
+                      <span
+                        class="text-[11px] font-medium text-destructive/90 uppercase tracking-wide"
                         >required</span
                       >
                     {:else}
@@ -293,7 +300,7 @@
                 </div>
                 {#if c.usage.lastError}
                   <div
-                    class="flex items-start gap-1.5 text-[11px] px-2 py-1.5 rounded border border-red-500/30 bg-red-500/5 text-red-300"
+                    class="flex items-start gap-1.5 text-[11px] px-2 py-1.5 rounded border border-destructive/30 bg-destructive/5 text-destructive"
                   >
                     <AlertTriangle class="size-3 mt-0.5 flex-shrink-0" />
                     <div class="flex-1 min-w-0">
@@ -301,11 +308,11 @@
                         {c.usage.lastError.title}
                       </div>
                       {#if c.usage.lastError.message}
-                        <div class="text-red-300/80 overflow-hidden whitespace-nowrap">
+                        <div class="text-destructive/80 overflow-hidden whitespace-nowrap">
                           {c.usage.lastError.message}
                         </div>
                       {/if}
-                      <div class="text-red-400/60 mt-0.5">
+                      <div class="text-destructive/60 mt-0.5">
                         {formatRelativeTime(c.usage.lastError.ts)}
                       </div>
                     </div>
@@ -339,7 +346,7 @@
                   </a>
                 {/if}
                 {#if c.status === 'down' || c.status === 'degraded'}
-                  <span class="text-[11px] text-amber-400 flex items-center gap-1">
+                  <span class="text-[11px] text-warning flex items-center gap-1">
                     <AlertCircle class="size-3" />
                     {c.status === 'down'
                       ? 'Action required to restore'

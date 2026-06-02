@@ -136,7 +136,7 @@
 <div class="space-y-6">
   <header class="space-y-2">
     <h1 class="text-2xl font-semibold tracking-tight flex items-center gap-2">
-      <KeyRound class="size-5 text-amber-400" />
+      <KeyRound class="size-5 text-accent-strong" />
       API keys
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">
@@ -149,13 +149,11 @@
 
   {#if canSkipApiKeys && !expanded}
     <!-- 2nd+ profile + keys already configured. Express path. -->
-    <div
-      class="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-4 py-4 flex items-start gap-3"
-    >
-      <CheckCircle2 class="size-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+    <div class="rounded-md border border-success/30 bg-success/5 px-4 py-4 flex items-start gap-3">
+      <CheckCircle2 class="size-5 text-success mt-0.5 flex-shrink-0" />
       <div class="flex-1 space-y-2">
-        <p class="text-sm font-medium text-emerald-200">Keys already configured</p>
-        <p class="text-[11px] text-emerald-200/80 leading-relaxed">
+        <p class="text-sm font-medium text-success">Keys already configured</p>
+        <p class="text-[11px] text-success/80 leading-relaxed">
           Anthropic + Gemini + Adzuna are shared across every profile, so the keys you set up on
           your first profile carry over. Click Continue to skip ahead — or expand to edit if you
           want different keys for this profile.
@@ -179,12 +177,12 @@
   {:else}
     <div class="space-y-4">
       <!-- Anthropic -- required -->
-      <div class="rounded-md border border-amber-500/40 bg-amber-500/5 px-4 py-3 space-y-2">
+      <div class="rounded-md border border-warning/40 bg-warning/5 px-4 py-3 space-y-2">
         <div class="flex items-center justify-between">
           <Label for="anthropic" class="text-sm font-medium flex items-center gap-1.5">
             Anthropic
             <span
-              class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300"
+              class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-warning/40 bg-warning/10 text-warning"
               >required</span
             >
           </Label>
@@ -228,8 +226,8 @@
           {@const r = probeResult.anthropic}
           <div
             class={r.ok
-              ? 'text-[11px] text-emerald-400 inline-flex items-center gap-1'
-              : 'text-[11px] text-red-400 inline-flex items-center gap-1'}
+              ? 'text-[11px] text-success inline-flex items-center gap-1'
+              : 'text-[11px] text-destructive inline-flex items-center gap-1'}
           >
             {#if r.ok}<CheckCircle2 class="size-3" />{:else}<AlertCircle class="size-3" />{/if}
             {r.message}
@@ -280,8 +278,8 @@
           {@const r = probeResult.gemini}
           <div
             class={r.ok
-              ? 'text-[11px] text-emerald-400 inline-flex items-center gap-1'
-              : 'text-[11px] text-red-400 inline-flex items-center gap-1'}
+              ? 'text-[11px] text-success inline-flex items-center gap-1'
+              : 'text-[11px] text-destructive inline-flex items-center gap-1'}
           >
             {#if r.ok}<CheckCircle2 class="size-3" />{:else}<AlertCircle class="size-3" />{/if}
             {r.message}

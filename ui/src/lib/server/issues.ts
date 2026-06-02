@@ -114,6 +114,8 @@ export function reportIssue(input: {
     userId: userIdTag,
   };
 
+  let persisted: Issue;
+
   if (!input.dedupeKey) {
     appendOne(next);
     // Mirror to app.db.issues for indexed per-user queries.
@@ -132,44 +134,66 @@ export function reportIssue(input: {
         e instanceof Error ? e.message : String(e),
       );
     }
-    return next;
+    persisted = next;
+  } else {
+    // Dedupe path: rewrite file replacing any open match for the same key
+    // AND the same userId scope (system-wide and per-user dedupe keys are
+    // distinct, e.g. two users can each have an "apply:job-123" issue).
+    const all = readAll();
+    let replaced = false;
+    const filtered = all.map((existing) => {
+      if (
+        existing.dedupeKey === input.dedupeKey &&
+        existing.userId === userIdTag &&
+        !existing.resolvedAt
+      ) {
+        replaced = true;
+        return { ...next, id: existing.id };
+      }
+      return existing;
+    });
+    if (!replaced) {
+      filtered.push(next);
+    }
+    writeAll(filtered);
+    persisted = replaced
+      ? filtered.find((i) => i.dedupeKey === input.dedupeKey && i.userId === userIdTag)!
+      : next;
+    // Mirror the dedup'd row into app.db.issues.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { dbWriteIssue } = require('./db-writers') as typeof import('./db-writers');
+      dbWriteIssue(persisted);
+    } catch {
+      /* non-fatal */
+    }
   }
 
-  // Dedupe path: rewrite file replacing any open match for the same key
-  // AND the same userId scope (system-wide and per-user dedupe keys are
-  // distinct, e.g. two users can each have an "apply:job-123" issue).
-  const all = readAll();
-  let replaced = false;
-  const filtered = all.map((existing) => {
-    if (
-      existing.dedupeKey === input.dedupeKey &&
-      existing.userId === userIdTag &&
-      !existing.resolvedAt
-    ) {
-      replaced = true;
-      return { ...next, id: existing.id };
-    }
-    return existing;
-  });
-  if (!replaced) {
-    filtered.push(next);
-  }
-  writeAll(filtered);
-  // Mirror the dedup'd row into app.db.issues.
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { dbWriteIssue } = require('./db-writers') as typeof import('./db-writers');
-    dbWriteIssue(
-      replaced
-        ? filtered.find((i) => i.dedupeKey === input.dedupeKey && i.userId === userIdTag)!
-        : next,
-    );
-  } catch {
-    /* non-fatal */
-  }
-  return replaced
-    ? filtered.find((i) => i.dedupeKey === input.dedupeKey && i.userId === userIdTag)!
-    : next;
+  // A persisted Issue is a PRODUCT-kind problem the user must act on, so emit
+  // one bus event after the durable write -- that pings the bell over the SSE
+  // stream (the activity feed shows it; the bell badge ticks). Lazy DYNAMIC
+  // import keeps events.ts <-> issues.ts free of a static import cycle; it's
+  // fire-and-forget so the issue write (and this function's synchronous Issue
+  // return) never waits on the bell, and a missing/failing events module can
+  // never block persistence.
+  const userScope = input.userId === null ? null : (persisted.userId ?? undefined);
+  void import('./events')
+    .then(({ logEvent }) => {
+      logEvent(persisted.source, persisted.summary, {
+        level: persisted.severity,
+        category: 'application',
+        kind: 'product',
+        message: persisted.detail,
+        // Carry the same user scope so the SSE per-user filter shows it to the
+        // right person (and system-wide issues stay broadcast).
+        userId: userScope,
+      });
+    })
+    .catch(() => {
+      /* bus emit best-effort -- the issue is already persisted */
+    });
+
+  return persisted;
 }
 
 /** Open (un-resolved) issues for the current user, newest first. Includes

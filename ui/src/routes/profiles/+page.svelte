@@ -59,7 +59,7 @@
       orange: 'bg-orange-400',
       pink: 'bg-pink-400',
     };
-    return map[color] ?? 'bg-zinc-400';
+    return map[color] ?? 'bg-muted-foreground';
   }
   function tintBorder(color: string): string {
     const map: Record<string, string> = {
@@ -168,7 +168,7 @@
       <!-- Hero -->
       <div class="space-y-1.5 max-w-2xl">
         <h1 class="text-xl font-semibold tracking-tight flex items-center gap-2">
-          <Users class="size-5 text-fuchsia-400" />
+          <Users class="size-5 text-fuchsia-600 dark:text-fuchsia-400" />
           Profiles
         </h1>
         <p class="text-sm text-muted-foreground leading-relaxed">
@@ -235,7 +235,7 @@
                       {#if isActive}
                         <Badge
                           variant="outline"
-                          class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                          class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                         >
                           <Check class="size-2.5 mr-0.5" /> active
                         </Badge>
@@ -301,7 +301,7 @@
                     <Button
                       variant="ghost"
                       size="sm"
-                      class="h-7 text-xs gap-1 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      class="h-7 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
                       onclick={() => {
                         confirmDeleteId = p.id;
                         confirmDeleteTyped = '';
@@ -314,8 +314,10 @@
               </div>
 
               {#if confirmDeleteId === p.id}
-                <div class="mt-3 p-3 rounded-md border border-red-500/30 bg-red-500/5 space-y-2">
-                  <p class="text-[11px] text-red-200/90 leading-relaxed">
+                <div
+                  class="mt-3 p-3 rounded-md border border-destructive/30 bg-destructive/5 space-y-2"
+                >
+                  <p class="text-[11px] text-destructive/90 leading-relaxed">
                     Deleting <strong>{p.name}</strong> removes its entire profile directory (the
                     active user's <code class="font-mono">profiles/{p.id}/</code>, i.e.
                     <code class="font-mono">data/users/&lcub;uid&rcub;/profiles/{p.id}/</code> — or
@@ -333,7 +335,7 @@
                     />
                     <Button
                       size="sm"
-                      class="h-7 text-xs gap-1 bg-red-500/90 hover:bg-red-500"
+                      class="h-7 text-xs gap-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       onclick={() => commitDelete(p)}
                       disabled={confirmDeleteTyped !== 'DELETE' || b === 'delete'}
                     >

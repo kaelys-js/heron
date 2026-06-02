@@ -16,6 +16,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build", "//#brand"],
+      "env": ["HERON_HTTP_PREVIEW"],
       "outputs": ["build/**", ".svelte-kit/**", "dist/**"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -226,6 +227,25 @@
       ]
     },
 
+    "//#verify:splash-sync": {
+      "outputs": [],
+      "inputs": [
+        "scripts/native/splash-spec.mjs",
+        "scripts/system/verify-splash-sync.mjs",
+        "branding/assets/mascot-b64.json",
+        "ui/src/app.html",
+        "ui/electron/src/splash.ts",
+        "ui/src/routes/login/+page.svelte",
+        "ui/src/routes/signup/+page.svelte",
+        "ui/ios/App/App/Base.lproj/LaunchScreen.storyboard"
+      ]
+    },
+
+    "//#native-smoke:test": {
+      "outputs": [],
+      "inputs": ["scripts/native/**", "branding/assets/mascot-b64.json"]
+    },
+
     "//#verify:comment-style": {
       "outputs": [],
       "inputs": [
@@ -350,6 +370,15 @@
       "inputs": ["pnpm-lock.yaml", "scripts/system/validate-pnpm-lockfile.mjs"]
     },
 
+    "//#validate:allow-builds": {
+      "outputs": [],
+      "inputs": [
+        "pnpm-workspace.yaml",
+        "scripts/system/validate-allow-builds.mjs",
+        "pnpm-lock.yaml"
+      ]
+    },
+
     "//#validate:pnpm-scripts": {
       "outputs": [],
       "inputs": [
@@ -395,6 +424,11 @@
     "//#fonts:verify": {
       "outputs": [],
       "inputs": ["ui/static/fonts/**", "scripts/system/verify-fonts.mjs"]
+    },
+
+    "//#verify:contrast": {
+      "outputs": [],
+      "inputs": ["branding/brand.json", "scripts/system/verify-contrast.mjs"]
     },
 
     "//#validate:workflows": {

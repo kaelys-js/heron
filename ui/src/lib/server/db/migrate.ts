@@ -16,7 +16,7 @@ import { authSqliteHandle, appSqliteHandle } from './index';
  *       reads them directly. The dropped-table-cleanup migration below
  *       runs once when v1 → v2 is detected.
  */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 /** Tables that existed in v1 but were dropped in v2. Listed so the
  *  upgrade step can DROP them from existing installs. */
@@ -178,7 +178,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS profiles_user_slug_uniq ON profiles(user_id, s
 
 CREATE TABLE IF NOT EXISTS activity_events (
   id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
+  user_id TEXT,
   profile_id TEXT,
   level TEXT NOT NULL,
   category TEXT NOT NULL,
@@ -187,10 +187,14 @@ CREATE TABLE IF NOT EXISTS activity_events (
   message TEXT,
   stack TEXT,
   link TEXT,
-  ts INTEGER NOT NULL
+  ts INTEGER NOT NULL,
+  request_id TEXT,
+  fingerprint TEXT
 );
 CREATE INDEX IF NOT EXISTS activity_events_user_id_idx ON activity_events(user_id);
 CREATE INDEX IF NOT EXISTS activity_events_ts_idx ON activity_events(ts);
+-- Composite index for the common "this user's recent events, newest first" query.
+CREATE INDEX IF NOT EXISTS activity_events_user_ts_idx ON activity_events(user_id, ts);
 
 CREATE TABLE IF NOT EXISTS issues (
   id TEXT PRIMARY KEY NOT NULL,
@@ -251,13 +255,31 @@ export function ensureSchema(): void {
   if (migrated) {
     return;
   }
+  // Read the on-disk version BEFORE creating tables so an upgrade step that must
+  // run ahead of the (IF NOT EXISTS) DDL can see the prior version.
+  const appVersion = readVersion(appSqliteHandle);
+
+  // v2 -> v3: activity_events gained a NULLABLE user_id (system / broadcast /
+  // CSP / process-level diagnostics now mirror to the DB too) plus request_id +
+  // fingerprint columns. SQLite can't drop a NOT NULL constraint via ALTER, and
+  // this table is a REBUILDABLE cache (data/activity.jsonl is the source of truth
+  // and the UI falls back to it when the table is empty), so drop it here and let
+  // APP_DDL recreate it with the new shape. A fresh install (version 0) has
+  // nothing to drop.
+  if (appVersion >= 1 && appVersion < 3) {
+    try {
+      appSqliteHandle.exec('DROP TABLE IF EXISTS activity_events;');
+    } catch {
+      /* mirror is rebuildable -- a failed drop just leaves the old shape */
+    }
+  }
+
   authSqliteHandle.exec(AUTH_DDL);
   appSqliteHandle.exec(APP_DDL);
 
   // Drop tables that existed in v1 but were removed in v2. Pre-v2 installs
   // never wrote any rows to these (they were aspirational), so DROP is
   // safe -- no user data is destroyed.
-  const appVersion = readVersion(appSqliteHandle);
   if (appVersion < 2) {
     for (const table of APP_DROPPED_IN_V2) {
       try {

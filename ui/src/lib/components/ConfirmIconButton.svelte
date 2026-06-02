@@ -83,7 +83,7 @@
           class={cn(
             'transition-colors',
             armed
-              ? 'text-red-300 bg-red-500/15 hover:bg-red-500/25 ring-1 ring-red-500/40 animate-pulse'
+              ? 'text-destructive bg-destructive/15 hover:bg-destructive/25 ring-1 ring-destructive/40 animate-pulse'
               : '',
             className,
           )}

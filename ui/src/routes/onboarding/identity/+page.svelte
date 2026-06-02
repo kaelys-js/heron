@@ -90,7 +90,7 @@
 <div class="space-y-6">
   <header class="space-y-2">
     <h1 class="text-2xl font-semibold tracking-tight flex items-center gap-2">
-      <User class="size-5 text-blue-400" />
+      <User class="size-5 text-blue-600 dark:text-blue-400" />
       Identity
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">

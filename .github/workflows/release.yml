@@ -112,6 +112,13 @@ jobs:
           VERSION: ${{ steps.rp.outputs.major }}.${{ steps.rp.outputs.minor }}.${{ steps.rp.outputs.patch }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Release announcement is delivery-critical on this workflow: a
+          # silent webhook failure means the release went out with no
+          # #changelog post. Run strict so a broken webhook fails the job.
+          # This step only runs when DISCORD_WEBHOOK_RELEASES is set (see
+          # the step `if:`), so a missing webhook never trips it -- only a
+          # configured-but-failing one does. PR CI never runs this job.
+          STRICT_DISCORD: '1'
         run: |
           set -euo pipefail
           # Pull the release notes (Release Please's auto-generated body)
@@ -141,12 +148,17 @@ jobs:
           }
           EOF
           )
-          curl -sS -X POST -H "Content-Type: application/json" \
+          if ! curl -sS -X POST -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
             "$DISCORD_WEBHOOK_RELEASES" \
             -o /dev/null \
-            --max-time 30 \
-            || echo "::warning::Discord webhook POST failed (release announcement)."
+            --max-time 30; then
+            if [ "${STRICT_DISCORD:-0}" = '1' ]; then
+              echo "::error::Discord webhook POST failed (release announcement); release went out with no #changelog post."
+              exit 1
+            fi
+            echo "::warning::Discord webhook POST failed (release announcement)."
+          fi
 
   # When Release Please cuts a real release (i.e. the release PR was just
   # merged), kick off the cross-platform build. workflow_call within the

@@ -19,9 +19,9 @@
 
   type Option = { value: ThemeMode; label: string; desc: string; icon: any };
   const OPTIONS: Option[] = [
-    { value: 'light', label: 'Light', desc: 'Always light', icon: Sun },
-    { value: 'dark', label: 'Dark', desc: 'Always dark', icon: Moon },
-    { value: 'system', label: 'System', desc: 'Follow OS preference', icon: Monitor },
+    { value: 'light', label: 'Light', desc: 'Bright background, dark text', icon: Sun },
+    { value: 'dark', label: 'Dark', desc: 'Dark background, light text', icon: Moon },
+    { value: 'system', label: 'System', desc: 'Follows your device setting', icon: Monitor },
   ];
 
   // Pick the trigger icon based on what's RESOLVED so the user sees the
@@ -31,6 +31,15 @@
   );
 
   let open = $state(false);
+  // The trigger button's element, so the theme-swap reveal can radiate from the
+  // toggle itself (the user's eye is already there) rather than a fixed corner.
+  let triggerEl = $state<HTMLElement | null>(null);
+
+  function choose(value: ThemeMode) {
+    const r = triggerEl?.getBoundingClientRect();
+    const origin = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : undefined;
+    theme.set(value, origin);
+  }
 </script>
 
 <ResponsiveActionMenu
@@ -43,6 +52,7 @@
   {#snippet trigger({ props })}
     <Button
       {...props}
+      bind:ref={triggerEl}
       variant="ghost"
       size="icon"
       class="h-9 w-9 relative overflow-hidden"
@@ -96,10 +106,8 @@
   {#snippet items()}
     {#each OPTIONS as o}
       <ResponsiveActionItem
-        onSelect={() => {
-          theme.set(o.value);
-          open = false;
-        }}
+        onSelect={() => choose(o.value)}
+        closeOnSelect={false}
         icon={o.icon}
         active={theme.mode === o.value}
         description={o.desc}

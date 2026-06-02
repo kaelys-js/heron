@@ -165,8 +165,7 @@
                     <Card.Title class="text-base flex items-center gap-2">
                       {a.label}
                       {#if isBusy}
-                        <span
-                          class="text-[11px] text-emerald-400 font-mono uppercase tracking-wider"
+                        <span class="text-[11px] text-success font-mono uppercase tracking-wider"
                           >running</span
                         >
                       {/if}

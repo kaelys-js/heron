@@ -517,7 +517,7 @@
                         class="text-xs font-mono px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground/90 flex-shrink-0 transition-colors min-w-[18ch] text-left flex items-center gap-1.5"
                       >
                         {#if copiedKey === 'cmd:' + cmd.invocation}
-                          <Check class="size-3 text-emerald-400" />
+                          <Check class="size-3 text-success" />
                         {:else}
                           <Copy
                             class="size-3 opacity-0 group-hover:opacity-60 transition-opacity"
@@ -574,7 +574,7 @@
                         class="text-xs font-mono px-2 py-0.5 rounded bg-muted hover:bg-muted/80 flex-shrink-0 transition-colors min-w-[26ch] text-left flex items-center gap-1.5"
                       >
                         {#if copiedKey === 'file:' + f.path}
-                          <Check class="size-3 text-emerald-400" />
+                          <Check class="size-3 text-success" />
                         {:else}
                           <Copy
                             class="size-3 opacity-0 group-hover:opacity-60 transition-opacity"
@@ -592,9 +592,9 @@
                   class={cn(
                     'text-[11px] uppercase tracking-wider font-medium flex-shrink-0',
                     f.tier === 'user'
-                      ? 'text-emerald-400/80'
+                      ? 'text-emerald-700/80 dark:text-emerald-400/80'
                       : f.tier === 'output'
-                        ? 'text-blue-400/80'
+                        ? 'text-blue-700/80 dark:text-blue-400/80'
                         : 'text-muted-foreground/60',
                   )}>{f.tier}</span
                 >

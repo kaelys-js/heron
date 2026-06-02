@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDevServerUrl, buildCsp, isInternalNavigation } from './dev-server';
+import {
+  resolveDevServerUrl,
+  buildCsp,
+  isInternalNavigation,
+  decideWindowOpen,
+} from './dev-server';
 import { BRAND } from './brand';
 
 // Brand scheme from the generated constant -- never hardcode `heron`.
@@ -35,11 +40,31 @@ describe('buildCsp', () => {
     expect(csp).not.toContain('ws://localhost');
     expect(csp).not.toContain('devtools');
   });
+  it('prod CSP tightens plugin / base-href / framing surface', () => {
+    // These directives remove attack surface default-src alone doesn't cover:
+    // no <object>/<embed> plugins, no <base href> hijack, no being framed
+    // (clickjacking). Regression guard -- dropping any is a hardening loss.
+    const csp = buildCsp(scheme, false);
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("base-uri 'none'");
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
   it('dev CSP additionally allows the vite dev server + HMR websocket', () => {
     const csp = buildCsp(scheme, true);
     expect(csp).toContain(`default-src ${scheme}://*`);
     expect(csp).toContain('http://localhost:*'); // module scripts
     expect(csp).toContain('ws://localhost:*'); // HMR socket
+  });
+
+  it('dev CSP also allows loopback 127.0.0.1 (local dev tooling, no console spam)', () => {
+    const csp = buildCsp(scheme, true);
+    expect(csp).toContain('http://127.0.0.1:*');
+    expect(csp).toContain('ws://127.0.0.1:*');
+  });
+
+  it('prod CSP does NOT allow loopback (stays locked to the app scheme)', () => {
+    const csp = buildCsp(scheme, false);
+    expect(csp).not.toContain('127.0.0.1');
   });
   it('dev CSP allows a non-localhost dev-server override (http + ws origin)', () => {
     const csp = buildCsp(scheme, true, 'http://1.2.3.4:5173');
@@ -85,5 +110,33 @@ describe('isInternalNavigation', () => {
     );
     expect(isInternalNavigation('https://github.com', scheme, null)).toBe(false);
     expect(isInternalNavigation('', scheme, 'http://localhost:5173')).toBe(false);
+  });
+});
+
+describe('decideWindowOpen', () => {
+  it('allows internal URLs (app scheme + dev origin) in-app', () => {
+    expect(decideWindowOpen(`${scheme}://localhost/inbox`, scheme, null)).toBe('allow');
+    expect(decideWindowOpen('http://localhost:5173/x', scheme, 'http://localhost:5173')).toBe(
+      'allow',
+    );
+  });
+  it('routes external http(s) URLs to the system browser', () => {
+    // WHY: a real external link (docs, GitHub, a job posting) should open in the
+    // user's browser, not a rogue in-app window -- so the handler returns
+    // 'external' and the caller calls shell.openExternal.
+    expect(decideWindowOpen('https://github.com/kaelys-js/heron', scheme, null)).toBe('external');
+    expect(decideWindowOpen('http://example.com', scheme, 'http://localhost:5173')).toBe(
+      'external',
+    );
+  });
+  it('DENIES non-http(s) schemes outright (no arbitrary protocol launches)', () => {
+    // WHY: a compromised renderer must not be able to launch file:/javascript:/
+    // data:/foreign-app handlers via window.open -- only http(s) reach the OS.
+    expect(decideWindowOpen('file:///etc/passwd', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('javascript:alert(1)', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('data:text/html,<script>', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('mailto:x@y.z', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('not a url', scheme, null)).toBe('deny');
+    expect(decideWindowOpen('', scheme, null)).toBe('deny');
   });
 });

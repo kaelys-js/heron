@@ -42,11 +42,11 @@
   }
   function levelColor(level: string) {
     return level === 'error'
-      ? 'text-red-400'
+      ? 'text-destructive'
       : level === 'warn'
-        ? 'text-amber-400'
+        ? 'text-warning'
         : level === 'success'
-          ? 'text-emerald-400'
+          ? 'text-success'
           : 'text-muted-foreground';
   }
 </script>

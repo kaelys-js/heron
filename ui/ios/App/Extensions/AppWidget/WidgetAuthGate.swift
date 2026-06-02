@@ -135,14 +135,14 @@ struct BrandMark: View {
                             .frame(maxHeight: .infinity, alignment: .top)
                             .clipShape(RoundedRectangle(cornerRadius: size * 0.226, style: .continuous))
                     )
-                    // Brand glyph centred on top. SF Symbol name comes
-                    // from BrandUI.glyphSymbol (brand.json::nativeGlyph.ios).
-                    // Currently 'feather' — the closest stock symbol to
-                    // the lucide bird glyph in branding/logo.svg.
+                    // Brand mascot centred on top (BrandUI.brandMark = the
+                    // embedded cartoon mascot, original colors; falls back to the
+                    // SF-symbol glyph if the embed is missing).
                     .overlay(
-                        Image(systemName: BrandUI.glyphSymbol)
-                            .font(.system(size: size * 0.42, weight: .medium))
-                            .foregroundStyle(.white)
+                        BrandUI.brandMark
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: size * 0.66, height: size * 0.66)
                     )
             }
         }

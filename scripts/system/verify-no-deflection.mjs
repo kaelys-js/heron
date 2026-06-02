@@ -40,9 +40,10 @@
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { error } from '../lib/logger.mjs';
 
 export const DEFLECTION_REGEX =
-  /\b(MVP|defer(?:red|ral|ring)?|out[- ]of[- ]scope|won['’]?t fit|future PR|future work|separate ticket|separate PR|follow[- ]?up|simplify to|for now|punt(?:ed|ing)?|leave for now)\b/i;
+  /\b(MVP|defer(?:red|ral|ring)?|out[- ]of[- ]scope|won['’]?t fit|future PR|future work|separate ticket|separate PR|follow[- ]up|simplify to|for now|punt(?:ed|ing)?|leave for now)\b/i;
 
 export const BYPASS_TOKEN = '[user-approved-deferral]';
 
@@ -97,9 +98,14 @@ function runStaged() {
     diff = execSync('git diff --cached --diff-filter=AM --unified=0', {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      // execSync defaults to a 1 MB stdout buffer; a large staged diff (many
+      // files, regenerated binaries, big inline base64 blocks) overflows it and
+      // throws ENOBUFS, aborting the commit on size rather than on any
+      // deflection. Give it plenty of headroom so the hook scans the real diff.
+      maxBuffer: 256 * 1024 * 1024,
     });
   } catch (e) {
-    console.error('::error::verify-no-deflection: git diff failed:', e.message);
+    error(`verify-no-deflection: git diff failed: ${e.message}`);
     return 2;
   }
 
@@ -142,7 +148,7 @@ function runStaged() {
 
   if (hitsByFile.size === 0) return 0;
 
-  console.error('::error::Deflection language detected in staged diff.');
+  error('Deflection language detected in staged diff.');
   console.error('');
   console.error('The user has explicitly forbidden these words on approved work:');
   for (const [file, hits] of hitsByFile) {
@@ -169,14 +175,14 @@ function runStaged() {
  */
 function runMessage(path) {
   if (!existsSync(path)) {
-    console.error(`::error::verify-no-deflection: message file not found: ${path}`);
+    error(`verify-no-deflection: message file not found: ${path}`);
     return 2;
   }
   const body = readFileSync(path, 'utf8');
   if (body.includes(BYPASS_TOKEN)) return 0;
   const hits = scanBody(body);
   if (hits.length === 0) return 0;
-  console.error('::error::Deflection language detected in commit message.');
+  error('Deflection language detected in commit message.');
   console.error('');
   for (const h of hits) {
     console.error(`  line ${h.lineNo}: ${h.match}  "${h.line.trim().slice(0, 100)}"`);

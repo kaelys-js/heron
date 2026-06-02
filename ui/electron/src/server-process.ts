@@ -111,7 +111,51 @@ export type ServerStartOptions = {
   portFinder?: () => Promise<number>;
   /** Optional override for waitForServer (test hook). */
   healthWaiter?: (url: string, timeoutMs?: number) => Promise<boolean>;
+  /** Sink for the child's stderr. Each complete line is forwarded here.
+   *  The caller (index.ts) wires this to the main-process log sink so the
+   *  embedded server's stderr survives in a packaged build (where there's
+   *  no terminal). Omit to drop stderr (the prior stdio:'inherit' default,
+   *  used by tests that don't assert on backend output). */
+  onStderrLine?: (line: string) => void;
 };
+
+/**
+ * Buffer a child's piped stderr and forward each COMPLETE line to onLine.
+ * Splitting on newlines keeps the sink's one-entry-per-line invariant even
+ * when a chunk straddles a line boundary. Fully guarded -- a stream error
+ * (child died mid-write) must not throw out of the spawn path.
+ */
+export function forwardStderrLines(child: ChildProcess, onLine: (line: string) => void): void {
+  const stream = child.stderr;
+  if (!stream) {
+    return;
+  }
+  let buffer = '';
+  try {
+    stream.setEncoding('utf8');
+  } catch {
+    /* non-text stream -- skip capture rather than throw */
+  }
+  stream.on('data', (chunk: string) => {
+    buffer += chunk;
+    let nl = buffer.indexOf('\n');
+    while (nl !== -1) {
+      const line = buffer.slice(0, nl).replace(/\r$/, '');
+      buffer = buffer.slice(nl + 1);
+      if (line.length > 0) {
+        try {
+          onLine(line);
+        } catch {
+          /* a misbehaving sink must not kill the stderr reader */
+        }
+      }
+      nl = buffer.indexOf('\n');
+    }
+  });
+  stream.on('error', () => {
+    /* the process 'exit' handler reports the failure code separately */
+  });
+}
 
 /**
  * Spawn the embedded Node server. Returns a ServerHandle on success.
@@ -132,6 +176,12 @@ export async function startEmbeddedServer(opts: ServerStartOptions): Promise<Ser
   const port = await portFinder();
   const url = `http://127.0.0.1:${port}`;
 
+  // stderr: 'pipe' (not 'inherit') ONLY when a sink is wired, so the child's
+  // stderr can be captured into the main-process log file -- a packaged build
+  // has no terminal, so an inherited stderr goes nowhere on disk and a backend
+  // crash leaves no trace. Without a sink, fall back to 'inherit' (the prior
+  // behaviour the tests rely on).
+  const captureStderr = !!opts.onStderrLine;
   const child = forker(opts.entryPath, [], {
     env: {
       ...process.env,
@@ -141,8 +191,12 @@ export async function startEmbeddedServer(opts: ServerStartOptions): Promise<Ser
       ORIGIN: url,
     },
     silent: false,
-    stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+    stdio: ['ignore', 'inherit', captureStderr ? 'pipe' : 'inherit', 'ipc'],
   });
+
+  if (captureStderr) {
+    forwardStderrLines(child, opts.onStderrLine!);
+  }
 
   const healthy = await waiter(url, opts.healthTimeoutMs ?? 15_000);
   if (!healthy) {

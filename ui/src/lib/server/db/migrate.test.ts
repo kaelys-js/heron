@@ -90,4 +90,27 @@ describe('db/migrate — schema parity (drizzle ↔ CREATE TABLE)', () => {
     authDb.close();
     appDb.close();
   });
+
+  it('activity_events mirror has the v3 correlation + grouping columns with a NULLABLE user_id', () => {
+    // WHY: P-D made the mirror a COMPLETE query surface. request_id closes the
+    // correlation chain into the indexed store; fingerprint enables error
+    // grouping; and user_id MUST be nullable so system / broadcast / CSP /
+    // process-level diagnostics (which carry no userId) mirror to the DB too --
+    // not only to the JSONL. This fails if a future edit forgets a column or
+    // re-adds the NOT NULL.
+    const appDb = new Database(':memory:');
+    const migrateSrc = readFileSync(APP_DDL_PATH, 'utf8');
+    const tickStart = migrateSrc.indexOf('`', migrateSrc.indexOf('const APP_DDL'));
+    const appDdl = migrateSrc.slice(tickStart + 1, migrateSrc.indexOf('`', tickStart + 1));
+    appDb.exec(appDdl);
+    const cols = appDb.prepare(`PRAGMA table_info(activity_events)`).all() as Array<{
+      name: string;
+      notnull: number;
+    }>;
+    const byName = Object.fromEntries(cols.map((c) => [c.name, c]));
+    expect(byName.request_id, 'activity_events.request_id missing').toBeTruthy();
+    expect(byName.fingerprint, 'activity_events.fingerprint missing').toBeTruthy();
+    expect(byName.user_id?.notnull, 'activity_events.user_id must be nullable').toBe(0);
+    appDb.close();
+  });
 });

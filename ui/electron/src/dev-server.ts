@@ -35,12 +35,33 @@ export function buildCsp(
   devServerUrl?: string | null,
 ): string {
   if (!isDev) {
-    return `default-src ${customScheme}://* 'unsafe-inline' data:`;
+    // Production: lock to the app scheme + data:. The extra directives below
+    // remove plugin (<object>/<embed>), <base href> hijack, and clickjacking
+    // (frame-ancestors) surface that default-src alone doesn't cover.
+    //
+    // NOTE -- 'unsafe-inline' in the (implied) script-src is retained: the
+    // SvelteKit static output served from the app scheme uses inline bootstrap
+    // scripts + inline styles, and tightening script-src to a nonce/hash needs
+    // to be validated against a PACKAGED build (flagged in the return notes) --
+    // dropping it blind would white-screen the app. Left as-is here; the added
+    // directives are pure tightening with no app-script impact.
+    return `default-src ${customScheme}://* 'unsafe-inline' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`;
   }
   // Allow the ACTUAL dev-server origin (http + ws), not just localhost, so a
   // non-localhost ELECTRON_DEV_SERVER_URL / CAPACITOR_SERVER_URL override (e.g.
   // a LAN IP) isn't CSP-blocked into a blank window.
-  const allow = new Set(['http://localhost:*', 'ws://localhost:*']);
+  //
+  // 127.0.0.1 is loopback-equivalent to localhost, but CSP treats them as
+  // distinct hosts. Local dev tooling (HMR, editor log relays, devtools
+  // bridges) often binds 127.0.0.1, so allow it too -- otherwise those
+  // connections are CSP-blocked into a stream of console errors. Dev-only;
+  // the production branch above stays locked to the app scheme.
+  const allow = new Set([
+    'http://localhost:*',
+    'ws://localhost:*',
+    'http://127.0.0.1:*',
+    'ws://127.0.0.1:*',
+  ]);
   if (devServerUrl) {
     try {
       const u = new URL(devServerUrl);
@@ -78,4 +99,33 @@ export function isInternalNavigation(
     }
   }
   return false;
+}
+
+/** What a window.open() / target=_blank request should do:
+ *    - 'allow'    internal URL (app scheme / dev origin) → open in-app
+ *    - 'external' external http(s) URL → hand to the OS browser (openExternal)
+ *    - 'deny'     anything else (file:, javascript:, data:, custom schemes we
+ *                 don't own, unparseable) → refuse outright. A compromised or
+ *                 malicious renderer must never be able to launch an arbitrary
+ *                 protocol handler via window.open.
+ *  Pure + side-effect-free so the decision is unit-testable; the caller in
+ *  setup.ts performs the actual shell.openExternal / window action. */
+export type WindowOpenDecision = 'allow' | 'external' | 'deny';
+export function decideWindowOpen(
+  url: string,
+  customScheme: string,
+  devServerUrl: string | null,
+): WindowOpenDecision {
+  if (isInternalNavigation(url, customScheme, devServerUrl)) {
+    return 'allow';
+  }
+  try {
+    const { protocol } = new URL(url);
+    if (protocol === 'http:' || protocol === 'https:') {
+      return 'external';
+    }
+  } catch {
+    /* unparseable → deny */
+  }
+  return 'deny';
 }

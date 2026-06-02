@@ -10,6 +10,8 @@ export const BRAND = {
   name: "heron",
   displayName: "Heron",
   tagline: "Stand still. Strike well.",
+  description: "Heron is a thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
+  copyright: "© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License.",
   bundleId: "com.resistjs.heron",
   appGroup: "group.com.resistjs.heron",
   urlScheme: "heron",
@@ -19,7 +21,7 @@ export const BRAND = {
   keychainService: "com.resistjs.heron",
   capacitorPluginName: "HeronNative",
   colors: {
-    "$comment": "9 base hex values + their human-readable names. The full 22-token CSS system in ui/src/app.css is generated from these by apply-brand (status colors + text scale are static across brands; everything else derives).",
+    "$comment": "9 base hex values + their human-readable names. The full per-mode token system in ui/src/app.css (incl. light/dark status colors success/warning/info and the accent-strong on-light text variants) is generated from colors.tokens by apply-brand. Every value here is WCAG-AA verified in both modes -- see scripts/system/verify-contrast.mjs.",
     "primary": "#4a5b6d",
     "primaryName": "Heron Slate",
     "accent": "#c89b4a",
@@ -33,7 +35,7 @@ export const BRAND = {
     "textOnDark": "#e8eaed",
     "textOnLight": "#1a1f26",
     "tokens": {
-      "$comment": "22-token CSS system, derived from the 9 bases. apply-brand writes these into the AUTO-GENERATED block in ui/src/app.css. The shadcn-shaped token graph (--background, --foreground, --primary, --accent, --sidebar-*, status.*) maps onto the brand palette here. light = warm-paper register, dark = slate-tinted black register.",
+      "$comment": "Per-mode token system, derived from the 9 bases. apply-brand writes these into the AUTO-GENERATED block in ui/src/app.css. The shadcn-shaped token graph (--background, --foreground, --primary, --accent(+Strong), --accent-secondary(+Strong), --success/--warning/--info, --sidebar-*) maps onto the brand palette here. light = warm-paper register, dark = slate-tinted black register. *Strong tokens are darker on-light variants of the accents for text/icon/ring use where the bright fill colour fails AA on cream.",
       "light": {
         "background": "#f7f5f0",
         "foreground": "#1a1f26",
@@ -46,16 +48,24 @@ export const BRAND = {
         "secondary": "#efeae0",
         "secondaryForeground": "#1a1f26",
         "muted": "#efeae0",
-        "mutedForeground": "#6b7585",
+        "mutedForeground": "#525c6c",
         "accent": "#c89b4a",
         "accentForeground": "#1a1f26",
+        "accentStrong": "#856319",
         "accentSecondary": "#7a8c6d",
         "accentSecondaryForeground": "#1a1f26",
+        "accentSecondaryStrong": "#4d5b40",
         "destructive": "#a85459",
         "destructiveForeground": "#fffefa",
+        "success": "#2f7140",
+        "successForeground": "#fffefa",
+        "warning": "#8a5300",
+        "warningForeground": "#fffefa",
+        "info": "#1f6fb2",
+        "infoForeground": "#fffefa",
         "border": "#e0d8c8",
-        "input": "#e0d8c8",
-        "ring": "#c89b4a",
+        "input": "#94835a",
+        "ring": "#856319",
         "sidebar": "#efeae0",
         "sidebarForeground": "#1a1f26",
         "sidebarPrimary": "#4a5b6d",
@@ -87,12 +97,20 @@ export const BRAND = {
         "mutedForeground": "#a8b0bb",
         "accent": "#c89b4a",
         "accentForeground": "#14181f",
+        "accentStrong": "#c89b4a",
         "accentSecondary": "#7a8c6d",
         "accentSecondaryForeground": "#0e1014",
-        "destructive": "#b3666b",
-        "destructiveForeground": "#f4e8e9",
+        "accentSecondaryStrong": "#9aab8c",
+        "destructive": "#e0686f",
+        "destructiveForeground": "#14181f",
+        "success": "#5fcf80",
+        "successForeground": "#0e1014",
+        "warning": "#e6b53f",
+        "warningForeground": "#0e1014",
+        "info": "#5aa9e6",
+        "infoForeground": "#0e1014",
         "border": "#232a35",
-        "input": "#232a35",
+        "input": "#5d6775",
         "ring": "#c89b4a",
         "sidebar": "#0e1014",
         "sidebarForeground": "#a8b0bb",
@@ -290,31 +308,33 @@ export const BRAND = {
     ]
   },
   mascot: {
-    "$comment": "Mascot identity -- fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
-    "subject": "Great Blue Heron",
-    "pose": "side profile, standing in shallow water, neck S-curve, head turned 25-30° right",
+    "$comment": "Mascot identity -- the friendly cartoon Heron that IS the brand mark (it replaced the stopgap Lucide 'bird' glyph). Source: branding/mascot.png (raw) -> branding/assets/mascot.png (cleaned transparent master, via `pnpm mascot`). EVERYTHING derives from the master: logo.svg embed, all platform icons, the splash, and the Swift image asset. Fed into the MASCOT.md template.",
+    "image": "branding/assets/mascot.png",
+    "rawSource": "branding/mascot.png",
+    "subject": "Great Blue Heron -- friendly cartoon character",
+    "pose": "3/4 head-and-shoulders, beak to the right, large warm eyes, small crest tuft",
     "styleReferences": [
-      "Audubon",
-      "Charley Harper",
-      "Field Notes",
-      "Hasegawa Tōhaku sumi-e"
+      "Duolingo Duo",
+      "flat vector app mascot",
+      "rounded thick-outline cartoon",
+      "friendly modern app mark"
     ],
     "tiers": {
       "mark": {
         "use": "≤64px contexts -- favicon, app icon, inline UI",
-        "treatment": "silhouette"
+        "treatment": "mascot head on the gradient squircle"
       },
       "illustration": {
-        "use": "≥200px contexts -- landing pages, marketing, press",
-        "treatment": "editorial illustration with subtle detail"
+        "use": "≥200px contexts -- splash, landing pages, marketing, press",
+        "treatment": "full cartoon mascot, animated where the surface allows"
       }
     },
     "antiStyles": [
-      "cartoon",
       "photo-realistic",
       "3D-rendered",
-      "anthropomorphized",
-      "mascot-with-arms"
+      "aggressive or scary",
+      "over-detailed or cluttered",
+      "off-brand colors"
     ]
   },
   repo: {

@@ -212,6 +212,40 @@ describe('apiCall — error paths', () => {
     }
   });
 
+  it('captures the failing response X-Request-Id onto ApiError.requestId', async () => {
+    // WHY: api.ts reads the correlation id off the response so a catch handler
+    // / the error reporter can quote the EXACT failing request to support --
+    // the same id the server logged + the error page shows as `· ref <id>`.
+    // The CORS Expose-Headers in hooks.server.ts is what lets a cross-origin
+    // client read it at all; here we assert api.ts actually plumbs it through.
+    server.use(
+      http.get('*/api/x', () =>
+        HttpResponse.json(
+          { ok: false, error: { message: 'boom' } },
+          { status: 500, headers: { 'X-Request-Id': 'req-xyz-789' } },
+        ),
+      ),
+    );
+    const err = await apiCall('/api/x', { silent: true }).catch((e) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    if (err instanceof ApiError) {
+      expect(err.requestId).toBe('req-xyz-789');
+    }
+  });
+
+  it('leaves ApiError.requestId undefined when no X-Request-Id is present', async () => {
+    server.use(
+      http.get('*/api/x', () =>
+        HttpResponse.json({ ok: false, error: { message: 'boom' } }, { status: 400 }),
+      ),
+    );
+    const err = await apiCall('/api/x', { silent: true }).catch((e) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    if (err instanceof ApiError) {
+      expect(err.requestId).toBeUndefined();
+    }
+  });
+
   it('toasts on failure when silent is not set', async () => {
     server.use(
       http.get('*/api/x', () =>
@@ -359,6 +393,10 @@ describe('apiError class', () => {
     expect(e.code).toBe('X');
     expect(e.details).toEqual({ foo: 1 });
     expect(e.data).toEqual({ bar: 2 });
+  });
+  it('exposes the requestId correlation id', () => {
+    const e = new ApiError('test', { status: 500, requestId: 'req-1' });
+    expect(e.requestId).toBe('req-1');
   });
   it('is an instance of Error', () => {
     expect(new ApiError('m', { status: 0 })).toBeInstanceOf(Error);

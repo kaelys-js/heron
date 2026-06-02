@@ -173,7 +173,7 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
 <div class="space-y-6">
   <header class="space-y-2">
     <h1 class="text-2xl font-semibold tracking-tight flex items-center gap-2">
-      <FileText class="size-5 text-emerald-400" />
+      <FileText class="size-5 text-emerald-600 dark:text-emerald-400" />
       CV
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">
@@ -195,7 +195,7 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
       onclick={() => (mode = 'markdown')}
     >
       <div class="flex items-center gap-1.5">
-        <FileText class="size-3.5 text-blue-400" />
+        <FileText class="size-3.5 text-blue-600 dark:text-blue-400" />
         <span class="text-xs font-semibold">Paste markdown</span>
       </div>
       <p class="mt-1 text-[11px] text-muted-foreground">
@@ -212,7 +212,7 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
       onclick={() => (mode = 'plain')}
     >
       <div class="flex items-center gap-1.5">
-        <Wand2 class="size-3.5 text-fuchsia-400" />
+        <Wand2 class="size-3.5 text-fuchsia-600 dark:text-fuchsia-400" />
         <span class="text-xs font-semibold">Paste plain text</span>
       </div>
       <p class="mt-1 text-[11px] text-muted-foreground">
@@ -230,7 +230,7 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
       onclick={() => (mode = 'linkedin')}
     >
       <div class="flex items-center gap-1.5">
-        <Globe class="size-3.5 text-emerald-400" />
+        <Globe class="size-3.5 text-emerald-600 dark:text-emerald-400" />
         <span class="text-xs font-semibold">Import from LinkedIn URL</span>
       </div>
       <p class="mt-1 text-[11px] text-muted-foreground">
@@ -288,7 +288,7 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
       {#if !data.linkedinConnected}
         <a
           href="/onboarding/sources"
-          class="text-[11px] text-emerald-300 hover:text-emerald-200 inline-flex items-center gap-1"
+          class="text-[11px] text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 inline-flex items-center gap-1"
         >
           Connect LinkedIn first <ExternalLink class="size-2.5" />
         </a>

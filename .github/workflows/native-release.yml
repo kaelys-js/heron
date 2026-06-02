@@ -65,11 +65,53 @@ on:
   push:
     tags: ['v*.*.*']
   workflow_dispatch:
+    inputs:
+      # The release model is convergent: a Release Please cut publishes to
+      # every BETA track (channel=beta), then promote.yml auto-promotes the
+      # soaked version to every PRODUCTION track (channel=stable +
+      # promote_to_production). A manual dispatch picks the leg explicitly --
+      # channel=beta is a TestFlight/internal/beta-channel build; channel=stable
+      # + promote_to_production is a production push. See docs/RELEASING.md.
+      channel:
+        description: 'Release channel. beta -> TestFlight + Play internal + Electron GH prerelease (latest*.yml via allowPrerelease). stable -> the production tracks.'
+        required: false
+        default: beta
+        type: choice
+        options: [beta, stable]
+      promote_to_production:
+        description: 'Promote to the PRODUCTION tracks (App Store app_store lane, Play production, Electron stable latest). Leave false for a normal beta cut.'
+        required: false
+        default: false
+        type: boolean
+      staging_percentage:
+        description: 'Electron staged-rollout percent (1-99) injected into latest*.yml; empty/100 = full rollout. Only meaningful with promote_to_production.'
+        required: false
+        default: ''
+        type: string
   workflow_call:
     inputs:
       version:
         description: 'Version tag to build (e.g. 1.7.0). Required when called.'
         required: true
+        type: string
+      # Convergent-model knobs (see docs/RELEASING.md). release.yml's cut
+      # passes nothing -> the defaults (channel=beta, no production promote)
+      # make every cut a beta on every platform. promote.yml's auto-promote
+      # passes channel=stable + promote_to_production=true + a staging_percentage.
+      channel:
+        description: "Release channel: 'beta' (the cut path) or 'stable' (production)."
+        required: false
+        default: beta
+        type: string
+      promote_to_production:
+        description: 'When true, iOS runs app_store, Android runs production, Electron is stable + staged.'
+        required: false
+        default: false
+        type: boolean
+      staging_percentage:
+        description: 'Electron staged-rollout percent injected into latest*.yml (1-99); empty = full.'
+        required: false
+        default: ''
         type: string
     # Declared secrets: required: false on every entry.
     #
@@ -187,6 +229,14 @@ permissions:
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  # The tag this run operates on. A tag-push sets github.ref_name to the tag
+  # directly; release.yml + promote.yml call this workflow with `version`, so
+  # github.ref_name is the caller's branch (main) -- derive the vX.Y.Z tag from
+  # the version input and check it out explicitly so the build (package.json /
+  # CHANGELOG version), the release-asset uploads, and the promote operate on
+  # the right release rather than HEAD-of-main. Falls back to ref_name on a
+  # bare tag push where version is unset.
+  RELEASE_TAG: ${{ inputs.version != '' && format('v{0}', inputs.version) || github.ref_name }}
 
 # Two release tags landing in quick succession waste 30min of CI per
 # job. Only one native-release run per ref at a time. We don't cancel
@@ -275,6 +325,12 @@ jobs:
   build-desktop:
     name: Build ${{ matrix.os }}
     needs: preflight
+    # Cut path only. A production promote does NOT rebuild Electron: a rebuild
+    # re-signs/re-notarizes (a different binary hash than what soaked) and the
+    # channel-less artifactName would clobber the soaked artifacts on the release.
+    # The promote re-channels the already-published latest*.yml instead -- see the
+    # `promote-desktop` job below.
+    if: ${{ inputs.promote_to_production != true }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     permissions:
@@ -299,6 +355,10 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+          # The release tag (see RELEASE_TAG env) -- so a workflow_call build
+          # (release.yml cut / promote.yml promote) compiles the tagged version,
+          # not HEAD-of-main.
+          ref: ${{ env.RELEASE_TAG }}
 
       # mise installs Node + pnpm versions pinned in .mise.toml so CI
       # uses the same versions developers run locally.
@@ -480,6 +540,21 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APPLE_API_KEY: ${{ env.APPLE_API_KEY_PATH }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # The cut publishes a PRERELEASE GitHub release. electron-builder emits a
+          # single latest.yml for the github provider -- it never builds a beta.yml
+          # (computeChannelNames hard-returns one channel for provider 'github'), so
+          # the beta/stable split is the PRERELEASE FLAG, not a channel file. Beta
+          # users (allowPrerelease, updater channel left at 'latest') read latest.yml
+          # off the prerelease release during the soak; stable users
+          # (allowPrerelease=false) skip the prerelease until promote.yml's finalize
+          # un-prereleases it, then read the SAME latest.yml (the exact soaked
+          # binary). EP_PRE_RELEASE sets ONLY that prerelease flag; gen-build-info.mjs
+          # reads it to stamp channel='beta' for the About-window display. A
+          # production promote does NOT run this job (see build-desktop `if`) -- it
+          # re-channels latest*.yml in promote-desktop. A bare tag push has no inputs
+          # -> beta cut; a manual channel=stable dispatch (without promote) builds a
+          # non-prerelease.
+          EP_PRE_RELEASE: ${{ (inputs.channel == '' || inputs.channel == 'beta') && 'true' || '' }}
         # Publish only on real releases (tag push / workflow_call from
         # release.yml). On workflow_dispatch test runs, build every target but
         # do NOT publish: the v0.1.0 GitHub Release is immutable, so attaching
@@ -753,7 +828,9 @@ jobs:
             ui/electron/dist/*.AppImage
             ui/electron/dist/*.deb
             ui/electron/dist/*.zip
-            ui/electron/dist/latest*.yml
+            # The github provider emits one channel file (latest*.yml); *.yml also
+            # captures electron-builder's debug yaml for the retained CI artifact.
+            ui/electron/dist/*.yml
           if-no-files-found: warn
           retention-days: 90
 
@@ -784,7 +861,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
           JOB_STATUS: ${{ job.status }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ env.RELEASE_TAG }}
           OS: ${{ matrix.os }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: bash
@@ -823,6 +900,75 @@ jobs:
             -o /dev/null --max-time 30 \
             || echo "::warning::Discord webhook POST failed (build status, $PLATFORM)."
 
+  # Production Electron promote -- NO rebuild. The cut already published the
+  # channel file (latest*.yml -- the github provider emits no beta.yml). Promoting
+  # to stable is two things: (1) inject stagingPercentage into the EXISTING
+  # latest*.yml so the rollout ramps to a fraction of installs; (2) un-prerelease
+  # the release (promote.yml's `finalize` job) so stable users
+  # (allowPrerelease=false) begin reading latest.yml -- the EXACT soaked binary,
+  # not a re-signed rebuild. A full rollout (staging_percentage empty/100) needs no
+  # file edit; finalize alone flips it. Lightweight: a single runner doing YAML
+  # text + gh, no signing.
+  promote-desktop:
+    name: Promote desktop (stable channel + staged rollout)
+    needs: preflight
+    if: ${{ inputs.promote_to_production == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # gh release download + upload
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Inject stagingPercentage into the soaked latest*.yml
+        env:
+          INPUT_PCT: ${{ inputs.staging_percentage }}
+          VAR_PCT: ${{ vars.STAGING_PERCENTAGE }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG_NAME: ${{ env.RELEASE_TAG }}
+        run: |
+          set -euo pipefail
+          # The workflow_call input wins over the repo-var fallback.
+          pct="${INPUT_PCT:-$VAR_PCT}"
+          if [ -z "$pct" ] || [ "$pct" = "100" ]; then
+            echo "::notice::Staged rollout at ${pct:-empty} -- full rollout; finalize's un-prerelease alone flips stable to this build."
+            exit 0
+          fi
+          # No checkout here, so gh needs --repo. Pull the channel file the cut
+          # already published, inject the gate, and re-attach. electron-updater
+          # reads stagingPercentage (0-100) from latest*.yml and serves the build to
+          # a deterministic fraction of installs (hashed per-machine), so a bad
+          # promote reaches only that fraction before the maintainer bumps it
+          # (docs/RELEASING.md). There is one latest*.yml (the github provider has no
+          # beta.yml), but the soak already pushed beta testers (allowPrerelease) to
+          # this build off the prerelease release while latest*.yml was ungated, so
+          # the gate now ramps the not-yet-updated population -- effectively the
+          # stable/general users that finalize is about to expose.
+          mkdir -p channelfiles
+          if ! gh release download "$TAG_NAME" --repo "$REPO" \
+              --pattern 'latest*.yml' --dir channelfiles --clobber; then
+            echo "::error::No latest*.yml on $TAG_NAME -- the cut must publish channel files before a promote."
+            exit 1
+          fi
+          shopt -s nullglob
+          found=0
+          for f in channelfiles/latest*.yml; do
+            found=1
+            if ! grep -q '^stagingPercentage:' "$f"; then
+              printf 'stagingPercentage: %s\n' "$pct" >> "$f"
+            fi
+            echo "  $f -> stagingPercentage: ${pct}"
+            gh release upload "$TAG_NAME" "$f" --repo "$REPO" --clobber
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "::error::latest*.yml pattern matched nothing after download."
+            exit 1
+          fi
+          echo "::notice::Stable channel staged at ${pct}% for $TAG_NAME."
+
   build-ios:
     name: Build iOS (TestFlight)
     needs: preflight
@@ -845,6 +991,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+          # The release tag (see RELEASE_TAG env) so a workflow_call build
+          # archives the tagged version, not HEAD-of-main.
+          ref: ${{ env.RELEASE_TAG }}
           # Full history + tags so the Fastlane changelog can list every commit
           # since the last release tag (git log <tag>..HEAD). A shallow checkout
           # (the default depth 1) has no tags and only HEAD, which is why
@@ -980,7 +1129,12 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-        run: bundle exec fastlane beta
+        # The cut path runs `beta` (TestFlight). The auto-promote path
+        # (promote_to_production=true, set by promote.yml) runs `app_store`,
+        # which preps the App Store version with phased_release and submits for
+        # review. The binary is the one `beta` already pushed to TestFlight
+        # (app_store has skip_binary_upload), so a promote never rebuilds.
+        run: bundle exec fastlane ${{ inputs.promote_to_production && 'app_store' || 'beta' }}
 
       - name: Attest build provenance (.ipa)
         # SLSA build provenance for the iOS .ipa, matching what
@@ -1007,7 +1161,7 @@ jobs:
         if: success() && hashFiles('ui/ios/App/fastlane/builds/*.ipa') != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ github.ref_name }}
+          TAG_NAME: ${{ env.RELEASE_TAG }}
         run: |
           set -euo pipefail
           for ipa in ui/ios/App/fastlane/builds/*.ipa; do
@@ -1021,7 +1175,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
           JOB_STATUS: ${{ job.status }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ env.RELEASE_TAG }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: bash
         run: |
@@ -1115,6 +1269,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+          # The release tag (see RELEASE_TAG env) so a workflow_call build
+          # bundles the tagged version, not HEAD-of-main.
+          ref: ${{ env.RELEASE_TAG }}
 
       # Same mise pin as iOS for Node + pnpm + Ruby consistency.
       # zizmor: ignore[cache-poisoning] -- maintainer-only-trigger; see
@@ -1273,7 +1430,11 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           # supply reads this for Play Console auth.
           SUPPLY_JSON_KEY: ${{ env.PLAY_STORE_JSON_KEY_PATH }}
-        run: bundle exec fastlane internal
+        # The cut path runs `internal` (Play internal track). The auto-promote
+        # path (promote_to_production=true, set by promote.yml) runs
+        # `production`, which promotes the internal build to the production track
+        # with a staged rollout (no rebuild -- track_promote_to: production).
+        run: bundle exec fastlane ${{ inputs.promote_to_production && 'production' || 'internal' }}
 
       - name: Attest build provenance (.aab)
         # SLSA build provenance for the Android App Bundle, matching the
@@ -1294,7 +1455,7 @@ jobs:
         if: success() && hashFiles('ui/android/app/build/outputs/bundle/release/*.aab') != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ github.ref_name }}
+          TAG_NAME: ${{ env.RELEASE_TAG }}
         run: |
           set -euo pipefail
           for aab in ui/android/app/build/outputs/bundle/release/*.aab; do
@@ -1308,7 +1469,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
           JOB_STATUS: ${{ job.status }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ env.RELEASE_TAG }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: bash
         run: |

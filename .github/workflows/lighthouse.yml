@@ -120,6 +120,9 @@ jobs:
         env:
           HERON_DATA_DIR: /tmp/heron-lighthouse
           HERON_E2E_DATA_DIR: /tmp/heron-lighthouse
+          # PR runs collect a single Lighthouse pass to cut wall-clock;
+          # push-to-main keeps the 3-run median (lighthouserc.json default).
+          LH_RUNS: ${{ github.event_name == 'pull_request' && '1' || '3' }}
         run: |
           set -euo pipefail
           # Cleanup runs unconditionally -- without the EXIT trap, a

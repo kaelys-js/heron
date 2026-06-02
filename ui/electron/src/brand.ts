@@ -5,6 +5,8 @@
 export const BRAND = {
   name: "heron",
   displayName: "Heron",
+  tagline: "Stand still. Strike well.",
+  description: "Heron is a thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
   bundleId: "com.resistjs.heron",
   urlScheme: "heron",
   serviceType: "_heron._tcp",
@@ -13,4 +15,13 @@ export const BRAND = {
   issuesUrl: "https://github.com/kaelys-js/heron/issues",
   homepageUrl: "https://heron.app",
   copyright: "© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License.",
+  // Subset of the palette the desktop About window paints with.
+  colors: {
+    accent: "#c89b4a",
+    primary: "#4a5b6d",
+    darkBg: "#0e1014",
+    darkSurface: "#14181f",
+    textOnDark: "#e8eaed",
+    splashBg: "#3e4f5e",
+  },
 } as const;

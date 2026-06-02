@@ -21,6 +21,8 @@
   import CheckMark from './CheckMark.svelte';
   import { useIsMobile } from '$lib/hooks/use-is-mobile.svelte';
   import { cn } from '$lib/utils';
+  import { scale } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import type { Snippet } from 'svelte';
 
   type Props = {
@@ -84,7 +86,7 @@
       'hover:bg-muted/60 active:bg-muted/80 active:scale-[0.98]',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
       'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
-      danger && 'text-red-400 hover:bg-red-500/10 active:bg-red-500/15',
+      danger && 'text-destructive hover:bg-destructive/10 active:bg-destructive/15',
       className,
     )}
   >
@@ -94,7 +96,7 @@
       <span
         class={cn(
           'flex size-9 items-center justify-center rounded-lg flex-shrink-0',
-          danger ? 'bg-red-500/10 text-red-400' : 'bg-muted text-foreground',
+          danger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground',
         )}
       >
         <Icon class="size-4" />
@@ -114,7 +116,12 @@
       {@render trailing()}
     {/if}
     {#if active}
-      <CheckMark class="size-4 flex-shrink-0 text-tint" />
+      <span
+        class="flex-shrink-0"
+        transition:scale={{ duration: 160, start: 0.6, easing: cubicOut }}
+      >
+        <CheckMark active class="size-4" />
+      </span>
     {/if}
   </button>
 {:else}
@@ -128,7 +135,7 @@
     {closeOnSelect}
     class={cn(
       'gap-2.5 cursor-pointer',
-      danger && 'text-red-400 focus:bg-red-500/10 focus:text-red-300',
+      danger && 'text-destructive focus:bg-destructive/10 focus:text-destructive',
       className,
     )}
     {onSelect}
@@ -148,7 +155,12 @@
       {@render trailing()}
     {/if}
     {#if active}
-      <CheckMark class="ml-auto size-3.5 flex-shrink-0 text-tint" />
+      <span
+        class="ml-auto flex-shrink-0"
+        transition:scale={{ duration: 160, start: 0.6, easing: cubicOut }}
+      >
+        <CheckMark active class="size-3.5" />
+      </span>
     {/if}
   </DropdownMenu.Item>
 {/if}

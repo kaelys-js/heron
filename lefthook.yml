@@ -156,6 +156,43 @@ pre-commit:
       glob: ".github/scripts/sticky/assemble-summary.{mjs,test.mjs}"
       run: pnpm pr:summary:test
 
+    "15-splash":
+      # Single-source splash: unit-test the spec + assert every generated
+      # surface still matches it. Fires only when the spec, its generators, the
+      # verifier, or a generated surface is staged. (99-verify also runs the
+      # drift check repo-wide; this gives fast targeted feedback + the unit test.)
+      glob: "{scripts/native/splash-spec.mjs,scripts/native/splash-spec.test.mjs,scripts/system/verify-splash-sync.mjs,scripts/native/apply-brand.mjs,scripts/native/icons/generate-icons.mjs,ui/src/app.html,ui/electron/src/splash.ts,ui/src/routes/login/+page.svelte,ui/src/routes/signup/+page.svelte,ui/ios/App/App/Base.lproj/LaunchScreen.storyboard}"
+      run: pnpm splash-spec:test && pnpm verify:splash-sync
+
+    "16-icons":
+      # Unit-test the icon generator's pure helpers (scaleSvgImage). Fires when
+      # the generator or its test is staged.
+      glob: "{scripts/native/icons/generate-icons.mjs,scripts/native/icons/generate-icons.test.mjs}"
+      run: pnpm icons:test
+
+    "17-brand-css":
+      # Brand token system: unit-test the single-block emitter + assert the
+      # brand.json palette clears WCAG AA in both modes. Fires when brand.json,
+      # the app.css block emitter, the generator, or the contrast guard is
+      # staged. (99-verify also runs verify:contrast repo-wide; this is fast
+      # targeted feedback + the emitter unit test.)
+      glob: "{branding/brand.json,scripts/native/app-css-block.mjs,scripts/native/app-css-block.test.mjs,scripts/native/apply-brand.mjs,scripts/system/verify-contrast.mjs}"
+      run: pnpm app-css-block:test && pnpm verify:contrast
+
+    "18-symbolicate":
+      # Unit-test the offline client-stack symbolicator's pure helpers. Fires
+      # only when the script or its test is staged.
+      glob: "{scripts/system/symbolicate.mjs,scripts/system/symbolicate.test.mjs}"
+      run: pnpm symbolicate:test
+
+    "19-pbxproj-version":
+      # Unit-test the pure pbxproj version-stamp rewrite (MARKETING_VERSION +
+      # CURRENT_PROJECT_VERSION derived from package.json semver, idempotently).
+      # Fires when the helper, its test, or either call site (apply-brand +
+      # _bump-versions) is staged.
+      glob: "{scripts/native/pbxproj-version.mjs,scripts/native/pbxproj-version.test.mjs,scripts/native/apply-brand.mjs,scripts/native/_bump-versions.mjs}"
+      run: pnpm pbxproj-version:test
+
     # ── Full verify pipeline (typecheck + build + tests + every linter +
     #    every gate), turbo-cached. Runs LAST so the writers above have
     #    already formatted + re-staged. SAME command pre-push + CI run. ──

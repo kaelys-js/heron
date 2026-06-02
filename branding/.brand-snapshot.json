@@ -65,7 +65,7 @@
     }
   },
   "colors": {
-    "$comment": "9 base hex values + their human-readable names. The full 22-token CSS system in ui/src/app.css is generated from these by apply-brand (status colors + text scale are static across brands; everything else derives).",
+    "$comment": "9 base hex values + their human-readable names. The full per-mode token system in ui/src/app.css (incl. light/dark status colors success/warning/info and the accent-strong on-light text variants) is generated from colors.tokens by apply-brand. Every value here is WCAG-AA verified in both modes -- see scripts/system/verify-contrast.mjs.",
     "primary": "#4a5b6d",
     "primaryName": "Heron Slate",
     "accent": "#c89b4a",
@@ -79,7 +79,7 @@
     "textOnDark": "#e8eaed",
     "textOnLight": "#1a1f26",
     "tokens": {
-      "$comment": "22-token CSS system, derived from the 9 bases. apply-brand writes these into the AUTO-GENERATED block in ui/src/app.css. The shadcn-shaped token graph (--background, --foreground, --primary, --accent, --sidebar-*, status.*) maps onto the brand palette here. light = warm-paper register, dark = slate-tinted black register.",
+      "$comment": "Per-mode token system, derived from the 9 bases. apply-brand writes these into the AUTO-GENERATED block in ui/src/app.css. The shadcn-shaped token graph (--background, --foreground, --primary, --accent(+Strong), --accent-secondary(+Strong), --success/--warning/--info, --sidebar-*) maps onto the brand palette here. light = warm-paper register, dark = slate-tinted black register. *Strong tokens are darker on-light variants of the accents for text/icon/ring use where the bright fill colour fails AA on cream.",
       "light": {
         "background": "#f7f5f0",
         "foreground": "#1a1f26",
@@ -92,16 +92,24 @@
         "secondary": "#efeae0",
         "secondaryForeground": "#1a1f26",
         "muted": "#efeae0",
-        "mutedForeground": "#6b7585",
+        "mutedForeground": "#525c6c",
         "accent": "#c89b4a",
         "accentForeground": "#1a1f26",
+        "accentStrong": "#856319",
         "accentSecondary": "#7a8c6d",
         "accentSecondaryForeground": "#1a1f26",
+        "accentSecondaryStrong": "#4d5b40",
         "destructive": "#a85459",
         "destructiveForeground": "#fffefa",
+        "success": "#2f7140",
+        "successForeground": "#fffefa",
+        "warning": "#8a5300",
+        "warningForeground": "#fffefa",
+        "info": "#1f6fb2",
+        "infoForeground": "#fffefa",
         "border": "#e0d8c8",
-        "input": "#e0d8c8",
-        "ring": "#c89b4a",
+        "input": "#94835a",
+        "ring": "#856319",
         "sidebar": "#efeae0",
         "sidebarForeground": "#1a1f26",
         "sidebarPrimary": "#4a5b6d",
@@ -127,12 +135,20 @@
         "mutedForeground": "#a8b0bb",
         "accent": "#c89b4a",
         "accentForeground": "#14181f",
+        "accentStrong": "#c89b4a",
         "accentSecondary": "#7a8c6d",
         "accentSecondaryForeground": "#0e1014",
-        "destructive": "#b3666b",
-        "destructiveForeground": "#f4e8e9",
+        "accentSecondaryStrong": "#9aab8c",
+        "destructive": "#e0686f",
+        "destructiveForeground": "#14181f",
+        "success": "#5fcf80",
+        "successForeground": "#0e1014",
+        "warning": "#e6b53f",
+        "warningForeground": "#0e1014",
+        "info": "#5aa9e6",
+        "infoForeground": "#0e1014",
         "border": "#232a35",
-        "input": "#232a35",
+        "input": "#5d6775",
         "ring": "#c89b4a",
         "sidebar": "#0e1014",
         "sidebarForeground": "#a8b0bb",
@@ -304,31 +320,39 @@
     ]
   },
   "nativeGlyph": {
-    "$comment": "SF Symbol name used on iOS / watchOS / iPadOS native surfaces where SVG paths from logo.svg can't be embedded directly (Widget AuthGate, Watch root view, Live Activity badges). Chosen to look as close to logo.svg's <symbol id='brand-glyph'> as the SF Symbols catalogue allows. Currently: lucide bird (web) <-> SF Symbol 'feather' (native). `iosFallback` is used when the primary symbol isn't available on the device's iOS / watchOS version (SF Symbols is version-tiered).",
+    "$comment": "Native iOS / watchOS / iPadOS surfaces (Widget AuthGate, Watch root view, Live Activity badges, BootFailureView) render the brand mascot as an IMAGE asset -- a cartoon mascot can't be expressed as an SF Symbol. `image` is the Assets.xcassets imageset name apply-brand emits (from branding/assets/mascot.png) into every Swift target. The SF-symbol `ios`/`iosFallback` remain as a last-resort fallback if that image asset is ever missing on an older OS.",
+    "image": "HeronMascot",
     "ios": "feather",
     "iosFallback": "paperplane.fill"
   },
   "mascot": {
-    "$comment": "Mascot identity -- fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
-    "subject": "Great Blue Heron",
-    "pose": "side profile, standing in shallow water, neck S-curve, head turned 25-30° right",
-    "styleReferences": ["Audubon", "Charley Harper", "Field Notes", "Hasegawa Tōhaku sumi-e"],
+    "$comment": "Mascot identity -- the friendly cartoon Heron that IS the brand mark (it replaced the stopgap Lucide 'bird' glyph). Source: branding/mascot.png (raw) -> branding/assets/mascot.png (cleaned transparent master, via `pnpm mascot`). EVERYTHING derives from the master: logo.svg embed, all platform icons, the splash, and the Swift image asset. Fed into the MASCOT.md template.",
+    "image": "branding/assets/mascot.png",
+    "rawSource": "branding/mascot.png",
+    "subject": "Great Blue Heron -- friendly cartoon character",
+    "pose": "3/4 head-and-shoulders, beak to the right, large warm eyes, small crest tuft",
+    "styleReferences": [
+      "Duolingo Duo",
+      "flat vector app mascot",
+      "rounded thick-outline cartoon",
+      "friendly modern app mark"
+    ],
     "tiers": {
       "mark": {
         "use": "≤64px contexts -- favicon, app icon, inline UI",
-        "treatment": "silhouette"
+        "treatment": "mascot head on the gradient squircle"
       },
       "illustration": {
-        "use": "≥200px contexts -- landing pages, marketing, press",
-        "treatment": "editorial illustration with subtle detail"
+        "use": "≥200px contexts -- splash, landing pages, marketing, press",
+        "treatment": "full cartoon mascot, animated where the surface allows"
       }
     },
     "antiStyles": [
-      "cartoon",
       "photo-realistic",
       "3D-rendered",
-      "anthropomorphized",
-      "mascot-with-arms"
+      "aggressive or scary",
+      "over-detailed or cluttered",
+      "off-brand colors"
     ]
   },
   "splash": {

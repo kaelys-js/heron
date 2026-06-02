@@ -217,12 +217,12 @@
 
   function levelDot(level: ActivityEvent['level']): string {
     return level === 'error'
-      ? 'bg-red-500'
+      ? 'bg-destructive'
       : level === 'warn'
-        ? 'bg-amber-500'
+        ? 'bg-warning'
         : level === 'success'
-          ? 'bg-emerald-500'
-          : 'bg-blue-500';
+          ? 'bg-success'
+          : 'bg-info';
   }
   function levelIcon(level: ActivityEvent['level']) {
     return level === 'error'
@@ -243,7 +243,7 @@
       <Card.Root
         class={cn(
           'border-l-2 transition-colors',
-          config.globalEnabled ? 'border-l-emerald-500/60' : 'border-l-zinc-700',
+          config.globalEnabled ? 'border-l-success/60' : 'border-l-border',
         )}
       >
         <Card.Content class="p-5 flex items-start gap-4">
@@ -251,8 +251,8 @@
             class={cn(
               'size-10 rounded-lg flex items-center justify-center flex-shrink-0 ring-1',
               config.globalEnabled
-                ? 'bg-emerald-500/10 ring-emerald-500/30 text-emerald-300'
-                : 'bg-zinc-500/10 ring-zinc-500/30 text-zinc-400',
+                ? 'bg-success/10 ring-success/30 text-success'
+                : 'bg-muted ring-border text-muted-foreground',
             )}
           >
             <Power class="size-5" />
@@ -264,7 +264,7 @@
                 data-testid="autopilot-status"
                 class={cn(
                   'text-[11px] uppercase tracking-wider font-medium',
-                  config.globalEnabled ? 'text-emerald-300' : 'text-zinc-400',
+                  config.globalEnabled ? 'text-success' : 'text-muted-foreground',
                 )}
               >
                 {config.globalEnabled ? '● Active' : '○ Paused'}
@@ -285,7 +285,7 @@
                   <span class="text-foreground"
                     >{config.schedules.find((s) => s.id === scheduledNext!.id)?.name}</span
                   >
-                  · <span class="text-emerald-300">{fmtCountdown(scheduledNext.ts)}</span>
+                  · <span class="text-success">{fmtCountdown(scheduledNext.ts)}</span>
                 {:else}
                   No daily schedules enabled — only event triggers will fire.
                 {/if}
@@ -300,10 +300,10 @@
 
       {#if config.globalEnabled}
         <div
-          class="flex items-start gap-2 px-3 py-2 rounded-md border border-blue-500/30 bg-blue-500/5 text-xs"
+          class="flex items-start gap-2 px-3 py-2 rounded-md border border-info/30 bg-info/5 text-xs"
         >
-          <Info class="size-3.5 text-blue-300 mt-0.5 flex-shrink-0" />
-          <div class="text-blue-200/80">
+          <Info class="size-3.5 text-info mt-0.5 flex-shrink-0" />
+          <div class="text-info/80">
             The scheduler runs in-process while this dashboard is open. For 24/7 background runs,
             set up a macOS launchd agent that opens the dashboard at boot — or run scheduled tasks
             via cron instead.
@@ -325,7 +325,7 @@
           <Card.Root
             class={cn(
               'border-l-2 transition-colors',
-              s.enabled ? 'border-l-emerald-500/40' : 'border-l-zinc-800',
+              s.enabled ? 'border-l-success/40' : 'border-l-border',
             )}
           >
             <Card.Content class="p-4 space-y-3">
@@ -352,7 +352,7 @@
                     {/if}
                     {#if s.lastRunResult === 'started'}
                       <span
-                        class="inline-flex items-center gap-1 text-[11px] uppercase tracking-wide text-blue-300"
+                        class="inline-flex items-center gap-1 text-[11px] uppercase tracking-wide text-info"
                       >
                         <Activity class="size-2.5 animate-pulse" /> running
                       </span>
@@ -493,7 +493,7 @@
                                     class={cn(
                                       'size-7 text-[11px] rounded-md font-medium border transition-all',
                                       isOn && !allDays
-                                        ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40'
+                                        ? 'bg-success/20 text-success border-success/40'
                                         : isOn && allDays
                                           ? 'bg-muted text-muted-foreground border-border/50'
                                           : 'bg-transparent text-muted-foreground/40 border-border/30 hover:border-border hover:text-foreground',
@@ -521,14 +521,14 @@
               {#if s.lastRunAt}
                 <div class="pl-12 flex items-center gap-2 text-[11px] pt-1">
                   {#if s.lastRunResult === 'success'}
-                    <CheckCircle2 class="size-3 text-emerald-400" />
-                    <span class="text-emerald-300">Last run: success</span>
+                    <CheckCircle2 class="size-3 text-success" />
+                    <span class="text-success">Last run: success</span>
                   {:else if s.lastRunResult === 'failure'}
-                    <AlertTriangle class="size-3 text-red-400" />
-                    <span class="text-red-300">Last run: failed</span>
+                    <AlertTriangle class="size-3 text-destructive" />
+                    <span class="text-destructive">Last run: failed</span>
                   {:else}
-                    <Activity class="size-3 text-blue-400 animate-pulse" />
-                    <span class="text-blue-300">Last run: in progress</span>
+                    <Activity class="size-3 text-info animate-pulse" />
+                    <span class="text-info">Last run: in progress</span>
                   {/if}
                   <span class="text-muted-foreground">· {formatRelativeTime(s.lastRunAt)}</span>
                   {#if s.lastRunMessage}
@@ -556,8 +556,8 @@
               <p class="text-[11px] text-muted-foreground leading-relaxed">
                 Jobs at or above this Gemini score get queued for deep Claude evaluation.
                 <span class="text-muted-foreground/70"
-                  >Range 0.0–5.0. <span class="text-emerald-400/80">4.0 is the standard cutoff</span
-                  > — lower casts a wider net at higher cost.</span
+                  >Range 0.0–5.0. <span class="text-success/80">4.0 is the standard cutoff</span> — lower
+                  casts a wider net at higher cost.</span
                 >
               </p>
             </div>
@@ -636,17 +636,17 @@
       <!-- Save bar -->
       {#if dirty}
         <div
-          class="sticky bottom-4 flex items-center gap-2 px-4 py-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 backdrop-blur-md shadow-lg"
+          class="sticky bottom-4 flex items-center gap-2 px-4 py-2.5 rounded-lg border border-warning/40 bg-warning/10 backdrop-blur-md shadow-lg"
         >
-          <AlertCircle class="size-4 text-amber-300" />
-          <span class="text-xs text-amber-200 flex-1">Unsaved changes</span>
+          <AlertCircle class="size-4 text-warning" />
+          <span class="text-xs text-warning flex-1">Unsaved changes</span>
           <Button
             variant="ghost"
             size="sm"
             class={cn(
               'h-7 transition-all',
               discardArmed &&
-                'bg-red-500/15 text-red-300 hover:bg-red-500/25 ring-1 ring-red-500/40 animate-pulse',
+                'bg-destructive/15 text-destructive hover:bg-destructive/25 ring-1 ring-destructive/40 animate-pulse',
             )}
             onclick={discard}
             disabled={saving}

@@ -30,7 +30,6 @@ const tick = () => new Promise<void>((r) => setTimeout(r, 0));
 beforeEach(async () => {
   __nativeErrors.length = 0;
   localStorage.clear();
-  reporter._testHelpers().recentTags.clear();
   reporter.setReporterBackend(null);
   await tick();
 });
@@ -204,5 +203,64 @@ describe('flushQueue', () => {
     const { flushQueue, QUEUE_KEY } = reporter._testHelpers();
     localStorage.removeItem(QUEUE_KEY);
     await expect(flushQueue()).resolves.toBeUndefined();
+  });
+
+  it('drops a >24h-old queued report and keeps a fresh one', async () => {
+    // WHY: a backend unreachable for a day means the queued report is stale --
+    // the route/build it captured has moved on. Retrying it forever ages-out
+    // useful slots, so flush must discard past the 24h TTL while STILL retrying
+    // a fresh report. Stub fetch to fail so the fresh report is retained
+    // (queued again) rather than sent-and-removed -- isolating the TTL drop.
+    const failingFetch = vi.fn(
+      async (_url?: unknown, _init?: RequestInit) => new Response(null, { status: 500 }),
+    );
+    vi.stubGlobal('fetch', failingFetch);
+    reporter.setReporterBackend('http://localhost:5173');
+    await tick();
+    const { flushQueue, queueLocally, QUEUE_KEY } = reporter._testHelpers();
+    const now = Date.now();
+    localStorage.removeItem(QUEUE_KEY);
+    queueLocally({
+      message: 'stale',
+      level: 'error',
+      capturedAt: now - 25 * 3600_000,
+      attempts: 0,
+    });
+    queueLocally({ message: 'fresh', level: 'error', capturedAt: now - 60_000, attempts: 0 });
+    await flushQueue();
+    const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]');
+    const messages = queue.map((q: { message: string }) => q.message);
+    expect(messages).not.toContain('stale'); // dropped by TTL, never sent
+    expect(messages).toContain('fresh'); // kept (send failed, retried later)
+    // The stale entry must be dropped WITHOUT a send attempt -- only the fresh
+    // one hits the wire.
+    const sentBodies = failingFetch.mock.calls.map((c) => JSON.parse(c[1]?.body as string));
+    expect(sentBodies.every((b) => b.summary !== 'stale')).toBe(true);
+  });
+});
+
+describe('pendingReportCount + clearReportQueue', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    reporter.setReporterBackend(null);
+  });
+
+  it('reports 0 on an empty / unset queue', () => {
+    expect(reporter.pendingReportCount()).toBe(0);
+  });
+
+  it('counts queued reports and clears them', () => {
+    const { queueLocally } = reporter._testHelpers();
+    queueLocally({ message: 'a', level: 'error', capturedAt: Date.now(), attempts: 0 });
+    queueLocally({ message: 'b', level: 'error', capturedAt: Date.now(), attempts: 0 });
+    expect(reporter.pendingReportCount()).toBe(2);
+    reporter.clearReportQueue();
+    expect(reporter.pendingReportCount()).toBe(0);
+  });
+
+  it('tolerates a malformed queue blob (returns 0, does not throw)', () => {
+    const { QUEUE_KEY } = reporter._testHelpers();
+    localStorage.setItem(QUEUE_KEY, 'not-json{');
+    expect(reporter.pendingReportCount()).toBe(0);
   });
 });

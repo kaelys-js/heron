@@ -4,14 +4,19 @@
   import { devtoolsEnabled } from '$lib/client/devtools.svelte';
   import * as Sidebar from '$lib/components/ui/sidebar';
   import AppSidebar from '$lib/components/AppSidebar.svelte';
+  import DevGalleryDrawer from './dev/views/DevGalleryDrawer.svelte';
+  import { installAuthMenuBridge } from '$lib/client/auth-menu';
+  import BloomBackground from '$lib/components/BloomBackground.svelte';
   import AgentChat from '$lib/components/AgentChat.svelte';
   import GlobalSearch from '$lib/components/GlobalSearch.svelte';
   import AddJobDialog from '$lib/components/AddJobDialog.svelte';
   import PostRejectionSheet from '$lib/components/PostRejectionSheet.svelte';
   import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
+  import ErrorScreen from '$lib/components/ErrorScreen.svelte';
+  import CopyButton from '$lib/components/CopyButton.svelte';
   import { Toaster } from '$lib/components/ui/sonner';
   import { Button } from '$lib/components/ui/button';
-  import { AlertTriangle, RefreshCw, FlaskConical } from '@lucide/svelte';
+  import { RefreshCw, RotateCw, FlaskConical } from '@lucide/svelte';
   import { reportClientError } from '$lib/notifications.svelte';
   import { BRAND_EVENTS, BRAND_STORAGE_KEYS } from '$lib/client/brand';
   import { onNavigate } from '$app/navigation';
@@ -20,6 +25,8 @@
   import { onMount, setContext } from 'svelte';
   import { goto } from '$app/navigation';
   import { installErrorReporter, setReporterBackend } from '$lib/client/error-reporter';
+  import { installConsoleBanner } from '$lib/client/console-banner';
+  import { installDevGlobal } from '$lib/client/dev-global';
   import { onlineStore } from '$lib/client/online-status.svelte';
   import { authClient } from '$lib/client/auth-client';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
@@ -30,7 +37,7 @@
   import { apiCall } from '$lib/api';
   import { installDeepLinkHandler, handleDeepLink } from '$lib/client/deep-links';
   import { onNotificationTap } from '$lib/client/notifications';
-  import { installNotificationsBridge } from '$lib/client/sse-notifications-bridge';
+  import { installWidgetRefreshBridge } from '$lib/client/widget-refresh-bridge';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
   // Lifecycle breadcrumb → the on-device diagnostics overlay (app.html).
@@ -45,6 +52,10 @@
   // Updates live as the route changes so signing out hides the FAB
   // immediately, and signing in reveals it on the very next navigation.
   let pathname = $derived(page.url.pathname);
+
+  // Dev gallery drawer open-state (opened by the floating flask launcher).
+  let devGalleryOpen = $state(false);
+
   let isAuthed = $derived.by(() => {
     if (typeof window === 'undefined') return false;
     if (isPublicRoute(pathname)) return false;
@@ -82,6 +93,10 @@
     );
   }
 
+  // Electron native File-menu auth actions (login/signup/passkey) -> renderer.
+  // No-op on web/iOS. Separate onMount so its teardown is self-contained.
+  onMount(() => installAuthMenuBridge());
+
   onMount(() => {
     diag('+layout.svelte onMount entered');
     // Hydrate the theme store so OS-preference changes propagate at runtime.
@@ -95,13 +110,22 @@
     // running native -- but in plain web mode, location.origin is correct.
     if (typeof window !== 'undefined') {
       installErrorReporter(window.location.origin);
+      // One-time styled boot banner: brand + exact build (version + git SHA) +
+      // links in every env; a self-XSS / paste-jacking warning in production.
+      installConsoleBanner();
+      // Install the frozen, paste-safe `window.heron` developer global (build
+      // identity + public links + safe actions: help / diagnostics /
+      // clearCacheAndReset). Carries no credential surface; pairs with the
+      // banner's self-XSS warning. One-time guarded like the banner.
+      installDevGlobal();
       // Initialize the cross-platform online-status store. Periodic /api/health
       // probe + navigator.onLine listeners + native hints (iOS/Electron) all
       // funnel through one boolean -- OfflineIndicator + api.ts subscribe.
       onlineStore.init(window.location.origin);
-      // web-vitals: CLS / INP / LCP / TTFB / FCP all funnel to /api/vitals
-      // for Issues-store ingestion. Dynamic-import keeps the 4KB
-      // web-vitals chunk out of the critical-path bundle. The
+      // web-vitals: CLS / INP / LCP / TTFB / FCP all funnel to /api/telemetry
+      // as quiet `kind: 'technical'` diagnostics (NOT Issues -- a poor LCP is a
+      // diagnostic, not an open problem the user must act on). Dynamic-import
+      // keeps the 4KB web-vitals chunk out of the critical-path bundle. The
       // `sendBeacon`-friendly fetch only fires when a metric finalises
       // (route change or page hide), not continuously, so the overhead
       // is bounded.
@@ -113,15 +137,15 @@
           // payload-size quota exceeded -- the spec allows the user agent
           // to refuse queueing).
           const body = JSON.stringify({
+            type: 'vitals',
             name: m.name,
             value: m.value,
             rating: m.rating,
             id: m.id,
-            url: window.location.pathname,
-            ts: Date.now(),
+            route: window.location.pathname,
           });
           const fetchFallback = (): void => {
-            void fetch('/api/vitals', {
+            void fetch('/api/telemetry', {
               method: 'POST',
               body,
               keepalive: true,
@@ -142,7 +166,7 @@
           ) {
             try {
               queued = navigator.sendBeacon(
-                '/api/vitals',
+                '/api/telemetry',
                 new Blob([body], { type: 'application/json' }),
               );
             } catch {
@@ -165,7 +189,7 @@
     // production probe ladder. We don't await -- first /api/* call will
     // wait on the same promise via api-base.ts's `resolving` deduplication.
     // Track the SSE bridge teardown so we can stop it on cleanup.
-    let stopNotificationsBridge: (() => void) | null = null;
+    let stopWidgetRefreshBridge: (() => void) | null = null;
 
     void import('$lib/client/api-base').then(({ getApiBase }) =>
       getApiBase()
@@ -184,16 +208,18 @@
           // Even an empty base on web is mirrored as '' which clears any
           // stale value from a prior native session.
           void setSharedBackendUrl(base || null);
-          // Install the SSE → notification + widget-stale bridge. The
-          // bridge listens to /api/notifications, fires OS notifications
-          // for warn/error/success events AND dispatches a widget-stale
-          // CustomEvent on every event with a widget-relevant source
-          // (apply-*, interview-*, scan-*, issue*). The bridge resolves
-          // its own backend URL via the shared sse-client wrapper, so
-          // we don't pass `base` in -- it'll re-resolve internally on
-          // every reconnect / net-status change.
+          // Install the widget-refresh bridge. It listens to /api/stream
+          // and dispatches a widget-stale CustomEvent for every PRODUCT
+          // event with a widget-relevant source (apply-*, interview-*,
+          // scan-*, issue*), so the iOS widget snapshot re-fetches on
+          // in-session state changes. OS notifications are NOT its job --
+          // the bell's own /api/stream subscription dispatches heron:notify
+          // and PushNotificationsToggle fires the OS Notification. The
+          // bridge resolves its own backend URL via the shared sse-client
+          // wrapper, so we don't pass `base` in -- it'll re-resolve
+          // internally on every reconnect / net-status change.
           //
-          // Gate on `authed === '1'`. /api/notifications is auth-protected;
+          // Gate on `authed === '1'`. /api/stream is auth-protected;
           // opening the SSE on an unauth page (/login, /signup, /help)
           // 401s the request, the sse-client retries with backoff, and
           // Lighthouse's `errors-in-console` audit records each 401 as a
@@ -205,7 +231,7 @@
             typeof localStorage !== 'undefined' &&
             localStorage.getItem(BRAND_STORAGE_KEYS.authed) === '1'
           ) {
-            stopNotificationsBridge = installNotificationsBridge();
+            stopWidgetRefreshBridge = installWidgetRefreshBridge();
           }
         })
         .catch((e) => {
@@ -339,7 +365,7 @@
     //   • Cold boot: fetch + push immediately after the auth probe wins.
     //   • While the app is foregrounded: SSE-driven (Task 9). The
     //     activity-feed bus already notifies on every relevant event;
-    //     sse-notifications-bridge listens and re-fetches.
+    //     widget-refresh-bridge listens and re-fetches.
     //   • App resumes from background: visibilitychange listener
     //     re-fetches so the user sees fresh data when they pull the app
     //     up. iOS itself coalesces widget refreshes to ~15min cycles, so
@@ -429,7 +455,7 @@
         window.removeEventListener(`${BRAND_EVENTS.notify}:widgets-stale`, onRefresh);
       }
       removeNotificationListener();
-      stopNotificationsBridge?.();
+      stopWidgetRefreshBridge?.();
     };
 
     // Client-side auth gate. In adapter-node builds hooks.server.ts
@@ -568,6 +594,11 @@
    * that surfaces as an unhandledrejection → red toast. Skip the in-flight
    * one explicitly so the new transition starts clean.
    */
+  // login ↔ signup share the brand hero + bloom (held steady by view-transition
+  // name); everything else rides `root`. Default root timing has a 90ms gap that
+  // makes the new card pop in, so for THESE navs we tag `html.auth-swap` and the
+  // CSS gives root a smooth overlapping crossfade + gentle rise instead.
+  const AUTH_PATHS = new Set(['/login', '/signup']);
   let inFlightTransition: { skipTransition?: () => void; finished?: Promise<void> } | null = null;
   onNavigate((navigation) => {
     if (typeof document === 'undefined') return;
@@ -578,13 +609,22 @@
     } catch {
       /* skipTransition is post-WAICG; older Chromium may lack it */
     }
+    const authSwap =
+      AUTH_PATHS.has(navigation.from?.url.pathname ?? '') &&
+      AUTH_PATHS.has(navigation.to?.url.pathname ?? '');
+    if (authSwap) document.documentElement.classList.add('auth-swap');
     return new Promise<void>((resolve) => {
       const t = sxt.call(document, async () => {
         resolve();
         await navigation.complete;
       });
       inFlightTransition = t;
-      t.finished?.finally?.(() => {
+      // Always clear the auth-swap tag once the transition settles (or
+      // immediately if `finished` isn't supported) so it never leaks into the
+      // next navigation.
+      const done = t.finished ?? Promise.resolve();
+      done.finally(() => {
+        if (authSwap) document.documentElement.classList.remove('auth-swap');
         if (inFlightTransition === t) inFlightTransition = null;
       });
     });
@@ -616,112 +656,112 @@
   while resolving, then either the app (children) or an actionable "Can't find
   your backend" screen. On web it's a no-op (origin IS the backend).
 -->
-<BackendBootGuard>
-  <!-- Top-level boundary: the page boundary below only wraps the route
-       content. A render throw in the shell (AppSidebar / Sidebar / floating
-       UI) would otherwise escape uncaught and blank the WebView. This shows a
-       full-screen crash UI on the brand background instead of black. -->
-  <svelte:boundary onerror={handleBoundaryError}>
-    <Sidebar.Provider class="h-svh overflow-hidden">
-      <AppSidebar
-        inboxCount={data?.inboxCount ?? 0}
-        queueCount={data?.queueCount ?? 0}
-        pinnedJobs={data?.pinnedJobs ?? []}
-        profilesState={data?.profilesState}
-        activeProfile={data?.activeProfile}
-      />
-      <Sidebar.Inset class="bg-card overflow-hidden">
-        <!-- `<main id="main-content">` is the target of app.html's
-         skip-to-content link. tabindex=-1 lets keyboard focus land here
-         after the skip link is activated. -->
-        <main id="main-content" tabindex="-1" class="contents">
-          <svelte:boundary onerror={handleBoundaryError}>
-            {@render children?.()}
-            {#snippet failed(error, reset)}
-              <!-- Page-level crash UI. Same visual language as ErrorBoundary
-               (the wrapper used by AgentChat / dialogs) so the user sees
-               a consistent failure surface across the app. Reload uses
-               location.reload() instead of location.assign('') so the
-               URL stays intact and the bug is reproducible. -->
-              <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 sm:p-8">
-                <div
-                  class="relative w-full max-w-xl flex flex-col gap-4 p-6 rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/5 via-card to-card overflow-hidden"
+<!-- Route content (main + page-level crash boundary), defined ONCE at the top
+     level and rendered EITHER inside the sidebar shell (authed) OR bare
+     (unauthed) below. The sidebar must NEVER appear on the unauthenticated
+     screens (/login, /signup, /onboarding). Defined here (not inside the
+     boundary -- a snippet there is read as a boundary prop, not a snippet). -->
+{#snippet routeContent()}
+  <!-- `<main id="main-content">` is the target of app.html's
+       skip-to-content link. tabindex=-1 lets keyboard focus land here
+       after the skip link is activated. -->
+  <main id="main-content" tabindex="-1" class="contents">
+    <svelte:boundary onerror={handleBoundaryError}>
+      {@render children?.()}
+      {#snippet failed(error, reset)}
+        <!-- Page-level crash UI on the shared ErrorScreen surface (same visual
+               language as the route +error.svelte). No status numeral — this is
+               a client render crash, not an HTTP error. Reload uses
+               location.reload() instead of location.assign('') so the URL stays
+               intact and the bug is reproducible. -->
+        <ErrorScreen
+          title="This page crashed"
+          description="A part of the app hit an unexpected error. The rest keeps running — this was logged."
+          accent="text-destructive"
+        >
+          {#snippet actions()}
+            <Button onclick={reset} class="w-full gap-1.5">
+              <RotateCw class="size-4" />
+              Try again
+            </Button>
+            <Button variant="outline" onclick={() => location.reload()} class="w-full gap-1.5">
+              <RefreshCw class="size-4" />
+              Reload page
+            </Button>
+            <Button
+              variant="ghost"
+              onclick={() => {
+                window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
+              }}
+              class="w-full gap-1.5 text-muted-foreground"
+            >
+              Open activity log
+            </Button>
+          {/snippet}
+
+          {#snippet details()}
+            {#if dev && error instanceof Error && error.stack}
+              <!-- Dev-only diagnostics: a disclosure with a rotating chevron and
+                     the stack in a copyable monospace block. Never in prod. -->
+              <details
+                class="group w-full rounded-lg border border-border/50 bg-muted/30 text-left"
+              >
+                <summary
+                  class="flex cursor-pointer select-none items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <div
-                    class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
-                  ></div>
-                  <div class="flex items-start gap-3">
-                    <div
-                      class="size-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0"
-                    >
-                      <AlertTriangle class="size-5 text-red-400" />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <h2 class="text-base font-semibold">This page crashed</h2>
-                      <p class="text-xs text-muted-foreground mt-0.5">
-                        <span
-                          class="font-mono text-[11px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded mr-1"
-                        >
-                          {error instanceof Error
-                            ? error.constructor.name || 'Error'
-                            : typeof error}
-                        </span>
-                        The rest of the app keeps running. This was logged to the activity feed.
-                      </p>
-                    </div>
+                  <span
+                    aria-hidden="true"
+                    class="inline-block text-muted-foreground/60 transition-transform group-open:rotate-90"
+                    >▸</span
+                  >
+                  Developer details
+                </summary>
+                <div class="space-y-2 border-t border-border/50 px-3 py-2.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] text-muted-foreground">Stack trace</span>
+                    <CopyButton text={error.stack} label="error details" />
                   </div>
                   <pre
-                    class="text-xs font-mono leading-relaxed bg-muted/40 border border-border/50 rounded-md p-3 max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-foreground/90">{error instanceof
-                    Error
-                      ? error.message || String(error)
-                      : typeof error === 'string'
-                        ? error
-                        : JSON.stringify(error, null, 2)}</pre>
-                  {#if error instanceof Error && error.stack}
-                    <details class="group">
-                      <summary
-                        class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors select-none flex items-center gap-1.5"
-                      >
-                        <span
-                          class="inline-block transition-transform group-open:rotate-90 text-muted-foreground/60"
-                          >▸</span
-                        >
-                        Stack trace
-                      </summary>
-                      <pre
-                        class="mt-2 p-3 text-[11px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{error.stack}</pre>
-                    </details>
-                  {/if}
-                  <div class="flex flex-wrap items-center gap-2">
-                    <Button variant="outline" size="sm" onclick={reset} class="h-8 gap-1.5">
-                      <RefreshCw class="size-3.5" /> Try again
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onclick={() => location.reload()}
-                      class="h-8 gap-1.5"
-                    >
-                      <RefreshCw class="size-3.5" /> Reload page
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      class="h-8 gap-1.5"
-                      onclick={() => {
-                        window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
-                      }}
-                    >
-                      Open activity log
-                    </Button>
-                  </div>
+                    class="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-background/60 p-2.5 text-[11px] font-mono leading-relaxed text-foreground/80">{error.stack}</pre>
                 </div>
-              </div>
-            {/snippet}
-          </svelte:boundary>
-        </main>
-      </Sidebar.Inset>
-    </Sidebar.Provider>
+              </details>
+            {/if}
+          {/snippet}
+        </ErrorScreen>
+      {/snippet}
+    </svelte:boundary>
+  </main>
+{/snippet}
+
+<BackendBootGuard>
+  <!-- Top-level boundary: the page boundary inside routeContent only wraps the
+       route content. A render throw in the shell (AppSidebar / Sidebar /
+       floating UI) would otherwise escape uncaught and blank the WebView. This
+       shows a full-screen crash UI on the brand background instead of black. -->
+  <svelte:boundary onerror={handleBoundaryError}>
+    <!-- `data.authed` is the SSR-accurate auth signal (no flash); isAuthed is
+         the reactive client flag so it flips the instant you sign in / out. -->
+    {#if data?.authed || isAuthed}
+      <Sidebar.Provider class="app-shell-root h-svh overflow-hidden">
+        <AppSidebar
+          inboxCount={data?.inboxCount ?? 0}
+          queueCount={data?.queueCount ?? 0}
+          pinnedJobs={data?.pinnedJobs ?? []}
+          profilesState={data?.profilesState}
+          activeProfile={data?.activeProfile}
+        />
+        <Sidebar.Inset class="bg-card overflow-hidden">
+          {@render routeContent()}
+        </Sidebar.Inset>
+      </Sidebar.Provider>
+    {:else}
+      <!-- Unauthed: no sidebar/app chrome at all -- the auth + onboarding pages
+           render full-screen on their own. `app-chromeless` lets the Electron
+           build add a top drag strip here (no topbar to drag from otherwise). -->
+      <div class="app-chromeless h-svh overflow-hidden">
+        {@render routeContent()}
+      </div>
+    {/if}
 
     <!-- Cross-platform offline banner. Sits above the layout chrome so it's
      always the topmost element. Always visible (no auth gate) because
@@ -779,18 +819,21 @@
     {/if}
     {#snippet failed(error)}
       <div
-        class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background p-6 text-center"
+        class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 overflow-hidden bg-background p-6 text-center"
       >
-        <h1 class="text-xl font-semibold">The app failed to load</h1>
-        <p class="max-w-md text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : String(error)}
-        </p>
-        <button
-          class="rounded-md border border-border bg-card px-4 py-2 text-sm hover:bg-accent"
-          onclick={() => location.reload()}
-        >
-          Reload
-        </button>
+        <BloomBackground />
+        <div class="relative z-10 flex flex-col items-center gap-4">
+          <h1 class="text-xl font-semibold">The app failed to load</h1>
+          <p class="max-w-md text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
+          <button
+            class="rounded-md border border-border bg-card px-4 py-2 text-sm hover:bg-accent"
+            onclick={() => location.reload()}
+          >
+            Reload
+          </button>
+        </div>
       </div>
     {/snippet}
   </svelte:boundary>
@@ -798,16 +841,27 @@
 <Toaster />
 
 {#if dev || devtoolsEnabled()}
-  <!-- Entry to the state/view gallery (/dev/views). Always shown under the live
-       dev server; in built/native apps it appears once the owner opts into
-       developer tools (Settings version-tap). Rendered in the root layout so
-       it's reachable from every screen. Minimal icon button (no text pill). -->
-  <a
-    href="/dev/views"
-    title="Dev view gallery"
-    aria-label="Open dev view gallery"
-    class="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[max(0.75rem,env(safe-area-inset-left))] z-[90] flex size-9 items-center justify-center rounded-full border border-border/50 bg-card/70 text-muted-foreground/70 shadow-sm backdrop-blur transition-all duration-150 hover:scale-105 hover:bg-card hover:text-foreground active:scale-95"
-  >
-    <FlaskConical class="size-4" />
-  </a>
+  <!-- Floating launcher: opens the dev gallery DRAWER in place. The drawer
+       (DevGalleryDrawer, a bits-ui Sheet) provides the slide-in/out animation,
+       Esc-to-close, and a portal z-index above all app chrome -- the same
+       primitive the theme menu uses. Always shown under the live dev server;
+       in built/native apps it appears once developer tools are opted in. -->
+  {#if !devGalleryOpen}
+    <!-- z-[9998] keeps the launcher above ALL app chrome (sidebars, topbars,
+         dialogs, page overlays) on every route -- it's a dev affordance that
+         should always be reachable. Just below toasts (z-9999). Hidden while
+         the drawer is open so it never floats on top of the Sheet. -->
+    <button
+      type="button"
+      onclick={() => (devGalleryOpen = true)}
+      title="Dev view gallery"
+      aria-label="Open dev view gallery"
+      class="group fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[max(0.75rem,env(safe-area-inset-left))] z-[9998] flex size-10 items-center justify-center rounded-full border border-border/60 bg-gradient-to-br from-card/95 to-card/60 text-muted-foreground shadow-md backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:border-accent/50 hover:text-accent hover:shadow-lg hover:shadow-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95"
+    >
+      <FlaskConical
+        class="size-[18px] transition-transform duration-300 group-hover:rotate-[8deg]"
+      />
+    </button>
+  {/if}
+  <DevGalleryDrawer bind:open={devGalleryOpen} />
 {/if}

@@ -101,9 +101,18 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-foreground: var(--accent-secondary-foreground);
+  --color-accent-secondary-strong: var(--accent-secondary-strong);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -146,227 +155,24 @@
   --secondary: #efeae0;
   --secondary-foreground: #1a1f26;
   --muted: #efeae0;
-  --muted-foreground: #6b7585;
-  --accent: #c89b4a;
-  --accent-foreground: #1a1f26;
-  --accent-secondary: #7a8c6d;
-  --accent-secondary-foreground: #1a1f26;
-  --destructive: #a85459;
-  --destructive-foreground: #fffefa;
-  --border: #e0d8c8;
-  --input: #e0d8c8;
-  --ring: #c89b4a;
-  --sidebar: #efeae0;
-  --sidebar-foreground: #1a1f26;
-  --sidebar-primary: #4a5b6d;
-  --sidebar-primary-foreground: #fffefa;
-  --sidebar-accent: #e8e0cc;
-  --sidebar-accent-foreground: #1a1f26;
-  --sidebar-border: #e0d8c8;
-  --sidebar-ring: #c89b4a;
-  --chart-1: #c89b4a;
-  --chart-2: #7a8c6d;
-  --chart-3: #4a5b6d;
-  --chart-4: #a8823a;
-  --chart-5: #5c6f50;
-}
-
-.dark {
-  --background: #0e1014;
-  --foreground: #e8eaed;
-  --card: #14181f;
-  --card-foreground: #e8eaed;
-  --popover: #1a1f29;
-  --popover-foreground: #e8eaed;
-  --primary: #c89b4a;
-  --primary-foreground: #14181f;
-  --secondary: #1a1f29;
-  --secondary-foreground: #e8eaed;
-  --muted: #1a1f29;
-  --muted-foreground: #a8b0bb;
-  --accent: #c89b4a;
-  --accent-foreground: #14181f;
-  --accent-secondary: #7a8c6d;
-  --accent-secondary-foreground: #0e1014;
-  --destructive: #b3666b;
-  --destructive-foreground: #f4e8e9;
-  --border: #232a35;
-  --input: #232a35;
-  --ring: #c89b4a;
-  --sidebar: #0e1014;
-  --sidebar-foreground: #a8b0bb;
-  --sidebar-primary: #c89b4a;
-  --sidebar-primary-foreground: #14181f;
-  --sidebar-accent: #1a1f29;
-  --sidebar-accent-foreground: #e8eaed;
-  --sidebar-border: #1a1f29;
-  --sidebar-ring: #c89b4a;
-  --chart-1: #d4a866;
-  --chart-2: #8a9b7d;
-  --chart-3: #6b7c8d;
-  --chart-4: #b88f4a;
-  --chart-5: #7a8c6d;
-}
-/* /AUTO-GENERATED:brand-tokens */
-
-/* AUTO-GENERATED:brand-tokens — Do not edit. Edit branding/brand.json + run `pnpm brand:apply`. */
-/* Self-hosted fonts — woff2 under ui/static/fonts/. font-display: swap so
- * system fallback paints first, the woff2 swap in seamlessly. */
-
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/fraunces-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/fraunces-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/inter-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/inter-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-400-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-500-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent-secondary: var(--accent-secondary);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-
-  /* Font stacks — Tailwind's font-sans / font-serif / font-mono resolve to these. */
-  --font-sans:
-    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
-  --font-serif:
-    'Fraunces', 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia,
-    serif;
-  --font-mono:
-    'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas,
-    'Liberation Mono', monospace;
-}
-
-:root {
-  --radius: 0.625rem;
-  --background: #f7f5f0;
-  --foreground: #1a1f26;
-  --card: #fffefa;
-  --card-foreground: #1a1f26;
-  --popover: #fffefa;
-  --popover-foreground: #1a1f26;
-  --primary: #4a5b6d;
-  --primary-foreground: #fffefa;
-  --secondary: #efeae0;
-  --secondary-foreground: #1a1f26;
-  --muted: #efeae0;
-  /* Darkened from #6b7585 to clear WCAG-AA against `--sidebar` /
-     `--muted` cream (#efeae0). The old slate read at ~3.88:1; this
-     hits ~5.0:1, so every full-opacity `text-muted-foreground`
-     usage passes axe `color-contrast`. Sub-100% opacity callers
-     (kbd chips, CollapsibleGroup headers) drop the slash in light
-     mode and keep a `dark:` variant so the blended colour still
-     clears AA on the cream surface. */
   --muted-foreground: #525c6c;
   --accent: #c89b4a;
   --accent-foreground: #1a1f26;
+  --accent-strong: #856319;
   --accent-secondary: #7a8c6d;
   --accent-secondary-foreground: #1a1f26;
+  --accent-secondary-strong: #4d5b40;
   --destructive: #a85459;
   --destructive-foreground: #fffefa;
+  --success: #2f7140;
+  --success-foreground: #fffefa;
+  --warning: #8a5300;
+  --warning-foreground: #fffefa;
+  --info: #1f6fb2;
+  --info-foreground: #fffefa;
   --border: #e0d8c8;
-  --input: #e0d8c8;
-  --ring: #c89b4a;
+  --input: #94835a;
+  --ring: #856319;
   --sidebar: #efeae0;
   --sidebar-foreground: #1a1f26;
   --sidebar-primary: #4a5b6d;
@@ -397,12 +203,20 @@
   --muted-foreground: #a8b0bb;
   --accent: #c89b4a;
   --accent-foreground: #14181f;
+  --accent-strong: #c89b4a;
   --accent-secondary: #7a8c6d;
   --accent-secondary-foreground: #0e1014;
-  --destructive: #b3666b;
-  --destructive-foreground: #f4e8e9;
+  --accent-secondary-strong: #9aab8c;
+  --destructive: #e0686f;
+  --destructive-foreground: #14181f;
+  --success: #5fcf80;
+  --success-foreground: #0e1014;
+  --warning: #e6b53f;
+  --warning-foreground: #0e1014;
+  --info: #5aa9e6;
+  --info-foreground: #0e1014;
   --border: #232a35;
-  --input: #232a35;
+  --input: #5d6775;
   --ring: #c89b4a;
   --sidebar: #0e1014;
   --sidebar-foreground: #a8b0bb;
@@ -532,6 +346,72 @@
   view-transition-name: app-topbar;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Electron custom window chrome. `.is-electron` (+ `.is-mac` / `.is-win`) is
+   set by the desktop preload (preload.ts) and NEVER on web / iOS / Android, so
+   these rules are desktop-only by construction. The main window paints to its
+   own edge (macOS hiddenInset + vibrancy / Win11 mica — see window-chrome.ts),
+   so the app must: (a) give the user a draggable top strip + macOS traffic-light
+   clearance where the native title bar used to be, and (b) go translucent over
+   the OS material. Kept UNLAYERED so the translucent backgrounds win over the
+   Tailwind `bg-sidebar` utilities.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --electron-drag-strip: 44px; /* mirrors DRAG_STRIP_HEIGHT in window-chrome.ts */
+}
+
+/* (a) Draggability. The app shell's topbar + sidebar header act as the title
+   bar; interactive descendants opt back out so clicks / inputs still work. */
+html.is-electron .app-shell-topbar,
+html.is-electron .app-shell-sidebar [data-sidebar='header'] {
+  -webkit-app-region: drag;
+}
+html.is-electron
+  .app-shell-topbar
+  :is(button, a, input, select, textarea, label, [role='button'], [data-sidebar='trigger']),
+html.is-electron .app-shell-sidebar [data-sidebar='header'] :is(button, a, input, [role='button']) {
+  -webkit-app-region: no-drag;
+}
+/* Chromeless screens (auth / onboarding) have no topbar: a thin fixed drag
+   strip across the top. z-index BELOW the floating theme toggle / back button
+   (z-50) so those stay clickable; the empty top area becomes the drag handle. */
+html.is-electron .app-chromeless::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--electron-drag-strip);
+  -webkit-app-region: drag;
+  z-index: 40;
+}
+
+/* (b) macOS traffic lights sit at top-left over the sidebar: clear them so the
+   sidebar header (logo / workspace switcher) doesn't hide under the lights. */
+html.is-electron.is-mac .app-shell-sidebar [data-sidebar='header'] {
+  padding-top: calc(var(--electron-drag-strip) - 0.5rem);
+}
+
+/* (c) Translucency so the vibrancy / mica material reads through. The inset
+   content card stays opaque (Sidebar.Inset = bg-card) for readability; only the
+   full-window canvas (provider) goes translucent — ONE frosted layer at ~38%
+   material. The sidebar panel (inner) is made fully transparent so it doesn't
+   STACK a second tint on top of the provider (which double-darkened the frost to
+   ~86% and killed the effect). body must be transparent so the provider shows
+   the OS material, not a solid colour. */
+html.is-electron.is-mac,
+html.is-electron.is-mac body {
+  /* Both must be transparent: the app.html pre-paint <style> + the Tailwind base
+     paint an opaque #0e1014 on BOTH html and body, either of which would sit
+     behind the translucent provider and block the OS material. Higher
+     specificity (2 classes) + later load wins over those base rules. */
+  background: transparent;
+}
+html.is-electron.is-mac .app-shell-root {
+  background: color-mix(in srgb, var(--sidebar) 62%, transparent);
+}
+html.is-electron.is-mac .app-shell-sidebar [data-slot='sidebar-inner'] {
+  background: transparent;
+}
+
 @keyframes view-fade-in {
   from {
     opacity: 0;
@@ -570,29 +450,113 @@
 }
 
 /*
- * Theme-swap override — when the user toggles light/dark/system,
- * theme.svelte.ts wraps the class change in `document.startViewTransition`
- * AND adds `html.theme-swap` for the duration of the transition. Here
- * we RE-ENABLE the sidebar/topbar crossfade (they'd otherwise snap and
- * the user would see two halves of the page flip at different times),
- * and we slow root + chrome to a single coordinated 260ms ease so the
- * whole viewport crossfades as one surface. Falls back automatically
- * on `prefers-reduced-motion: reduce` via the @media block below.
+ * Auth flow (login ↔ signup). Both screens share an identical brand-mark hero
+ * and full-screen bloom. Naming them holds them STEADY across the transition
+ * (the browser matches old↔new by name and, since they're identical, there's
+ * nothing to animate) while only the card + headline crossfade via `root`.
+ * Turns the swap into a calm morph instead of a whole-page flash. The hero gets
+ * its name inline on each page; the bloom is named here, scoped to `.auth-page`
+ * so the same <BloomBackground /> stays unnamed on every other route. Only the
+ * theme-visible `.bloom-surface` is rendered (the other is `display:none`), so
+ * there's never a duplicate `auth-bloom` name on one page.
  */
-html.theme-swap::view-transition-old(root),
-html.theme-swap::view-transition-old(app-sidebar),
-html.theme-swap::view-transition-old(app-topbar) {
-  animation: 260ms ease-out both view-fade-out !important;
+.auth-page .bloom-surface {
+  view-transition-name: auth-bloom;
 }
-html.theme-swap::view-transition-new(root),
-html.theme-swap::view-transition-new(app-sidebar),
-html.theme-swap::view-transition-new(app-topbar) {
-  animation: 260ms ease-out both view-fade-in !important;
+::view-transition-old(auth-hero),
+::view-transition-new(auth-hero),
+::view-transition-old(auth-bloom),
+::view-transition-new(auth-bloom) {
+  animation: none !important;
+  mix-blend-mode: normal;
+}
+
+/*
+ * Auth content crossfade: the card/headline ride `root`, whose default timing
+ * fades the old out (90ms) then the new in after a 90ms GAP — which reads as the
+ * form popping in. On a login↔signup swap (html.auth-swap, set in +layout's
+ * onNavigate) overlap them instead: old and new both animate from t=0 over
+ * ~220ms, and the incoming content eases up 8px so it settles rather than snaps.
+ */
+@keyframes auth-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+html.auth-swap::view-transition-old(root) {
+  animation: 180ms ease-out both view-fade-out !important;
+}
+html.auth-swap::view-transition-new(root) {
+  animation: 240ms cubic-bezier(0.22, 1, 0.36, 1) both auth-content-in !important;
+}
+
+/*
+ * Auth CONTENT panel — named `auth-content` on /login + /signup. Lifting the
+ * headline+form into its own group lets the browser MORPH the panel box (short
+ * login → taller signup) and crossfade only its contents, so the form settles
+ * into place instead of popping in at a mismatched Y (the old behaviour, when
+ * the whole `root` — toggle, particles, footer — crossfaded as one). The hero
+ * is nested + separately named, so it holds steady. Old/new use a plain opacity
+ * crossfade; the GROUP wrapper owns the box morph (a transform here would fight
+ * it). Active only during an auth-swap.
+ */
+html.auth-swap::view-transition-group(auth-content) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+html.auth-swap::view-transition-old(auth-content) {
+  animation: 200ms ease-out both view-fade-out !important;
+}
+html.auth-swap::view-transition-new(auth-content) {
+  animation: 320ms cubic-bezier(0.22, 1, 0.36, 1) both view-fade-in !important;
+}
+
+/*
+ * Theme-swap — when the user toggles light/dark/system, theme.svelte.ts wraps
+ * the class flip in `document.startViewTransition`, adds `html.theme-swap`, and
+ * sets --theme-x / --theme-y / --theme-r (the reveal's origin + cover radius).
+ * A light↔dark OPACITY crossfade reads as a muddy double-exposure flash, so
+ * instead we REVEAL the new theme over the old with a hard-edged clip-path
+ * circle expanding from the toggle:
+ *   - fold the sidebar + topbar back into `root` (drop their names) so the whole
+ *     viewport wipes as ONE surface — no two-halves snap;
+ *   - hold the OLD snapshot static underneath;
+ *   - clip the NEW snapshot from a 0-radius circle out to --theme-r.
+ * Falls back to an instant swap on `prefers-reduced-motion` (theme.svelte.ts
+ * skips startViewTransition entirely; the @media block below is belt-and-braces).
+ */
+html.theme-swap .app-shell-sidebar,
+html.theme-swap .app-shell-topbar {
+  view-transition-name: none;
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-x, 100%) var(--theme-y, 0%));
+  }
+  to {
+    clip-path: circle(var(--theme-r, 150%) at var(--theme-x, 100%) var(--theme-y, 0%));
+  }
+}
+html.theme-swap::view-transition-old(root) {
+  animation: none !important;
+}
+html.theme-swap::view-transition-new(root) {
+  animation: 480ms cubic-bezier(0.22, 1, 0.36, 1) both theme-reveal !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
-  ::view-transition-new(root) {
+  ::view-transition-new(root),
+  html.theme-swap::view-transition-old(root),
+  html.theme-swap::view-transition-new(root),
+  html.auth-swap::view-transition-old(auth-content),
+  html.auth-swap::view-transition-new(auth-content),
+  html.auth-swap::view-transition-group(auth-content) {
     animation: none !important;
   }
 
@@ -633,7 +597,10 @@ html.theme-swap::view-transition-new(app-topbar) {
    `focus-visible:` on its primitives; this is the safety net for any
    hand-rolled focusable element. */
 *:focus-visible {
-  outline: 2px solid hsl(var(--ring, 220 90% 60%));
+  /* --ring is a hex token (brand.json), so use it directly. The old
+     `hsl(var(--ring))` wrapped a hex in hsl() -- invalid, so this
+     safety-net outline silently rendered with an invalid colour. */
+  outline: 2px solid var(--ring, #c89b4a);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -853,6 +820,15 @@ body {
 }
 .mb-safe {
   margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* Reed-green hero halo for the brand-mark on the auth / loading / error /
+   connectivity surfaces. Previously duplicated verbatim as an inline filter in
+   five runtime files; centralized here so the glow tracks the reed-green accent
+   token (legible over either surface) instead of a hardcoded rgba. */
+.brand-hero-glow {
+  filter: drop-shadow(0 6px 24px color-mix(in srgb, var(--accent-secondary) 35%, transparent))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
 /* iOS Safari's elastic over-scroll moves the whole document and pushes

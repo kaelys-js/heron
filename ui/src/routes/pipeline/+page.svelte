@@ -286,7 +286,7 @@
       <div
         class="flex items-center gap-2 px-3 py-2 rounded-md border border-border/40 bg-muted/20 text-xs"
       >
-        <Activity class="size-3.5 text-blue-400/80 flex-shrink-0" />
+        <Activity class="size-3.5 text-info/80 flex-shrink-0" />
         <span class="flex-1 min-w-0">
           <span class="font-medium">{livenessCandidateCount} open jobs</span>
           <span class="text-muted-foreground"

@@ -14,8 +14,8 @@
     • the same loading-shimmer gradient affordance
 
   Critical: this is RAW HTML — no SvelteKit, no JS bundles, no
-  Tailwind. Every visual must be inlined. SvelteKit's `%message%` and
-  `%status%` tokens are replaced at error-render time with the actual
+  Tailwind. Every visual must be inlined. SvelteKit's `%sveltekit.error.message%` and
+  `%sveltekit.status%` tokens are replaced at error-render time with the actual
   status code + message string. If the error has no message, SvelteKit
   leaves the placeholder text — handled by the CSS `:empty` selector
   on the message line so we degrade to a generic copy.
@@ -24,7 +24,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>%status% · Heron</title>
+    <title>%sveltekit.status% · Heron</title>
     <style>
       :root {
         color-scheme: dark;
@@ -36,22 +36,34 @@
         min-height: 100vh;
         background-color: #0e1014;
         color: #e8eaed;
+        /* Match the app's --font-sans (Inter) so the fallback reads identically to
+           the in-app ErrorScreen when Inter is cached; graceful system fallback
+           otherwise (no @font-face — a no-network fallback shouldn't fetch fonts). */
         font-family:
-          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+          'Inter',
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        /* Brand bloom — same recipe as app.html's boot-fallback so the
-           transition between "loading" and "crashed" feels continuous. */
+        /* Brand bloom — the SAME dawn-sky recipe as BloomBackground.svelte /
+           ErrorScreen, so the static SSR-crash fallback shares ONE visual base
+           with the in-app error pages and login. */
         background:
+          radial-gradient(135% 100% at 50% 50%, transparent 46%, rgba(0, 0, 0, 0.42) 100%),
           radial-gradient(
-            circle at 50% 50%,
-            rgba(122, 140, 109, 0.18) 0%,
-            rgba(74, 91, 109, 0.12) 32%,
-            rgba(200, 155, 74, 0.06) 56%,
-            transparent 78%
+            120% 85% at 50% 116%,
+            rgba(200, 155, 74, 0.17) 0%,
+            rgba(200, 155, 74, 0.06) 30%,
+            transparent 58%
           ),
-          radial-gradient(ellipse at 50% 0%, rgba(200, 155, 74, 0.1) 0%, transparent 60%),
-          #0e1014;
+          radial-gradient(135% 95% at 50% 104%, rgba(122, 140, 109, 0.1) 0%, transparent 62%),
+          linear-gradient(180deg, #090b0f 0%, #0e1014 44%, #11151c 100%);
       }
       .container {
         min-height: 100vh;
@@ -63,16 +75,10 @@
         padding-bottom: max(24px, env(safe-area-inset-bottom));
         box-sizing: border-box;
       }
-      .card {
+      .content {
         width: 100%;
-        max-width: 420px;
-        padding: 32px 28px;
-        border-radius: 18px;
-        background: rgba(24, 24, 27, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 12px 48px -12px rgba(0, 0, 0, 0.6);
+        max-width: 360px;
+        text-align: center;
       }
       .mark {
         width: 64px;
@@ -90,26 +96,37 @@
         display: block;
       }
       .status {
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #f87171;
+        font-family:
+          'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas,
+          'Liberation Mono', monospace;
+        font-size: 48px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        color: #a8b0bb;
         text-align: center;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         font-feature-settings: 'tnum';
       }
       .title {
-        font-size: 22px;
+        /* Match the app's @layer base heading rule (app.css): bare <h1> renders
+           in Fraunces serif, NOT the Inter body font — that's why the in-app
+           ErrorScreen title and this fallback looked different. No @font-face
+           here (fallback fetches no fonts); the serif fallbacks keep it a serif. */
+        font-family:
+          'Fraunces', 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times,
+          Georgia, serif;
+        font-optical-sizing: auto;
+        font-size: 24px;
         font-weight: 600;
         text-align: center;
         margin: 0 0 8px 0;
-        letter-spacing: -0.01em;
+        letter-spacing: -0.015em;
       }
       .message {
         font-size: 14px;
         line-height: 1.5;
-        color: #a1a1aa;
+        color: #a8b0bb;
         text-align: center;
         margin: 0 0 24px 0;
       }
@@ -118,40 +135,64 @@
       }
       .actions {
         display: flex;
+        flex-direction: column;
         gap: 8px;
-        flex-wrap: wrap;
-        justify-content: center;
       }
+      /* Match the in-app shadcn Button EXACTLY (it's what ErrorScreen renders):
+         h-8 (32px) · px-2.5 (10px) · gap-1.5 (6px) · text-sm (14px) · font-medium
+         · rounded-lg (--radius 0.625rem = 10px). Base = the `outline` variant
+         (used by "Go home"); .primary + .ghost override below. Colors are the
+         resolved DARK-theme tokens (--primary #c89b4a / --primary-foreground
+         #14181f / --input #232a35 / --muted #1a1f29 / --foreground #e8eaed). */
       .btn {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 500;
-        padding: 10px 16px;
+        height: 32px;
+        padding: 0 10px;
         border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.04);
-        color: #fafafa;
+        border: 1px solid #232a35;
+        background: rgba(35, 42, 53, 0.3);
+        color: #e8eaed;
         cursor: pointer;
         text-decoration: none;
         display: inline-flex;
+        width: 100%;
+        box-sizing: border-box;
         align-items: center;
+        justify-content: center;
         gap: 6px;
         transition:
           background 120ms ease,
-          border-color 120ms ease;
+          border-color 120ms ease,
+          filter 120ms ease;
       }
       .btn:hover,
       .btn:focus-visible {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(35, 42, 53, 0.5);
         outline: none;
       }
       .btn.primary {
-        background: linear-gradient(135deg, #4a5b6d, #7a8c6d, #c89b4a);
-        border-color: rgba(200, 155, 74, 0.55);
-        color: white;
+        background: #c89b4a;
+        border-color: #c89b4a;
+        color: #14181f;
       }
       .btn.primary:hover {
         filter: brightness(1.05);
+      }
+      .btn.ghost {
+        background: transparent;
+        border-color: transparent;
+        color: #a8b0bb;
+      }
+      .btn.ghost:hover,
+      .btn.ghost:focus-visible {
+        background: rgba(26, 31, 41, 0.5);
+        color: #e8eaed;
+      }
+      .btn-ic {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
       }
       .footnote {
         font-size: 11px;
@@ -159,52 +200,383 @@
         text-align: center;
         margin-top: 20px;
       }
+      /* Support reference: a copyable blob (status · time · UA) so a user can
+         hand support something concrete even on the catastrophic SSR fallback.
+         Client-side only (no server log id available here). */
+      .reference {
+        margin-top: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: #71717a;
+      }
+      .ref-code {
+        font-family:
+          'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas,
+          'Liberation Mono', monospace;
+        color: #a8b0bb;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        padding: 2px 6px;
+      }
+      .ref-copy {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: 0;
+        background: transparent;
+        color: #a8b0bb;
+        font: inherit;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 6px;
+      }
+      .ref-copy:hover,
+      .ref-copy:focus-visible {
+        color: #fafafa;
+        background: rgba(255, 255, 255, 0.06);
+        outline: none;
+      }
+      .ref-ic-wrap {
+        position: relative;
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+      }
+      .ref-ic {
+        position: absolute;
+        inset: 0;
+        width: 14px;
+        height: 14px;
+        transition:
+          transform 180ms ease,
+          opacity 180ms ease;
+      }
+      .ref-ic-check {
+        color: #34d399;
+        transform: scale(0);
+        opacity: 0;
+      }
+      .ref-copy.copied .ref-ic-copy {
+        transform: scale(0);
+        opacity: 0;
+      }
+      .ref-copy.copied .ref-ic-check {
+        transform: scale(1);
+        opacity: 1;
+      }
+      .sr-live {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ref-ic {
+          transition: none;
+        }
+      }
+      /* Developer details — DEV only (shown by the inline script when the message
+         carries a stack). Mirrors the in-app +error.svelte disclosure: rotating
+         chevron + status chip + copyable mono stack block. Hidden by default. */
+      .dev-details {
+        margin: 18px auto 0;
+        width: 100%;
+        max-width: 360px;
+        text-align: left;
+        border: 1px solid rgba(35, 42, 53, 0.8);
+        border-radius: 8px;
+        background: rgba(26, 31, 41, 0.3);
+      }
+      .dd-summary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        list-style: none;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #a8b0bb;
+      }
+      .dd-summary::-webkit-details-marker {
+        display: none;
+      }
+      .dd-chevron {
+        transition: transform 150ms ease;
+      }
+      .dev-details[open] .dd-chevron {
+        transform: rotate(90deg);
+      }
+      .dd-chip {
+        margin-left: auto;
+        font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        color: #e8eaed;
+        background: #1a1f29;
+        border-radius: 4px;
+        padding: 2px 6px;
+      }
+      .dd-body {
+        border-top: 1px solid rgba(35, 42, 53, 0.8);
+        padding: 10px 12px;
+      }
+      .dd-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 11px;
+        color: #a8b0bb;
+      }
+      .dd-pre {
+        max-height: 256px;
+        overflow: auto;
+        margin: 0;
+        padding: 10px;
+        border-radius: 6px;
+        background: rgba(14, 16, 20, 0.6);
+        font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        color: rgba(232, 234, 237, 0.8);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .dd-chevron {
+          transition: none;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="card" role="alert" aria-live="assertive">
+      <div class="content" role="alert" aria-live="assertive">
         <div class="mark">
           <!-- Same brand mark as app.html's boot-fallback. Inline so it
                renders without any chunk loaded. -->
           <svg viewBox="0 0 1024 1024" aria-hidden="true">
             <!-- AUTO-GENERATED:brand-mark gradient-id="err-bg" -->
-            <defs>
-              <linearGradient id="err-bg" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#4a5b6d" />
-                <stop offset="55%" stop-color="#7a8c6d" />
-                <stop offset="100%" stop-color="#c89b4a" />
-              </linearGradient>
-            </defs>
-            <rect width="1024" height="1024" rx="232" fill="url(#err-bg)" />
-            <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />
-            <g
-              transform="translate(192,192) scale(26.667)"
-              fill="none"
-              stroke="#ffffff"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M16 7h.01" />
-              <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
-              <path d="m20 7 2 .5-2 .5" />
-              <path d="M10 18v3" />
-              <path d="M14 17.75V21" />
-              <path d="M7 18a6 6 0 0 0 3.84-10.61" />
-            </g>
+            <image width="1024" height="1024" preserveAspectRatio="xMidYMid meet" href="data:image/webp;base64,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" />
             <!-- /AUTO-GENERATED:brand-mark -->
           </svg>
         </div>
-        <div class="status">Error · %status%</div>
-        <h1 class="title">Something broke on our end</h1>
-        <p class="message">%message%</p>
+        <!-- Decorative numeral; the h1 aria-label carries the cohesive summary
+             so the alert region reads "Error <status>: …" once, not the bare number. -->
+        <div class="status" aria-hidden="true">%sveltekit.status%</div>
+        <h1 class="title" aria-label="Error %sveltekit.status%: Something broke on our end">
+          Something broke on our end
+        </h1>
+        <p class="message">%sveltekit.error.message%</p>
+        <!-- Same recovery stack + icons as the in-app ErrorScreen 5xx case:
+             Try again (reload) + Go home + Go back. -->
         <div class="actions">
-          <a href="/" class="btn primary">Reload Heron</a>
-          <button class="btn" onclick="history.back()">Go back</button>
+          <button type="button" class="btn primary" onclick="location.reload()">
+            <svg
+              class="btn-ic"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+              <path d="M21 3v6h-6" />
+            </svg>
+            Try again
+          </button>
+          <a href="/" class="btn">
+            <svg
+              class="btn-ic"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            Go home
+          </a>
+          <button type="button" class="btn ghost" onclick="history.back()">
+            <svg
+              class="btn-ic"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+            Go back
+          </button>
         </div>
+        <div class="reference">
+          <span>Reference</span>
+          <code class="ref-code" id="ref-code"></code>
+          <button type="button" id="copy-ref" class="ref-copy" aria-label="Copy error reference">
+            <span class="ref-ic-wrap" aria-hidden="true">
+              <svg
+                class="ref-ic ref-ic-copy"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <svg
+                class="ref-ic ref-ic-check"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span id="copy-text">Click to copy</span>
+          </button>
+          <span class="sr-live" aria-live="polite" id="copy-live"></span>
+        </div>
+        <!-- Developer details — populated + unhidden by the inline script ONLY
+             when the message carries a dev stack (dev builds). Hidden otherwise. -->
+        <details class="dev-details" id="dev-details" style="display: none">
+          <summary class="dd-summary">
+            <span class="dd-chevron" aria-hidden="true">▸</span>
+            Developer details
+            <span class="dd-chip" id="dd-chip"></span>
+          </summary>
+          <div class="dd-body">
+            <div class="dd-bar">
+              <span>Stack trace</span>
+              <button type="button" id="dd-copy" class="ref-copy" aria-label="Copy stack trace">
+                <span class="ref-ic-wrap" aria-hidden="true">
+                  <svg
+                    class="ref-ic ref-ic-copy"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <svg
+                    class="ref-ic ref-ic-check"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span id="dd-copy-text">Click to copy</span>
+              </button>
+            </div>
+            <pre class="dd-pre" id="dd-pre"></pre>
+          </div>
+        </details>
         <p class="footnote">If this keeps happening, sign back in or restart the app.</p>
       </div>
     </div>
+    <script>
+      (function () {
+        // handleError bakes "<human> · ref <uuid>" into the message (the only
+        // field SvelteKit templates into error.html), plus a DEV-only
+        // "\n::stack::\n<stack>". Parse them out, clean the visible message, show
+        // err_<short> + (in dev) the stack disclosure — matching ErrorScreen.
+        var msgEl = document.querySelector('.message');
+        var raw = msgEl ? msgEl.textContent : '';
+        var parts = raw.split('\n::stack::\n');
+        var head = parts[0];
+        var stack = parts.length > 1 ? parts.slice(1).join('\n::stack::\n') : '';
+
+        var m = head.match(/^([\s\S]*?)\s*·\s*ref\s+([0-9a-fA-F-]{8,})\s*$/);
+        var fullId = m ? m[2] : '';
+        if (msgEl) msgEl.textContent = (m ? m[1] : head).trim();
+
+        var refRow = document.querySelector('.reference');
+        var code = document.getElementById('ref-code');
+        if (fullId && code) {
+          code.textContent = 'err_' + fullId.slice(0, 8);
+        } else if (refRow) {
+          // No correlated id (a non-handleError fatal) — hide the reference row.
+          refRow.style.display = 'none';
+        }
+
+        // Copy-button wiring shared by the reference + stack buttons: animate
+        // Copy→Check, announce via the live region, revert after 1.6s.
+        function wireCopy(btnId, textId, value, idle) {
+          var btn = document.getElementById(btnId);
+          var label = document.getElementById(textId);
+          var live = document.getElementById('copy-live');
+          var timer;
+          if (!btn || !value) return;
+          btn.addEventListener('click', function () {
+            function done() {
+              btn.classList.add('copied');
+              if (label) label.textContent = 'Copied';
+              if (live) live.textContent = 'copied';
+              clearTimeout(timer);
+              timer = setTimeout(function () {
+                btn.classList.remove('copied');
+                if (label) label.textContent = idle;
+                if (live) live.textContent = '';
+              }, 1600);
+            }
+            try {
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(value).then(done, function () {});
+              } else {
+                done();
+              }
+            } catch (e) {
+              /* clipboard unavailable — the value is visible to copy by hand */
+            }
+          });
+        }
+
+        wireCopy('copy-ref', 'copy-text', fullId, 'Click to copy');
+
+        // Dev-details: only present when a stack was embedded (dev builds).
+        if (stack) {
+          var pre = document.getElementById('dd-pre');
+          var chip = document.getElementById('dd-chip');
+          var statusEl = document.querySelector('.status');
+          var dd = document.getElementById('dev-details');
+          if (pre) pre.textContent = stack;
+          if (chip && statusEl) chip.textContent = statusEl.textContent.trim();
+          if (dd) dd.style.display = '';
+          wireCopy('dd-copy', 'dd-copy-text', stack, 'Click to copy');
+        }
+      })();
+    </script>
   </body>
 </html>

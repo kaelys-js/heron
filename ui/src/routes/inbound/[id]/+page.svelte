@@ -108,7 +108,7 @@
 
 <div class="mx-auto max-w-4xl space-y-6 p-6">
   <header>
-    <a href="/inbound" class="text-xs text-zinc-400 hover:text-zinc-200">← All inbound</a>
+    <a href="/inbound" class="text-xs text-muted-foreground hover:text-foreground">← All inbound</a>
     <h1 class="mt-2 text-2xl font-semibold">{data.lead.senderName || '(unknown sender)'}</h1>
     <div class="mt-1 flex flex-wrap items-center gap-2 text-sm">
       <Badge variant="outline">{data.lead.channel}</Badge>
@@ -116,36 +116,40 @@
       {#if data.thread?.state}
         <Badge variant="outline">{data.thread.state}</Badge>
       {/if}
-      <span class="text-xs text-zinc-500">{new Date(data.lead.arrivedAt).toLocaleString()}</span>
+      <span class="text-xs text-muted-foreground"
+        >{new Date(data.lead.arrivedAt).toLocaleString()}</span
+      >
       {#if data.lead.senderProfileUrl}
         <a
           href={data.lead.senderProfileUrl}
           target="_blank"
           rel="noopener"
-          class="text-xs text-cyan-400 hover:underline">LinkedIn profile</a
+          class="text-xs text-cyan-700 dark:text-cyan-400 hover:underline">LinkedIn profile</a
         >
       {/if}
     </div>
   </header>
 
   <!-- Original message -->
-  <section class="rounded-lg border border-zinc-700 bg-zinc-900/40 p-4">
-    <h2 class="text-xs uppercase tracking-wider text-zinc-400">Original message</h2>
+  <section class="rounded-lg border border-border bg-card p-4">
+    <h2 class="text-xs uppercase tracking-wider text-muted-foreground">Original message</h2>
     {#if data.lead.subject}
       <p class="mt-2 text-sm font-medium">{data.lead.subject}</p>
     {/if}
-    <pre class="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-300">{data.lead.body}</pre>
+    <pre class="mt-2 whitespace-pre-wrap break-words text-sm text-foreground">{data.lead.body}</pre>
   </section>
 
   <!-- Draft controls / preview -->
-  <section class="rounded-lg border border-zinc-700 bg-zinc-900/40 p-4">
-    <h2 class="text-xs uppercase tracking-wider text-zinc-400">Reply draft (never auto-sent)</h2>
+  <section class="rounded-lg border border-border bg-card p-4">
+    <h2 class="text-xs uppercase tracking-wider text-muted-foreground">
+      Reply draft (never auto-sent)
+    </h2>
     <div class="mt-3 grid grid-cols-2 gap-3">
       <label class="text-xs">
-        <span class="text-zinc-400">Tone</span>
+        <span class="text-muted-foreground">Tone</span>
         <select
           bind:value={tone}
-          class="ml-2 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 w-full mt-1"
+          class="ml-2 rounded border border-input bg-background px-2 py-1 w-full mt-1"
         >
           <option value="friendly">friendly</option>
           <option value="formal">formal</option>
@@ -153,10 +157,10 @@
         </select>
       </label>
       <label class="text-xs">
-        <span class="text-zinc-400">Intent</span>
+        <span class="text-muted-foreground">Intent</span>
         <select
           bind:value={intent}
-          class="ml-2 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 w-full mt-1"
+          class="ml-2 rounded border border-input bg-background px-2 py-1 w-full mt-1"
         >
           <option value="interested-want-more">Interested · want more info</option>
           <option value="interested-with-concern">Interested · have a concern</option>
@@ -165,17 +169,17 @@
         </select>
       </label>
       <label class="col-span-2 text-xs">
-        <span class="text-zinc-400">Concern to address (optional)</span>
+        <span class="text-muted-foreground">Concern to address (optional)</span>
         <input
           bind:value={userConcern}
-          class="mt-1 w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          class="mt-1 w-full rounded border border-input bg-background px-2 py-1"
         />
       </label>
       <label class="col-span-2 text-xs">
-        <span class="text-zinc-400">Question to weave in (optional)</span>
+        <span class="text-muted-foreground">Question to weave in (optional)</span>
         <input
           bind:value={userQuestion}
-          class="mt-1 w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1"
+          class="mt-1 w-full rounded border border-input bg-background px-2 py-1"
         />
       </label>
     </div>
@@ -200,12 +204,12 @@
 
     {#if data.draftContent}
       <article
-        class="prose prose-invert prose-sm mt-4 max-w-none rounded border border-zinc-800 bg-zinc-950/50 p-4"
+        class="prose prose-invert prose-sm mt-4 max-w-none rounded border border-border bg-muted p-4"
       >
         {@html html}
       </article>
     {:else}
-      <p class="mt-3 text-xs text-zinc-500">
+      <p class="mt-3 text-xs text-muted-foreground">
         No draft yet — pick tone + intent and click Generate.
       </p>
     {/if}

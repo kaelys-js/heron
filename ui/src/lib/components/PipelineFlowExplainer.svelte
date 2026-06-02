@@ -158,15 +158,15 @@
             <ArrowRight class="size-2.5 text-muted-foreground/50" />
             <span class="font-mono">Scored</span>
             <ArrowRight class="size-2.5 text-muted-foreground/50" />
-            <span class="font-mono text-emerald-300">Ready</span>
+            <span class="font-mono text-emerald-700 dark:text-emerald-300">Ready</span>
             <ArrowRight class="size-2.5 text-muted-foreground/50" />
-            <span class="font-mono text-violet-300">Applied</span>
+            <span class="font-mono text-violet-700 dark:text-violet-300">Applied</span>
             <ArrowRight class="size-2.5 text-muted-foreground/50" />
-            <span class="font-mono text-amber-300">Screened</span>
+            <span class="font-mono text-amber-700 dark:text-amber-300">Screened</span>
             <ArrowRight class="size-2.5 text-muted-foreground/50" />
-            <span class="font-mono text-orange-300">Interview</span>
+            <span class="font-mono text-orange-700 dark:text-orange-300">Interview</span>
             <ArrowRight class="size-2.5 text-muted-foreground/50" />
-            <span class="font-mono text-emerald-400">Offer</span>
+            <span class="font-mono text-emerald-700 dark:text-emerald-400">Offer</span>
           </span>
         </div>
       </div>

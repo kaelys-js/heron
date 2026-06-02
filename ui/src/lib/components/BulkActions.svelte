@@ -255,7 +255,9 @@
         <Linkedin
           class={cn(
             'size-4 mt-0.5 flex-shrink-0',
-            applyLinkedInCount > 0 ? 'text-blue-400' : 'text-muted-foreground/60',
+            applyLinkedInCount > 0
+              ? 'text-blue-700 dark:text-blue-400'
+              : 'text-muted-foreground/60',
           )}
         />
         <div class="flex-1 min-w-0 space-y-1">
@@ -282,7 +284,9 @@
         <ArrowUpRight
           class={cn(
             'size-4 mt-0.5 flex-shrink-0',
-            applyOtherCount > 0 ? 'text-violet-400' : 'text-muted-foreground/60',
+            applyOtherCount > 0
+              ? 'text-violet-700 dark:text-violet-400'
+              : 'text-muted-foreground/60',
           )}
         />
         <div class="flex-1 min-w-0 space-y-1">
@@ -300,7 +304,7 @@
 
       <!-- Notifications explainer -->
       <div class="rounded-md border border-border/40 bg-muted/30 p-3 flex items-start gap-2">
-        <Bell class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+        <Bell class="size-3.5 text-accent-strong mt-0.5 flex-shrink-0" />
         <div class="flex-1 min-w-0 space-y-1">
           <div class="text-[11px] font-medium">How you'll be notified</div>
           <ul
@@ -319,11 +323,9 @@
       </div>
 
       {#if applyOtherCount > 5}
-        <div
-          class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2"
-        >
-          <AlertTriangle class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p class="text-[11px] text-amber-200/90 leading-relaxed">
+        <div class="rounded-md border border-warning/30 bg-warning/5 p-3 flex items-start gap-2">
+          <AlertTriangle class="size-3.5 text-warning mt-0.5 flex-shrink-0" />
+          <p class="text-[11px] text-warning/90 leading-relaxed">
             Browsers may block more than ~5 simultaneous tab opens. If you see fewer tabs than
             expected, allow pop-ups for this site and re-run for the missing rows.
           </p>
@@ -373,7 +375,7 @@
     <div class="px-5 py-4 space-y-3">
       <div class="rounded-md border border-border/40 bg-muted/20 p-3 space-y-2">
         <div class="flex items-baseline gap-2">
-          <Sparkles class="size-3.5 text-amber-400" />
+          <Sparkles class="size-3.5 text-accent-strong" />
           <span class="text-sm font-medium">What you get per job</span>
         </div>
         <ul
@@ -392,11 +394,9 @@
       </div>
 
       {#if cvAlreadyHave > 0}
-        <div
-          class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2"
-        >
-          <AlertTriangle class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p class="text-[11px] text-amber-200/90 leading-relaxed">
+        <div class="rounded-md border border-warning/30 bg-warning/5 p-3 flex items-start gap-2">
+          <AlertTriangle class="size-3.5 text-warning mt-0.5 flex-shrink-0" />
+          <p class="text-[11px] text-warning/90 leading-relaxed">
             {cvAlreadyHave} of these already have a CV PDF. Running again will regenerate them.
           </p>
         </div>
@@ -404,7 +404,7 @@
 
       <!-- Notifications explainer -->
       <div class="rounded-md border border-border/40 bg-muted/30 p-3 flex items-start gap-2">
-        <Bell class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+        <Bell class="size-3.5 text-accent-strong mt-0.5 flex-shrink-0" />
         <div class="flex-1 min-w-0 space-y-1">
           <div class="text-[11px] font-medium">How you'll be notified</div>
           <ul
@@ -422,7 +422,7 @@
       </div>
 
       <div class="rounded-md border border-border/40 bg-muted/20 p-3 flex items-start gap-2">
-        <Info class="size-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+        <Info class="size-3.5 text-info mt-0.5 flex-shrink-0" />
         <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
           Requires <span class="font-mono text-foreground">claude</span> on PATH and an active session.
           If you use a different CLI (Gemini / Codex / OpenCode), the orchestrator may not pick it up

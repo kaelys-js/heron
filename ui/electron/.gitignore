@@ -13,3 +13,7 @@ build/icon*
 build/capacitor.config.*
 dist
 logs
+# Generated at build time by scripts/native/gen-build-info.mjs (commit /
+# buildDate / channel / changelog notes). Regenerated before every tsgo
+# compile; never committed so it can't churn the working tree.
+src/build-info.ts

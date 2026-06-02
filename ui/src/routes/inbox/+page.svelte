@@ -75,7 +75,6 @@
       velocityDeltaPct: number | null;
       topSources: { name: string; count: number }[];
       activity: ActivityEvent[];
-      recentErrorsCount: number;
       pipelineDaysAgo: number | null;
       alerts: InboxAlert[];
       applyIssues: Array<{
@@ -247,9 +246,9 @@
   // /login + /signup). The light-mode -700 shade hits WCAG AA against
   // the 5-10% bg tint these alerts use.
   let alertLevelTint: Record<string, string> = {
-    error: 'border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-200',
-    warning: 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-200',
-    info: 'border-blue-500/30 bg-blue-500/5 text-blue-700 dark:text-blue-200',
+    error: 'border-destructive/40 bg-destructive/10 text-destructive',
+    warning: 'border-warning/40 bg-warning/10 text-warning',
+    info: 'border-info/30 bg-info/5 text-info',
   };
   function alertIcon(level: 'error' | 'warning' | 'info') {
     return level === 'error' ? AlertCircle : level === 'warning' ? AlertTriangle : Info;
@@ -257,12 +256,12 @@
 
   function levelDot(level: EventLevel): string {
     return level === 'error'
-      ? 'bg-red-500'
+      ? 'bg-destructive'
       : level === 'warn'
-        ? 'bg-amber-500'
+        ? 'bg-warning'
         : level === 'success'
-          ? 'bg-emerald-500'
-          : 'bg-blue-500';
+          ? 'bg-success'
+          : 'bg-info';
   }
 
   let greeting = $derived.by(() => {
@@ -289,7 +288,7 @@
           <p class="text-sm text-muted-foreground" data-testid="topbar-date">
             {weekday}, {dateStr}
             {#if data.runtime.runningTasks.length > 0}
-              · <span class="text-emerald-400 inline-flex items-center gap-1">
+              · <span class="text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                 <ActivityIcon class="size-3 animate-pulse" />
                 {data.runtime.runningTasks.join(' + ')} running
               </span>
@@ -309,7 +308,7 @@
                     class="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 hover:bg-emerald-500/10 transition-colors block"
                   >
                     <div class="flex items-center gap-1.5">
-                      <Flame class="size-3.5 text-emerald-400" />
+                      <Flame class="size-3.5 text-emerald-700 dark:text-emerald-400" />
                       <span
                         class="text-[11px] uppercase tracking-wide text-emerald-800 dark:text-emerald-300/80 font-medium"
                         >Up next</span
@@ -338,7 +337,7 @@
                     class="rounded-lg border border-orange-500/30 bg-orange-500/5 px-4 py-3 hover:bg-orange-500/10 transition-colors block"
                   >
                     <div class="flex items-center gap-1.5">
-                      <Target class="size-3.5 text-orange-400" />
+                      <Target class="size-3.5 text-orange-700 dark:text-orange-400" />
                       <span
                         class="text-[11px] uppercase tracking-wide text-orange-800 dark:text-orange-300/80 font-medium"
                         >In flight</span
@@ -367,7 +366,7 @@
                     class="rounded-lg border border-violet-500/30 bg-violet-500/5 px-4 py-3 hover:bg-violet-500/10 transition-colors block"
                   >
                     <div class="flex items-center gap-1.5">
-                      <ListTodo class="size-3.5 text-violet-400" />
+                      <ListTodo class="size-3.5 text-violet-700 dark:text-violet-400" />
                       <span
                         class="text-[11px] uppercase tracking-wide text-violet-800 dark:text-violet-300/80 font-medium"
                         >Active apps</span
@@ -395,9 +394,9 @@
                     class={cn(
                       'rounded-lg border px-4 py-3',
                       data.pipelineDaysAgo == null
-                        ? 'border-zinc-500/30 bg-zinc-500/5'
+                        ? 'border-border bg-muted'
                         : data.pipelineDaysAgo >= 7
-                          ? 'border-amber-500/30 bg-amber-500/5'
+                          ? 'border-warning/30 bg-warning/5'
                           : 'border-border/40 bg-card',
                     )}
                   >
@@ -406,7 +405,7 @@
                         class={cn(
                           'size-3.5',
                           data.pipelineDaysAgo != null && data.pipelineDaysAgo >= 7
-                            ? 'text-amber-400'
+                            ? 'text-warning'
                             : 'text-muted-foreground/70',
                         )}
                       />
@@ -414,7 +413,7 @@
                         class={cn(
                           'text-[11px] uppercase tracking-wide font-medium',
                           data.pipelineDaysAgo != null && data.pipelineDaysAgo >= 7
-                            ? 'text-amber-300/80'
+                            ? 'text-warning/80'
                             : 'text-muted-foreground/70',
                         )}>Last scan</span
                       >
@@ -425,7 +424,7 @@
                         data.pipelineDaysAgo == null
                           ? 'text-muted-foreground/40'
                           : data.pipelineDaysAgo >= 7
-                            ? 'text-amber-200'
+                            ? 'text-warning'
                             : 'text-foreground',
                       )}
                     >
@@ -473,7 +472,9 @@
                     disabled={busyTask === 'scan' || data.runtime.runningTasks.includes('scan')}
                   >
                     {#if busyTask === 'scan' || data.runtime.runningTasks.includes('scan')}
-                      <ActivityIcon class="size-3.5 animate-pulse text-emerald-400" />
+                      <ActivityIcon
+                        class="size-3.5 animate-pulse text-emerald-700 dark:text-emerald-400"
+                      />
                       Scanning…
                     {:else}
                       <Globe class="size-3.5" />
@@ -506,7 +507,9 @@
                       data.runtime.runningTasks.includes('gemini')}
                   >
                     {#if busyTask === 'gemini' || data.runtime.runningTasks.includes('gemini')}
-                      <ActivityIcon class="size-3.5 animate-pulse text-blue-400" />
+                      <ActivityIcon
+                        class="size-3.5 animate-pulse text-blue-700 dark:text-blue-400"
+                      />
                       Scoring…
                     {:else}
                       <Sparkles class="size-3.5" />
@@ -652,7 +655,7 @@
           <h2
             class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"
           >
-            <Bell class="size-3 text-amber-400" />
+            <Bell class="size-3 text-warning" />
             Auto-apply needs review · {data.applyIssues.length}
           </h2>
           {#each data.applyIssues as issue (issue.id)}
@@ -663,15 +666,15 @@
               class={cn(
                 'rounded-md border',
                 issue.severity === 'error'
-                  ? 'border-red-500/40 bg-red-500/5'
-                  : 'border-amber-500/40 bg-amber-500/5',
+                  ? 'border-destructive/40 bg-destructive/5'
+                  : 'border-warning/40 bg-warning/5',
               )}
             >
               <div class="flex items-start gap-3 px-3.5 py-2.5">
                 {#if issue.severity === 'error'}
-                  <AlertCircle class="size-4 mt-0.5 text-red-400 flex-shrink-0" />
+                  <AlertCircle class="size-4 mt-0.5 text-destructive flex-shrink-0" />
                 {:else}
-                  <AlertTriangle class="size-4 mt-0.5 text-amber-400 flex-shrink-0" />
+                  <AlertTriangle class="size-4 mt-0.5 text-warning flex-shrink-0" />
                 {/if}
                 <div class="flex-1 min-w-0">
                   <div class="text-sm font-medium">{issue.summary}</div>
@@ -712,8 +715,8 @@
               </div>
               <!-- Inline save-answer form (only for unknown-field issues) -->
               {#if isUnknownField && isExpanded}
-                <div class="border-t border-amber-500/20 px-3.5 py-3 space-y-3 bg-amber-500/5">
-                  <p class="text-[11px] text-amber-100/90 leading-relaxed">
+                <div class="border-t border-warning/20 px-3.5 py-3 space-y-3 bg-warning/5">
+                  <p class="text-[11px] text-warning leading-relaxed">
                     Save an answer for each question below. Adapter will pull these from your
                     form-answers cache next time. Once saved, click <strong>Re-queue</strong> to retry
                     the apply.
@@ -745,7 +748,7 @@
                       </div>
                     </div>
                   {/each}
-                  <div class="flex items-center justify-between pt-1 border-t border-amber-500/20">
+                  <div class="flex items-center justify-between pt-1 border-t border-warning/20">
                     <p class="text-[11px] text-muted-foreground/80">
                       Stored under your profile's form-answers cache.
                       <a
@@ -794,7 +797,7 @@
           <h2
             class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"
           >
-            <Bell class="size-3 text-cyan-400" />
+            <Bell class="size-3 text-cyan-700 dark:text-cyan-400" />
             Post-apply actions · {data.postApplyCards.length}
           </h2>
           <div class="space-y-1.5">
@@ -805,14 +808,14 @@
                   : card.kind === 'prep-block-recommended'
                     ? 'border-cyan-500/40 bg-cyan-500/5'
                     : card.kind === 'ghosted-flagged'
-                      ? 'border-zinc-500/40 bg-zinc-500/5'
+                      ? 'border-border bg-muted'
                       : card.kind === 'offer-decision-due'
                         ? 'border-orange-500/50 bg-orange-500/5'
                         : 'border-violet-500/40 bg-violet-500/5'}
               <a
                 href={card.cta?.href ?? `/job/${card.jobId}`}
                 class={cn(
-                  'flex items-start gap-3 px-3.5 py-2.5 rounded-md border transition-colors hover:bg-zinc-900/50',
+                  'flex items-start gap-3 px-3.5 py-2.5 rounded-md border transition-colors hover:bg-muted',
                   tint,
                 )}
               >
@@ -821,7 +824,9 @@
                   <div class="text-xs text-muted-foreground mt-0.5">{card.description}</div>
                 </div>
                 {#if card.cta}
-                  <span class="text-xs text-cyan-300 whitespace-nowrap">{card.cta.label} →</span>
+                  <span class="text-xs text-cyan-700 dark:text-cyan-300 whitespace-nowrap"
+                    >{card.cta.label} →</span
+                  >
                 {/if}
               </a>
             {/each}
@@ -841,7 +846,7 @@
           <h2
             class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"
           >
-            <Sparkles class="size-3 text-emerald-400" />
+            <Sparkles class="size-3 text-emerald-700 dark:text-emerald-400" />
             Inbound recruiter leads · {data.inboundLeads.length}
           </h2>
           <div class="space-y-1.5">
@@ -849,7 +854,9 @@
               <div
                 class="flex items-start gap-3 px-3.5 py-2.5 rounded-md border border-emerald-500/30 bg-emerald-500/5"
               >
-                <Sparkles class="size-4 mt-0.5 text-emerald-300 flex-shrink-0" />
+                <Sparkles
+                  class="size-4 mt-0.5 text-emerald-700 dark:text-emerald-300 flex-shrink-0"
+                />
                 <div class="flex-1 min-w-0">
                   <div class="text-sm font-medium truncate">{lead.subject}</div>
                   <div class="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
@@ -871,7 +878,7 @@
           <!-- Up next -->
           <section id="up-next" class="space-y-2.5 scroll-mt-4">
             <header class="flex items-center gap-2">
-              <Flame class="size-4 text-emerald-400" />
+              <Flame class="size-4 text-emerald-700 dark:text-emerald-400" />
               <h2 class="text-sm font-semibold">Up next — evaluate these</h2>
               <span class="text-[11px] text-muted-foreground tabular-nums"
                 >{data.upNextTotal} total</span
@@ -928,7 +935,7 @@
           {#if data.ready.length > 0}
             <section class="space-y-2.5">
               <header class="flex items-center gap-2">
-                <Send class="size-4 text-blue-400" />
+                <Send class="size-4 text-blue-700 dark:text-blue-400" />
                 <h2 class="text-sm font-semibold">Ready to apply</h2>
                 <span class="text-[11px] text-muted-foreground tabular-nums"
                   >{data.readyTotal} total</span
@@ -970,7 +977,7 @@
           {#if data.inFlight.length > 0}
             <section id="in-flight" class="space-y-2.5 scroll-mt-4">
               <header class="flex items-center gap-2">
-                <Target class="size-4 text-orange-400" />
+                <Target class="size-4 text-orange-700 dark:text-orange-400" />
                 <h2 class="text-sm font-semibold">In flight</h2>
                 <span class="text-[11px] text-muted-foreground tabular-nums"
                   >{data.inFlightTotal} total</span
@@ -996,7 +1003,7 @@
           {#if data.followupsUrgent.length > 0 || data.followupsOverdue.length > 0}
             <section id="follow-ups-due" class="space-y-2.5 scroll-mt-4">
               <header class="flex items-center gap-2">
-                <Bell class="size-4 text-amber-400" />
+                <Bell class="size-4 text-amber-700 dark:text-amber-400" />
                 <h2 class="text-sm font-semibold">Follow-ups due</h2>
                 <span class="text-[11px] text-muted-foreground tabular-nums">
                   {data.followupsUrgent.length + data.followupsOverdue.length} ready
@@ -1032,7 +1039,7 @@
           {#if data.followUps.length > 0}
             <section id="follow-ups" class="space-y-2.5 scroll-mt-4">
               <header class="flex items-center gap-2">
-                <ListTodo class="size-4 text-violet-400" />
+                <ListTodo class="size-4 text-violet-700 dark:text-violet-400" />
                 <h2 class="text-sm font-semibold">Active applications</h2>
                 <span class="text-[11px] text-muted-foreground tabular-nums"
                   >{data.followUpsTotal} total</span
@@ -1101,8 +1108,8 @@
                     class={cn(
                       'h-5 text-[11px] gap-0.5',
                       data.velocityDeltaPct >= 0
-                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                        : 'border-red-500/40 bg-red-500/10 text-red-300',
+                        ? 'border-success/40 bg-success/10 text-success'
+                        : 'border-destructive/40 bg-destructive/10 text-destructive',
                     )}
                   >
                     {#if data.velocityDeltaPct >= 0}<TrendingUp
@@ -1112,7 +1119,7 @@
                   </Badge>
                 {/if}
               </div>
-              <div class="text-emerald-400">
+              <div class="text-emerald-700 dark:text-emerald-400">
                 <Sparkline data={velocityNumbers} width={300} height={48} />
               </div>
               <div class="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -1156,15 +1163,6 @@
             <Card.Header class="pb-2">
               <Card.Title class="text-xs flex items-center gap-1.5">
                 <ActivityIcon class="size-3.5 text-muted-foreground" /> Recent activity
-                {#if data.recentErrorsCount > 0}
-                  <Badge
-                    variant="outline"
-                    class="h-4 px-1 text-[9px] border-red-500/40 bg-red-500/10 text-red-300 ml-auto"
-                  >
-                    {data.recentErrorsCount}
-                    {data.recentErrorsCount === 1 ? 'error' : 'errors'}
-                  </Badge>
-                {/if}
               </Card.Title>
             </Card.Header>
             <Card.Content>
@@ -1220,7 +1218,10 @@
               {#each [{ label: 'Gemini', on: data.runtime.hasGemini, role: 'first-pass scoring' }, { label: 'Anthropic', on: data.runtime.hasAnthropic, role: 'deep evaluation, chat' }] as svc}
                 <div class="flex items-center gap-2 text-xs">
                   <span
-                    class={cn('size-1.5 rounded-full', svc.on ? 'bg-emerald-500' : 'bg-zinc-500')}
+                    class={cn(
+                      'size-1.5 rounded-full',
+                      svc.on ? 'bg-success' : 'bg-muted-foreground',
+                    )}
                   ></span>
                   <span class={svc.on ? 'text-foreground' : 'text-muted-foreground/60'}
                     >{svc.label}</span

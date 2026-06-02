@@ -51,6 +51,7 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { error } from '../lib/logger.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MODES_DIR = join(ROOT, 'modes');
@@ -60,7 +61,7 @@ const STRICT = process.argv.includes('--strict');
 const JSON_OUT = process.argv.includes('--json');
 
 if (!existsSync(MODES_DIR)) {
-  console.error('::error::modes/ directory missing');
+  error('modes/ directory missing');
   process.exit(2);
 }
 
@@ -71,7 +72,7 @@ const englishModes = readdirSync(MODES_DIR)
   .sort();
 
 if (englishModes.length === 0) {
-  console.error('::error::modes/ has no .md files — wrong directory?');
+  error('modes/ has no .md files — wrong directory?');
   process.exit(2);
 }
 
@@ -88,9 +89,7 @@ if (existingLocales.length === 0) {
     process.exit(0);
   }
   if (STRICT) {
-    console.error(
-      '::error::no locale directories under modes/ — strict mode requires at least one',
-    );
+    error('no locale directories under modes/ — strict mode requires at least one');
     process.exit(1);
   }
   console.log(
@@ -143,7 +142,8 @@ if (JSON_OUT) {
 }
 
 if (drift > 0) {
-  console.error(`\n::error::${drift} locale(s) drift from English parity. See above for details.`);
+  console.error('');
+  error(`${drift} locale(s) drift from English parity. See above for details.`);
   console.error(`Run \`ls modes/<locale>/\` against \`ls modes/\` to find the gap.`);
   process.exit(1);
 }

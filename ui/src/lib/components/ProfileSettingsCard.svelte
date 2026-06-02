@@ -198,7 +198,7 @@
 <Card.Root>
   <Card.Header>
     <Card.Title class="text-base flex items-center gap-2">
-      <User class="size-4 text-fuchsia-400" />
+      <User class="size-4 text-fuchsia-700 dark:text-fuchsia-400" />
       Profile + appearance
     </Card.Title>
     <Card.Description>
@@ -223,7 +223,7 @@
             />
           {:else}
             <div
-              class="size-16 rounded-full bg-fuchsia-500/10 ring-1 ring-fuchsia-500/40 flex items-center justify-center text-xl font-medium text-fuchsia-200"
+              class="size-16 rounded-full bg-fuchsia-500/10 ring-1 ring-fuchsia-500/40 flex items-center justify-center text-xl font-medium text-fuchsia-700 dark:text-fuchsia-200"
             >
               {initials(prefs.displayName)}
             </div>
@@ -272,7 +272,7 @@
                 size="sm"
                 variant="ghost"
                 onclick={removeAvatar}
-                class="gap-1.5 h-7 text-[11px] text-muted-foreground hover:text-red-300"
+                class="gap-1.5 h-7 text-[11px] text-muted-foreground hover:text-destructive"
               >
                 <Trash2 class="size-3" /> Remove
               </Button>
@@ -292,7 +292,7 @@
               class={cn(
                 'rounded-md border px-3 py-2 flex items-center justify-center gap-1.5 text-xs transition',
                 prefs.appearance === opt.id
-                  ? 'border-fuchsia-500/60 bg-fuchsia-500/10 text-fuchsia-100'
+                  ? 'border-fuchsia-500/60 bg-fuchsia-500/10 text-fuchsia-800 dark:text-fuchsia-100'
                   : 'border-border/40 bg-card hover:border-border',
               )}
             >
@@ -314,7 +314,7 @@
               class={cn(
                 'rounded-md border p-2 flex flex-col items-center gap-1 text-[11px] transition',
                 prefs.theme === theme
-                  ? 'border-fuchsia-500/60 bg-fuchsia-500/10 text-fuchsia-100'
+                  ? 'border-fuchsia-500/60 bg-fuchsia-500/10 text-fuchsia-800 dark:text-fuchsia-100'
                   : 'border-border/40 bg-card hover:border-border text-muted-foreground',
               )}
             >
@@ -332,10 +332,10 @@
       <!-- Notifications -->
       <div class="space-y-2 pt-2 border-t border-border/30">
         <Label class="text-xs flex items-center gap-1.5">
-          <Bell class="size-3 text-amber-400" /> In-app notifications (toasts)
+          <Bell class="size-3 text-accent-strong" /> In-app notifications (toasts)
         </Label>
         <div class="grid grid-cols-2 gap-1.5">
-          {#each [{ level: 'error' as const, label: 'Errors', tint: 'text-red-300' }, { level: 'warn' as const, label: 'Warnings', tint: 'text-amber-300' }, { level: 'success' as const, label: 'Successes', tint: 'text-emerald-300' }, { level: 'info' as const, label: 'Info', tint: 'text-blue-300' }] as opt}
+          {#each [{ level: 'error' as const, label: 'Errors', tint: 'text-destructive' }, { level: 'warn' as const, label: 'Warnings', tint: 'text-warning' }, { level: 'success' as const, label: 'Successes', tint: 'text-success' }, { level: 'info' as const, label: 'Info', tint: 'text-info' }] as opt}
             <label class="flex items-center gap-2 text-xs cursor-pointer">
               <input
                 type="checkbox"

@@ -37,7 +37,7 @@
           <div
             class="size-10 rounded-lg bg-orange-500/10 ring-1 ring-orange-500/40 flex items-center justify-center"
           >
-            <Code class="size-5 text-orange-400" />
+            <Code class="size-5 text-orange-600 dark:text-orange-400" />
           </div>
           <h1 class="text-2xl font-semibold tracking-tight">Technical interview prep</h1>
         </div>
@@ -54,7 +54,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <Target class="size-4 text-orange-400" />
+            <Target class="size-4 text-orange-600 dark:text-orange-400" />
             Recommended workflow
           </Card.Title>
         </Card.Header>
@@ -95,7 +95,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <BookOpen class="size-4 text-orange-400" />
+            <BookOpen class="size-4 text-orange-600 dark:text-orange-400" />
             What's in a tech-prep file
           </Card.Title>
         </Card.Header>
@@ -139,14 +139,14 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <Network class="size-4 text-orange-400" />
+            <Network class="size-4 text-orange-600 dark:text-orange-400" />
             Three-resource learning paths
           </Card.Title>
         </Card.Header>
         <Card.Content class="space-y-3 text-sm">
           <div>
             <h3 class="font-medium text-sm flex items-center gap-1.5">
-              <Code class="size-3.5 text-orange-300" /> Coding rounds
+              <Code class="size-3.5 text-orange-700 dark:text-orange-300" /> Coding rounds
             </h3>
             <ul class="list-disc pl-5 mt-1 text-xs text-muted-foreground space-y-0.5">
               <li>
@@ -169,7 +169,7 @@
           </div>
           <div>
             <h3 class="font-medium text-sm flex items-center gap-1.5">
-              <Network class="size-3.5 text-orange-300" /> System design
+              <Network class="size-3.5 text-orange-700 dark:text-orange-300" /> System design
             </h3>
             <ul class="list-disc pl-5 mt-1 text-xs text-muted-foreground space-y-0.5">
               <li>
@@ -192,7 +192,7 @@
           </div>
           <div>
             <h3 class="font-medium text-sm flex items-center gap-1.5">
-              <MessageSquare class="size-3.5 text-orange-300" /> Behavioral / leadership
+              <MessageSquare class="size-3.5 text-orange-700 dark:text-orange-300" /> Behavioral / leadership
             </h3>
             <ul class="list-disc pl-5 mt-1 text-xs text-muted-foreground space-y-0.5">
               <li>
@@ -216,7 +216,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <Clock class="size-4 text-orange-400" />
+            <Clock class="size-4 text-orange-600 dark:text-orange-400" />
             Realistic time budget
           </Card.Title>
         </Card.Header>

@@ -9,11 +9,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const __buildFromTemplate = vi.fn();
 const __openExternal = vi.fn();
 const __appGetVersion = vi.fn(() => '1.2.3');
-const __getFocusedWindow = vi.fn();
 
 vi.mock('electron', () => ({
   Menu: { buildFromTemplate: __buildFromTemplate },
-  BrowserWindow: { getFocusedWindow: __getFocusedWindow },
   shell: { openExternal: __openExternal },
   app: { getVersion: __appGetVersion },
 }));
@@ -35,7 +33,6 @@ function setPlatform(p: NodeJS.Platform): void {
 beforeEach(() => {
   __buildFromTemplate.mockReset();
   __openExternal.mockReset();
-  __getFocusedWindow.mockReset();
   __buildFromTemplate.mockReturnValue({ __mockMenu: true });
 });
 
@@ -48,8 +45,15 @@ function handlers() {
   return {
     onAbout: vi.fn(),
     onPreferences: vi.fn(),
+    onCheckForUpdates: vi.fn(),
+    onSetUpdateChannel: vi.fn(),
+    onSimulateUpdate: vi.fn(),
+    onClearCache: vi.fn(),
     onOpenDocs: vi.fn(),
     onReportBug: vi.fn(),
+    onGotoLogin: vi.fn(),
+    onPasskeySignin: vi.fn(),
+    onGotoSignup: vi.fn(),
   };
 }
 
@@ -64,14 +68,27 @@ describe('buildAppMenu -- macOS', () => {
     expect(Array.isArray(template[0].submenu)).toBe(true);
   });
 
-  it('app menu has About + Preferences + Quit', async () => {
+  it('app menu has About + Check for Updates + Settings + Quit', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
     const { submenu } = __buildFromTemplate.mock.calls[0][0][0];
     const labels = submenu.map((s: { label?: string; role?: string }) => s.label ?? s.role);
     expect(labels).toContain('About Heron');
-    expect(labels).toContain('Preferences…');
+    // "Settings…" is the modern macOS label (was "Preferences…").
+    expect(labels).toContain('Settings…');
+    expect(labels).not.toContain('Preferences…');
+    expect(labels).toContain('Check for Updates…');
     expect(labels).toContain('quit'); // role
+  });
+
+  it('Check for Updates click invokes h.onCheckForUpdates', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    const h = handlers();
+    buildAppMenu(h);
+    const { submenu } = __buildFromTemplate.mock.calls[0][0][0];
+    const item = submenu.find((s: { label?: string }) => s.label === 'Check for Updates…');
+    item.click();
+    expect(h.onCheckForUpdates).toHaveBeenCalled();
   });
 
   it('about click handler invokes h.onAbout', async () => {
@@ -84,24 +101,26 @@ describe('buildAppMenu -- macOS', () => {
     expect(h.onAbout).toHaveBeenCalled();
   });
 
-  it('preferences click handler invokes h.onPreferences', async () => {
+  it('settings click handler invokes h.onPreferences (Cmd+,)', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     const h = handlers();
     buildAppMenu(h);
     const { submenu } = __buildFromTemplate.mock.calls[0][0][0];
-    const prefs = submenu.find((s: { label?: string }) => s.label === 'Preferences…');
-    prefs.click();
+    const settings = submenu.find((s: { label?: string }) => s.label === 'Settings…');
+    expect(settings.accelerator).toBe('Cmd+,');
+    settings.click();
     expect(h.onPreferences).toHaveBeenCalled();
   });
 
-  it('window menu has front + window roles on mac', async () => {
+  it('uses the OS-managed windowMenu role on mac (live window list)', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
     const template = __buildFromTemplate.mock.calls[0][0];
-    const windowMenu = template.find((t: { label?: string }) => t.label === '&Window');
-    const roles = windowMenu.submenu.map((s: { role?: string }) => s.role).filter(Boolean);
-    expect(roles).toContain('front');
-    expect(roles).toContain('window');
+    // macOS gets the built-in windowMenu role (AppKit maintains the window
+    // list); we do NOT hand-roll a '&Window' submenu with a stale 'window' item.
+    const windowMenu = template.find((t: { role?: string }) => t.role === 'windowMenu');
+    expect(windowMenu).toBeDefined();
+    expect(template.find((t: { label?: string }) => t.label === '&Window')).toBeUndefined();
   });
 
   it('help menu does NOT have a duplicate About entry on mac', async () => {
@@ -113,6 +132,33 @@ describe('buildAppMenu -- macOS', () => {
       (s.label ?? '').includes('About'),
     );
     expect(aboutInHelp).toBeUndefined();
+  });
+
+  // WHY: the canonical macOS Edit menu (Electron docs) ships a Speech submenu
+  // (Start/Stop Speaking) + pasteAndMatchStyle. These are the macOS-only
+  // affordances we previously lacked; assert them so the platform menu stays HIG.
+  it('Edit has a macOS Speech submenu + pasteAndMatchStyle', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    const template = __buildFromTemplate.mock.calls[0][0];
+    const editMenu = template.find((t: { label?: string }) => t.label === '&Edit');
+    const roles = editMenu.submenu.map((s: { role?: string }) => s.role).filter(Boolean);
+    expect(roles).toContain('pasteAndMatchStyle');
+    const speech = editMenu.submenu.find((s: { label?: string }) => s.label === 'Speech');
+    expect(speech, 'macOS Edit should have a Speech submenu').toBeDefined();
+    const speechRoles = speech.submenu.map((s: { role?: string }) => s.role).filter(Boolean);
+    expect(speechRoles).toEqual(expect.arrayContaining(['startSpeaking', 'stopSpeaking']));
+  });
+
+  // WHY: macOS auto-inserts "Enter Full Screen" into the View menu, so an
+  // explicit togglefullscreen role renders a DUPLICATE. We omit ours on mac.
+  it('View omits togglefullscreen on macOS (system supplies Enter Full Screen)', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers(), { isDev: true });
+    const template = __buildFromTemplate.mock.calls[0][0];
+    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+    const roles = viewMenu.submenu.map((s: { role?: string }) => s.role).filter(Boolean);
+    expect(roles).not.toContain('togglefullscreen');
   });
 });
 
@@ -159,6 +205,43 @@ describe('buildAppMenu -- win/linux', () => {
     aboutInHelp.click();
     expect(h.onAbout).toHaveBeenCalled();
   });
+
+  it('help menu HAS Check for Updates on non-mac (no app menu to hold it)', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    const h = handlers();
+    buildAppMenu(h);
+    const template = __buildFromTemplate.mock.calls[0][0];
+    const helpMenu = template.find((t: { label?: string }) => t.label === '&Help');
+    const cfu = helpMenu.submenu.find((s: { label?: string }) => s.label === 'Check for Updates…');
+    expect(cfu, 'win/linux Help should hold Check for Updates').toBeDefined();
+    cfu.click();
+    expect(h.onCheckForUpdates).toHaveBeenCalled();
+  });
+
+  // WHY: pasteAndMatchStyle + the Speech submenu are macOS-only; on Win/Linux
+  // they'd be dead/no-op items, so the canonical non-mac Edit menu omits them.
+  it('Edit omits macOS-only pasteAndMatchStyle + Speech on win/linux', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    const template = __buildFromTemplate.mock.calls[0][0];
+    const editMenu = template.find((t: { label?: string }) => t.label === '&Edit');
+    const roles = editMenu.submenu.map((s: { role?: string }) => s.role).filter(Boolean);
+    expect(roles).toContain('selectAll');
+    expect(roles).toContain('delete');
+    expect(roles).not.toContain('pasteAndMatchStyle');
+    const speech = editMenu.submenu.find((s: { label?: string }) => s.label === 'Speech');
+    expect(speech).toBeUndefined();
+  });
+
+  // WHY: no macOS-style system auto-add on Win/Linux, so we MUST supply our own.
+  it('View includes togglefullscreen on win/linux', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    const template = __buildFromTemplate.mock.calls[0][0];
+    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+    const roles = viewMenu.submenu.map((s: { role?: string }) => s.role).filter(Boolean);
+    expect(roles).toContain('togglefullscreen');
+  });
 });
 
 describe('buildAppMenu -- common menus', () => {
@@ -173,12 +256,30 @@ describe('buildAppMenu -- common menus', () => {
     );
   });
 
-  it('emits View menu with reload + dev tools + zoom', async () => {
-    const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
-    const roles = viewMenu.submenu.map((s: { role?: string }) => s.role).filter(Boolean);
+  // WHY: shipping Reload / Force-Reload / Toggle-DevTools in a PRODUCTION menu is
+  // a UX + footgun smell (users reload into a blank state, or open devtools by
+  // accident). They belong only in dev. Zoom + fullscreen are always useful.
+  function viewRoles(opts?: Record<string, unknown>) {
+    return (mod: { buildAppMenu: (h: unknown, o?: unknown) => unknown }) => {
+      mod.buildAppMenu(handlers(), opts);
+      const template = __buildFromTemplate.mock.calls.at(-1)![0];
+      const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+      return viewMenu.submenu.map((s: { role?: string }) => s.role).filter(Boolean);
+    };
+  }
+
+  it('View hides reload/forceReload/devtools in production (no isDev)', async () => {
+    const mod = await import('./app-menu.js');
+    const roles = viewRoles()(mod);
+    expect(roles).not.toContain('reload');
+    expect(roles).not.toContain('forceReload');
+    expect(roles).not.toContain('toggleDevTools');
+    expect(roles).toEqual(expect.arrayContaining(['resetZoom', 'zoomIn', 'zoomOut']));
+  });
+
+  it('View exposes reload/forceReload/devtools in dev (isDev: true)', async () => {
+    const mod = await import('./app-menu.js');
+    const roles = viewRoles({ isDev: true })(mod);
     expect(roles).toEqual(
       expect.arrayContaining([
         'reload',
@@ -187,7 +288,6 @@ describe('buildAppMenu -- common menus', () => {
         'resetZoom',
         'zoomIn',
         'zoomOut',
-        'togglefullscreen',
       ]),
     );
   });
@@ -223,99 +323,203 @@ describe('buildAppMenu -- common menus', () => {
     gh.click();
     expect(__openExternal).toHaveBeenCalledWith('https://github.com/example/heron');
   });
+
+  it('help/Release Notes opens the GitHub releases page', async () => {
+    // WHY: users want to see WHAT changed before/after updating; Release Notes
+    // links straight to the tagged GitHub releases (distinct from the repo root).
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    const template = __buildFromTemplate.mock.calls[0][0];
+    const helpMenu = template.find((t: { label?: string }) => t.label === '&Help');
+    const rn = helpMenu.submenu.find((s: { label?: string }) => s.label === 'Release Notes');
+    expect(rn, 'Help should have a Release Notes item').toBeDefined();
+    rn.click();
+    expect(__openExternal).toHaveBeenCalledWith('https://github.com/example/heron/releases');
+  });
 });
 
-describe('buildAppMenu -- File menu click handlers', () => {
-  it('import URL navigates focused window to /pipeline (replacing last segment)', async () => {
-    const mockWebContents = {
-      getURL: vi.fn(() => 'http://localhost:5173/inbox'),
-      loadURL: vi.fn(() => Promise.resolve()),
-    };
-    __getFocusedWindow.mockReturnValue({ webContents: mockWebContents });
+describe('buildAppMenu -- View menu Clear Cache & Reload', () => {
+  const viewLabels = () => {
+    const template = __buildFromTemplate.mock.calls.at(-1)![0];
+    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+    return viewMenu.submenu.map((s: { label?: string }) => s.label).filter(Boolean);
+  };
+
+  // WHY: a wedged cache / stale session is a real PROD support path, so unlike
+  // the dev-gated reload/devtools items this MUST be present regardless of isDev.
+  it('includes a "Clear Cache & Reload" item in production (no isDev)', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const importUrl = fileMenu.submenu.find((s: { label?: string }) => s.label === 'Import URL…');
-    importUrl.click();
-    expect(mockWebContents.loadURL).toHaveBeenCalled();
-    const target = (mockWebContents.loadURL as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(target).toContain('/pipeline');
+    expect(viewLabels()).toEqual(expect.arrayContaining(['Clear Cache & Reload…']));
   });
 
-  it('import URL is a no-op when no window is focused', async () => {
-    __getFocusedWindow.mockReturnValue(null);
+  it('includes a "Clear Cache & Reload" item in dev (isDev: true)', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const importUrl = fileMenu.submenu.find((s: { label?: string }) => s.label === 'Import URL…');
-    expect(() => importUrl.click()).not.toThrow();
+    buildAppMenu(handlers(), { isDev: true });
+    expect(viewLabels()).toEqual(expect.arrayContaining(['Clear Cache & Reload…']));
   });
 
-  it('open Pipeline navigates focused window using origin', async () => {
-    const mockWebContents = {
-      getURL: vi.fn(() => 'http://localhost:5173/inbox/123'),
-      loadURL: vi.fn(() => Promise.resolve()),
-    };
-    __getFocusedWindow.mockReturnValue({ webContents: mockWebContents });
+  it('Clear Cache & Reload click invokes h.onClearCache', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
-    buildAppMenu(handlers());
+    const h = handlers();
+    buildAppMenu(h);
     const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const openPipeline = fileMenu.submenu.find(
-      (s: { label?: string }) => s.label === 'Open Pipeline',
+    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+    const item = viewMenu.submenu.find(
+      (s: { label?: string }) => s.label === 'Clear Cache & Reload…',
     );
-    openPipeline.click();
-    expect(mockWebContents.loadURL).toHaveBeenCalledWith('http://localhost:5173/pipeline');
+    item.click();
+    expect(h.onClearCache).toHaveBeenCalled();
   });
+});
 
-  it('open Pipeline is a no-op when no window is focused', async () => {
-    __getFocusedWindow.mockReturnValue(null);
+describe('buildAppMenu -- View menu Simulate update (dev-gated)', () => {
+  const viewItems = () => {
+    const template = __buildFromTemplate.mock.calls.at(-1)![0];
+    const viewMenu = template.find((t: { label?: string }) => t.label === '&View');
+    return viewMenu.submenu as Array<{ label?: string; role?: string; click?: () => void }>;
+  };
+
+  // WHY: a fake "update ready" card in PRODUCTION would mislead users into
+  // thinking a real update is staged. It's a dev-only preview affordance, gated
+  // like the reload / devtools items.
+  it('hides "Simulate update…" in production (no isDev)', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const openPipeline = fileMenu.submenu.find(
-      (s: { label?: string }) => s.label === 'Open Pipeline',
-    );
-    expect(() => openPipeline.click()).not.toThrow();
+    const labels = viewItems()
+      .map((s) => s.label)
+      .filter(Boolean);
+    expect(labels).not.toContain('Simulate update…');
   });
 
-  it('import URL swallows loadURL rejection (catch handler covered)', async () => {
-    const mockWebContents = {
-      getURL: vi.fn(() => 'http://localhost:5173/inbox'),
-      // Reject to exercise the `.catch(() => {})` arrow.
-      loadURL: vi.fn(() => Promise.reject(new Error('load failed'))),
-    };
-    __getFocusedWindow.mockReturnValue({ webContents: mockWebContents });
+  it('shows "Simulate update…" in dev (isDev: true) and wires onSimulateUpdate', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    const h = handlers();
+    buildAppMenu(h, { isDev: true });
+    const item = viewItems().find((s) => s.label === 'Simulate update…');
+    expect(item, 'dev View menu should hold Simulate update…').toBeDefined();
+    item!.click!();
+    expect(h.onSimulateUpdate).toHaveBeenCalled();
+  });
+});
+
+describe('buildAppMenu -- Help menu Release channel submenu', () => {
+  const channelSubmenu = () => {
+    const template = __buildFromTemplate.mock.calls.at(-1)![0];
+    const helpMenu = template.find((t: { label?: string }) => t.label === '&Help');
+    const rc = helpMenu.submenu.find((s: { label?: string }) => s.label === 'Release channel');
+    return rc?.submenu as
+      | Array<{ label?: string; type?: string; checked?: boolean; click?: () => void }>
+      | undefined;
+  };
+
+  // WHY: opting into prereleases is a per-user choice that must survive restarts
+  // (persisted by the handler) and be discoverable in the native menu, mirroring
+  // the Settings UI radio group.
+  it('Help has a Release channel submenu with Stable + Beta radios', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
-    const template = __buildFromTemplate.mock.calls[0][0];
-    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const importUrl = fileMenu.submenu.find((s: { label?: string }) => s.label === 'Import URL…');
-    importUrl.click();
-    // Let the rejection propagate through the .catch().
-    await new Promise((r) => setTimeout(r, 0));
-    expect(mockWebContents.loadURL).toHaveBeenCalled();
+    const sub = channelSubmenu();
+    expect(sub, 'Help should have a Release channel submenu').toBeDefined();
+    const stable = sub!.find((s) => s.label === 'Stable');
+    const beta = sub!.find((s) => s.label === 'Beta');
+    expect(stable?.type).toBe('radio');
+    expect(beta?.type).toBe('radio');
   });
 
-  it('open Pipeline swallows loadURL rejection (catch handler covered)', async () => {
-    const mockWebContents = {
-      getURL: vi.fn(() => 'http://localhost:5173/inbox/123'),
-      loadURL: vi.fn(() => Promise.reject(new Error('load failed'))),
-    };
-    __getFocusedWindow.mockReturnValue({ webContents: mockWebContents });
+  it('checks the Stable radio by default (no updateChannel given)', async () => {
     const { buildAppMenu } = await import('./app-menu.js');
     buildAppMenu(handlers());
+    const sub = channelSubmenu()!;
+    expect(sub.find((s) => s.label === 'Stable')!.checked).toBe(true);
+    expect(sub.find((s) => s.label === 'Beta')!.checked).toBe(false);
+  });
+
+  it('checks the Beta radio when updateChannel is beta', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers(), { updateChannel: 'beta' });
+    const sub = channelSubmenu()!;
+    expect(sub.find((s) => s.label === 'Stable')!.checked).toBe(false);
+    expect(sub.find((s) => s.label === 'Beta')!.checked).toBe(true);
+  });
+
+  it('clicking a radio invokes onSetUpdateChannel with the chosen channel', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    const h = handlers();
+    buildAppMenu(h);
+    const sub = channelSubmenu()!;
+    sub.find((s) => s.label === 'Beta')!.click!();
+    expect(h.onSetUpdateChannel).toHaveBeenCalledWith('beta');
+    sub.find((s) => s.label === 'Stable')!.click!();
+    expect(h.onSetUpdateChannel).toHaveBeenCalledWith('stable');
+  });
+});
+
+describe('buildAppMenu -- File menu', () => {
+  // WHY: with no auth route, the File menu must collapse to the SINGLE standard
+  // platform action (close on macOS, quit elsewhere) -- the design keeps in-app
+  // navigation out of the native menu. Asserting the exact length + role fails
+  // if any new File item is added, where a `not.toContain(...)` check would not.
+  it('File menu is limited to the standard platform close/quit action', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    for (const platform of ['darwin', 'linux'] as const) {
+      setPlatform(platform);
+      buildAppMenu(handlers());
+      const template = __buildFromTemplate.mock.calls.at(-1)![0];
+      const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
+      const actionable = fileMenu.submenu.filter((s: { type?: string }) => s.type !== 'separator');
+      expect(actionable).toHaveLength(1);
+      expect(actionable[0].role).toBe(platform === 'darwin' ? 'close' : 'quit');
+    }
+  });
+});
+
+describe('buildAppMenu -- File menu auth actions (login/signup only)', () => {
+  const AUTH_LABELS = ['Login page', 'Sign in with passkey', 'Set up with invite code'];
+  const fileLabels = () => {
     const template = __buildFromTemplate.mock.calls[0][0];
     const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
-    const openPipeline = fileMenu.submenu.find(
-      (s: { label?: string }) => s.label === 'Open Pipeline',
-    );
-    openPipeline.click();
-    await new Promise((r) => setTimeout(r, 0));
-    expect(mockWebContents.loadURL).toHaveBeenCalled();
+    return fileMenu.submenu.map((s: { label?: string }) => s.label).filter(Boolean);
+  };
+
+  it('shows the auth actions on /login', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers(), { route: '/login' });
+    expect(fileLabels()).toEqual(expect.arrayContaining(AUTH_LABELS));
+  });
+
+  it('shows the auth actions on /signup', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers(), { route: '/signup' });
+    expect(fileLabels()).toEqual(expect.arrayContaining(AUTH_LABELS));
+  });
+
+  it('omits the auth actions off auth routes', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers(), { route: '/dashboard' });
+    for (const l of AUTH_LABELS) expect(fileLabels()).not.toContain(l);
+  });
+
+  it('omits the auth actions when no route is given', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    buildAppMenu(handlers());
+    for (const l of AUTH_LABELS) expect(fileLabels()).not.toContain(l);
+  });
+
+  it('wires the auth action click handlers', async () => {
+    const { buildAppMenu } = await import('./app-menu.js');
+    const h = handlers();
+    buildAppMenu(h, { route: '/login' });
+    const template = __buildFromTemplate.mock.calls[0][0];
+    const fileMenu = template.find((t: { label?: string }) => t.label === '&File');
+    const byLabel = (label: string) =>
+      fileMenu.submenu.find((s: { label?: string }) => s.label === label);
+    byLabel('Login page').click();
+    byLabel('Sign in with passkey').click();
+    byLabel('Set up with invite code').click();
+    expect(h.onGotoLogin).toHaveBeenCalled();
+    expect(h.onPasskeySignin).toHaveBeenCalled();
+    expect(h.onGotoSignup).toHaveBeenCalled();
   });
 });
 

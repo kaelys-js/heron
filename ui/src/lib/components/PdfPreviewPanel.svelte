@@ -51,7 +51,7 @@
         open && 'rotate-90',
       )}
     />
-    <FileBadge2 class="size-3.5 text-emerald-400/80 flex-shrink-0" />
+    <FileBadge2 class="size-3.5 text-success/80 flex-shrink-0" />
     <span class="text-xs font-medium">Tailored CV preview</span>
     <span class="text-[11px] font-mono text-muted-foreground/60 truncate">{pdfFile}</span>
     <div class="flex-1"></div>

@@ -65,7 +65,7 @@
       <div
         class="size-8 rounded-md bg-fuchsia-500/15 ring-1 ring-fuchsia-500/40 flex items-center justify-center"
       >
-        <Sparkles class="size-4 text-fuchsia-300" />
+        <Sparkles class="size-4 text-fuchsia-700 dark:text-fuchsia-300" />
       </div>
       <div>
         <div class="text-sm font-semibold">{APP_NAME}</div>
@@ -85,22 +85,22 @@
           {href}
           class={cn(
             'flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs transition-colors',
-            isCurrent && 'bg-fuchsia-500/15 text-fuchsia-200',
+            isCurrent && 'bg-fuchsia-500/15 text-fuchsia-800 dark:text-fuchsia-200',
             isComplete &&
               !isCurrent &&
               'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-            isSkipped && !isCurrent && 'text-amber-400/80 hover:bg-muted/40',
+            isSkipped && !isCurrent && 'text-warning/80 hover:bg-muted/40',
             row.status === 'pending' && 'text-muted-foreground/40 pointer-events-none',
           )}
           aria-current={isCurrent ? 'step' : undefined}
           tabindex={clickable ? 0 : -1}
         >
           {#if isComplete}
-            <CheckCircle2 class="size-3.5 text-emerald-400 flex-shrink-0" />
+            <CheckCircle2 class="size-3.5 text-success flex-shrink-0" />
           {:else if isCurrent}
-            <ArrowRight class="size-3.5 text-fuchsia-300 flex-shrink-0" />
+            <ArrowRight class="size-3.5 text-fuchsia-700 dark:text-fuchsia-300 flex-shrink-0" />
           {:else if isSkipped}
-            <Circle class="size-3.5 text-amber-400/70 flex-shrink-0" />
+            <Circle class="size-3.5 text-warning/70 flex-shrink-0" />
           {:else}
             <Circle class="size-3.5 text-muted-foreground/30 flex-shrink-0" />
           {/if}

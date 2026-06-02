@@ -341,7 +341,7 @@
                   onSelect={() => onUnpinAllClick(new Event('click'))}
                   icon={Trash2}
                   danger
-                  class={unpinAllArmed ? 'animate-pulse bg-red-500/15' : ''}
+                  class={unpinAllArmed ? 'animate-pulse bg-destructive/15' : ''}
                 >
                   {unpinAllArmed ? 'Click again to confirm' : 'Unpin all'}
                   {#snippet trailing()}
@@ -397,8 +397,8 @@
                             class={cn(
                               'absolute right-1 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded transition-all',
                               armedThis
-                                ? 'text-red-300 bg-red-500/15 ring-1 ring-red-500/40 opacity-100 animate-pulse'
-                                : 'text-muted-foreground/50 opacity-0 group-hover/pin-item:opacity-100 focus:opacity-100 hover:text-red-300 hover:bg-red-500/10',
+                                ? 'text-destructive bg-destructive/15 ring-1 ring-destructive/40 opacity-100 animate-pulse'
+                                : 'text-muted-foreground/50 opacity-0 group-hover/pin-item:opacity-100 focus:opacity-100 hover:text-destructive hover:bg-destructive/10',
                             )}
                           >
                             <Star class="size-3 fill-current" />
@@ -441,7 +441,7 @@
                     {#if queueCount > 0}
                       <Badge
                         variant="secondary"
-                        class="ml-auto h-5 px-1.5 text-[11px] border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300"
+                        class="ml-auto h-5 px-1.5 text-[11px] border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300"
                         >{queueCount}</Badge
                       >
                     {/if}

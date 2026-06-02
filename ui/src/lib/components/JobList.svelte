@@ -16,10 +16,10 @@
 
   function scoreClass(s?: number) {
     if (s == null) return 'bg-muted text-muted-foreground border-border';
-    if (s >= 4.5) return 'bg-emerald-500/15 text-emerald-200 border-emerald-500/40';
-    if (s >= 4) return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40';
-    if (s >= 3) return 'bg-amber-500/15 text-amber-300 border-amber-500/40';
-    return 'bg-red-500/10 text-red-300 border-red-500/30';
+    if (s >= 4.5) return 'bg-success/15 text-success border-success/40';
+    if (s >= 4) return 'bg-success/15 text-success/90 border-success/40';
+    if (s >= 3) return 'bg-warning/15 text-warning border-warning/40';
+    return 'bg-destructive/10 text-destructive border-destructive/30';
   }
   function scoreVerdict(s?: number) {
     if (s == null) return 'Not yet scored';
@@ -55,17 +55,22 @@
   };
 
   const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
-    remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300', tip: 'Fully remote' },
+    remote: {
+      label: 'Remote',
+      icon: Wifi,
+      tint: 'text-emerald-700 dark:text-emerald-300',
+      tip: 'Fully remote',
+    },
     hybrid: {
       label: 'Hybrid',
       icon: Building,
-      tint: 'text-amber-300',
+      tint: 'text-amber-700 dark:text-amber-300',
       tip: 'Hybrid — some office presence required',
     },
     onsite: {
       label: 'On-site',
       icon: Building,
-      tint: 'text-red-300',
+      tint: 'text-red-700 dark:text-red-300',
       tip: 'On-site — must work from a specific location',
     },
     unknown: {
@@ -302,7 +307,7 @@
                   {#snippet child({ props })}
                     <span
                       {...props}
-                      class="inline-flex items-center gap-0.5 text-[11px] text-emerald-400/85 cursor-help truncate max-w-full"
+                      class="inline-flex items-center gap-0.5 text-[11px] text-success/85 cursor-help truncate max-w-full"
                     >
                       <DollarSign class="size-2.5 flex-shrink-0" />
                       <span class="truncate">{job.salary}</span>
@@ -334,8 +339,7 @@
               <Tooltip.Root>
                 <Tooltip.Trigger>
                   {#snippet child({ props })}
-                    <span {...props} class="text-emerald-400/70"><FileBadge2 class="size-3" /></span
-                    >
+                    <span {...props} class="text-success/70"><FileBadge2 class="size-3" /></span>
                   {/snippet}
                 </Tooltip.Trigger>
                 <Tooltip.Content side="top" class="text-xs"

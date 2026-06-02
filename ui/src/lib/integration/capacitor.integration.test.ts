@@ -364,6 +364,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     'docs/LEGAL_DISCLAIMER.md',
     'docs/NATIVE.md',
     'docs/PHILOSOPHY.md',
+    'docs/RELEASING.md',
     'docs/SETUP.md',
     'docs/STATUS_MODEL.md',
     'docs/TESTING.md',
@@ -488,6 +489,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
       '.lostpixel/baseline/README.md',
       'docs/screenshots/README.md',
       'ui/e2e/README.md',
+      'scripts/README.md', // dev-facing scripts conventions (exit codes + logger), not brand-propagated
       'branding/screenshots/README.md', // per-store screenshot specs
       // all-contributors auto-generates the contributors list block.
       'CONTRIBUTORS.md',
@@ -506,4 +508,49 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
       `These .md files are neither in SCOPED_DOCS nor EXEMPT: ${unaccounted.join(', ')}`,
     ).toEqual([]);
   });
+});
+
+describe('app.css brand-token block — single source, no drift', () => {
+  // Regression guard for the duplicate-block bug: app.css once carried the
+  // AUTO-GENERATED:brand-tokens block TWICE (a script-managed `--` copy + a
+  // frozen em-dash copy that won by cascade and silently overrode brand.json).
+  // These assertions fail if (a) the block is duplicated again, or (b) any
+  // :root/.dark token value drifts from branding/brand.json.
+  const css = readFile('ui/src/app.css');
+  const START = '/* AUTO-GENERATED:brand-tokens';
+  const END = '/* /AUTO-GENERATED:brand-tokens */';
+
+  it('contains EXACTLY ONE brand-tokens block', () => {
+    expect(css.split(START).length - 1, 'brand-tokens start markers').toBe(1);
+    expect(css.split(END).length - 1, 'brand-tokens end markers').toBe(1);
+  });
+
+  // camelCase brand key -> the --kebab-case CSS var apply-brand emits.
+  const kebab = (k: string) => '--' + k.replace(/([A-Z])/g, '-$1').toLowerCase();
+  const block = css.slice(css.indexOf(START), css.indexOf(END));
+  const selectorBody = (sel: string) => {
+    const open = block.indexOf(`${sel} {`);
+    return open < 0 ? '' : block.slice(open, block.indexOf('}', open));
+  };
+
+  for (const [mode, sel] of [
+    ['light', ':root'],
+    ['dark', '.dark'],
+  ] as const) {
+    it(`${mode} :root/.dark token values match brand.json (no drift)`, () => {
+      const tokens = brand.colors.tokens[mode] as Record<string, unknown>;
+      const body = selectorBody(sel);
+      expect(body, `${sel} block present`).not.toBe('');
+      for (const [key, value] of Object.entries(tokens)) {
+        if (key.startsWith('$')) continue;
+        if (key === 'chart') {
+          (value as string[]).forEach((c, i) =>
+            expect(body, `--chart-${i + 1}`).toContain(`--chart-${i + 1}: ${c};`),
+          );
+          continue;
+        }
+        expect(body, `${kebab(key)} in ${mode}`).toContain(`${kebab(key)}: ${value};`);
+      }
+    });
+  }
 });

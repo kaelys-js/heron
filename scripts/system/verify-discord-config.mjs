@@ -13,6 +13,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import yaml from 'js-yaml';
+import { error } from '../lib/logger.mjs';
 import {
   PERMISSION_NAMES,
   SYSTEM_CHANNEL_FLAGS,
@@ -139,7 +140,7 @@ async function main() {
     console.log('OK verify-discord-config -- config.yml valid + references resolve.');
     process.exit(0);
   }
-  console.error(`::error::Discord config has ${issues.length} problem(s):`);
+  error(`Discord config has ${issues.length} problem(s):`);
   for (const i of issues) console.error(`  - ${i}`);
   process.exit(1);
 }
@@ -147,7 +148,7 @@ async function main() {
 const isEntrypoint = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isEntrypoint) {
   main().catch((e) => {
-    console.error(`::error::${e.message}`);
+    error(e.message);
     process.exit(2);
   });
 }

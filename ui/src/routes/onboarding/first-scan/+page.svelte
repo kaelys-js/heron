@@ -162,15 +162,15 @@
 
   function statusTint(s: ChildStatus): string {
     if (s === 'pending') return 'text-muted-foreground/50';
-    if (s === 'running') return 'text-blue-400 animate-spin';
-    if (s === 'success') return 'text-emerald-400';
-    return 'text-red-400';
+    if (s === 'running') return 'text-info animate-spin';
+    if (s === 'success') return 'text-success';
+    return 'text-destructive';
   }
 
   function rowTint(s: ChildStatus): string {
-    if (s === 'success') return 'border-emerald-500/30 bg-emerald-500/5';
-    if (s === 'error') return 'border-red-500/30 bg-red-500/5';
-    if (s === 'running') return 'border-blue-500/30 bg-blue-500/5';
+    if (s === 'success') return 'border-success/30 bg-success/5';
+    if (s === 'error') return 'border-destructive/30 bg-destructive/5';
+    if (s === 'running') return 'border-info/30 bg-info/5';
     return 'border-border/40 bg-card';
   }
 </script>
@@ -178,7 +178,7 @@
 <div class="space-y-6">
   <header class="space-y-2">
     <h1 class="text-2xl font-semibold tracking-tight flex items-center gap-2">
-      <Search class="size-5 text-cyan-400" />
+      <Search class="size-5 text-cyan-600 dark:text-cyan-400" />
       First scan
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">
@@ -203,11 +203,11 @@
           <Play class="size-3.5" /> Start scan
         </Button>
       {:else if !finished}
-        <span class="text-[11px] text-blue-300 inline-flex items-center gap-1">
+        <span class="text-[11px] text-info inline-flex items-center gap-1">
           <Loader2 class="size-3 animate-spin" /> Scanning…
         </span>
       {:else}
-        <span class="text-[11px] text-emerald-300 inline-flex items-center gap-1">
+        <span class="text-[11px] text-success inline-flex items-center gap-1">
           <CheckCircle2 class="size-3" /> Scan complete · {scanAllFound} new
         </span>
       {/if}
@@ -224,7 +224,7 @@
               <div class="flex items-center justify-between gap-2">
                 <span class="text-xs font-medium truncate">{c.label}</span>
                 {#if s.found !== undefined && s.status === 'success'}
-                  <span class="text-[11px] font-mono text-emerald-300">+{s.found}</span>
+                  <span class="text-[11px] font-mono text-success">+{s.found}</span>
                 {/if}
               </div>
               {#if s.message}
@@ -238,8 +238,8 @@
   </div>
 
   {#if !started}
-    <div class="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2">
-      <p class="text-[11px] text-amber-200/90 leading-relaxed">
+    <div class="rounded-md border border-warning/30 bg-warning/5 px-3 py-2">
+      <p class="text-[11px] text-warning/90 leading-relaxed">
         First scan can take 1–3 minutes depending on how many sources are connected. You can keep
         the wizard open or skip ahead — the scan runs in the background either way.
       </p>

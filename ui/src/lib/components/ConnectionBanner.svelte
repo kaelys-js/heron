@@ -29,7 +29,7 @@
 
 {#if visible}
   <div
-    class="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300"
+    class="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-md bg-warning/10 border border-warning/30 text-warning"
   >
     {#if notifications.connected === 'error'}
       <WifiOff class="size-3" />

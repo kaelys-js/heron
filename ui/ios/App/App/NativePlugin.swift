@@ -76,11 +76,31 @@ public class NativePlugin: CAPPlugin, CAPBridgedPlugin {
         // JS sign-out flow can't accidentally forget one of the keys.
         // See clearAllSharedState() below.
         CAPPluginMethod(name: "clearAllSharedState", returnType: CAPPluginReturnPromise),
+        // Bundle identity for the in-app About screen. The WebView's
+        // __APP_VERSION__ literal is the SOURCE semver and can drift from the
+        // shipped binary; only Info.plist's CFBundleShortVersionString /
+        // CFBundleVersion are the trustworthy App Store build identity, and the
+        // WebView can't read them without this bridge. See getBuildInfo() below.
+        CAPPluginMethod(name: "getBuildInfo", returnType: CAPPluginReturnPromise),
     ]
 
     @objc public func getLanUrl(_ call: CAPPluginCall) {
         let url = UserDefaults.standard.string(forKey: Brand.DefaultsKey.lanUrl)
         call.resolve(["url": url as Any])
+    }
+
+    /// Return the running binary's Info.plist version identity for the About
+    /// screen: CFBundleShortVersionString (marketing, e.g. "1.2.0") +
+    /// CFBundleVersion (build number, e.g. "47"). Empty strings if absent so the
+    /// JS side can fall back to its compile-time literal.
+    @objc public func getBuildInfo(_ call: CAPPluginCall) {
+        let info = Bundle.main.infoDictionary
+        let shortVersion = info?["CFBundleShortVersionString"] as? String ?? ""
+        let buildNumber = info?["CFBundleVersion"] as? String ?? ""
+        call.resolve([
+            "shortVersion": shortVersion,
+            "buildNumber": buildNumber,
+        ])
     }
 
     @objc public func biometricAvailable(_ call: CAPPluginCall) {

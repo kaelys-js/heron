@@ -218,7 +218,7 @@
       )}
     >
       {#if showHints && focused}
-        <Sparkles class="size-2.5 text-amber-400/70" />
+        <Sparkles class="size-2.5 text-accent-strong/70" />
         <span class="hidden md:inline">⌘B · ⌘I · ⌘K</span>
       {/if}
       <span>{wordCount}w · {charCount}c</span>

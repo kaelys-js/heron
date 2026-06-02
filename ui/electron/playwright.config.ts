@@ -15,14 +15,10 @@
  * Run locally:
  *   pnpm --filter heron-electron exec playwright test
  *
- * Run in CI: the test.yml `electron-e2e` job runs this on the
- * macos-latest + ubuntu-latest + windows-latest matrix.
- *
- * Failure-tolerance during ramp-up: the suite is gated behind
- * `if: ${{ vars.ELECTRON_E2E_ENABLED == 'true' }}` in CI so a flaky
- * harness doesn't block PRs while the suite stabilizes. Local runs
- * always exercise it. Remove the gate once the suite passes 10
- * consecutive PR runs.
+ * Run in CI: the `ts` job in test.yml runs `pnpm --filter heron-electron
+ * test:e2e` under xvfb (Linux needs a display for the real Electron window),
+ * path-gated on ui changes like the rest of that job. It is NOT gated behind a
+ * feature flag -- it runs for real on every relevant PR.
  */
 import { defineConfig } from '@playwright/test';
 

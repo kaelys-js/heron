@@ -67,7 +67,7 @@
         <button
           {...props}
           type="button"
-          class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 text-[11px] font-medium hover:brightness-110 transition"
+          class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-success/40 bg-success/10 text-success text-[11px] font-medium hover:brightness-110 transition"
         >
           <DollarSign class="size-3" />
           <span>Comp pre-flight</span>
@@ -78,25 +78,25 @@
     </Popover.Trigger>
     <Popover.Content class="w-96 p-3 space-y-2">
       <div class="text-xs font-medium flex items-center gap-1.5">
-        <DollarSign class="size-3 text-emerald-400" />
+        <DollarSign class="size-3 text-success" />
         Before the call · comp pre-flight
       </div>
       {#if preflight.warning}
         <div
-          class="rounded border border-amber-500/40 bg-amber-500/5 px-2 py-1 flex items-start gap-1.5"
+          class="rounded border border-warning/40 bg-warning/5 px-2 py-1 flex items-start gap-1.5"
         >
-          <AlertTriangle class="size-3 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p class="text-[11px] text-amber-200/90 leading-relaxed">{preflight.warning}</p>
+          <AlertTriangle class="size-3 text-warning mt-0.5 flex-shrink-0" />
+          <p class="text-[11px] text-warning/90 leading-relaxed">{preflight.warning}</p>
         </div>
       {/if}
       <div class="space-y-1 text-xs">
         <div class="flex items-center gap-2">
           <span class="text-muted-foreground w-16">ASK:</span>
-          <span class="font-mono text-emerald-200">{preflight.ask}</span>
+          <span class="font-mono text-success">{preflight.ask}</span>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-muted-foreground w-16">WALKAWAY:</span>
-          <span class="font-mono text-amber-200">{preflight.walkaway}</span>
+          <span class="font-mono text-warning">{preflight.walkaway}</span>
         </div>
         <div class="text-[11px] text-muted-foreground/70 pt-1">Currency: {preflight.currency}</div>
       </div>

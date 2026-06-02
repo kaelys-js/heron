@@ -19,6 +19,7 @@
     CheckCheck,
   } from '@lucide/svelte';
   import { formatRelativeTime, cn } from '$lib/utils';
+  import { eventKind } from '$lib/report-routing';
   import type { ActivityEvent, EventLevel } from '$lib/types';
   import EmptyState from './EmptyState.svelte';
   import { BRAND_EVENTS } from '$lib/client/brand';
@@ -61,14 +62,21 @@
     }
   });
 
+  // The bell is a PRODUCT alert surface. The store keeps technical
+  // diagnostics in events[] (for a future diagnostics view), but they must
+  // never appear here -- routing matrix: technical never bells. Filter to
+  // eventKind === 'product' before any level/unread filtering or counting.
+  let productEvents = $derived(notifications.events.filter((e) => eventKind(e) === 'product'));
+
   let visible = $derived.by(() => {
-    if (filter === 'all') return notifications.events;
-    if (filter === 'unread')
-      return notifications.events.filter((e) => notifications.unreadIds.has(e.id));
-    return notifications.events.filter((e) => e.level === filter);
+    if (filter === 'all') return productEvents;
+    if (filter === 'unread') return productEvents.filter((e) => notifications.unreadIds.has(e.id));
+    return productEvents.filter((e) => e.level === filter);
   });
 
-  let unreadCount = $derived(notifications.unreadIds.size);
+  // Unread badge counts product events only -- a technical diagnostic stored
+  // in the feed must not light up the bell's unread count.
+  let unreadCount = $derived(productEvents.filter((e) => notifications.unreadIds.has(e.id)).length);
 
   function levelIcon(level: EventLevel) {
     return level === 'error'
@@ -81,12 +89,12 @@
   }
   function levelColor(level: EventLevel) {
     return level === 'error'
-      ? 'text-red-400'
+      ? 'text-destructive'
       : level === 'warn'
-        ? 'text-amber-400'
+        ? 'text-warning'
         : level === 'success'
-          ? 'text-emerald-400'
-          : 'text-blue-400';
+          ? 'text-success'
+          : 'text-info';
   }
 
   const isMobile = useIsMobile();
@@ -146,7 +154,7 @@
     <div class="flex items-center gap-2">
       <Bell class="size-3.5 text-muted-foreground" />
       <span class="text-sm font-medium">Notifications</span>
-      <span class="text-xs text-muted-foreground">({notifications.events.length})</span>
+      <span class="text-xs text-muted-foreground">({productEvents.length})</span>
     </div>
     <div class="flex items-center gap-1">
       {#if unreadCount > 0}
@@ -181,7 +189,7 @@
                 class={cn(
                   'h-7 w-7 transition-colors',
                   clearArmed &&
-                    'text-red-300 bg-red-500/15 hover:bg-red-500/25 ring-1 ring-red-500/40 animate-pulse',
+                    'text-destructive bg-destructive/15 hover:bg-destructive/25 ring-1 ring-destructive/40 animate-pulse',
                 )}
                 onclick={onClearClick}
                 aria-label={clearArmed ? 'Click again to clear all events' : 'Clear all events'}

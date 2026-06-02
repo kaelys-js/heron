@@ -1,8 +1,10 @@
 /** Vite config -- brandWatcherPlugin + dev/build settings.
- *  brandWatcherPlugin runs `pnpm brand:apply` once at startup (dev or
- *  build) and, in dev, re-runs on branding/{brand.json,logo.svg} changes
+ *  brandWatcherPlugin runs `pnpm brand:apply` once at DEV startup (serve only,
+ *  see `apply: 'serve'`) and re-runs on branding/{brand.json,logo.svg} changes
  *  so generated configs (capacitor, Brand.swift, brand.ts, manifest,
- *  favicon, icons) are always fresh. Touched files HMR through SvelteKit.
+ *  favicon, icons) stay fresh while you work. Touched files HMR through
+ *  SvelteKit. A production `build` does NOT run it -- the committed generated
+ *  files are authoritative and a build must not mutate tracked source.
  *  Server: host:true (0.0.0.0 for iOS-on-LAN), port:5173 + strictPort
  *  (discovery's dev fallback). Build: target es2022 (Capacitor iOS WebView
  *  supports it), sourcemap on, chunkSizeWarningLimit 1500 for bits-ui +
@@ -24,6 +26,29 @@ const APPLY_BRAND = resolve(REPO_ROOT, 'scripts/native/apply-brand.mjs');
 const APP_VERSION: string = JSON.parse(
   readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8'),
 ).version;
+// Short git SHA captured at config time. Surfaced in the X-App-Build response
+// header, the console boot banner, and Settings so support can pin the EXACT
+// build a response/session came from (semver alone can't distinguish two builds
+// of the same version). Falls back to '' on a shallow / non-git checkout (e.g.
+// a CI tarball) so the build never fails on its absence -- consumers guard for ''.
+const APP_BUILD: string = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      cwd: REPO_ROOT,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+  } catch {
+    return '';
+  }
+})();
+// ISO timestamp captured at config time. Surfaced in the About surface's
+// build-meta line (rendered as the calendar day) and the copy-diagnostics
+// payload (full ISO) so support can date a build to the minute -- semver +
+// SHA alone don't say WHEN a binary was cut. Mirrors the APP_BUILD pattern:
+// a single literal folded in at build time, consumers guard for ''.
+const APP_BUILD_DATE: string = new Date().toISOString();
 const WATCH_FILES = [
   resolve(REPO_ROOT, 'branding/brand.json'),
   resolve(REPO_ROOT, 'branding/logo.svg'),
@@ -42,6 +67,13 @@ function brandWatcherPlugin(): Plugin {
   return {
     name: 'heron:brand-watcher',
     enforce: 'pre',
+    // Dev-only (serve). A production `build` must NOT mutate tracked brand
+    // consumers (Brand.swift / brand.ts / icons): the committed generated files
+    // are authoritative, brand drift is caught by capacitor.integration + the
+    // verify gates, and reproducible builds shouldn't write source. Applying
+    // brand on build also raced the tests-dont-mutate-working-tree integrity
+    // check under the concurrent verify pipeline (rewrote Brand.swift mid-run).
+    apply: 'serve',
     configResolved() {
       runApply('vite startup');
     },
@@ -78,6 +110,8 @@ export default defineConfig({
       process.env.PUBLIC_CAPACITOR_BUILD ?? '',
     ),
     __APP_VERSION__: JSON.stringify(APP_VERSION),
+    __APP_BUILD__: JSON.stringify(APP_BUILD),
+    __APP_BUILD_DATE__: JSON.stringify(APP_BUILD_DATE),
   },
   plugins: [brandWatcherPlugin(), tailwindcss(), sveltekit()],
   server: {
@@ -93,6 +127,19 @@ export default defineConfig({
     // break iOS sim re-connection during dev.
     hmr: {
       port: 5173,
+    },
+    // Warm up the first-paint modules at dev-server startup so the FIRST
+    // request (e.g. the desktop shell loading / after vite "ready") doesn't
+    // pay the full cold SSR+client transform cost on the critical path. The
+    // root layout + the unauthenticated entry pages are what every cold launch
+    // hits first, so pre-transforming them shaves seconds off splash -> app.
+    warmup: {
+      clientFiles: [
+        './src/routes/+layout.svelte',
+        './src/routes/+page.svelte',
+        './src/routes/login/+page.svelte',
+      ],
+      ssrFiles: ['./src/routes/+layout.server.ts', './src/hooks.server.ts'],
     },
   },
   preview: {
@@ -136,7 +183,10 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Force-include heavy deps so vite pre-bundles them once on cold
-    // start instead of doing it lazily during route navigation.
-    include: ['svelte-sonner', 'marked', 'gray-matter'],
+    // start instead of doing it lazily during route navigation. @capacitor/share
+    // is here too: the About surface lazy-imports it, and a first-navigation
+    // discovery triggers a dep re-optimize + reload (flaky under vitest browser
+    // mode) -- pre-bundling it avoids the mid-run reload.
+    include: ['svelte-sonner', 'marked', 'gray-matter', '@capacitor/share'],
   },
 });

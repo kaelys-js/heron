@@ -176,13 +176,14 @@ export async function load({ url }: { url: URL }) {
     .slice(0, 5)
     .map(([name, count]) => ({ name, count }));
 
-  // Recent activity (last 14, newest first)
+  // Recent activity (last 14, newest first). This is the raw event log
+  // (product + technical), shown verbatim for visibility -- it is NOT an
+  // alert source. R6: we no longer derive a "Recent error" Inbox ALERT from
+  // technical activity events. A 5xx / render crash is a technical diagnostic
+  // (it lands in the diagnostics sink + Runtimes), not a product alert that
+  // belongs alongside apply-failures and offer deadlines. Inbox alerts come
+  // exclusively from product issues (listOpenIssues) + product cards below.
   const activity: ActivityEvent[] = [...recent].slice(-14).reverse();
-  const recentErrorsCount = recent.filter(
-    (ev) => ev.level === 'error' && Date.now() - ev.ts < DAY_MS,
-  ).length;
-  const lastError =
-    [...recent].reverse().find((ev) => ev.level === 'error' && Date.now() - ev.ts < DAY_MS) ?? null;
 
   // Alerts
   const alerts: InboxAlert[] = [];
@@ -218,16 +219,6 @@ export async function load({ url }: { url: URL }) {
       ts: i.ts,
     }))
     .sort((a, b) => b.ts - a.ts);
-  if (lastError) {
-    alerts.push({
-      id: 'recent-error',
-      level: 'error',
-      title: 'Recent error: ' + lastError.title,
-      message: lastError.message,
-      actionLabel: 'Open Runtimes',
-      actionUrl: '/runtimes',
-    });
-  }
   if (pipelineDaysAgo != null && pipelineDaysAgo >= 7) {
     alerts.push({
       id: 'stale-pipeline',
@@ -428,7 +419,6 @@ export async function load({ url }: { url: URL }) {
     velocityDeltaPct,
     topSources,
     activity,
-    recentErrorsCount,
     pipelineDaysAgo,
     alerts,
     applyIssues,

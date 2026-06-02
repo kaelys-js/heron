@@ -134,7 +134,7 @@ const config: Config = {
                 "'wasm-unsafe-eval'",
                 "'sha256-MegZb3SbZVAzUiaf6ATlJAKhkmCEkr6O499YSuBjk14='", // theme bootstrap
                 "'sha256-AXMfZ0Qft2fuay5SZHCsOAG2dtpQN7X51WmFaMr33hA='", // speculationrules
-                "'sha256-onfd55iQ1MDS3EaPDrpnTofArAEtpaE1HoihzSutX18='", // app.html bootstrap + diagnostics
+                "'sha256-nqbTk2C9AYxK2aim7Dorj8PN4hj4Fa6SueN00fDGZPg='", // app.html bootstrap + diagnostics
                 "'sha256-ctdFQ0DAi7RYIXKN3mXFXyP6e30ct5aV+fwqy3FMS4o='", // boot-fallback UX driver
               ],
               'style-src': ["'self'", "'unsafe-inline'"], // Tailwind JIT inline styles
@@ -154,6 +154,15 @@ const config: Config = {
               'form-action': ["'self'"],
               'base-uri': ["'self'"],
               'object-src': ["'none'"],
+              // Route CSP violation reports to /api/telemetry (the diagnostics
+              // sink). `report-to` names the group defined by the
+              // Reporting-Endpoints response header (hooks.server.ts
+              // securityHeaders); `report-uri` is the legacy fallback for
+              // engines without the Reporting API. adapter-node emits CSP as a
+              // response header so both work; the Capacitor static build sets no
+              // CSP at all (csp: undefined above), so there's nothing to report.
+              'report-to': ['heron-telemetry'],
+              'report-uri': ['/api/telemetry'],
               // Omitted for the HTTP preview build (see HTTP_PREVIEW above);
               // kept as defence-in-depth for the HTTPS production build.
               ...(HTTP_PREVIEW ? {} : { 'upgrade-insecure-requests': true }),

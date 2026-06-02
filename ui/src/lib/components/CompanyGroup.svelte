@@ -34,10 +34,10 @@
 
   let topScoreClass = $derived.by(() => {
     if (stats.topScore == null) return 'text-muted-foreground/50';
-    if (stats.topScore >= 4.5) return 'text-emerald-300';
-    if (stats.topScore >= 4) return 'text-emerald-400/90';
-    if (stats.topScore >= 3) return 'text-amber-400/90';
-    return 'text-red-400/80';
+    if (stats.topScore >= 4.5) return 'text-success';
+    if (stats.topScore >= 4) return 'text-success/90';
+    if (stats.topScore >= 3) return 'text-warning/90';
+    return 'text-destructive/80';
   });
 </script>
 
@@ -72,13 +72,19 @@
         </span>
       {/if}
       {#if stats.ready > 0}
-        <span class="text-emerald-400/80 tabular-nums">{stats.ready} ready</span>
+        <span class="text-emerald-700/80 dark:text-emerald-400/80 tabular-nums"
+          >{stats.ready} ready</span
+        >
       {/if}
       {#if stats.applied > 0}
-        <span class="text-violet-400/80 tabular-nums">{stats.applied} applied</span>
+        <span class="text-violet-700/80 dark:text-violet-400/80 tabular-nums"
+          >{stats.applied} applied</span
+        >
       {/if}
       {#if stats.interview > 0}
-        <span class="text-orange-400/80 tabular-nums">{stats.interview} interviewing</span>
+        <span class="text-orange-700/80 dark:text-orange-400/80 tabular-nums"
+          >{stats.interview} interviewing</span
+        >
       {/if}
     </div>
   </button>

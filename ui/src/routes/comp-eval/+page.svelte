@@ -169,7 +169,7 @@
           <div
             class="size-10 rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/40 flex items-center justify-center"
           >
-            <Calculator class="size-5 text-emerald-400" />
+            <Calculator class="size-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <h1 class="text-2xl font-semibold tracking-tight">Compensation calculator</h1>
         </div>
@@ -205,7 +205,7 @@
         <Card.Root>
           <Card.Header class="pb-2">
             <Card.Title class="text-base flex items-center gap-2">
-              <DollarSign class="size-4 text-emerald-400" />
+              <DollarSign class="size-4 text-emerald-600 dark:text-emerald-400" />
               {compareMode ? 'Offer A' : 'Offer'}
             </Card.Title>
           </Card.Header>
@@ -294,7 +294,7 @@
           <Card.Root>
             <Card.Header class="pb-2">
               <Card.Title class="text-base flex items-center gap-2">
-                <DollarSign class="size-4 text-fuchsia-400" />
+                <DollarSign class="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
                 Offer B
               </Card.Title>
             </Card.Header>
@@ -363,7 +363,7 @@
         <Card.Root>
           <Card.Header class="pb-2">
             <Card.Title class="text-base flex items-center gap-2">
-              <TrendingUp class="size-4 text-emerald-400" />
+              <TrendingUp class="size-4 text-emerald-600 dark:text-emerald-400" />
               {compareMode ? 'Offer A results' : 'Results'}
             </Card.Title>
           </Card.Header>
@@ -453,7 +453,7 @@
         >
           <Card.Header class="pb-2">
             <Card.Title class="text-base flex items-center gap-2">
-              <Sparkles class="size-4 text-amber-400" />
+              <Sparkles class="size-4 text-accent-strong" />
               Side-by-side
             </Card.Title>
           </Card.Header>
@@ -487,7 +487,9 @@
                 >
               {:else}
                 <span
-                  class={comparison.preferred === 'a' ? 'text-emerald-300' : 'text-fuchsia-300'}
+                  class={comparison.preferred === 'a'
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : 'text-fuchsia-700 dark:text-fuchsia-300'}
                 >
                   Offer {comparison.preferred.toUpperCase()} leads by
                   <strong class="font-mono">{fmt(comparison.delta)}</strong>

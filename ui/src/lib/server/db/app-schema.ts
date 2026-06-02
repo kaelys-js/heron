@@ -31,7 +31,11 @@ export const profiles = sqliteTable(
  *  this table exists for indexed per-user queries by the UI. */
 export const activityEvents = sqliteTable('activity_events', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull(),
+  // Nullable: system / broadcast / CSP / process-level diagnostics carry no
+  // userId, and the mirror must hold them too -- else the DB is an incomplete
+  // query surface vs the JSONL (support's "all errors in the last hour" must be
+  // answerable from the indexed DB, not only by grepping the file).
+  userId: text('user_id'),
   profileId: text('profile_id'),
   level: text('level').notNull(), // 'info' | 'success' | 'warn' | 'error'
   category: text('category').notNull(),
@@ -41,6 +45,10 @@ export const activityEvents = sqliteTable('activity_events', {
   stack: text('stack'),
   link: text('link'),
   ts: integer('ts').notNull(),
+  /** X-Request-Id correlation id (see ActivityEvent.requestId). */
+  requestId: text('request_id'),
+  /** Stable error fingerprint for grouping (see ActivityEvent.fingerprint). */
+  fingerprint: text('fingerprint'),
 });
 
 /** Per-user mirror of the open-issues Inbox. The JSONL at

@@ -226,67 +226,49 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   # ─────────────────────────────────────────────────────────────────
-  # TS / Svelte / Server / Electron -- Vitest + svelte-check + audit
+  # TS static -- install + svelte-check typecheck + every static linter
+  # + the full SvelteKit build, uploading the prebuilt output so ts-e2e
+  # never rebuilds. Was folded into the monolithic `ts` job; split out so
+  # the static + build phase runs once in parallel with the Vitest + E2E
+  # shards instead of serially ahead of them.
   # ─────────────────────────────────────────────────────────────────
-  ts:
-    name: TS — typecheck + Vitest + coverage
+  ts-static:
+    name: TS static (typecheck + lint + build)
     needs: changes
+    if: needs.changes.outputs.ts == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
-      id-token: write # Codecov OIDC upload (G12)
     env:
       CI: "true"
       BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
       FORCE_COLOR: "3"
-
     steps:
-      # Skip-stub. When the path filter says no TS-touching files changed
-      # in this PR, this is the ONLY step that runs. The job reports
-      # success under the required-check context "TS -- typecheck +
-      # Vitest + coverage" without spending the ~5min Vitest matrix.
-      # Branch protection sees the green check and merge proceeds.
-      - name: Skip — no TS-relevant paths changed
-        if: needs.changes.outputs.ts != 'true'
-        run: |
-          echo "::notice::TS Tests skipped — no changes under TS/Svelte/JS/JSON/lockfile/config paths."
-          {
-            echo "### ⏭️ TS Tests skipped"
-            echo ""
-            echo "No paths matching the \`ts\` filter changed in this PR."
-            echo "See \`changes\` job in \`.github/workflows/test.yml\` for the full list."
-          } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Harden runner
-        if: needs.changes.outputs.ts == 'true'
-        # G4 -- defense-in-depth for the TS test runner. Audit mode for
-        # rollout; flip to block after observing legitimate endpoints
-        # (pnpm registry, codecov, etc.).
+        # G4 -- defense-in-depth for the TS static + build runner. Audit
+        # mode for rollout; flip to block after observing legitimate
+        # endpoints (pnpm registry, etc.).
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
       - name: Checkout
-        if: needs.changes.outputs.ts == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Setup mise (Node + pnpm + Ruby)
-        if: needs.changes.outputs.ts == 'true'
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
           cache: true
 
       - name: Resolve pnpm store path
-        if: needs.changes.outputs.ts == 'true'
         id: pnpm-store
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
-        if: needs.changes.outputs.ts == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
@@ -295,14 +277,9 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       - name: Cache turbo
-        # G22 -- multi-tier restore-keys. Pre-fix the key was `turbo-{os}-
-        # {sha}` which always missed on a new commit; only the
-        # `turbo-{os}-` fallback hit (any branch's last build). Now we
-        # try most-specific → progressively broader keys, giving ~50%
-        # warm hits on the same branch and ~100% on the same PR
-        # incremental push. The `${{ github.sha }}` SAVE key still
-        # ensures fresh writes don't pollute older caches.
-        if: needs.changes.outputs.ts == 'true'
+        # G22 -- multi-tier restore-keys. Most-specific to broadest key so
+        # the same branch / same PR push gets a warm hit; the github.sha
+        # SAVE key keeps fresh writes from polluting older caches.
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
@@ -315,78 +292,11 @@ jobs:
             turbo-${{ runner.os }}-main-
             turbo-${{ runner.os }}-
 
-      - name: Cache Vitest
-        if: needs.changes.outputs.ts == 'true'
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-        with:
-          path: |
-            ui/.vitest-cache
-            ui/coverage
-          key: vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml', 'ui/vitest.config.ts', 'ui/vitest.base.ts') }}
-          restore-keys: |
-            vitest-${{ runner.os }}-
-
-      - name: Cache Playwright browsers
-        if: needs.changes.outputs.ts == 'true'
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
-
-      # Pip wheel cache for the cryptography install below. Pre-fix
-      # every PR re-downloaded the (heavy) cryptography wheels cold
-      # (~1-2 min on cold cache). The --require-hashes lockfile keeps
-      # the install tamper-evident; the wheel cache just makes the
-      # warm path near-instant.
-      - name: Cache pip wheels (cryptography etc.)
-        if: needs.changes.outputs.ts == 'true'
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('scripts/requirements.txt', 'pyproject.toml') }}
-          restore-keys: |
-            pip-${{ runner.os }}-
-
       - name: Install dependencies
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm install --frozen-lockfile
-
-      - name: Install Python dependencies (cryptography etc.)
-        # The dashboard's orchestrator spawns scripts/scan/*.py +
-        # scripts/apply/*.py children that import `cryptography` via
-        # scripts/lib/user_secrets.py. Without this step the children
-        # crash with ModuleNotFoundError at boot, polluting browser
-        # console (visible in the e2e Playwright step + breaks
-        # `errors-in-console` Lighthouse assertion).
-        # `python -m pip` guarantees the mise-managed interpreter is
-        # the one we install into.
-        if: needs.changes.outputs.ts == 'true'
-        run: |
-          # `--require-hashes` makes the install tamper-evident -- pip refuses
-          # to download anything whose archive hash isn't in
-          # `scripts/requirements.txt`. Satisfies Scorecard's
-          # PinnedDependenciesID; matches the lighthouse.yml step.
-          # No `pip install --upgrade pip` -- the mise-managed interpreter
-          # already ships a recent pip, and an unpinned upgrade would itself
-          # trip PinnedDependenciesID.
-          python -m pip install --require-hashes -r scripts/requirements.txt
-          python -c "from cryptography.hazmat.primitives.ciphers.aead import AESGCM; print('cryptography import OK')"
-
-      # Playwright browsers are required for the ui-component project.
-      # The vitest workspace's ui-component project runs against BOTH
-      # chromium and webkit (so pointer-event gestures get tested under
-      # Safari too) -- install both. The cache step above persists
-      # ~/.cache/ms-playwright across runs; this command is a no-op on
-      # a cache hit.
-      - name: Install Playwright browsers (chromium + webkit)
-        if: needs.changes.outputs.ts == 'true'
-        run: pnpm --filter ui exec playwright install chromium webkit --with-deps
 
       # ── Static checks (fast, fail-fast) ──────────────────────────
       - name: Format check (biome + prettier-svelte)
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm format:check
 
       - name: Validate JSON schemas
@@ -394,7 +304,6 @@ jobs:
         # $schema-annotated JSON/JSONC and validates against the
         # referenced schema via ajv. Catches typos / unknown keys
         # BEFORE the consuming tool's runtime would surface them.
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:json-schemas
 
       - name: Validate format-config sync
@@ -405,7 +314,6 @@ jobs:
         # another" surprise. Pre-commit catches it on the contributor's
         # machine when one of the three is staged; this CI step is the
         # belt-and-braces full-repo check.
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:format-sync
 
       - name: markdownlint (relaxed config — real bugs only)
@@ -414,7 +322,6 @@ jobs:
         # tables, missing alt text, broken links, etc. Style rules
         # (line length / heading style / list bullets) are intentionally
         # disabled -- see the file header for the full rule rationale.
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:markdown
 
       - name: Exact-version pins (no ^ / ~ / partial versions)
@@ -423,7 +330,6 @@ jobs:
         # [tools]. Exact pinning + lockfile = reproducible builds + a
         # supply-chain attack via malicious-publish can't escalate to a
         # new prod build without an explicit version-bump PR.
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:exact-versions
 
       - name: Version-source sync (release-please vs manual bumps)
@@ -432,7 +338,6 @@ jobs:
         # update-system.mjs probe target) + .release-please-manifest.
         # release-please auto-bumps all 5 on real releases; this catches
         # manual / partial bumps that bypass the release-please PR flow.
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:version-sync
 
       - name: Lockfile integrity (G21)
@@ -445,7 +350,6 @@ jobs:
         # validate:exact-versions above (which asserts package.json
         # specifiers are exact) - this asserts the lockfile resolves
         # them to safe, verifiable sources.
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:lockfile
 
       - name: No leftover merge-conflict markers (G28)
@@ -457,7 +361,6 @@ jobs:
         # `=======` / `>>>>>>>` triple-character marker lines in
         # source files. Skips docs that intentionally explain merge
         # conflicts.
-        if: needs.changes.outputs.ts == 'true'
         run: |
           set -euo pipefail
           if git grep -l -E '^(<{7}|={7}|>{7})( |$)' -- \
@@ -482,7 +385,6 @@ jobs:
         # this check catches GPL deps that already lurk in the existing
         # graph (e.g. a transitive upgrade that switched license).
         # Production deps only -- devDeps may include GPL CLI tooling.
-        if: needs.changes.outputs.ts == 'true'
         run: |
           pnpm licenses list --prod --json > licenses.json
           node -e '
@@ -506,24 +408,535 @@ jobs:
         # at `warn` severity (see the config header for the excluded
         # classes). The gate has no --deny-warnings, so warnings never fail
         # CI; this still catches parse-level failures (~50 ms full-repo).
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm lint
 
       - name: Typecheck (svelte-check + tsgo, turbo-cached)
-        if: needs.changes.outputs.ts == 'true'
         run: pnpm exec turbo run check
 
-      # ── Behavioural checks ───────────────────────────────────────
-      # Run the full Vitest matrix (ui-unit + ui-server + ui-component
-      # + ui-routes + ui-integration + electron) with coverage. Coverage
-      # threshold (70% lines / 65% branches / per-file 50% floor) is
-      # enforced by vitest.config.ts -- falling below trips this step.
-      - name: Vitest matrix (with coverage)
+      # apply-brand regenerates the platform icons + propagated configs
+      # the build consumes. Icons (.png/.icns/.ico) live under
+      # ui/electron/build/ which is .gitignored, so CI must produce them
+      # before the build runs.
+      - name: Install icon-generation toolchain (Linux only)
+        run: sudo apt-get update && sudo apt-get install -y imagemagick icnsutils
+
+      - name: Apply brand (generate icons + propagated configs)
+        run: pnpm brand:apply
+
+      # ── Build ────────────────────────────────────────────────────
+      - name: Build (turbo)
+        env:
+          # ts-build-output feeds ONLY ts-e2e. HERON_HTTP_PREVIEW drops the
+          # upgrade-insecure-requests CSP directive at BUILD time (svelte.config.ts),
+          # so webkit + mobile-safari load the preview over plain http on 127.0.0.1.
+          HERON_HTTP_PREVIEW: "1"
+        run: pnpm build
+
+      # Hand the prebuilt SvelteKit output to ts-e2e so each browser shard
+      # serves the same artifacts via `vite preview` WITHOUT rebuilding.
+      # ui/.svelte-kit carries the synced types + server manifest the
+      # preview server needs alongside ui/build.
+      - name: Upload prebuilt SvelteKit output
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ts-build-output
+          path: |
+            ui/build
+            ui/.svelte-kit
+          include-hidden-files: true
+          retention-days: 1
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────────────────────────
+  # TS Vitest -- the unit/server/routes/integration suites split into two
+  # parallel coverage shards (server | rest). Each emits raw v8 coverage
+  # (coverage-final.json) uploaded as ts-cov-<group>; the `ts` gate merges
+  # them and asserts the thresholds once.
+  # ─────────────────────────────────────────────────────────────────
+  ts-vitest:
+    name: TS Vitest (${{ matrix.group }})
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # server = the ui-server project (DB / auth / orchestrator surface);
+        # rest = ui-unit + ui-routes + ui-integration. Split so the two
+        # heaviest project groups run on separate 2-core runners in parallel.
+        group: [server, rest]
+    env:
+      CI: "true"
+      BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
+      FORCE_COLOR: "3"
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm + Ruby)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Cache Vitest
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ui/.vitest-cache
+          key: vitest-${{ runner.os }}-${{ matrix.group }}-${{ hashFiles('**/pnpm-lock.yaml', 'ui/vitest.config.ts', 'ui/vitest.base.ts') }}
+          restore-keys: |
+            vitest-${{ runner.os }}-${{ matrix.group }}-
+            vitest-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies (cryptography etc.)
+        # The ui-server + ui-integration projects spin the orchestrator,
+        # which spawns scripts/scan/*.py + scripts/apply/*.py children that
+        # import `cryptography` via scripts/lib/user_secrets.py. Without
+        # this step the children crash with ModuleNotFoundError at boot.
+        # `python -m pip` guarantees the mise-managed interpreter is the one
+        # we install into.
+        run: |
+          # `--require-hashes` makes the install tamper-evident -- pip refuses
+          # to download anything whose archive hash isn't in
+          # `scripts/requirements.txt`. Satisfies Scorecard's
+          # PinnedDependenciesID; matches the lighthouse.yml step.
+          python -m pip install --require-hashes -r scripts/requirements.txt
+          python -c "from cryptography.hazmat.primitives.ciphers.aead import AESGCM; print('cryptography import OK')"
+
+      # The rest group's ui-integration project drives the real preview
+      # server through Playwright-less HTTP; the ui-server project does not
+      # need a browser. Neither vitest group needs the Playwright browser
+      # download (that lives in ts-e2e + ts-electron + verify-full), so it
+      # is intentionally omitted here to keep the shard lean.
+      - name: Vitest coverage shard (${{ matrix.group }})
+        run: pnpm --filter ui test:cov:${{ matrix.group }}
+
+      - name: Assert coverage-final.json exists (shard gate)
+        # The gate downloads ts-cov-* + merges them. A shard that emitted
+        # NO coverage-final.json would silently drop its lines from the
+        # merge, deflating the asserted totals. Fail here instead.
+        run: |
+          if [ ! -s ui/coverage/coverage-final.json ]; then
+            echo "::error::ui/coverage/coverage-final.json missing or empty after test:cov:${{ matrix.group }}."
+            echo "::error::Check that the test:cov:${{ matrix.group }} script emits --coverage.reporter=json."
+            ls -la ui/coverage/ || true
+            exit 1
+          fi
+          echo "✓ coverage-final.json present: $(wc -c < ui/coverage/coverage-final.json) bytes"
+
+      - name: Upload raw coverage shard
+        # Upload ONLY coverage-final.json (not the whole ui/coverage tree --
+        # the local HTML report + a stale coverage-summary.json may linger).
+        # The gate downloads each ts-cov-* artifact into its OWN
+        # name-prefixed subdir (merge-multiple is OFF there), so the two
+        # shards' files land at ui/coverage/ts-cov-server/coverage-final.json
+        # and ui/coverage/ts-cov-rest/coverage-final.json -- no collision.
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ts-cov-${{ matrix.group }}
+          path: ui/coverage/coverage-final.json
+          retention-days: 1
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────────────────────────
+  # TS E2E -- Playwright across the 5 browser projects, one per matrix leg
+  # so the WebKit-family engines (webkit + mobile-safari) no longer starve
+  # each other on a 2-core runner (the root cause of the theme-toggle /
+  # notifications / web-vitals flakes). Each leg downloads the prebuilt
+  # ts-build-output so `vite preview` serves it without rebuilding.
+  # ─────────────────────────────────────────────────────────────────
+  ts-e2e:
+    name: TS E2E (${{ matrix.browser }})
+    needs: [changes, ts-static]
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit, mobile-chrome, mobile-safari]
+    env:
+      CI: "1"
+      BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
+      FORCE_COLOR: "3"
+      # The playwright.config.ts webServer command guards on this var: when
+      # set to "1" it skips the `pnpm --filter ui run build` step and just
+      # boots `vite preview` against the downloaded ts-build-output. The
+      # config reads PLAYWRIGHT_REUSE_BUILD (=== '1'), so the var name here
+      # must match it exactly.
+      PLAYWRIGHT_REUSE_BUILD: "1"
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm + Ruby)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies (cryptography etc.)
+        # The preview server's orchestrator spawns scripts/*.py children
+        # that import `cryptography`. Without this they crash at boot and
+        # pollute the browser console (breaks errors-in-console assertions).
+        run: |
+          python -m pip install --require-hashes -r scripts/requirements.txt
+          python -c "from cryptography.hazmat.primitives.ciphers.aead import AESGCM; print('cryptography import OK')"
+
+      - name: Download prebuilt SvelteKit output
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
+        with:
+          name: ts-build-output
+          path: ui
+
+      # Install ONLY the browser engine this matrix leg drives. chromium +
+      # mobile-chrome both run on the chromium engine; webkit + mobile-safari
+      # both run on the webkit engine; firefox runs on its own. Mapping the
+      # project name to its engine keeps each leg's install to one browser.
+      - name: Install Playwright engine for ${{ matrix.browser }}
+        run: |
+          set -euo pipefail
+          case "${{ matrix.browser }}" in
+            chromium|mobile-chrome) engine=chromium ;;
+            webkit|mobile-safari) engine=webkit ;;
+            firefox) engine=firefox ;;
+            *) echo "::error::unknown browser project ${{ matrix.browser }}"; exit 1 ;;
+          esac
+          pnpm --filter ui exec playwright install --with-deps "$engine"
+
+      - name: E2E (${{ matrix.browser }})
+        env:
+          # The preview server (booted by playwright.config.ts) must see
+          # this var so the /api/auth/e2e-login bypass endpoint resolves
+          # (it 404s without HERON_E2E_DATA_DIR). The fixtures in
+          # ui/e2e/fixtures/auth-fixtures.ts mint a bearer token via that
+          # endpoint; without it every authenticatedPage spec 401s.
+          HERON_E2E_DATA_DIR: /tmp/heron-e2e-ci-${{ matrix.browser }}
+        run: pnpm --filter ui exec playwright test --project=${{ matrix.browser }}
+
+      - name: Upload Playwright trace + screenshots on failure
+        if: failure() && hashFiles('ui/playwright-report/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}
+          path: |
+            ui/playwright-report/
+            ui/test-results/
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────
+  # TS Electron -- main-process Vitest (separate Codecov flag) + the
+  # _electron launch / crash-recovery E2E under xvfb. Split out of the
+  # monolithic `ts` job so the desktop surface runs in parallel.
+  # ─────────────────────────────────────────────────────────────────
+  ts-electron:
+    name: TS Electron (vitest + launch E2E)
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload (G12)
+    env:
+      CI: "true"
+      BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
+      FORCE_COLOR: "3"
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm + Ruby)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Cache turbo
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            .turbo
+            ui/.turbo
+            ui/electron/.turbo
+          key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ github.ref_name }}-
+            turbo-${{ runner.os }}-main-
+            turbo-${{ runner.os }}-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Cache Electron binary (@electron/get)
+        # ~/.cache/electron is the default @electron/get cache on Linux. The
+        # guard step below re-fetches the binary via install.js when the
+        # postinstall did not land it; a warm cache makes that a no-op.
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/electron
+          key: electron-bin-${{ runner.os }}-${{ hashFiles('pnpm-workspace.yaml') }}
+          restore-keys: |
+            electron-bin-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Ensure Electron binary present
+        run: |
+          set -euo pipefail
+          # _electron.launch() resolves the binary via require('electron') from
+          # the heron-electron workspace (electron is declared there, not at the
+          # repo root). Check it resolves to a file that exists; if a cache-miss
+          # or shared pnpm store left node_modules/.pnpm/electron without its
+          # dist, pnpm rebuild re-runs the @electron/get postinstall (fast on a
+          # warm ~/.cache/electron) to repopulate it.
+          check() { pnpm --filter heron-electron exec node -e "const p=require('electron'); process.exit(require('fs').existsSync(p)?0:3)" >/dev/null 2>&1; }
+          if ! check; then
+            echo "electron binary missing; rebuilding via pnpm"
+            pnpm rebuild electron
+          fi
+          pnpm --filter heron-electron exec node -e "const p=require('electron'); if(!require('fs').existsSync(p)){throw new Error('electron binary still missing: '+p)}; console.log('OK electron binary:', p)"
+
+      # apply-brand regenerates the generated brand.ts the electron main
+      # process + tests import. The electron vitest reads it at module load.
+      - name: Apply brand (generate brand artifacts)
+        run: pnpm brand:apply
+
+      # Electron main-process coverage as a SEPARATE Codecov flag. Without
+      # this upload, electron coverage would be invisible OR rolled into the
+      # `ts` flag -- masking regressions on the IPC bridge / brand-watcher /
+      # auto-updater surfaces.
+      - name: Electron Vitest (with coverage)
+        run: pnpm --filter heron-electron test:coverage
+
+      - name: Assert electron lcov.info exists (Codecov gate)
+        run: |
+          if [ ! -s ui/electron/coverage/lcov.info ]; then
+            echo "::error::ui/electron/coverage/lcov.info missing or empty after test:coverage."
+            exit 1
+          fi
+          echo "OK electron lcov.info present"
+
+      - name: Upload coverage to Codecov (electron flag)
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          files: ui/electron/coverage/lcov.info
+          flags: electron
+          name: electron-coverage
+          fail_ci_if_error: true
+          use_oidc: true
+          verbose: true
+
+      # Playwright drives the real desktop shell via @playwright/test's
+      # `_electron`: the window opens AND becomes visible, the renderer
+      # recovers from a forced crash, and the IPC + lifecycle handlers are
+      # wired. Electron needs a display on Linux, so it runs under xvfb
+      # (pre-installed on GitHub's ubuntu-latest runners).
+      - name: Install Playwright chromium (electron bundles its own, deps only)
+        run: pnpm --filter ui exec playwright install --with-deps chromium
+
+      - name: Electron E2E (launch + crash recovery)
+        run: xvfb-run -a pnpm --filter heron-electron test:e2e
+
+      - name: Upload Electron E2E report on failure
+        if: failure() && hashFiles('ui/electron/test-results/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: electron-e2e-report-${{ github.run_id }}
+          path: ui/electron/test-results/
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────
+  # TS aggregator-GATE -- the REQUIRED check (the job `name:` below is the
+  # exact required context). Cheap ubuntu runner: fails if any of the
+  # ts-static / ts-vitest / ts-e2e / ts-electron shards did not succeed,
+  # else merges the two raw coverage shards, asserts the thresholds once,
+  # uploads the merged report to Codecov (ts flag) + the sticky-comment
+  # artifact. Keeping the job KEY `ts` preserves the coverage: job's
+  # needs:[ts,ios,android] edge AND the exact required-check context name.
+  # ─────────────────────────────────────────────────────────────────
+  ts:
+    name: TS — typecheck + Vitest + coverage
+    needs: [changes, ts-static, ts-vitest, ts-e2e, ts-electron]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload (G12)
+    steps:
+      # Early-success. When the path filter says no TS-touching files
+      # changed, the shards were skipped (their `if:` short-circuited) and
+      # this is the ONLY step that runs. The job reports success under the
+      # required-check context so branch protection sees green.
+      - name: TS gate green — no TS-relevant paths changed
+        if: needs.changes.outputs.ts != 'true'
+        run: |
+          echo "::notice::TS gate green — no changes under TS/Svelte/JS/JSON/lockfile/config paths."
+          {
+            echo "### ⏭️ TS Tests skipped"
+            echo ""
+            echo "No paths matching the \`ts\` filter changed in this PR."
+            echo "See \`changes\` job in \`.github/workflows/test.yml\` for the full list."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if any TS shard failed
+        if: >-
+          needs.changes.outputs.ts == 'true' &&
+          (needs.ts-static.result != 'success' ||
+           needs.ts-vitest.result != 'success' ||
+           needs.ts-e2e.result != 'success' ||
+           needs.ts-electron.result != 'success')
+        run: |
+          echo "::error::one or more TS shards did not succeed:"
+          echo "::error::  ts-static=${{ needs.ts-static.result }} ts-vitest=${{ needs.ts-vitest.result }} ts-e2e=${{ needs.ts-e2e.result }} ts-electron=${{ needs.ts-electron.result }}"
+          exit 1
+
+      - name: Harden runner
         if: needs.changes.outputs.ts == 'true'
-        run: pnpm test:coverage
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        if: needs.changes.outputs.ts == 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm)
+        if: needs.changes.outputs.ts == 'true'
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        if: needs.changes.outputs.ts == 'true'
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        if: needs.changes.outputs.ts == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies
+        if: needs.changes.outputs.ts == 'true'
+        run: pnpm install --frozen-lockfile
+
+      # Download BOTH raw coverage shards (ts-cov-server + ts-cov-rest) into
+      # ui/coverage. merge-multiple is intentionally OFF: both artifacts carry
+      # a file literally named coverage-final.json, so a flattened download
+      # would clobber one shard. Without merge-multiple, download-artifact
+      # extracts each artifact into its OWN name-prefixed subdir
+      # (ui/coverage/ts-cov-server/ + ui/coverage/ts-cov-rest/). cov:merge
+      # (merge-coverage.mjs) walks ui/coverage/** recursively, finds both,
+      # and istanbul-merges them into a single coverage-summary.json that
+      # assert-coverage-thresholds.mjs reads.
+      - name: Download raw coverage shards
+        if: needs.changes.outputs.ts == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
+        with:
+          pattern: ts-cov-*
+          path: ui/coverage
+
+      - name: Merge coverage shards (istanbul json-summary + lcov)
+        if: needs.changes.outputs.ts == 'true'
+        run: pnpm --filter ui cov:merge
+
+      - name: Assert merged coverage thresholds
+        if: needs.changes.outputs.ts == 'true'
+        run: node scripts/system/assert-coverage-thresholds.mjs
 
       - name: Coverage summary (HP10)
-        if: needs.changes.outputs.ts == 'true' && (always() && hashFiles('ui/coverage/coverage-summary.json') != '')
+        if: needs.changes.outputs.ts == 'true' && hashFiles('ui/coverage/coverage-summary.json') != ''
         run: |
           node -e '
             const s = require("./ui/coverage/coverage-summary.json").total;
@@ -539,31 +952,23 @@ jobs:
           ' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Assert lcov.info exists (Codecov gate)
-        # Pre-codecov guard. The codecov-action below is gated on
-        # hashFiles() being non-empty -- if the file is MISSING, the
-        # upload silently skips and the Codecov badge stays "unknown".
-        # This step turns "missing lcov.info" into a hard CI failure
-        # so a vitest config drift (reporter list ignored, wrong
-        # path, etc.) surfaces immediately instead of letting Codecov
-        # display stale data forever.
+        # cov:merge emits lcov.info alongside coverage-summary.json. If it
+        # is MISSING, the codecov upload below silently skips and the badge
+        # stays "unknown" -- turn that into a hard failure here instead.
         if: needs.changes.outputs.ts == 'true'
         run: |
           if [ ! -s ui/coverage/lcov.info ]; then
-            echo "::error::ui/coverage/lcov.info missing or empty after test:coverage."
-            echo "::error::Check that vitest config emits the 'lcov' reporter."
-            echo "::error::Try: pnpm --filter ui exec vitest run --coverage --coverage.reporter=lcov --passWithNoTests"
+            echo "::error::ui/coverage/lcov.info missing or empty after cov:merge."
             ls -la ui/coverage/ || true
             exit 1
           fi
           echo "✓ lcov.info present: $(wc -l < ui/coverage/lcov.info) lines"
 
-      - name: Upload coverage to Codecov (ts flag)
+      - name: Upload merged coverage to Codecov (ts flag)
         # G12 -- OIDC + fail_ci_if_error. OIDC means no CODECOV_TOKEN
-        # rotation, no token leakage risk, and the upload works on PRs
-        # from forks (which can't see secrets). fail_ci_if_error: true
-        # turns silent upload skips into real CI failures so the
-        # coverage gate is enforced -- pre-fix a broken upload silently
-        # passed.
+        # rotation, works on fork PRs (which can't see secrets).
+        # fail_ci_if_error: true turns silent upload skips into real CI
+        # failures so the coverage gate is enforced.
         if: needs.changes.outputs.ts == 'true'
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
@@ -574,97 +979,12 @@ jobs:
           use_oidc: true
           verbose: true
 
-      # Electron main-process coverage as a SEPARATE Codecov flag. The
-      # `pnpm test:coverage` turbo task already ran electron's vitest
-      # (per ui/electron/package.json::test:coverage), so the lcov.info
-      # is on disk. Without this upload, electron coverage would either
-      # be invisible OR rolled into the `ts` flag -- masking regressions
-      # on the IPC bridge / brand-watcher / auto-updater surfaces.
-      #
-      # Fail-fast gate: previously the upload's `if:` short-circuited
-      # when lcov.info was missing, which would silently green the job
-      # if the electron test step had failed to emit coverage. We now
-      # assert presence BEFORE the upload + drop the hashFiles guard so
-      # any breakage surfaces here rather than at codecov upload time.
-      - name: Assert electron lcov.info exists (Codecov gate)
-        if: needs.changes.outputs.ts == 'true'
-        run: |
-          if [ ! -s ui/electron/coverage/lcov.info ]; then
-            echo "::error::ui/electron/coverage/lcov.info missing or empty after test:coverage."
-            exit 1
-          fi
-          echo "OK electron lcov.info present"
-
-      - name: Upload coverage to Codecov (electron flag)
-        if: needs.changes.outputs.ts == 'true'
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
-        with:
-          files: ui/electron/coverage/lcov.info
-          flags: electron
-          name: electron-coverage
-          fail_ci_if_error: true
-          use_oidc: true
-          verbose: true
-
-      # apply-brand regenerates the platform icons + propagated configs
-      # that verify-capacitor inspects. Icons (.png/.icns/.ico) live
-      # under ui/electron/build/ which is .gitignored, so CI must
-      # produce them before the verifier runs.
-      - name: Install icon-generation toolchain (Linux only)
-        if: needs.changes.outputs.ts == 'true'
-        run: sudo apt-get update && sudo apt-get install -y imagemagick icnsutils
-
-      - name: Apply brand (generate icons + propagated configs)
-        if: needs.changes.outputs.ts == 'true'
-        run: pnpm brand:apply
-
-      # ── Build ────────────────────────────────────────────────────
-      - name: Build (turbo)
-        if: needs.changes.outputs.ts == 'true'
-        run: pnpm build
-
-      # ── E2E (Playwright against prod build via vite preview) ─────
-      # Spec lives under ui/e2e/; playwright.config.ts boots `vite
-      # preview` with the already-built static bundle, runs the full
-      # spec suite across 5 browser projects: chromium, webkit,
-      # firefox, mobile-chrome (Pixel 7), mobile-safari (iPhone 15).
-      # Each project gets a fresh context so spec isolation holds.
-      # CI=1 enables retry-on-flake + trace-on-failure for diagnostics;
-      # workers=2 in the config lets each browser engine boot in
-      # parallel so wall time stays ~1.5x single-browser instead of 5x.
-      - name: Install Playwright browsers (all 5 engines)
-        if: needs.changes.outputs.ts == 'true'
-        run: pnpm --filter ui exec playwright install --with-deps chromium webkit firefox
-
-      - name: E2E (Playwright matrix across chromium, webkit, firefox, mobile-chrome, mobile-safari)
-        if: needs.changes.outputs.ts == 'true'
-        env:
-          CI: "1"
-          # The preview server (booted by playwright.config.ts) must
-          # see this var so the /api/auth/e2e-login bypass endpoint
-          # resolves (it 404s without HERON_E2E_DATA_DIR). The fixtures
-          # in ui/e2e/fixtures/auth-fixtures.ts mint a bearer token via
-          # that endpoint; without it every authenticatedPage spec 401s.
-          HERON_E2E_DATA_DIR: /tmp/heron-e2e-ci
-        run: pnpm --filter ui test:e2e
-
-      - name: Upload Playwright trace + screenshots on failure
-        if: needs.changes.outputs.ts == 'true' && (failure() && hashFiles('ui/playwright-report/**') != '')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: playwright-report-${{ github.run_id }}
-          path: |
-            ui/playwright-report/
-            ui/test-results/
-          retention-days: 14
-
-
       # Upload coverage as a workflow artifact so the `coverage-comment.yml`
       # sticky-comment workflow (triggered by workflow_run after this run
       # completes) can download + scan it. Codecov uploads the same file
       # for its own sunburst; this artifact is for the in-repo sticky.
       - name: Upload TS coverage artifact for sticky-comment workflow
-        if: needs.changes.outputs.ts == 'true' && always() && hashFiles('ui/coverage/lcov.info') != ''
+        if: needs.changes.outputs.ts == 'true' && hashFiles('ui/coverage/lcov.info') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage-ts
@@ -680,9 +1000,38 @@ jobs:
   # Runs XCTest + XCUITest + snapshot tests across AppTests, AppUITests,
   # WidgetTests, WatchTests. xcov produces a Cobertura report consumed by
   # the codecov upload step below (separate `ios` flag from the `ts` flag).
-  ios:
-    name: iOS — XCTest + XCUITest + Snapshot
+  ios-shards:
+    name: iOS shard (${{ matrix.id }})
     needs: changes
+    strategy:
+      # Shard the 6 schemes across 4 parallel macOS runners (was one ~28min
+      # serial job). fail-fast off so one shard's failure still lets the others
+      # report; the `ios` aggregator-gate below is the required check.
+      fail-fast: false
+      matrix:
+        include:
+          # AppTests + AppUITests both measure App.app, but in SEPARATE shards
+          # (separate runners) the "AppTests must run last on the same machine"
+          # ordering no longer applies -- each shard runs its scheme in
+          # isolation and writes its own cobertura. AppTests is the
+          # coverage-gated XCTest bundle; check-ios-coverage.mjs reads its
+          # cobertura.
+          - id: app-tests
+            schemes: AppTests
+          # AppUITests is the XCUITest E2E bundle. It is the historically flaky
+          # one ("Timed out while launching application via Xcode"), so it sets
+          # TEST_RETRIES=2 -- the Fastfile passes number_of_retries to run_tests
+          # so a transient app-launch failure retries instead of failing the
+          # shard. Not coverage-gated (subset of what AppTests gates on App.app).
+          - id: app-ui
+            schemes: AppUITests
+            retries: "2"
+          # Extension logic bundles -- each measures its own extension source.
+          - id: ext
+            schemes: WidgetTests,AppLiveActivityTests,AppShareExtensionTests
+          # watchOS sim (separate SDK).
+          - id: watch
+            schemes: WatchTests
     # Path-gated, not disabled: macos-latest is always allocated (cheap), but the
     # expensive xcodebuild + slather + coverage steps run only when
     # iOS-affecting paths changed, via the per-step
@@ -703,7 +1052,8 @@ jobs:
     # Net savings on non-iOS PRs: ~7min of macos-latest build work skipped =
     # ~70min ubuntu-equivalent saved per such PR. Worth the ~5ubuntu-min
     # provisioning overhead.
-    runs-on: macos-latest
+    # set repo variable IOS_RUNNER to a managed Apple-silicon label to speed iOS; defaults to free macos-latest.
+    runs-on: ${{ vars.IOS_RUNNER || 'macos-latest' }}
     # 5 test schemes run sequentially (AppTests + WidgetTests +
     # AppLiveActivityTests + AppShareExtensionTests on iOS sim,
     # WatchTests on watchOS sim) + xcov per scheme + slather aggregator.
@@ -766,6 +1116,14 @@ jobs:
           [ -n "$XC" ] && sudo xcode-select -s "$XC/Contents/Developer"
           xcodebuild -version
 
+      - name: Pre-boot newest iOS simulator (reduce XCUITest launch flake)
+        continue-on-error: true
+        run: |
+          set +e
+          UDID=$(xcrun simctl list devices available | grep -E 'iPhone' | tail -1 | grep -oE '[0-9A-F-]{36}')
+          if [ -n "$UDID" ]; then xcrun simctl boot "$UDID" 2>/dev/null; xcrun simctl bootstatus "$UDID" -b 2>/dev/null; fi
+          exit 0
+
       - name: Setup mise (Node + pnpm + Ruby + Swift)
         if: needs.changes.outputs.ios == 'true'
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
@@ -792,8 +1150,9 @@ jobs:
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/Library/Developer/Xcode/DerivedData
-          key: derived-data-${{ runner.os }}-${{ hashFiles('ui/ios/App/App.xcodeproj/project.pbxproj', 'ui/ios/App/Package.resolved') }}
+          key: derived-data-${{ runner.os }}-${{ matrix.id }}-${{ hashFiles('ui/ios/App/App.xcodeproj/project.pbxproj', 'ui/ios/App/Package.resolved') }}
           restore-keys: |
+            derived-data-${{ runner.os }}-${{ matrix.id }}-
             derived-data-${{ runner.os }}-
 
       - name: Cache SPM
@@ -876,13 +1235,22 @@ jobs:
           # uploads those PNGs as a workflow artifact for download +
           # local commit.
           RECORD_MODE: ${{ github.event.inputs.record_mode == 'true' && '1' || '' }}
+          # Run only THIS shard's schemes (Fastfile filters IOS_TEST_SCHEMES +
+          # WatchTests by this list). SKIP_COVERAGE_GATE makes the per-target
+          # threshold check run in the `ios` aggregator, which merges all shards.
+          TEST_SCHEMES: ${{ matrix.schemes }}
+          SKIP_COVERAGE_GATE: "1"
+          # Per-shard XCUITest flake retries. Only the app-ui shard sets
+          # matrix.retries ("2"); other shards leave it empty and the Fastfile
+          # defaults TEST_RETRIES to "0" (no retries).
+          TEST_RETRIES: ${{ matrix.retries }}
         run: bundle exec fastlane test_ci
 
       - name: Upload xcresult bundle
         if: always() && needs.changes.outputs.ios == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: xcresult-bundle
+          name: xcresult-bundle-${{ matrix.id }}
           path: ui/ios/App/fastlane/test_output/
           retention-days: 14
 
@@ -896,25 +1264,89 @@ jobs:
         if: always() && needs.changes.outputs.ios == 'true' && (hashFiles('ui/ios/App/WidgetTests/__Snapshots__/**') != '' || hashFiles('ui/ios/App/WatchTests/__Snapshots__/**') != '')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ios-snapshot-baselines-${{ github.run_id }}
+          name: ios-snapshot-baselines-${{ matrix.id }}-${{ github.run_id }}
           path: |
             ui/ios/App/WidgetTests/__Snapshots__/
             ui/ios/App/WatchTests/__Snapshots__/
           retention-days: 14
           if-no-files-found: ignore
 
-      - name: Upload coverage to Codecov (ios flag)
-        # G12 -- see the ts upload above for OIDC rationale.
-        # Six per-scheme cobertura.xml files (AppTests / AppUITests / WidgetTests /
-        # AppLiveActivityTests / AppShareExtensionTests / WatchTests)
-        # uploaded under the single `ios` flag. Codecov merges them
-        # into one tree -- per-binary coverage is preserved through
-        # the source paths, which already differ per target. The
-        # threshold gate (scripts/native/check-ios-coverage.mjs) ran
-        # inside fastlane test_ci, so by the time we reach this step
-        # the per-target floors (95% App.app + 50% extensions/watch)
-        # are already enforced.
+      # Per-shard cobertura -> artifact. The `ios` aggregator-gate downloads
+      # every shard's `ios-coverage-<id>`, merges them, runs the per-target
+      # threshold gate ONCE (check-ios-coverage.mjs needs all targets present),
+      # then does the single Codecov upload + sticky-comment artifact.
+      - name: Upload shard coverage (cobertura)
         if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ios-coverage-${{ matrix.id }}
+          path: ui/ios/App/fastlane/coverage/
+          retention-days: 14
+          if-no-files-found: warn
+
+  # ─────────────────────────────────────────────────────────────────
+  # iOS aggregator-GATE -- the REQUIRED check (the job `name:` below is the
+  # exact required context). Cheap ubuntu runner (no Xcode): it fails if any
+  # shard failed, merges every shard's cobertura, runs the per-target threshold
+  # gate once, and uploads to Codecov + the sticky-comment artifact.
+  # Keeping the job KEY `ios` preserves the coverage: job's needs:[ts,ios,
+  # android] edge AND the exact required-check context name.
+  # ─────────────────────────────────────────────────────────────────
+  ios:
+    name: iOS — XCTest + XCUITest + Snapshot
+    needs: [changes, ios-shards]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload
+    steps:
+      - name: iOS gate green — no iOS-relevant paths changed
+        if: needs.changes.outputs.ios != 'true'
+        run: echo "::notice::iOS gate green — no iOS-affecting paths changed (shards skipped)."
+
+      - name: Fail if any iOS shard failed
+        if: needs.changes.outputs.ios == 'true' && needs.ios-shards.result != 'success'
+        run: |
+          echo "::error::one or more iOS shards did not succeed (ios-shards result: ${{ needs.ios-shards.result }})"
+          exit 1
+
+      - name: Harden runner
+        if: needs.changes.outputs.ios == 'true'
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        if: needs.changes.outputs.ios == 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup mise (Node)
+        if: needs.changes.outputs.ios == 'true'
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Download every shard's coverage
+        if: needs.changes.outputs.ios == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
+        with:
+          pattern: ios-coverage-*
+          merge-multiple: true
+          path: ui/ios/App/fastlane/coverage
+
+      - name: Enforce per-target iOS coverage thresholds (merged)
+        if: needs.changes.outputs.ios == 'true'
+        # check-ios-coverage.mjs resolves the coverage dir from its own
+        # __dirname (-> ui/ios/App/fastlane/coverage), so it runs from anywhere.
+        run: node scripts/native/check-ios-coverage.mjs
+
+      - name: Upload merged coverage to Codecov (ios flag)
+        if: needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           files: ui/ios/App/fastlane/coverage/AppTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppUITests/cobertura.xml,ui/ios/App/fastlane/coverage/WidgetTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppLiveActivityTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppShareExtensionTests/cobertura.xml,ui/ios/App/fastlane/coverage/WatchTests/cobertura.xml
@@ -926,7 +1358,7 @@ jobs:
 
       # Sibling of the ts-job upload, for the heron-pr-coverage sticky.
       - name: Upload iOS coverage artifact for sticky-comment workflow
-        if: needs.changes.outputs.ios == 'true' && always() && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
+        if: needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage-ios

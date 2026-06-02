@@ -13,6 +13,8 @@
 <Sonner
   theme={mode.current}
   class="toaster group"
+  position="top-center"
+  offset="calc(env(safe-area-inset-top) + 0.5rem)"
   closeButton
   expand={false}
   richColors
@@ -28,6 +30,11 @@
       // a fixed square so it can't be compressed by the flex row either.
       toast:
         'group/toast border shadow-lg ' +
+        // Brand voice on the toast title: Fraunces serif + tight tracking,
+        // matching the app's heading scale. `data-title` is svelte-sonner's
+        // title node; the !important wins over the lib's default title style.
+        '[&_[data-title]]:!font-serif ' +
+        '[&_[data-title]]:!tracking-tight ' +
         '[&_[data-close-button]]:!top-2 ' +
         '[&_[data-close-button]]:!bottom-auto ' +
         '[&_[data-close-button]]:!h-[22px] ' +
@@ -48,7 +55,13 @@
         '!bg-amber-950/90 !border-amber-500/60 !text-amber-50 !shadow-[0_4px_24px_-4px_rgba(245,158,11,0.30)] [&_[data-icon]]:!text-amber-300 [&_[data-description]]:!text-amber-200/85 [&_[data-close-button]]:!bg-amber-900 [&_[data-close-button]]:!border-amber-500/60 [&_[data-close-button]]:!text-amber-100',
       success:
         '!bg-emerald-950/90 !border-emerald-500/50 !text-emerald-50 [&_[data-icon]]:!text-emerald-300 [&_[data-description]]:!text-emerald-200/85 [&_[data-close-button]]:!bg-emerald-900 [&_[data-close-button]]:!border-emerald-500/50 [&_[data-close-button]]:!text-emerald-100',
-      info: '!bg-popover !text-popover-foreground !border-border [&_[data-icon]]:!text-blue-300',
+      // Neutral / info toast carries a gold brand accent rail on the leading
+      // edge (--primary: gold in dark, slate in light) so system-state
+      // messages read as Heron's voice rather than generic chrome.
+      info:
+        '!bg-popover !text-popover-foreground !border-border ' +
+        '!border-l-2 !border-l-primary ' +
+        '[&_[data-icon]]:!text-info',
     },
   }}
   style="--normal-bg: var(--color-popover); --normal-text: var(--color-popover-foreground); --normal-border: var(--color-border);"

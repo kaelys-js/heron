@@ -174,7 +174,7 @@
 <div class="space-y-6">
   <header class="space-y-2">
     <h1 class="text-2xl font-semibold tracking-tight flex items-center gap-2">
-      <Sparkles class="size-6 text-fuchsia-400" />
+      <Sparkles class="size-6 text-fuchsia-600 dark:text-fuchsia-400" />
       {isNewProfile ? 'Add a new profile' : `Welcome to ${BRAND.displayName}`}
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">
@@ -193,7 +193,7 @@
 
   {#if isNewProfile}
     <!-- New-profile creation form -->
-    <div class="space-y-4 rounded-md border border-blue-500/30 bg-blue-500/5 p-4">
+    <div class="space-y-4 rounded-md border border-info/30 bg-info/5 p-4">
       <div class="space-y-1.5">
         <Label for="profile-name" class="text-xs">Profile name</Label>
         <Input
@@ -243,8 +243,8 @@
       </Button>
     </div>
   {:else if resuming}
-    <div class="rounded-md border border-blue-500/30 bg-blue-500/5 px-4 py-3">
-      <p class="text-xs text-blue-200">
+    <div class="rounded-md border border-info/30 bg-info/5 px-4 py-3">
+      <p class="text-xs text-info">
         Resuming where you left off — you've completed
         <strong>{data.state.completedSteps.length}</strong> of 6 steps. Click any step in the sidebar
         to revisit, or continue below.
@@ -275,7 +275,7 @@
 
     <div class="rounded-md border border-border/40 bg-muted/20 px-4 py-3 space-y-1">
       <h3 class="text-xs font-semibold flex items-center gap-1.5">
-        <Trophy class="size-3 text-amber-400" />
+        <Trophy class="size-3 text-accent-strong" />
         What you'll have at the end
       </h3>
       <ul class="text-[11px] text-muted-foreground/90 list-disc pl-4 leading-relaxed space-y-0.5">

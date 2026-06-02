@@ -6,6 +6,7 @@ import { screenshotBypassUser } from '$lib/server/screenshot-bypass';
 import { json, redirect } from '@sveltejs/kit';
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { building, dev } from '$app/environment';
+import { createHash } from 'node:crypto';
 
 // bootOnce() runs at module-load time (top of hooks.server.ts, BEFORE
 // any request handler). If it throws, SvelteKit's module-init fails
@@ -75,30 +76,58 @@ if (typeof process !== 'undefined') {
  *
  *   /api/auth/*        -- Better Auth's own endpoints (login, register, etc.)
  *   /login, /signup    -- the auth UI pages
+ *   /about             -- public About surface (brand + build + links). Linked
+ *                         from the login/signup footers, so it must render
+ *                         logged-out; client-rendered, no per-user data.
  *   /onboarding        -- first-run setup (no users exist yet)
  *   /api/health        -- liveness probe used by backend-discovery
  *   /api/discover      -- Bonjour/mDNS pairing check
  *   /api/onboarding/*  -- first-run setup endpoints
+ *   /api/vitals        -- web-vitals beacons; fire pre-auth on cold loads
+ *                         (login/signup), write no per-user data
+ *   /api/telemetry     -- client technical-diagnostics + vitals sink; public
+ *                         for the same reason as /api/vitals (fires pre-auth,
+ *                         writes only quiet technical events, never Issues)
  *   /favicon, /robots, /manifest.webmanifest, /apple-touch-icon -- bare assets
  *   /_app/*            -- SvelteKit's hashed bundle assets (served by adapter-node)
  *   /assets/*, /static/*, /branding/* -- static folders
  */
-const PUBLIC_PREFIXES = [
+// Static-asset / namespace prefixes matched by startsWith. These serve public
+// files or a whole namespace and never per-user state, so a broad match is safe.
+// `/favicon` + `/apple-touch-icon` are FILENAME stems (e.g. /favicon.ico,
+// /apple-touch-icon-precomposed.png), so they MUST stay startsWith, not segment.
+const PUBLIC_DIR_PREFIXES = [
   '/api/auth/',
-  '/login',
-  '/signup',
-  '/onboarding',
-  '/api/health',
-  '/api/discover',
   '/api/onboarding/',
   '/favicon',
-  '/robots.txt',
-  '/manifest.webmanifest',
   '/apple-touch-icon',
   '/_app/',
   '/assets/',
   '/static/',
   '/branding/',
+];
+
+// Public ROUTES matched by exact path OR an exact segment boundary (prefix + '/')
+// -- never a bare startsWith. This is the auth guard, so '/api/vitals' must not
+// also make '/api/vitals-anything' public (a startsWith would widen the gate).
+const PUBLIC_ROUTES = [
+  '/login',
+  '/signup',
+  '/about',
+  '/onboarding',
+  '/api/health',
+  '/api/discover',
+  // web-vitals beacons fire before auth hydration (on the login/signup pages
+  // themselves), and the handler writes no per-user state. Without this the
+  // guard 401s every beacon -> console-error noise on every cold load.
+  '/api/vitals',
+  // client technical-diagnostics + vitals sink. Same rationale as /api/vitals:
+  // fires pre-auth on cold loads, writes only quiet technical activity events
+  // (never Issues), so a 401 here would just spam console-errors on the very
+  // errors we're trying to capture.
+  '/api/telemetry',
+  '/robots.txt',
+  '/manifest.webmanifest',
 ];
 
 function isPublicPath(pathname: string, devServer: boolean): boolean {
@@ -114,12 +143,44 @@ function isPublicPath(pathname: string, devServer: boolean): boolean {
   if (devServer && (pathname === '/dev' || pathname.startsWith('/dev/'))) {
     return true;
   }
-  for (const prefix of PUBLIC_PREFIXES) {
-    if (pathname === prefix || pathname.startsWith(prefix)) {
+  for (const prefix of PUBLIC_DIR_PREFIXES) {
+    if (pathname.startsWith(prefix)) {
+      return true;
+    }
+  }
+  for (const route of PUBLIC_ROUTES) {
+    if (pathname === route || pathname.startsWith(`${route}/`)) {
       return true;
     }
   }
   return false;
+}
+
+/** Best-effort, NON-secret identifier for whichever credential a request
+ *  presented, used to attribute a session-lookup failure. Better Auth session
+ *  tokens are opaque random ids (no decodable email), and the lookup that WOULD
+ *  resolve a user just threw -- so we can't name the user. Instead we surface
+ *  which auth method was used + a short SHA-256 fingerprint of the presented
+ *  token, so recurring failures for the SAME credential group together in the
+ *  log WITHOUT ever persisting the token itself. Returns 'no-credential' when
+ *  neither a session cookie nor a bearer header is present. */
+function failingCredentialLabel(request: Request): string {
+  const hash = (secret: string): string =>
+    createHash('sha256').update(secret).digest('hex').slice(0, 8);
+
+  const auth = request.headers.get('authorization');
+  if (auth?.startsWith('Bearer ')) {
+    return `bearer token ${hash(auth.slice(7).trim())}`;
+  }
+  // Better Auth's session cookie is `<prefix>.session_token=<token>.<sig>`. We
+  // fingerprint the whole cookie value (token+sig) -- it's enough to correlate
+  // repeated failures and never reveals the secret.
+  const cookie = request.headers.get('cookie') ?? '';
+  const m = cookie.match(/(?:^|;\s*)[\w.-]*session_token=([^;]+)/);
+  if (m) {
+    return `session cookie ${hash(m[1])}`;
+  }
+  return 'no-credential';
 }
 
 /** Population: fill event.locals from the Better Auth session cookie.
@@ -134,7 +195,20 @@ const populateAuth: Handle = async ({ event, resolve }) => {
     event.locals.session = session?.session ?? null;
   } catch (err) {
     if (!isBenignIO(err)) {
-      reportServerError('auth', 'session-lookup', err);
+      // requestId is set by the requestId handle step, which runs before
+      // populateAuth -- so the session-lookup failure correlates to its request.
+      // Attribute it to the failing credential (auth method + a non-secret token
+      // fingerprint, never the raw token) so a recurring failure is greppable to
+      // ONE session without leaking it. redact() masks any token that slips into
+      // the error too, but the label is constructed not to carry one.
+      reportServerError(
+        'auth',
+        `session lookup failed for ${failingCredentialLabel(event.request)}`,
+        err,
+        {
+          requestId: event.locals.requestId,
+        },
+      );
     }
     event.locals.user = null;
     event.locals.session = null;
@@ -343,6 +417,19 @@ const cors: Handle = async ({ event, resolve }) => {
     response.headers.set('Access-Control-Allow-Origin', origin!);
     response.headers.set('Access-Control-Allow-Credentials', 'true');
     response.headers.set('Vary', 'Origin');
+    // Let the cross-origin caller (Capacitor WebView / LAN client) actually
+    // READ our correlation + version + timing headers. The CORS spec hides
+    // every non-safelisted response header from cross-origin JS unless it's
+    // named here. (Same-origin web reads all headers natively, so this is a
+    // no-op there -- it only matters for the WebView/Tailscale origins.)
+    response.headers.set(
+      'Access-Control-Expose-Headers',
+      'X-Request-Id, X-App-Version, X-App-Build, Server-Timing',
+    );
+    // Let the Resource Timing API surface detailed timing (incl. our
+    // Server-Timing) to the initiating origin for these cross-origin
+    // requests. Scoped to the echoed allow-listed origin, never '*'.
+    response.headers.set('Timing-Allow-Origin', origin!);
   }
   return response;
 };
@@ -377,14 +464,20 @@ const cors: Handle = async ({ event, resolve }) => {
  *   Cross-Origin-Resource-Policy: same-site
  *     Refuse cross-site embeds of our resources (icons, JS).
  *
- *   Content-Security-Policy
- *     Tight on script-src/style-src + allows the API domains we
- *     legitimately hit. `'unsafe-inline'` on style needs Tailwind's
- *     JIT (CSS-in-JS for theme classes); we tighten to a hash later.
+ *   Cache-Control: no-store  (ONLY on /api/*)
+ *     API payloads are per-user + auth-scoped; never let a browser or
+ *     shared intermediary cache them. Scoped to /api/* so SvelteKit's
+ *     immutable hashing on /_app/* assets (and HTML caching) is untouched,
+ *     and so a route that set its own Cache-Control wins (we don't clobber).
  *
- * Skip these for /api/auth/* because Better Auth's responses are pure
- * JSON and don't need page-level headers -- sending CSP there is just
- * bytes-on-the-wire noise for IPC-style endpoints.
+ * NOTE: the Content-Security-Policy is NOT set by this handler. It's
+ * configured in `svelte.config.ts` (`kit.csp`, mode 'auto' with the manual
+ * app.html script hashes) and emitted by SvelteKit itself -- a per-response
+ * header on the adapter-node build, baked into <meta> on the Capacitor
+ * static build. This handler only adds the headers SvelteKit doesn't.
+ * It runs for EVERY route, including /api/auth/*: nosniff / frame-options /
+ * COOP are cheap and harmless on JSON responses, and a blanket pass is
+ * simpler + safer than a per-prefix skip-list that could leak a header gap.
  */
 const securityHeaders: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
@@ -424,7 +517,9 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
         'screen-wake-lock=()',
         'serial=()',
         'usb=()',
-        'web-share=(self)',
+        // 'web-share' deliberately omitted: it's redundant with the spec
+        // default (self) AND the Electron/Chromium WebView logs "Unrecognized
+        // feature: 'web-share'" for it, spamming the desktop console.
       ].join(', '),
     );
   }
@@ -437,14 +532,47 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   if (isHttps && !headers.has('Strict-Transport-Security')) {
     headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
+  // Reporting API endpoint group. Paired with the CSP `report-to heron-telemetry`
+  // directive (svelte.config.ts), this routes CSP / COOP / deprecation /
+  // intervention reports to /api/telemetry, where they land as quiet
+  // kind:'technical' diagnostics. Relative URL -- the browser resolves it against
+  // the document origin, so it works behind any proxy without an origin mismatch.
+  if (!headers.has('Reporting-Endpoints')) {
+    headers.set('Reporting-Endpoints', 'heron-telemetry="/api/telemetry"');
+  }
+  // API payloads are per-user + auth-scoped -- never cache them. Scoped to
+  // /api/* so SvelteKit's immutable /_app/* asset hashing is untouched, and
+  // a route that already chose a Cache-Control policy keeps it.
+  if (url.pathname.startsWith('/api/') && !headers.has('Cache-Control')) {
+    headers.set('Cache-Control', 'no-store');
+  }
   return response;
 };
 
-/** Sequence: cors (short-circuits OPTIONS) → populateAuth → guard
- *  → withUserContext → securityHeaders → user handler. CORS runs first
- *  so preflights don't even touch auth or per-user context. */
-export const handle: Handle = async ({ event, resolve }) =>
-  cors({
+/** Sequence: requestId → cors (short-circuits OPTIONS) → populateAuth → guard
+ *  → withUserContext → securityHeaders → user handler. CORS runs first after the
+ *  id so preflights don't touch auth/context. The per-request id is generated up
+ *  front (so it's on `event.locals` for every handler + handleError), emitted as
+ *  the `X-Request-Id` response header, and injected as a `<meta>` so the client
+ *  can read its own request's id (a page can't read its own response headers). */
+export const handle: Handle = async ({ event, resolve }) => {
+  const requestId = crypto.randomUUID();
+  event.locals.requestId = requestId;
+  const startedAt = performance.now();
+  // Build identity, computed once. `__APP_VERSION__` (semver) + `__APP_BUILD__`
+  // (short git SHA) are Vite defines; the `typeof` guard keeps this safe in the
+  // test env where the defines aren't applied. Surfaced as response headers AND
+  // a <meta> so a page can read its own build without a network round-trip.
+  const appVersion = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '';
+  const appBuild = typeof __APP_BUILD__ === 'string' ? __APP_BUILD__ : '';
+  const versionMeta = appVersion
+    ? `<meta name="app-version" content="${appVersion}${appBuild ? `+${appBuild}` : ''}" />`
+    : '';
+  // Captured in the innermost resolve closure so Server-Timing can split the
+  // middleware/auth phase from the render phase (see below).
+  let resolveStartedAt = 0;
+
+  const response = await cors({
     event,
     resolve: (e0) =>
       populateAuth({
@@ -464,7 +592,16 @@ export const handle: Handle = async ({ event, resolve }) =>
                         resolve: (e5) =>
                           securityHeaders({
                             event: e5,
-                            resolve: (e6) => resolve(e6),
+                            resolve: (e6) => {
+                              resolveStartedAt = performance.now();
+                              return resolve(e6, {
+                                transformPageChunk: ({ html }) =>
+                                  html.replace(
+                                    '</head>',
+                                    `<meta name="x-request-id" content="${requestId}" />${versionMeta}</head>`,
+                                  ),
+                              });
+                            },
                           }),
                       }),
                   }),
@@ -473,14 +610,86 @@ export const handle: Handle = async ({ event, resolve }) =>
       }),
   });
 
+  // Strip any server-fingerprinting header an adapter / proxy may have added
+  // (adapter-node doesn't, but a fronting Express/nginx might). Removing
+  // X-Powered-By is a cheap, standard hardening step -- we expose USEFUL build
+  // info (X-App-Version/Build) deliberately, not incidental stack fingerprints.
+  response.headers.delete('X-Powered-By');
+
+  // Correlation id on every (non-fatal) response -- client fetches can read it,
+  // support can grep logs for it, and handleError reuses it as the error ref.
+  if (!response.headers.has('X-Request-Id')) {
+    response.headers.set('X-Request-Id', requestId);
+  }
+  // App version + build SHA on every response -- lets clients, log-scrapers, and
+  // support pin the EXACT build a response came from (semver alone can't tell two
+  // builds of the same version apart). Both are read cross-origin via the CORS
+  // Access-Control-Expose-Headers list set in `cors`.
+  if (appVersion && !response.headers.has('X-App-Version')) {
+    response.headers.set('X-App-Version', appVersion);
+  }
+  if (appBuild && !response.headers.has('X-App-Build')) {
+    response.headers.set('X-App-Build', appBuild);
+  }
+  // Server-Timing on EVERY response, split into phases for the browser Network
+  // "Timing" panel + Resource Timing: `total` (whole hook), `middleware` (the
+  // requestId→cors→auth→guard→…→securityHeaders chain up to render), and
+  // `render` (SvelteKit resolve). Durations only -- no payload/path leakage;
+  // cross-origin reads are gated by Timing-Allow-Origin set in `cors`.
+  if (!response.headers.has('Server-Timing')) {
+    const end = performance.now();
+    const mark = resolveStartedAt || end;
+    response.headers.set(
+      'Server-Timing',
+      [
+        `total;dur=${(end - startedAt).toFixed(1)}`,
+        `middleware;dur=${(mark - startedAt).toFixed(1)}`,
+        `render;dur=${(end - mark).toFixed(1)}`,
+      ].join(', '),
+    );
+  }
+  // Optional per-request lifecycle log (HERON_LOG_REQUESTS=on; OFF by default to
+  // avoid feed noise). One info-level technical event tying method/path/status/
+  // duration to the requestId -- gives a normal request to anchor an error
+  // against + cheap p95/hot-path visibility. Skips the long-lived SSE stream so a
+  // multi-minute feed connection isn't logged as one giant "request". Mute it
+  // from disk anytime with HERON_LOG_MUTE=request while keeping the live feed.
+  if (process.env.HERON_LOG_REQUESTS === 'on' && !event.url.pathname.startsWith('/api/stream')) {
+    logEvent('request', `${event.request.method} ${event.url.pathname} ${response.status}`, {
+      level: 'info',
+      category: 'system',
+      kind: 'technical',
+      message: `${Math.round(performance.now() - startedAt)}ms`,
+      requestId,
+    });
+  }
+  return response;
+};
+
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
   const url = event.url.pathname;
-  reportServerError('server', `[${status}] ${url}`, error);
+  // Reuse the per-request id (set by the requestId handle step) so the error
+  // reference == X-Request-Id == the log line. Fall back to a fresh id if a
+  // pre-handle failure means locals was never populated.
+  const errorId = event.locals?.requestId ?? crypto.randomUUID();
+  // Thread the same id into the logged event so the activity-log row, the
+  // X-Request-Id response header, and the on-screen "ref" are all one value.
+  reportServerError('server', `[${status}] ${url} · ref ${errorId}`, error, { requestId: errorId });
   const code = (error as Record<string, unknown>)?.code as string | undefined;
   const details = (error as Record<string, unknown>)?.details;
+  const human = status >= 500 ? 'Something broke on our end.' : message;
+  const stack = dev ? (error as Error)?.stack : undefined;
   return {
-    message: status >= 500 ? 'Something broke on our end.' : message,
+    // `· ref <id>` carries the correlation id into error.html (only %message% is
+    // templated into that catastrophic fallback). In DEV we also append the stack
+    // after a `::stack::` marker so the fallback can show developer details too --
+    // error.html's inline script parses it out + cleans the visible message.
+    // Prod: no stack appended. +error.svelte uses the dedicated `stack` field /
+    // preset copy and strips this whole suffix on the unknown-status fallback.
+    message: `${human} · ref ${errorId}${stack ? `\n::stack::\n${stack}` : ''}`,
     code,
     details,
+    errorId,
+    ...(stack ? { stack } : {}),
   };
 };

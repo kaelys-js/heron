@@ -214,7 +214,7 @@
 <Card.Root>
   <Card.Header>
     <Card.Title class="text-base flex items-center gap-2">
-      <Archive class="size-4 text-fuchsia-400" />
+      <Archive class="size-4 text-fuchsia-700 dark:text-fuchsia-400" />
       Backups
     </Card.Title>
     <Card.Description>
@@ -269,7 +269,7 @@
       <div class="space-y-1.5">
         {#each backups as b (b.id)}
           <div class="flex items-center gap-3 rounded-md border border-border/40 bg-card px-3 py-2">
-            <CheckCircle2 class="size-3.5 text-emerald-400 flex-shrink-0" />
+            <CheckCircle2 class="size-3.5 text-success flex-shrink-0" />
             <div class="flex-1 min-w-0">
               <div class="text-xs font-mono truncate">{b.id}</div>
               <div class="text-[11px] text-muted-foreground/80 flex items-center gap-2 flex-wrap">
@@ -298,7 +298,7 @@
             <Button
               variant="ghost"
               size="sm"
-              class="h-7 text-[11px] gap-1 text-amber-300 hover:text-amber-200"
+              class="h-7 text-[11px] gap-1 text-warning hover:text-warning/80"
               onclick={() => openRestoreDialog(b)}
               aria-label="Restore {b.id}"
             >
@@ -308,7 +308,7 @@
               variant="ghost"
               size="sm"
               class={cn(
-                'h-7 text-[11px] gap-1 text-muted-foreground hover:text-red-300',
+                'h-7 text-[11px] gap-1 text-muted-foreground hover:text-destructive',
                 busyDelete === b.id && 'opacity-50',
               )}
               onclick={() => deleteOne(b)}
@@ -348,7 +348,7 @@
   <Dialog.Content class="sm:max-w-md">
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
-        <AlertTriangle class="size-4 text-amber-400" />
+        <AlertTriangle class="size-4 text-warning" />
         Restore from backup?
       </Dialog.Title>
       <Dialog.Description class="space-y-2 pt-2">
@@ -370,7 +370,7 @@
         >
         inside the backups dir so you can roll back manually if needed.
       </p>
-      <p class="text-amber-200">
+      <p class="text-warning">
         <code class="font-mono">.env</code> is NOT touched. Type <strong>RESTORE</strong> to confirm.
       </p>
     </div>

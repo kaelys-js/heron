@@ -103,9 +103,9 @@
   }
 
   function impactTint(i: string): string {
-    if (i === 'high') return 'border-red-500/40 bg-red-500/5 text-red-200';
-    if (i === 'medium') return 'border-amber-500/40 bg-amber-500/5 text-amber-200';
-    return 'border-blue-500/30 bg-blue-500/5 text-blue-200';
+    if (i === 'high') return 'border-destructive/40 bg-destructive/5 text-destructive';
+    if (i === 'medium') return 'border-warning/40 bg-warning/5 text-warning';
+    return 'border-info/30 bg-info/5 text-info';
   }
 </script>
 
@@ -120,7 +120,7 @@
           <div
             class="size-10 rounded-lg bg-amber-500/10 ring-1 ring-amber-500/40 flex items-center justify-center"
           >
-            <TrendingUp class="size-5 text-amber-400" />
+            <TrendingUp class="size-5 text-accent-strong" />
           </div>
           <h1 class="text-2xl font-semibold tracking-tight">Pattern analyzer</h1>
         </div>
@@ -170,7 +170,7 @@
               <Card.Content class="py-3 space-y-2">
                 <div class="flex items-start gap-3">
                   {#if isApplied}
-                    <CheckCircle2 class="size-4 text-emerald-300 mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 class="size-4 text-success mt-0.5 flex-shrink-0" />
                   {:else}
                     <AlertTriangle class="size-4 mt-0.5 flex-shrink-0" />
                   {/if}

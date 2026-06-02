@@ -195,42 +195,42 @@
       label: 'New',
       desc: 'Just discovered — no score yet',
       icon: Sparkles,
-      tint: 'text-zinc-400',
+      tint: 'text-muted-foreground',
     },
     {
       value: 'Scored',
       label: 'Scored',
       desc: 'Default — review and promote to Ready or Apply',
       icon: Globe,
-      tint: 'text-cyan-400',
+      tint: 'text-cyan-700 dark:text-cyan-400',
     },
     {
       value: 'Ready',
       label: 'Ready',
       desc: 'Eval done · CV PDF ready · go apply',
       icon: ListTodo,
-      tint: 'text-emerald-400',
+      tint: 'text-emerald-700 dark:text-emerald-400',
     },
     {
       value: 'Applied',
       label: 'Applied',
       desc: 'You already submitted — track follow-ups',
       icon: Send,
-      tint: 'text-violet-400',
+      tint: 'text-violet-700 dark:text-violet-400',
     },
     {
       value: 'Interview',
       label: 'Interview',
       desc: 'In active interview process',
       icon: Briefcase,
-      tint: 'text-orange-400',
+      tint: 'text-orange-700 dark:text-orange-400',
     },
     {
       value: 'Closed',
       label: 'Closed',
       desc: 'Skip — not pursuing',
       icon: AlertCircle,
-      tint: 'text-zinc-500',
+      tint: 'text-muted-foreground',
     },
   ];
   let activeStatusDef = $derived(STATUS_DEFS.find((s) => s.value === status) ?? STATUS_DEFS[1]);
@@ -262,7 +262,7 @@
       <div class="space-y-1.5">
         <div class="flex items-center justify-between gap-2">
           <Label class="text-xs flex items-center gap-1.5">
-            Job URL <span class="text-red-400">*</span>
+            Job URL <span class="text-destructive">*</span>
           </Label>
           {#if url.trim()}
             <a
@@ -283,7 +283,7 @@
         />
         {#if detected}
           <div
-            class="flex items-center gap-1.5 text-[11px] text-emerald-300/90 animate-in fade-in slide-in-from-top-1 duration-200"
+            class="flex items-center gap-1.5 text-[11px] text-success/90 animate-in fade-in slide-in-from-top-1 duration-200"
           >
             <Check class="size-3 flex-shrink-0" />
             <span>Detected:</span>
@@ -387,7 +387,7 @@
       <!-- Workflow next-steps -->
       <div class="rounded-md border border-border/40 bg-muted/30 px-3 py-2.5">
         <div class="flex items-start gap-2">
-          <Lightbulb class="size-3.5 text-amber-400/90 mt-0.5 flex-shrink-0" />
+          <Lightbulb class="size-3.5 text-accent-strong/90 mt-0.5 flex-shrink-0" />
           <div class="space-y-1 min-w-0">
             <div class="text-[11px] font-medium">What happens next</div>
             <p class="text-[11px] text-muted-foreground/80 leading-relaxed">

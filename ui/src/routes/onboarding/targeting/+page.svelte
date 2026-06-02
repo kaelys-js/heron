@@ -167,7 +167,7 @@
 <div class="space-y-6">
   <header class="space-y-2">
     <h1 class="text-2xl font-semibold tracking-tight flex items-center gap-2">
-      <Target class="size-5 text-rose-400" />
+      <Target class="size-5 text-rose-600 dark:text-rose-400" />
       Targeting
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">
@@ -176,7 +176,7 @@
       preferences feed the deeper Claude evaluation later.
     </p>
     {#if data.bootstrappedFromTemplate}
-      <p class="text-[11px] text-blue-300">
+      <p class="text-[11px] text-info">
         We'll seed your <code class="font-mono">portals.yml</code> from the curated 100+-company template
         the first time you save.
       </p>
@@ -201,7 +201,7 @@
           <button
             type="button"
             onclick={() => removeChip('targetRoles', i)}
-            class="hover:text-rose-300"
+            class="hover:text-rose-700 dark:hover:text-rose-300"
             aria-label="Remove"
           >
             <X class="size-3" />
@@ -249,7 +249,7 @@
             <button
               type="button"
               onclick={() => removeChip('positive', i)}
-              class="hover:text-emerald-300"
+              class="hover:text-emerald-700 dark:hover:text-emerald-300"
               aria-label="Remove"
             >
               <X class="size-2.5" />
@@ -291,7 +291,7 @@
             <button
               type="button"
               onclick={() => removeChip('negative', i)}
-              class="hover:text-red-300"
+              class="hover:text-red-700 dark:hover:text-red-300"
               aria-label="Remove"
             >
               <X class="size-2.5" />
@@ -370,7 +370,7 @@
             <button
               type="button"
               onclick={() => removeChip('mustHave', i)}
-              class="hover:text-blue-300"
+              class="hover:text-blue-700 dark:hover:text-blue-300"
               aria-label="Remove"><X class="size-2.5" /></button
             >
           </span>
@@ -406,7 +406,7 @@
             <button
               type="button"
               onclick={() => removeChip('strongPlus', i)}
-              class="hover:text-amber-300"
+              class="hover:text-amber-700 dark:hover:text-amber-300"
               aria-label="Remove"><X class="size-2.5" /></button
             >
           </span>
@@ -442,7 +442,7 @@
             <button
               type="button"
               onclick={() => removeChip('hardNo', i)}
-              class="hover:text-red-300"
+              class="hover:text-red-700 dark:hover:text-red-300"
               aria-label="Remove"><X class="size-2.5" /></button
             >
           </span>

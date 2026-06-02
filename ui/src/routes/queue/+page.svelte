@@ -83,20 +83,29 @@
   }
 
   function portalBadge(url: string): { label: string; tint: string } {
-    if (/linkedin\.com/.test(url)) return { label: 'LinkedIn', tint: 'text-blue-300' };
+    if (/linkedin\.com/.test(url))
+      return { label: 'LinkedIn', tint: 'text-blue-700 dark:text-blue-300' };
     if (/(?:job-)?boards(?:\.eu)?\.greenhouse\.io/.test(url))
-      return { label: 'Greenhouse', tint: 'text-emerald-300' };
-    if (/ashbyhq\.com/.test(url)) return { label: 'Ashby', tint: 'text-fuchsia-300' };
-    if (/lever\.co/.test(url)) return { label: 'Lever', tint: 'text-amber-300' };
-    if (/workable\.com/.test(url)) return { label: 'Workable', tint: 'text-cyan-300' };
-    if (/personio\./.test(url)) return { label: 'Personio', tint: 'text-pink-300' };
+      return { label: 'Greenhouse', tint: 'text-emerald-700 dark:text-emerald-300' };
+    if (/ashbyhq\.com/.test(url))
+      return { label: 'Ashby', tint: 'text-fuchsia-700 dark:text-fuchsia-300' };
+    if (/lever\.co/.test(url))
+      return { label: 'Lever', tint: 'text-amber-700 dark:text-amber-300' };
+    if (/workable\.com/.test(url))
+      return { label: 'Workable', tint: 'text-cyan-700 dark:text-cyan-300' };
+    if (/personio\./.test(url))
+      return { label: 'Personio', tint: 'text-pink-700 dark:text-pink-300' };
     if (/smartrecruiters\.com/.test(url))
-      return { label: 'SmartRecruiters', tint: 'text-indigo-300' };
-    if (/recruitee\.com/.test(url)) return { label: 'Recruitee', tint: 'text-orange-300' };
-    if (/teamtailor\.com/.test(url)) return { label: 'Teamtailor', tint: 'text-rose-300' };
-    if (/myworkdayjobs\.com/.test(url)) return { label: 'Workday', tint: 'text-yellow-300' };
-    if (/indeed\.com/.test(url)) return { label: 'Indeed', tint: 'text-lime-300' };
-    return { label: 'Other', tint: 'text-zinc-400' };
+      return { label: 'SmartRecruiters', tint: 'text-indigo-700 dark:text-indigo-300' };
+    if (/recruitee\.com/.test(url))
+      return { label: 'Recruitee', tint: 'text-orange-700 dark:text-orange-300' };
+    if (/teamtailor\.com/.test(url))
+      return { label: 'Teamtailor', tint: 'text-rose-700 dark:text-rose-300' };
+    if (/myworkdayjobs\.com/.test(url))
+      return { label: 'Workday', tint: 'text-yellow-700 dark:text-yellow-300' };
+    if (/indeed\.com/.test(url))
+      return { label: 'Indeed', tint: 'text-lime-800 dark:text-lime-300' };
+    return { label: 'Other', tint: 'text-muted-foreground' };
   }
 
   /** Fire apply-queue-drain manually via /api/agents/run. */
@@ -204,7 +213,7 @@
       <!-- Hero -->
       <div class="space-y-1.5">
         <h1 class="text-xl font-semibold tracking-tight flex items-center gap-2">
-          <ListChecks class="size-5 text-fuchsia-400" />
+          <ListChecks class="size-5 text-fuchsia-700 dark:text-fuchsia-400" />
           Apply queue
         </h1>
         <p class="text-sm text-muted-foreground leading-relaxed max-w-3xl">
@@ -220,24 +229,27 @@
         class="rounded-md border border-border/40 bg-card px-4 py-3 flex items-center gap-4 flex-wrap"
       >
         <div class="flex items-center gap-1.5 text-xs">
-          <Hourglass class="size-3.5 text-fuchsia-400" />
+          <Hourglass class="size-3.5 text-fuchsia-700 dark:text-fuchsia-400" />
           <span class="font-mono">{data.queued.length}</span>
           <span class="text-muted-foreground">queued</span>
         </div>
         <div class="flex items-center gap-1.5 text-xs">
           <Loader2
-            class={cn('size-3.5 text-blue-400', data.applying.length > 0 && 'animate-spin')}
+            class={cn(
+              'size-3.5 text-blue-700 dark:text-blue-400',
+              data.applying.length > 0 && 'animate-spin',
+            )}
           />
           <span class="font-mono">{data.applying.length}</span>
           <span class="text-muted-foreground">applying</span>
         </div>
         <div class="flex items-center gap-1.5 text-xs">
-          <AlertTriangle class="size-3.5 text-amber-400" />
+          <AlertTriangle class="size-3.5 text-warning" />
           <span class="font-mono">{data.manual.length}</span>
           <span class="text-muted-foreground">need review</span>
         </div>
         <div class="flex items-center gap-1.5 text-xs ml-auto">
-          <Activity class="size-3.5 text-emerald-400" />
+          <Activity class="size-3.5 text-emerald-700 dark:text-emerald-400" />
           <span class="font-mono">{data.todayCount}/{data.cap}</span>
           <span class="text-muted-foreground">applied today</span>
         </div>
@@ -261,7 +273,7 @@
           <h2
             class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"
           >
-            <Loader2 class="size-3 animate-spin text-blue-400" />
+            <Loader2 class="size-3 animate-spin text-blue-700 dark:text-blue-400" />
             Applying right now · {data.applying.length}
           </h2>
           {#each data.applying as job (job.id)}
@@ -270,7 +282,9 @@
             <div
               class="flex items-start gap-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3"
             >
-              <Loader2 class="size-4 animate-spin text-blue-400 mt-2 flex-shrink-0" />
+              <Loader2
+                class="size-4 animate-spin text-blue-700 dark:text-blue-400 mt-2 flex-shrink-0"
+              />
               <div class="flex-1 min-w-0">
                 <JobCard {job} />
                 {#if state}
@@ -294,7 +308,7 @@
           <h2
             class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"
           >
-            <Hourglass class="size-3 text-fuchsia-400" />
+            <Hourglass class="size-3 text-fuchsia-700 dark:text-fuchsia-400" />
             Queued · {data.queued.length}
           </h2>
 
@@ -339,7 +353,7 @@
                 size="sm"
                 onclick={() => cancelQueue(job)}
                 disabled={cancelBusy === job.id}
-                class="text-[11px] h-7 text-muted-foreground hover:text-red-300"
+                class="text-[11px] h-7 text-muted-foreground hover:text-destructive"
               >
                 {#if cancelBusy === job.id}
                   <Loader2 class="size-3 animate-spin" />
@@ -358,14 +372,14 @@
           <h2
             class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"
           >
-            <AlertTriangle class="size-3 text-amber-400" />
+            <AlertTriangle class="size-3 text-warning" />
             Auto-apply failed — finish by hand · {data.manual.length}
           </h2>
           <div
-            class="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 flex items-start gap-2"
+            class="rounded-md border border-warning/30 bg-warning/5 px-3 py-2 flex items-start gap-2"
           >
-            <Info class="size-3.5 text-amber-300 mt-0.5 flex-shrink-0" />
-            <p class="text-[11px] text-amber-100/90 leading-relaxed">
+            <Info class="size-3.5 text-warning mt-0.5 flex-shrink-0" />
+            <p class="text-[11px] text-warning leading-relaxed">
               These hit a soft block during auto-apply (CAPTCHA, anti-bot, unknown form field). The
               Inbox has a "Open posting" CTA on each one — finish them in the browser, then mark
               Applied.
@@ -373,8 +387,8 @@
           </div>
           {#each data.manual as job (job.id)}
             {@const pb = portalBadge(job.url)}
-            <div class="flex items-start gap-3 rounded-md border border-amber-500/30 bg-card p-3">
-              <Bell class="size-4 text-amber-400 mt-2 flex-shrink-0" />
+            <div class="flex items-start gap-3 rounded-md border border-warning/30 bg-card p-3">
+              <Bell class="size-4 text-warning mt-2 flex-shrink-0" />
               <div class="flex-1 min-w-0">
                 <JobCard {job} />
                 <div class="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -416,7 +430,7 @@
               class={cn(
                 'gap-1.5 transition-all',
                 sendArmed &&
-                  'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40 animate-pulse',
+                  'bg-destructive/20 text-destructive hover:bg-destructive/30 border border-destructive/40 animate-pulse',
               )}
             >
               {#if batchSendBusy}

@@ -157,7 +157,7 @@
           <div
             class="size-10 rounded-lg bg-fuchsia-500/10 ring-1 ring-fuchsia-500/40 flex items-center justify-center"
           >
-            <Zap class="size-5 text-fuchsia-400" />
+            <Zap class="size-5 text-fuchsia-600 dark:text-fuchsia-400" />
           </div>
           <h1 class="text-2xl font-semibold tracking-tight">Autonomous apply</h1>
         </div>
@@ -171,15 +171,15 @@
       </div>
 
       <!-- Risk acknowledgment -->
-      <Card.Root class="border-amber-500/40 bg-amber-500/5">
+      <Card.Root class="border-warning/40 bg-warning/5">
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <ShieldAlert class="size-4 text-amber-300" />
+            <ShieldAlert class="size-4 text-warning" />
             Risk acknowledgment — read before enabling
           </Card.Title>
         </Card.Header>
         <Card.Content class="space-y-3 text-sm leading-relaxed">
-          <ul class="space-y-2 list-disc pl-5 text-amber-100/90">
+          <ul class="space-y-2 list-disc pl-5 text-warning/90">
             <li>
               <strong>LinkedIn shadowban risk.</strong> Easy Apply at &gt;10/day from a single IP for
               consecutive days can land your account in a soft-flagged state where listings disappear
@@ -215,34 +215,34 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <ListChecks class="size-4 text-fuchsia-400" />
+            <ListChecks class="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
             Pipeline flow
           </Card.Title>
         </Card.Header>
         <Card.Content class="space-y-3">
           <div class="flex items-center gap-1.5 text-xs flex-wrap">
             <span
-              class="px-2 py-1 rounded bg-cyan-500/10 ring-1 ring-cyan-500/40 text-cyan-200 font-mono"
+              class="px-2 py-1 rounded bg-cyan-500/10 ring-1 ring-cyan-500/40 text-cyan-700 dark:text-cyan-200 font-mono"
               >Scored</span
             >
             <ArrowRight class="size-3 text-muted-foreground" />
             <span
-              class="px-2 py-1 rounded bg-fuchsia-500/10 ring-1 ring-fuchsia-500/40 text-fuchsia-200 font-mono"
+              class="px-2 py-1 rounded bg-fuchsia-500/10 ring-1 ring-fuchsia-500/40 text-fuchsia-700 dark:text-fuchsia-200 font-mono"
               >Queued</span
             >
             <ArrowRight class="size-3 text-muted-foreground" />
             <span
-              class="px-2 py-1 rounded bg-blue-500/10 ring-1 ring-blue-500/40 text-blue-200 font-mono"
+              class="px-2 py-1 rounded bg-blue-500/10 ring-1 ring-blue-500/40 text-blue-700 dark:text-blue-200 font-mono"
               >Applying</span
             >
             <ArrowRight class="size-3 text-muted-foreground" />
             <span
-              class="px-2 py-1 rounded bg-violet-500/10 ring-1 ring-violet-500/40 text-violet-200 font-mono"
+              class="px-2 py-1 rounded bg-violet-500/10 ring-1 ring-violet-500/40 text-violet-700 dark:text-violet-200 font-mono"
               >Applied</span
             >
             <span class="text-muted-foreground/50">or</span>
             <span
-              class="px-2 py-1 rounded bg-amber-500/10 ring-1 ring-amber-500/40 text-amber-200 font-mono"
+              class="px-2 py-1 rounded bg-amber-500/10 ring-1 ring-amber-500/40 text-amber-700 dark:text-amber-200 font-mono"
               >ManualApplyNeeded</span
             >
           </div>
@@ -277,7 +277,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <Briefcase class="size-4 text-fuchsia-400" />
+            <Briefcase class="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
             Portal coverage
           </Card.Title>
         </Card.Header>
@@ -287,17 +287,17 @@
               class="rounded-md border border-border/40 bg-card px-3 py-2 flex items-start gap-3"
             >
               {#if p.status === 'production'}
-                <CheckCircle2 class="size-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 class="size-4 text-success mt-0.5 flex-shrink-0" />
               {:else}
-                <Hourglass class="size-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                <Hourglass class="size-4 text-warning mt-0.5 flex-shrink-0" />
               {/if}
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-medium flex items-center gap-2">
                   {p.label}
                   <span
                     class={p.status === 'production'
-                      ? 'text-[11px] uppercase tracking-wider text-emerald-300/80'
-                      : 'text-[11px] uppercase tracking-wider text-amber-300/80'}
+                      ? 'text-[11px] uppercase tracking-wider text-success/80'
+                      : 'text-[11px] uppercase tracking-wider text-warning/80'}
                   >
                     {p.status}
                   </span>
@@ -313,7 +313,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <Activity class="size-4 text-fuchsia-400" />
+            <Activity class="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
             Score gate &amp; warmup
           </Card.Title>
         </Card.Header>
@@ -353,7 +353,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <Bell class="size-4 text-amber-400" />
+            <Bell class="size-4 text-warning" />
             Failure modes
           </Card.Title>
         </Card.Header>
@@ -361,7 +361,7 @@
           {#each FAILURE_MODES as f (f.id)}
             <div class="rounded-md border border-border/40 bg-card px-3 py-2 space-y-1">
               <div class="text-sm font-medium flex items-center gap-2">
-                <AlertTriangle class="size-3.5 text-amber-400 flex-shrink-0" />
+                <AlertTriangle class="size-3.5 text-warning flex-shrink-0" />
                 {f.summary}
                 <span
                   class="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-mono"
@@ -385,7 +385,7 @@
       <Card.Root>
         <Card.Header class="pb-2">
           <Card.Title class="text-base flex items-center gap-2">
-            <Zap class="size-4 text-fuchsia-400" />
+            <Zap class="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
             How to enable / cancel
           </Card.Title>
         </Card.Header>

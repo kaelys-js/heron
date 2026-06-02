@@ -247,8 +247,8 @@
           {#if probes.anthropic}
             <div
               class="flex items-center gap-1 text-xs {probes.anthropic.ok
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-red-600 dark:text-red-400'}"
+                ? 'text-success'
+                : 'text-destructive'}"
             >
               {#if probes.anthropic.ok}
                 <CheckCircle2 class="h-3 w-3" />
@@ -339,8 +339,8 @@
           {#if probes.gemini}
             <div
               class="flex items-center gap-1 text-xs {probes.gemini.ok
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-red-600 dark:text-red-400'}"
+                ? 'text-success'
+                : 'text-destructive'}"
             >
               {#if probes.gemini.ok}<CheckCircle2 class="h-3 w-3" />{:else}<AlertCircle
                   class="h-3 w-3"
@@ -418,8 +418,8 @@
           {#if probes.adzuna}
             <div
               class="flex items-center gap-1 text-xs {probes.adzuna.ok
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-red-600 dark:text-red-400'}"
+                ? 'text-success'
+                : 'text-destructive'}"
             >
               {#if probes.adzuna.ok}<CheckCircle2 class="h-3 w-3" />{:else}<AlertCircle
                   class="h-3 w-3"

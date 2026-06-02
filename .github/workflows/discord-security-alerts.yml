@@ -75,6 +75,12 @@ jobs:
           SINCE_INPUT: ${{ inputs.since }}
           EVENT_NAME: ${{ github.event_name }}
           WORKFLOW_RUN_STARTED: ${{ github.event.workflow_run.run_started_at }}
+          # Security alerts are delivery-critical: a webhook POST failure
+          # here means HIGH+ findings silently never reach #security. Run
+          # strict so a misconfigured/expired webhook fails the job loudly
+          # instead of degrading to a warning. PR/other CI never sets this,
+          # so a webhook outage can never block normal CI.
+          STRICT_DISCORD: '1'
         run: |
           set -euo pipefail
           # GitHub Actions does not expose a step's own `env:` to that
@@ -149,6 +155,11 @@ jobs:
           MAX=10
           POSTED=0
 
+          # The posting loops run in a subshell (`... | while`), so a curl
+          # failure inside can't `exit` the step directly. Record failures
+          # in a flag file the loops can write and we check after they run.
+          POST_FAIL_FLAG="$(mktemp)"
+
           # ---- Post CodeQL alerts ----
           if [ "$CQ_COUNT" -gt 0 ]; then
             echo "$CQ_ALERTS" | jq -c '.[]' | while IFS= read -r alert; do
@@ -187,7 +198,7 @@ jobs:
               curl -sS -X POST -H "Content-Type: application/json" \
                 -d "$PAYLOAD" "$DISCORD_WEBHOOK_SECURITY" \
                 -o /dev/null --max-time 30 \
-                || echo "::warning::Discord webhook POST failed (CodeQL alert #$NUMBER)."
+                || { echo "::warning::Discord webhook POST failed (CodeQL alert #$NUMBER)."; echo 1 >>"$POST_FAIL_FLAG"; }
               POSTED=$((POSTED + 1))
               sleep 1
             done
@@ -232,7 +243,7 @@ jobs:
               curl -sS -X POST -H "Content-Type: application/json" \
                 -d "$PAYLOAD" "$DISCORD_WEBHOOK_SECURITY" \
                 -o /dev/null --max-time 30 \
-                || echo "::warning::Discord webhook POST failed (Dependabot alert #$NUMBER)."
+                || { echo "::warning::Discord webhook POST failed (Dependabot alert #$NUMBER)."; echo 1 >>"$POST_FAIL_FLAG"; }
               POSTED=$((POSTED + 1))
               # Discord webhook rate limit: ~30/min; 1s sleep is plenty.
               sleep 1
@@ -242,3 +253,15 @@ jobs:
           if [ "$TOTAL" -gt "$MAX" ]; then
             echo "::warning::Posted $MAX of $TOTAL alerts; remainder visible in GitHub Security tab."
           fi
+
+          # STRICT_DISCORD: fail the job if any webhook POST failed. A
+          # silent webhook failure means HIGH+ security findings never
+          # reached #security -- on this scheduled/critical workflow that
+          # is a hard failure, not a warning.
+          if [ -s "$POST_FAIL_FLAG" ] && [ "${STRICT_DISCORD:-0}" = '1' ]; then
+            FAILS=$(wc -l <"$POST_FAIL_FLAG" | tr -d ' ')
+            echo "::error::$FAILS Discord webhook POST(s) failed; security alerts were not delivered."
+            rm -f "$POST_FAIL_FLAG"
+            exit 1
+          fi
+          rm -f "$POST_FAIL_FLAG"

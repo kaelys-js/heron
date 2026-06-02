@@ -56,7 +56,7 @@
 </script>
 
 <div
-  class="flex min-h-screen items-center justify-center bg-background text-zinc-500"
+  class="flex min-h-screen items-center justify-center bg-background text-muted-foreground"
   data-debug="root-page"
 >
   <p class="text-sm">Loading {BRAND.displayName}…</p>

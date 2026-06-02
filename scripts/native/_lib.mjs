@@ -77,40 +77,77 @@ export function run(cmd, args, opts = {}) {
 }
 
 /** Run two commands in parallel, both stdio inherited. */
+/**
+ * Decide what a child's exit means for the parallel session. Pure, so the
+ * precedence is unit-testable without spawning processes.
+ *   'fail'  -- a child exited non-zero      -> kill siblings + reject
+ *   'done'  -- the LEADER exited cleanly     -> kill siblings + resolve
+ *   'quiet' -- the last child exited cleanly -> resolve (nothing left to kill)
+ *   'wait'  -- a non-leader exited cleanly, others still running -> keep going
+ *
+ * The 'done' case is the fix for "quitting the Electron window from the Dock
+ * leaves vite running": Electron is the leader, so its exit (code 0) tears the
+ * whole dev session down instead of orphaning the dev server.
+ */
+export function runParallelExitAction({ code, leader, remaining }) {
+  if (code !== 0) {
+    return 'fail';
+  }
+  if (leader) {
+    return 'done';
+  }
+  if (remaining <= 0) {
+    return 'quiet';
+  }
+  return 'wait';
+}
+
 export function runParallel(cmds) {
   return new Promise((resolve, reject) => {
+    let settled = false;
     let remaining = cmds.length;
-    let failed = false;
-    const children = cmds.map(({ cmd, args, cwd, label }) => {
+    const children = [];
+    const killAll = () => {
+      for (const c of children) {
+        try {
+          c.kill('SIGTERM');
+        } catch {}
+      }
+    };
+    for (const { cmd, args, cwd, label, leader } of cmds) {
       info(`$ ${label ?? cmd + ' ' + args.join(' ')}`);
       const child = spawn(cmd, args, {
         cwd: cwd ?? ROOT,
         stdio: 'inherit',
         env: process.env,
       });
-      child.on('exit', (code) => {
-        remaining--;
-        if (code !== 0 && !failed) {
-          failed = true;
-          children.forEach((c) => {
-            try {
-              c.kill('SIGTERM');
-            } catch {}
-          });
-          reject(new Error(`${label ?? cmd} exited ${code}`));
+      child.on('exit', (code, signal) => {
+        if (settled) {
+          return;
         }
-        if (remaining === 0 && !failed) resolve();
+        remaining--;
+        // A signal-based exit (SIGTERM/SIGKILL) reports code=null; treat it as
+        // a failure (exit 1) instead of letting `code ?? 0` read it as success.
+        const exitCode = signal ? 1 : (code ?? 0);
+        const action = runParallelExitAction({ code: exitCode, leader: !!leader, remaining });
+        if (action === 'fail') {
+          settled = true;
+          killAll();
+          reject(new Error(`${label ?? cmd} exited ${signal ? `via ${signal}` : code}`));
+        } else if (action === 'done' || action === 'quiet') {
+          settled = true;
+          killAll();
+          resolve();
+        }
+        // 'wait': a non-leader finished cleanly; keep the others running.
       });
-      return child;
-    });
-    // Ctrl+C: relay to all children.
-    process.on('SIGINT', () => {
-      children.forEach((c) => {
-        try {
-          c.kill('SIGTERM');
-        } catch {}
-      });
-    });
+      children.push(child);
+    }
+    // Relay termination of THIS process to the children so quitting the
+    // orchestrator (Ctrl+C / SIGTERM / normal exit) never strands them.
+    process.on('SIGINT', killAll);
+    process.on('SIGTERM', killAll);
+    process.on('exit', killAll);
   });
 }
 

@@ -93,7 +93,15 @@ export default defineConfig({
           name: 'ui-routes',
           environment: 'jsdom',
           include: ['src/routes/**/*.test.ts'],
-          exclude: ['src/routes/api/**'],
+          exclude: [
+            'src/routes/api/**',
+            // Real-browser component/page render tests go to ui-component, even
+            // when they live under src/routes/ (a route-level +page render
+            // test). Without this they'd ALSO run here under jsdom, where
+            // Svelte's mount() throws lifecycle_function_unavailable.
+            'src/**/*.component.test.ts',
+            'src/**/*.svelte.test.ts',
+          ],
         },
       },
 

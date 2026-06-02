@@ -66,6 +66,11 @@ function injectExtraHeaders(config, token) {
   cloned.ci.collect.settings.extraHeaders = JSON.stringify({
     Authorization: `Bearer ${token}`,
   });
+  // LH_RUNS lets CI override the checked-in numberOfRuns (3) without
+  // editing lighthouserc.json -- PR runs pass "1" to cut wall-clock.
+  if (process.env.LH_RUNS) {
+    cloned.ci.collect.numberOfRuns = Number(process.env.LH_RUNS);
+  }
   return cloned;
 }
 

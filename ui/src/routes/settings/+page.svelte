@@ -23,31 +23,18 @@
     Sparkles,
     Activity,
     Info,
+    Trash2,
+    FlaskConical,
+    PackageCheck,
+    ChevronRight,
   } from '@lucide/svelte';
   import { cn } from '$lib/utils';
   import { onMount } from 'svelte';
   import { BRAND } from '$lib/client/brand';
-  import { devtoolsEnabled, setDevtools } from '$lib/client/devtools.svelte';
-
-  // "About" card + hidden developer-tools opt-in. Tapping the version 7x
-  // unlocks the /dev view gallery in built/native apps (where `dev` is false) --
-  // Settings is the conventional hiding spot (cf. Android "tap build number").
-  const appVersion = __APP_VERSION__ ?? '';
-  let versionTaps = 0;
-  let versionTapTimer: ReturnType<typeof setTimeout> | null = null;
-  function onVersionTap(): void {
-    if (devtoolsEnabled()) return;
-    versionTaps += 1;
-    if (versionTapTimer) clearTimeout(versionTapTimer);
-    versionTapTimer = setTimeout(() => (versionTaps = 0), 1200);
-    if (versionTaps >= 7) {
-      versionTaps = 0;
-      setDevtools(true);
-      toast.success('Developer tools enabled', {
-        description: 'The view-gallery button is now available on every screen.',
-      });
-    }
-  }
+  import { nativeConfirm } from '$lib/client/capacitor-plugins';
+  import { clearClientCacheAndReset } from '$lib/client/reset';
+  import { pendingReportCount, clearReportQueue } from '$lib/client/error-reporter';
+  import { Stethoscope, Download } from '@lucide/svelte';
 
   /** Compact "Nm/Nh/Nd ago" formatter for the health card. */
   function sinceShort(ts: number): string {
@@ -83,7 +70,56 @@
   }
   onMount(() => {
     void refreshHealth();
+    void loadUpdateChannel();
   });
+
+  // Release channel (Electron desktop only). window.electronAPI is exposed by the
+  // Electron preload; it's absent on web / iOS / Android, so the whole card is
+  // gated on its presence. getUpdateChannel/setUpdateChannel were added to the
+  // preload's electronAPI alongside clearCache.
+  type ElectronUpdateApi = {
+    getUpdateChannel?: () => Promise<'stable' | 'beta'>;
+    setUpdateChannel?: (channel: 'stable' | 'beta') => Promise<boolean>;
+  };
+  function electronUpdateApi(): ElectronUpdateApi | undefined {
+    if (typeof window === 'undefined') return undefined;
+    return (window as unknown as { electronAPI?: ElectronUpdateApi }).electronAPI;
+  }
+  let isElectron = $state(false);
+  let updateChannel = $state<'stable' | 'beta'>('stable');
+  let settingChannel = $state(false);
+  async function loadUpdateChannel() {
+    const apiBridge = electronUpdateApi();
+    if (!apiBridge?.getUpdateChannel) return;
+    isElectron = true;
+    try {
+      updateChannel = (await apiBridge.getUpdateChannel()) ?? 'stable';
+    } catch {
+      /* leave the default; the menu radio is the fallback control */
+    }
+  }
+  async function setUpdateChannel(channel: 'stable' | 'beta') {
+    const apiBridge = electronUpdateApi();
+    if (!apiBridge?.setUpdateChannel || settingChannel || channel === updateChannel) return;
+    settingChannel = true;
+    const previous = updateChannel;
+    updateChannel = channel; // optimistic
+    try {
+      await apiBridge.setUpdateChannel(channel);
+      toast.success(`Switched to the ${channel} channel`, {
+        description:
+          channel === 'beta'
+            ? 'You will receive prerelease builds. Checking for an update now.'
+            : 'You are back on stable releases.',
+      });
+    } catch (e) {
+      updateChannel = previous; // roll back on failure
+      const err = e as ApiError;
+      toast.error('Could not change release channel', { description: err.message });
+    } finally {
+      settingChannel = false;
+    }
+  }
 
   let {
     data,
@@ -334,11 +370,41 @@
     }
   }
 
+  let clearingCache = $state(false);
+  async function clearCacheAndReset() {
+    if (clearingCache) return;
+    // window.confirm is blocked in the Capacitor WebView -- nativeConfirm
+    // (title, message) is WebView-safe and falls back to confirm() on web.
+    const ok = await nativeConfirm(
+      'Clear cache & sign out?',
+      'This clears cached data on this device and signs you out. Your applications, ' +
+        'reports, and profile are NOT deleted.',
+    );
+    if (!ok) return;
+    clearingCache = true;
+    // clearClientCacheAndReset reloads to /login itself, so there is no
+    // toast-then-navigate race -- the 'Clearing…' state covers the gap.
+    await clearClientCacheAndReset();
+  }
+
   function fmtRelative(ts: number): string {
     const dt = Date.now() - ts;
     if (dt < 5_000) return 'just now';
     if (dt < 60_000) return Math.floor(dt / 1000) + 's ago';
     return Math.floor(dt / 60_000) + 'm ago';
+  }
+
+  // Diagnostics card -- pending local error-report backlog (queued when the
+  // backend was unreachable) + a redacted diagnostics-bundle download. The
+  // count is read on mount; clearing drops the localStorage queue.
+  let pendingReports = $state(0);
+  onMount(() => {
+    pendingReports = pendingReportCount();
+  });
+  function clearDiagnosticsQueue() {
+    clearReportQueue();
+    pendingReports = pendingReportCount();
+    toast.success('Cleared queued reports');
   }
 </script>
 
@@ -382,8 +448,8 @@
                 class={cn(
                   'rounded-md border px-3 py-2',
                   health.pipeline.stale
-                    ? 'border-amber-500/30 bg-amber-500/5'
-                    : 'border-emerald-500/30 bg-emerald-500/5',
+                    ? 'border-warning/30 bg-warning/10'
+                    : 'border-success/30 bg-success/10',
                 )}
               >
                 <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
@@ -409,8 +475,8 @@
                 class={cn(
                   'rounded-md border px-3 py-2',
                   health.anthropic.keyConfigured
-                    ? 'border-emerald-500/30 bg-emerald-500/5'
-                    : 'border-amber-500/30 bg-amber-500/5',
+                    ? 'border-success/30 bg-success/10'
+                    : 'border-warning/30 bg-warning/10',
                 )}
               >
                 <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
@@ -425,8 +491,8 @@
                 class={cn(
                   'rounded-md border px-3 py-2',
                   health.gemini.keyConfigured
-                    ? 'border-emerald-500/30 bg-emerald-500/5'
-                    : 'border-zinc-500/30 bg-zinc-500/5',
+                    ? 'border-success/30 bg-success/10'
+                    : 'border-border bg-muted',
                 )}
               >
                 <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
@@ -490,14 +556,14 @@
                   {#if isConnected(f.key)}
                     <Badge
                       variant="outline"
-                      class="text-[11px] h-5 px-1.5 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                      class="text-[11px] h-5 px-1.5 border-success/30 bg-success/10 text-success"
                     >
                       <CheckCircle2 class="size-2.5 mr-0.5" /> connected
                     </Badge>
                   {:else if dirty}
                     <Badge
                       variant="outline"
-                      class="text-[11px] h-5 px-1.5 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                      class="text-[11px] h-5 px-1.5 border-warning/30 bg-warning/10 text-warning"
                     >
                       unsaved
                     </Badge>
@@ -545,7 +611,7 @@
               {#if validation}
                 <p
                   class={'text-xs flex items-center gap-1 ' +
-                    (validation.ok ? 'text-emerald-400' : 'text-red-400')}
+                    (validation.ok ? 'text-success' : 'text-destructive')}
                 >
                   {#if validation.ok}
                     <CheckCircle2 class="size-3" />
@@ -581,7 +647,7 @@
                   {#if probeResult}
                     <span
                       class={'text-xs flex items-center gap-1 ' +
-                        (probeResult.ok ? 'text-emerald-400' : 'text-red-400')}
+                        (probeResult.ok ? 'text-success' : 'text-destructive')}
                     >
                       {#if probeResult.ok}
                         <CheckCircle2 class="size-3" />
@@ -600,7 +666,7 @@
         <Card.Footer class="justify-between border-t pt-4">
           <p class="text-xs text-muted-foreground">
             {#if dirtyCount > 0}
-              <span class="text-amber-400"
+              <span class="text-warning"
                 >{dirtyCount} unsaved {dirtyCount === 1 ? 'change' : 'changes'}</span
               > · take effect immediately on save
             {:else}
@@ -681,7 +747,7 @@
       <Card.Root>
         <Card.Header>
           <div class="flex items-center gap-2">
-            <Sparkles class="size-4 text-fuchsia-400" />
+            <Sparkles class="size-4 text-fuchsia-700 dark:text-fuchsia-400" />
             <Card.Title class="text-base">Re-run onboarding</Card.Title>
           </div>
           <Card.Description>
@@ -707,6 +773,76 @@
 
       <Card.Root>
         <Card.Header>
+          <div class="flex items-center gap-2">
+            <Trash2 class="size-4 text-destructive" />
+            <Card.Title class="text-base">Clear Cache & Reset</Card.Title>
+          </div>
+          <Card.Description>
+            Clears this device's cached data and signs you out, then returns you to the login
+            screen. Your applications, reports, and profile are <strong>not</strong> deleted — that's
+            the separate profile reset.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content>
+          <Button
+            onclick={clearCacheAndReset}
+            variant="destructive"
+            disabled={clearingCache}
+            class="gap-1.5"
+          >
+            {#if clearingCache}<Loader2 class="size-3.5 animate-spin" /> Clearing…{:else}<Trash2
+                class="size-3.5"
+              /> Clear Cache & Reset{/if}
+          </Button>
+        </Card.Content>
+      </Card.Root>
+
+      <!-- Diagnostics — pending local error-report backlog + a downloadable,
+           already-redacted bundle the user can attach to a bug report. The
+           bundle is a deliberate GET download (content-disposition attachment),
+           not an automatic upload; /api/diagnostics scopes it to this user. -->
+      <Card.Root>
+        <Card.Header>
+          <div class="flex items-center gap-2">
+            <Stethoscope class="size-4 text-muted-foreground" />
+            <Card.Title class="text-base">Diagnostics</Card.Title>
+          </div>
+          <Card.Description>
+            Error reports queue on this device when the backend is unreachable and flush
+            automatically on reconnect. Download a redacted diagnostics bundle to attach to a bug
+            report — it carries only your own activity, with emails, keys, and paths masked.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content class="space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm">
+              <span class="font-medium">{pendingReports}</span>
+              <span class="text-muted-foreground">
+                pending {pendingReports === 1 ? 'report' : 'reports'} queued locally
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              class="h-7 text-xs gap-1.5"
+              onclick={clearDiagnosticsQueue}
+              disabled={pendingReports === 0}
+            >
+              <Trash2 class="size-3" /> Clear
+            </Button>
+          </div>
+          <a
+            href="/api/diagnostics"
+            download="heron-diagnostics.json"
+            class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-border/40 bg-muted/20 hover:bg-muted/40 transition-colors"
+          >
+            <Download class="size-3.5" /> Download diagnostics
+          </a>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Header>
           <Card.Title class="text-base"
             >Browser bookmarklet · auto-fill application forms</Card.Title
           >
@@ -725,7 +861,7 @@
             <a
               href={bookmarkletHref}
               draggable="true"
-              class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200 hover:bg-fuchsia-500/20 transition-colors"
+              class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-200 hover:bg-fuchsia-500/20 transition-colors"
               onclick={(e: MouseEvent) => e.preventDefault()}
             >
               📎 Heron fill
@@ -750,7 +886,70 @@
         </Card.Content>
       </Card.Root>
 
-      <!-- About + hidden developer-tools opt-in (tap the version 7x). -->
+      <!-- Release channel (Electron desktop only). Gated on window.electronAPI —
+           the preload that exposes getUpdateChannel/setUpdateChannel only runs in
+           the Electron shell, so this card never renders on web / iOS / Android.
+           Mirrors the native Help → Release channel menu radio. -->
+      {#if isElectron}
+        <Card.Root>
+          <Card.Header>
+            <div class="flex items-center gap-2">
+              <PackageCheck class="size-4 text-muted-foreground" />
+              <Card.Title class="text-base">Release channel</Card.Title>
+            </div>
+            <Card.Description>
+              Stable ships tested releases. Beta opts into prerelease builds — newer features,
+              rougher edges. Switching re-checks for an update right away. (This also lives in the
+              app's Help menu.)
+            </Card.Description>
+          </Card.Header>
+          <Card.Content>
+            <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Release channel">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={updateChannel === 'stable'}
+                disabled={settingChannel}
+                onclick={() => setUpdateChannel('stable')}
+                class={cn(
+                  'rounded-md border px-3 py-2.5 text-left transition-colors',
+                  updateChannel === 'stable'
+                    ? 'border-success/40 bg-success/10'
+                    : 'border-border/40 bg-card hover:bg-muted/40',
+                )}
+              >
+                <div class="flex items-center gap-1.5 text-sm font-medium">
+                  <PackageCheck class="size-3.5" /> Stable
+                </div>
+                <div class="text-[11px] text-muted-foreground/80">Recommended for everyone</div>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={updateChannel === 'beta'}
+                disabled={settingChannel}
+                onclick={() => setUpdateChannel('beta')}
+                class={cn(
+                  'rounded-md border px-3 py-2.5 text-left transition-colors',
+                  updateChannel === 'beta'
+                    ? 'border-fuchsia-500/40 bg-fuchsia-500/10'
+                    : 'border-border/40 bg-card hover:bg-muted/40',
+                )}
+              >
+                <div class="flex items-center gap-1.5 text-sm font-medium">
+                  <FlaskConical class="size-3.5" /> Beta
+                </div>
+                <div class="text-[11px] text-muted-foreground/80">Prerelease builds</div>
+              </button>
+            </div>
+          </Card.Content>
+        </Card.Root>
+      {/if}
+
+      <!-- About — links to the single About surface (/about), which carries the
+           brand + build identity, the external links, and the hidden
+           developer-tools opt-in (tap the version 7x). Keeping About in one
+           place means the version/build/gesture can't drift between two cards. -->
       <Card.Root>
         <Card.Header>
           <div class="flex items-center gap-2">
@@ -762,30 +961,11 @@
           <div class="flex items-center justify-between gap-3">
             <div class="min-w-0">
               <div class="text-sm font-medium">{BRAND.displayName}</div>
-              <button
-                type="button"
-                onclick={onVersionTap}
-                class="cursor-default text-xs text-muted-foreground select-none"
-                aria-label="App version"
-              >
-                {appVersion ? `Version ${appVersion}` : 'Local-first job search'}
-              </button>
+              <div class="text-xs text-muted-foreground">{BRAND.tagline}</div>
             </div>
-            {#if devtoolsEnabled()}
-              <div class="flex shrink-0 items-center gap-2">
-                <Badge variant="secondary" class="text-[11px]">Developer tools on</Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => {
-                    setDevtools(false);
-                    toast.info('Developer tools disabled');
-                  }}
-                >
-                  Disable
-                </Button>
-              </div>
-            {/if}
+            <Button href="/about" variant="outline" size="sm" class="shrink-0 gap-1.5">
+              About <ChevronRight class="size-3.5" />
+            </Button>
           </div>
         </Card.Content>
       </Card.Root>

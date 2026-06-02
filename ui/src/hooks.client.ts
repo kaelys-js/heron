@@ -1,5 +1,6 @@
 import type { HandleClientError } from '@sveltejs/kit';
-import { reportClientError } from '$lib/notifications.svelte';
+import { dev } from '$app/environment';
+import { report } from '$lib/client/error-reporter';
 import { stringify as devalueStringify } from 'devalue';
 
 /**
@@ -87,7 +88,6 @@ if (typeof window !== 'undefined' && !window.location.protocol.startsWith('http'
         velocityDeltaPct: null,
         topSources: [] as unknown[],
         activity: [] as unknown[],
-        recentErrorsCount: 0,
         pipelineDaysAgo: null,
         alerts: [] as unknown[],
         applyIssues: [] as unknown[],
@@ -114,44 +114,32 @@ if (typeof window !== 'undefined' && !window.location.protocol.startsWith('http'
 }
 
 /**
- * Funnel every client-side error through `reportClientError` so the user always
- * sees a toast + activity-feed entry instead of a silent console log.
+ * Funnel SvelteKit load/navigation lifecycle errors through the canonical
+ * technical reporter (console + POST /api/telemetry; quiet per
+ * $lib/report-routing).
  *
- * Three sources are wired up:
- *   1. SvelteKit `handleError` hook -- load/navigation lifecycle errors
- *   2. `<svelte:boundary onerror>` in +layout.svelte -- component-tree errors ($effect, render, lifecycle)
- *   3. Plain `window.error` and `window.unhandledrejection` -- anything outside Svelte's reach
+ * The plain `window.error` + `window.unhandledrejection` listeners are NOT
+ * registered here -- error-reporter's installErrorReporter() (called from
+ * +layout onMount) is the SINGLE place those are wired, so one JS error
+ * fires the pipeline exactly once. Component-tree errors arrive via
+ * `<svelte:boundary onerror>` in +layout.svelte, which calls
+ * reportClientError (also a thin wrapper over report()).
  */
 export const handleError: HandleClientError = ({ error, event, status, message }) => {
   const url = event?.url?.pathname ?? '?';
-  reportClientError('sveltekit', `[${status}] ${url}`, error);
+  // Correlation id: embedded in the reporter context AND returned on page.error,
+  // so the error page can show it (copyable) and support can grep logs for it.
+  const errorId = crypto.randomUUID();
+  void report({
+    err: error,
+    level: 'error',
+    kind: 'technical',
+    context: { source: 'sveltekit', route: url, requestId: errorId },
+  });
   return {
     message: status >= 500 ? 'Something broke on our end.' : message,
     code: (error as { code?: string })?.code,
+    errorId,
+    ...(dev ? { stack: (error as Error)?.stack } : {}),
   };
 };
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('error', (e: ErrorEvent) => {
-    if (!e.error && !e.message) {
-      return;
-    }
-    const stackFrame =
-      (e.error?.stack ?? '').split('\n')[0] ||
-      (e.filename ? `${e.filename}:${e.lineno}:${e.colno}` : '');
-    reportClientError('window', 'Uncaught error', e.error ?? e.message, {
-      message: stackFrame
-        ? `${e.error?.message ?? e.message} · ${stackFrame}`
-        : (e.error?.message ?? e.message),
-    });
-  });
-
-  window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
-    const code = (e.reason as { code?: string })?.code;
-    reportClientError('promise', 'Unhandled promise rejection', e.reason, {
-      message: code
-        ? `[${code}] ${e.reason instanceof Error ? e.reason.message : String(e.reason)}`
-        : undefined,
-    });
-  });
-}

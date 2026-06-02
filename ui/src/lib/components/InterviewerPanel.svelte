@@ -168,10 +168,7 @@
   }
 </script>
 
-<section
-  id="interview-panel"
-  class="space-y-4 rounded-lg border border-zinc-700 bg-zinc-900/40 p-5"
->
+<section id="interview-panel" class="space-y-4 rounded-lg border border-border bg-card p-5">
   <header class="flex items-center justify-between">
     <h3 class="text-base font-medium">Interview panel</h3>
     <Button size="sm" variant="ghost" onclick={() => (showAddForm = !showAddForm)}>
@@ -181,20 +178,20 @@
   </header>
 
   {#if showAddForm}
-    <div class="space-y-2 rounded-md border border-zinc-800 bg-zinc-950/50 p-3">
+    <div class="space-y-2 rounded-md border border-border bg-muted p-3">
       <input
         bind:value={formName}
         placeholder="Name (e.g. Sarah Chen)"
-        class="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm"
+        class="w-full rounded border border-input bg-muted px-3 py-1.5 text-sm"
       />
       <input
         bind:value={formTitle}
         placeholder="Title (e.g. Engineering Manager)"
-        class="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm"
+        class="w-full rounded border border-input bg-muted px-3 py-1.5 text-sm"
       />
       <select
         bind:value={formStage}
-        class="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm"
+        class="w-full rounded border border-input bg-muted px-3 py-1.5 text-sm"
       >
         {#each STAGES as s}
           <option value={s}>{s}</option>
@@ -203,12 +200,12 @@
       <input
         type="datetime-local"
         bind:value={formScheduledAt}
-        class="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm"
+        class="w-full rounded border border-input bg-muted px-3 py-1.5 text-sm"
       />
       <input
         bind:value={formLinkedin}
         placeholder="LinkedIn URL (optional)"
-        class="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm"
+        class="w-full rounded border border-input bg-muted px-3 py-1.5 text-sm"
       />
       <div class="flex gap-2">
         <Button size="sm" onclick={addInterviewer} disabled={busy === 'add'}>
@@ -220,17 +217,14 @@
   {/if}
 
   {#if interviewers.length === 0}
-    <p class="text-sm text-zinc-500">
+    <p class="text-sm text-muted-foreground">
       No interviewers logged. Add someone above to start generating dossiers, questions, and
       thank-you notes.
     </p>
   {:else}
     <div class="space-y-3">
       {#each interviewers as iv (iv.slug)}
-        <div
-          id={'interviewer-' + iv.slug}
-          class="rounded-md border border-zinc-800 bg-zinc-950/40 p-3"
-        >
+        <div id={'interviewer-' + iv.slug} class="rounded-md border border-border bg-muted p-3">
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-2">
@@ -241,14 +235,14 @@
                     href={iv.linkedinUrl}
                     target="_blank"
                     rel="noopener"
-                    class="text-xs text-cyan-400 hover:underline">LinkedIn</a
+                    class="text-xs text-cyan-700 dark:text-cyan-400 hover:underline">LinkedIn</a
                   >
                 {/if}
               </div>
               {#if iv.title}
-                <div class="text-xs text-zinc-400">{iv.title}</div>
+                <div class="text-xs text-muted-foreground">{iv.title}</div>
               {/if}
-              <div class="text-xs text-zinc-500">Scheduled: {fmtDate(iv.scheduledAt)}</div>
+              <div class="text-xs text-muted-foreground">Scheduled: {fmtDate(iv.scheduledAt)}</div>
             </div>
             <Button
               size="sm"

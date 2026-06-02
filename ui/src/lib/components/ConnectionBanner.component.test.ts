@@ -56,11 +56,11 @@ describe('connectionBanner', () => {
     await Promise.resolve();
   });
 
-  it('renders inside a styled div with amber tones', () => {
+  it('renders inside a styled div with the warning token colour', () => {
     notifications.connected = 'error';
     notifications.hasEverConnected = true;
     const { container } = render(ConnectionBanner);
     const wrapper = container.querySelector('div');
-    expect(wrapper?.className).toContain('amber');
+    expect(wrapper?.className).toContain('warning');
   });
 });

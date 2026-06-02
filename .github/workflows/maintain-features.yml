@@ -4,8 +4,8 @@ name: Maintain repo features
 # apply-github-config.mjs (rulesets + topics + GHAS toggles) and don't
 # fit cleanly into brand.json:
 #
-#   • Deployment environments (production-ios, production-electron,
-#     npm-publish, github-pages) with branch policies
+#   • Deployment environments (production, npm-publish, github-pages)
+#     with branch policies + required-reviewer gate
 #   • Standard issue labels (good first issue, oversize-ok, no-issue, etc.)
 #   • Secret-scanning validity checks (toggle attempt)
 #
@@ -31,6 +31,7 @@ on:
     branches: [main]
     paths:
       - "scripts/system/apply-github-features.mjs"
+      - ".github/labels.yml"
       - ".github/workflows/maintain-features.yml"
   schedule:
     # Weekly apply sweep, Monday 06:18 UTC (5 min after maintain-config,
@@ -58,8 +59,8 @@ jobs:
       contents: read
       # NB: GITHUB_TOKEN cannot grant the `administration` scope (only
       # fine-grained PATs can). Without `GH_USER_PAT`, environment ops
-      # (production-ios, production-electron, npm-publish, github-pages
-      # branch policies) silently no-op. Labels + validity-checks
+      # (production, npm-publish, github-pages branch policies +
+      # the production required-reviewer gate) silently no-op. Labels + validity-checks
       # attempt apply regardless. Land `GH_USER_PAT` for full reconcile.
       # `issues: write` not requested -- this workflow has no drift-issue
       # opening path (unlike maintain-config.yml's schedule branch); the

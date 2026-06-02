@@ -16,9 +16,18 @@ import { defineConfig } from 'vitest/config';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Mirror vite.config.ts's `__APP_VERSION__` define (root package.json version)
+// so server/components that read the build-time app version -- the
+// X-App-Version response header, the Settings "About" card -- resolve the SAME
+// literal under `vitest run` as in a real build. Without this define
+// `__APP_VERSION__` is an undeclared global (the `typeof` guards stay false).
+const __appVersion: string = JSON.parse(
+  readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8'),
+).version;
 
 // Pre-create the temp dir so the --localstorage-file flag (passed to
 // every test worker below) resolves to a writable path. Without this
@@ -68,6 +77,19 @@ const __workerExecArgv = [
 ];
 
 export default defineConfig({
+  // Build-time global replacements, mirrored from vite.config.ts so tests run
+  // against the same defines the app does (see __appVersion above).
+  define: {
+    __APP_VERSION__: JSON.stringify(__appVersion),
+    // Mirror vite.config.ts's `__APP_BUILD__` (short git SHA). A fixed literal
+    // here so the X-App-Build header + console banner resolve deterministically
+    // under `vitest run` (a real git SHA would make snapshots non-reproducible).
+    __APP_BUILD__: JSON.stringify('testsha'),
+    // Mirror vite.config.ts's `__APP_BUILD_DATE__` (ISO build timestamp). A
+    // fixed literal under `vitest run` so the build-info helper + About-surface
+    // assertions resolve deterministically (a real Date would make them flaky).
+    __APP_BUILD_DATE__: JSON.stringify('2024-01-02T03:04:05.000Z'),
+  },
   // NOTE: We deliberately do NOT include the `brandWatcherPlugin` from
   // vite.config.ts. That plugin shells out to `apply-brand.mjs` on every
   // `configResolved()` call -- fine for dev/build, but Vitest spawns

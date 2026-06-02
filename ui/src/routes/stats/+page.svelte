@@ -149,14 +149,14 @@
   <div class="p-6">
     <div class="max-w-6xl mx-auto space-y-6">
       {#if data.pipelineStaleDays != null && data.pipelineStaleDays >= 7}
-        <Card.Root class="border-amber-500/40 bg-amber-500/5">
+        <Card.Root class="border-warning/40 bg-warning/5">
           <Card.Content class="flex items-center gap-3 p-4">
-            <AlertCircle class="size-5 text-amber-400 shrink-0" />
+            <AlertCircle class="size-5 text-warning shrink-0" />
             <div class="flex-1">
-              <div class="text-sm font-medium text-amber-200">
+              <div class="text-sm font-medium text-warning">
                 Pipeline is {data.pipelineStaleDays} days old
               </div>
-              <div class="text-xs text-amber-200/70">Run a fresh scan to find new jobs.</div>
+              <div class="text-xs text-warning/70">Run a fresh scan to find new jobs.</div>
             </div>
             <Button size="sm" variant="outline" class="gap-1.5" onclick={runScan} disabled={busy}>
               <Play class="size-3.5" /> Run scan
@@ -166,14 +166,12 @@
       {/if}
 
       {#if data.unscored > 0 && data.counts.total > 0 && data.unscored / data.counts.total > 0.3}
-        <Card.Root class="border-cyan-500/40 bg-cyan-500/5">
+        <Card.Root class="border-info/40 bg-info/5">
           <Card.Content class="flex items-center gap-3 p-4">
-            <Sparkles class="size-5 text-cyan-400 shrink-0" />
+            <Sparkles class="size-5 text-info shrink-0" />
             <div class="flex-1">
-              <div class="text-sm font-medium text-cyan-200">{data.unscored} jobs unscored</div>
-              <div class="text-xs text-cyan-200/70">
-                Run Gemini first-pass to triage them quickly.
-              </div>
+              <div class="text-sm font-medium text-info">{data.unscored} jobs unscored</div>
+              <div class="text-xs text-info/70">Run Gemini first-pass to triage them quickly.</div>
             </div>
             <Button size="sm" variant="outline" class="gap-1.5" onclick={runGemini} disabled={busy}>
               <Play class="size-3.5" /> Run Gemini
@@ -237,18 +235,18 @@
                 data={velocityData}
                 width={70}
                 height={24}
-                stroke="rgb(110, 231, 183)"
-                fill="rgb(110, 231, 183)"
+                stroke="var(--chart-2)"
+                fill="var(--chart-2)"
               />
             </div>
             <div class="text-[11px] text-muted-foreground flex items-center gap-1">
               {#if data.velocityDelta != null && data.velocityDelta !== 0}
                 {#if data.velocityDelta > 0}
-                  <TrendingUp class="size-3 text-emerald-400" />
-                  <span class="text-emerald-400">+{data.velocityDelta}%</span>
+                  <TrendingUp class="size-3 text-success" />
+                  <span class="text-success">+{data.velocityDelta}%</span>
                 {:else}
-                  <TrendingDown class="size-3 text-red-400" />
-                  <span class="text-red-400">{data.velocityDelta}%</span>
+                  <TrendingDown class="size-3 text-destructive" />
+                  <span class="text-destructive">{data.velocityDelta}%</span>
                 {/if}
                 <span>vs prior 7d</span>
               {:else}
@@ -400,7 +398,7 @@
           <Card.Content>
             <StackedBar segments={bgSegments} />
             {#if data.bgCounts.BLOCKED > 0}
-              <div class="mt-3 text-[11px] text-red-300 flex items-center gap-1.5">
+              <div class="mt-3 text-[11px] text-destructive flex items-center gap-1.5">
                 <AlertCircle class="size-3.5" />
                 <span>{data.bgCounts.BLOCKED} jobs flagged BLOCKED — auto-skipped from apply.</span>
               </div>
@@ -558,12 +556,12 @@
                     <span
                       class={'text-[11px] font-mono uppercase px-1.5 py-0.5 rounded ' +
                         (j.bgRisk === 'BLOCKED'
-                          ? 'bg-red-700/80 text-red-100'
+                          ? 'bg-destructive/25 text-destructive'
                           : j.bgRisk === 'HIGH'
-                            ? 'bg-red-500/30 text-red-200'
+                            ? 'bg-destructive/10 text-destructive'
                             : j.bgRisk === 'MEDIUM'
-                              ? 'bg-amber-500/30 text-amber-200'
-                              : 'bg-emerald-500/30 text-emerald-200')}>{j.bgRisk}</span
+                              ? 'bg-warning/10 text-warning'
+                              : 'bg-success/10 text-success')}>{j.bgRisk}</span
                     >
                   {/if}
                   {#if j.score != null}

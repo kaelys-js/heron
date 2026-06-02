@@ -50,10 +50,10 @@
     job.score == null
       ? 'bg-muted text-muted-foreground border-border'
       : job.score >= 4
-        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+        ? 'bg-success/15 text-success border-success/40'
         : job.score >= 3
-          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-          : 'bg-red-500/10 text-red-300 border-red-500/30',
+          ? 'bg-warning/15 text-warning border-warning/40'
+          : 'bg-destructive/10 text-destructive border-destructive/30',
   );
 
   // Defensive hostname parse -- never crash the page over a malformed URL
@@ -120,19 +120,19 @@
     remote: {
       label: 'Remote',
       icon: Wifi,
-      tint: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/40',
+      tint: 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/40',
       tip: 'Fully remote',
     },
     hybrid: {
       label: 'Hybrid',
       icon: Building,
-      tint: 'text-amber-300 bg-amber-500/10 border-amber-500/40',
+      tint: 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/40',
       tip: 'Hybrid — some office presence required',
     },
     onsite: {
       label: 'On-site',
       icon: Building,
-      tint: 'text-red-300 bg-red-500/10 border-red-500/40',
+      tint: 'text-red-700 dark:text-red-300 bg-red-500/10 border-red-500/40',
       tip: 'On-site — must work from a specific location',
     },
     unknown: {
@@ -201,7 +201,7 @@
                   onclick={copyUrl}
                 >
                   {#if copyState === 'copied'}
-                    <Check class="size-3 text-emerald-400" />
+                    <Check class="size-3 text-success" />
                   {:else}
                     <Copy class="size-3" />
                   {/if}
@@ -501,7 +501,7 @@
                   >{PROP_TIPS['CV PDF']}</Tooltip.Content
                 >
               </Tooltip.Root>
-              <dd class="text-emerald-400 inline-flex items-center gap-1">
+              <dd class="text-success inline-flex items-center gap-1">
                 <Check class="size-3" />
                 <span class="text-[11px]">generated</span>
               </dd>

@@ -147,7 +147,7 @@
       class={cn(
         'group/pp rounded-lg border overflow-hidden transition-colors',
         armed
-          ? 'border-red-500/40 bg-red-500/5 ring-1 ring-red-500/20'
+          ? 'border-destructive/40 bg-destructive/5 ring-1 ring-destructive/20'
           : 'border-border/50 bg-card/30 hover:bg-card/50',
       )}
       onfocusin={() => {
@@ -187,7 +187,7 @@
             {p.name || 'Untitled proof point'}
           </span>
           {#if p.hero_metric}
-            <span class="text-[11px] font-mono text-emerald-400/80 truncate max-w-[40%]"
+            <span class="text-[11px] font-mono text-success/80 truncate max-w-[40%]"
               >· {p.hero_metric}</span
             >
           {/if}
@@ -248,8 +248,8 @@
                     class={cn(
                       'size-7 transition-colors',
                       armed
-                        ? 'text-red-300 bg-red-500/15 hover:bg-red-500/25 ring-1 ring-red-500/40 animate-pulse'
-                        : 'text-muted-foreground hover:text-red-300 hover:bg-red-500/10',
+                        ? 'text-destructive bg-destructive/15 hover:bg-destructive/25 ring-1 ring-destructive/40 animate-pulse'
+                        : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
                     )}
                     onclick={(e) => {
                       e.preventDefault();

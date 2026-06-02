@@ -23,6 +23,7 @@
       "!**/.next/**", // not used here but a safety belt for future
       "!**/.cache/**", // generic tool cache
       "!**/_build/**", // icon generator + native build artefacts
+      "!**/.claude/**", // local Claude Code tooling (workflow scripts use top-level return)
 
       // ── Electron build pipeline outputs ───────────────────────────
       "!ui/electron/build/**", // tsgo output for the Electron main process

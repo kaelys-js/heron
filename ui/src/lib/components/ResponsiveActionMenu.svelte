@@ -40,6 +40,7 @@
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { useIsMobile } from '$lib/hooks/use-is-mobile.svelte';
+  import { dragToDismiss } from '$lib/actions/drag-to-dismiss';
   import type { Snippet } from 'svelte';
   import { cn } from '$lib/utils';
 
@@ -94,6 +95,16 @@
   }: Props = $props();
 
   const isMobile = useIsMobile();
+
+  // bits-ui Sheet.Content is a component, so `use:` can't target its DOM node;
+  // grab the node via bind:ref and drive the drag-to-dismiss gesture from an
+  // effect instead. The handle inside it carries `data-drag-handle`.
+  let sheetContent = $state<HTMLElement | null>(null);
+  $effect(() => {
+    if (!sheetContent) return;
+    const instance = dragToDismiss(sheetContent, { onDismiss: () => (open = false) });
+    return () => instance?.destroy?.();
+  });
 </script>
 
 {#if isMobile.value}
@@ -110,6 +121,7 @@
       {/snippet}
     </Sheet.Trigger>
     <Sheet.Content
+      bind:ref={sheetContent}
       side="bottom"
       class={cn(
         'flex flex-col gap-0 p-0 rounded-t-2xl max-h-[85svh]',
@@ -119,11 +131,12 @@
       )}
       showCloseButton={false}
     >
-      <!-- Drag-handle pill — pure visual cue. Sheet dismisses via
-           overlay-tap + Escape; the handle is for affordance only. -->
+      <!-- Drag-handle pill. `data-drag-handle` wires the drag-to-dismiss gesture
+           (dragToDismiss action); the sheet also closes via overlay-tap + Escape. -->
       <div
+        data-drag-handle
         aria-hidden="true"
-        class="mx-auto mt-2.5 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30 flex-shrink-0"
+        class="mx-auto mt-2.5 mb-1 h-1.5 w-10 rounded-full bg-muted-foreground/40 flex-shrink-0 touch-none"
       ></div>
 
       {#if title}

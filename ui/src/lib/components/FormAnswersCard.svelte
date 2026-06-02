@@ -230,7 +230,7 @@
 <Card.Root>
   <Card.Header>
     <Card.Title class="text-base flex items-center gap-2">
-      <MessageSquare class="size-4 text-fuchsia-400" />
+      <MessageSquare class="size-4 text-fuchsia-700 dark:text-fuchsia-400" />
       Form-answers cache
     </Card.Title>
     <Card.Description>
@@ -272,7 +272,7 @@
         {#if seedingFromCv}
           <Loader2 class="size-3 animate-spin" /> Seeding…
         {:else}
-          <Sparkles class="size-3 text-fuchsia-400" />
+          <Sparkles class="size-3 text-fuchsia-700 dark:text-fuchsia-400" />
           {stats.total === 0 ? 'Seed from CV + profile' : 'Re-seed from CV'}
         {/if}
       </Button>
@@ -376,7 +376,7 @@
                 variant="ghost"
                 size="sm"
                 class={cn(
-                  'h-7 text-[11px] gap-1 text-muted-foreground hover:text-red-300',
+                  'h-7 text-[11px] gap-1 text-muted-foreground hover:text-destructive',
                   saving && 'opacity-50',
                 )}
                 onclick={() => deleteOne(row)}
