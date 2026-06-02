@@ -16,6 +16,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build", "//#brand"],
+      "env": ["HERON_HTTP_PREVIEW"],
       "outputs": ["build/**", ".svelte-kit/**", "dist/**"],
       "inputs": [
         "$TURBO_DEFAULT$",

@@ -425,6 +425,11 @@ jobs:
 
       # ── Build ────────────────────────────────────────────────────
       - name: Build (turbo)
+        env:
+          # ts-build-output feeds ONLY ts-e2e. HERON_HTTP_PREVIEW drops the
+          # upgrade-insecure-requests CSP directive at BUILD time (svelte.config.ts),
+          # so webkit + mobile-safari load the preview over plain http on 127.0.0.1.
+          HERON_HTTP_PREVIEW: "1"
         run: pnpm build
 
       # Hand the prebuilt SvelteKit output to ts-e2e so each browser shard
@@ -438,6 +443,7 @@ jobs:
           path: |
             ui/build
             ui/.svelte-kit
+          include-hidden-files: true
           retention-days: 1
           if-no-files-found: error
 
@@ -743,8 +749,30 @@ jobs:
           restore-keys: |
             playwright-${{ runner.os }}-
 
+      - name: Cache Electron binary (@electron/get)
+        # ~/.cache/electron is the default @electron/get cache on Linux. The
+        # guard step below re-fetches the binary via install.js when the
+        # postinstall did not land it; a warm cache makes that a no-op.
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/electron
+          key: electron-bin-${{ runner.os }}-${{ hashFiles('pnpm-workspace.yaml') }}
+          restore-keys: |
+            electron-bin-${{ runner.os }}-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Ensure Electron binary present
+        run: |
+          set -euo pipefail
+          if [ ! -s node_modules/electron/path.txt ] || [ ! -d node_modules/electron/dist ]; then
+            echo "electron binary missing after install; fetching via @electron/get"
+            node node_modules/electron/install.js
+          fi
+          test -s node_modules/electron/path.txt
+          test -d node_modules/electron/dist
+          echo "OK electron binary present: $(cat node_modules/electron/path.txt)"
 
       # apply-brand regenerates the generated brand.ts the electron main
       # process + tests import. The electron vitest reads it at module load.
@@ -1019,7 +1047,8 @@ jobs:
     # Net savings on non-iOS PRs: ~7min of macos-latest build work skipped =
     # ~70min ubuntu-equivalent saved per such PR. Worth the ~5ubuntu-min
     # provisioning overhead.
-    runs-on: macos-latest
+    # set repo variable IOS_RUNNER to a managed Apple-silicon label to speed iOS; defaults to free macos-latest.
+    runs-on: ${{ vars.IOS_RUNNER || 'macos-latest' }}
     # 5 test schemes run sequentially (AppTests + WidgetTests +
     # AppLiveActivityTests + AppShareExtensionTests on iOS sim,
     # WatchTests on watchOS sim) + xcov per scheme + slather aggregator.
@@ -1081,6 +1110,14 @@ jobs:
           XC=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
           [ -n "$XC" ] && sudo xcode-select -s "$XC/Contents/Developer"
           xcodebuild -version
+
+      - name: Pre-boot newest iOS simulator (reduce XCUITest launch flake)
+        continue-on-error: true
+        run: |
+          set +e
+          UDID=$(xcrun simctl list devices available | grep -E 'iPhone' | tail -1 | grep -oE '[0-9A-F-]{36}')
+          if [ -n "$UDID" ]; then xcrun simctl boot "$UDID" 2>/dev/null; xcrun simctl bootstatus "$UDID" -b 2>/dev/null; fi
+          exit 0
 
       - name: Setup mise (Node + pnpm + Ruby + Swift)
         if: needs.changes.outputs.ios == 'true'

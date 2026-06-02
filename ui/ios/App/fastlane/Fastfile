@@ -670,7 +670,7 @@ platform :ios do
         UI.message("RECORD_MODE: enabled snapshot recording in #{s}.xcscheme")
       end
     end
-    common_xcargs = "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf"
+    common_xcargs = "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf COMPILATION_CACHE_ENABLE_CACHING=YES ONLY_ACTIVE_ARCH=YES"
 
     # TEST_RETRIES (set per ios-shards matrix job, default "0"): re-run a
     # failed test up to this many times before failing the build. The app-ui

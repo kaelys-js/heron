@@ -1,0 +1,92 @@
+name: Cache prime
+
+# Warms the turbo REMOTE cache on every push to main so PR runs replay
+# the cached check + build + lint instead of paying the cold ~2 min
+# SvelteKit build from scratch.
+#
+# How it works: this job runs the same check/build/lint turbo tasks the
+# PR `ts-static` job runs, writing the results to the Vercel remote cache
+# via TURBO_TOKEN/TURBO_TEAM. A later PR (or another main push) that has
+# not changed the relevant inputs gets a remote cache HIT and skips the
+# work. Local actions/cache of the pnpm store keeps the install step warm
+# across runs as well.
+#
+# This is a pure warm-the-cache job: it produces no artifacts, uploads no
+# coverage, and is not a required check. If it is ever skipped the only
+# cost is that the next PR pays the cold build once and then re-primes.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cache-prime-${{ github.ref }}
+  cancel-in-progress: true
+
+# Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate the remote
+# write; when absent turbo falls back to the local actions/cache and this
+# job still warms the pnpm store at least.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  CI: 'true'
+  BETTER_AUTH_SECRET: ci-cache-prime-${{ github.run_id }}
+  FORCE_COLOR: '3'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  prime:
+    name: Prime turbo remote cache (check + build + lint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm + Ruby)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      # apply-brand regenerates the platform icons + propagated configs the
+      # build consumes. Icons (.png/.icns/.ico) live under ui/electron/build/
+      # which is .gitignored, so this runner must produce them before build.
+      - name: Install icon-generation toolchain (Linux only)
+        run: sudo apt-get update && sudo apt-get install -y imagemagick icnsutils
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply brand (generate icons + propagated configs)
+        run: pnpm brand:apply
+
+      # Run the same tasks PR `ts-static` runs so their remote cache entries
+      # are warm by the time a PR opens. Writes to the Vercel remote cache
+      # via TURBO_TOKEN/TURBO_TEAM.
+      - name: Prime turbo remote cache
+        run: pnpm exec turbo run check build lint --cache-dir=.turbo
